@@ -1,0 +1,81 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "rank_bin5_10d_img_news",
+    "prob_rank_bin5_label4_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B73_S1_SENT_DELTA5_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(ts_delta(mean_sentiment_score_transfer, 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 8 ops: Replaces static sentiment with 5-day sentiment surprise (ts_delta). Models news catalyst shock rather than static tone."
+    },
+    {
+      "id": 2,
+      "type": "B73_S2_SENT_DELTA10_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(ts_delta(mean_sentiment_score_transfer, 10), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 8 ops: 10-day sentiment surprise (ts_delta 10), capturing bi-weekly sentiment acceleration."
+    },
+    {
+      "id": 3,
+      "type": "B73_S3_SENT_SHOCK_AMP_9OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(multiply(ts_delta(mean_sentiment_score_transfer, 5), power(mean_sentiment_score_transfer, 3)), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 10 ops: Product of positive surprise (ts_delta) AND absolute conviction (power 3), filtering out false positive jumps on tiny sentiment."
+    },
+    {
+      "id": 4,
+      "type": "B73_S4_DISCRETE_RANKBIN5_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(subtract(rank_bin5_10d_img_news, 2), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 8 ops: Replaces continuous regression with discrete 5-quantile bucket assignment (rank_bin5_10d_img_news - 2). Zero alphas use this field!"
+    },
+    {
+      "id": 5,
+      "type": "B73_S5_PROB_BIN5_LABEL4_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(subtract(prob_rank_bin5_label4_10d_img_news, 0.2), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 8 ops: Replaces regression with the direct probability of landing in the top 20% return quintile (centered at 0.20)."
+    },
+    {
+      "id": 6,
+      "type": "B73_S6_DISCRETE_BIN5_SGNPOW15_9OPS",
+      "expression": "ts_decay_linear(signed_power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(subtract(rank_bin5_10d_img_news, 2), sqrt(news_relevance_score_2))), subindustry), 0.5), 1.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 9 ops: Discrete 5-quantile bucket with signed_power 1.5 for convex tail magnification."
+    },
+    {
+      "id": 7,
+      "type": "B73_S7_SENT_TSZSCORE20_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(ts_zscore(mean_sentiment_score_transfer, 20), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 8 ops: 20-day time-series standardized sentiment shock (ts_zscore), measuring statistical significance of news burst."
+    },
+    {
+      "id": 8,
+      "type": "B73_S8_SENT_DELTA5_D10_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(ts_delta(mean_sentiment_score_transfer, 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 8)",
+      "decay": 10,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 8 ops: Fast reaction sentiment surprise with outer decay 8 and sim decay 10, targeting Sharpe >= 1.60."
+    }
+  ]
+}

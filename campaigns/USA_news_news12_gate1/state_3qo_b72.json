@@ -1,0 +1,70 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/1rWoej3hp4mLc5UUjdOLfsM",
+  "submitted_at": 1793078341,
+  "items": [
+    {
+      "id": 1,
+      "type": "B72_S1_WPQ_OUTER12_D12_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 12)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 8 ops: Extends outer decay from 10 to 12. Follows the monotonic progression (5d->7d->8d->10d) where each extension raised Sharpe and Fitness."
+    },
+    {
+      "id": 2,
+      "type": "B72_S2_WPQ_OUTER14_D12_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 14)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 8 ops: Extends outer decay to 14. Targets turnover ~11% and Sharpe >= 1.55."
+    },
+    {
+      "id": 3,
+      "type": "B72_S3_WPQ_OUTER16_D12_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 16)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 8 ops: Extends outer decay to 16. Targets Sharpe >= 1.58 and Fitness >= 0.92."
+    },
+    {
+      "id": 4,
+      "type": "B72_S4_WPQ_OUTER18_D12_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 18)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 8 ops: Extends outer decay to 18. Tests upper bound of outer rank smoothing."
+    },
+    {
+      "id": 5,
+      "type": "B72_S5_WPQ_OUTER14_D10_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 14)",
+      "decay": 10,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 8 ops: Outer decay 14 with reduced sim decay 10: shifts smoothing from simulator to expression for faster event reactivity."
+    },
+    {
+      "id": 6,
+      "type": "B72_S6_WPQ_OUTER16_D10_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 16)",
+      "decay": 10,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 8 ops: Outer decay 16 with sim decay 10: optimal 26-day total smoothing horizon."
+    },
+    {
+      "id": 7,
+      "type": "B72_S7_WPQ_OUTER14_SGNPOW15_9OPS",
+      "expression": "ts_decay_linear(signed_power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 1.5), 14)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 9 ops: Combines outer decay 14 with signed_power 1.5 to crush dead weight and lift Returns."
+    },
+    {
+      "id": 8,
+      "type": "B72_S8_WPQ_OUTER16_SGNPOW15_9OPS",
+      "expression": "ts_decay_linear(signed_power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 1.5), 16)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 9 ops: Combines outer decay 16 with signed_power 1.5 targeting Sharpe >= 1.58 and Fitness >= 1.00."
+    }
+  ]
+}

@@ -1,0 +1,324 @@
+{
+  "run_mode": "OFFLINE_ONLY_NO_SIMULATION_NO_SUBMISSION",
+  "dataset_id": "fundamental90",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "research_roles": [
+    "Field Explorer: selected real low-crowding fields and honored VECTOR metadata",
+    "Main Signal Synthesizer: eight 8-question causal hypotheses",
+    "Tech Auditor: independent field/type/operator/PV/AST/dimension checks",
+    "Blind Red Team: hypothesis-to-expression and parsimony review with no metrics"
+  ],
+  "strict_operator_budget": "<=4 total AST Call nodes including vec_* wrappers",
+  "technical_results": [
+    {
+      "seed_id": "SEED_Q1_INVARIANCE",
+      "expression": "subtract(vec_avg(fnd90_game_cash_flow_coverage), vec_avg(fnd90_game_short_term_debt))",
+      "field_ids_exist": true,
+      "fields_are_VECTOR": true,
+      "all_vectors_wrapped": true,
+      "field_reference_match": true,
+      "ast_operator_count_including_vector_casts": 3,
+      "operator_budget_max": 4,
+      "unknown_operators": [],
+      "pv_contamination_fields": [],
+      "dimension_auditor": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd90_game_short_term_debt",
+          "fnd90_game_cash_flow_coverage"
+        ],
+        "used_pv_fields": [],
+        "group_vars": []
+      },
+      "technical_pass": true
+    },
+    {
+      "seed_id": "SEED_Q2_DYNAMICS",
+      "expression": "subtract(vec_avg(fnd90_game_gma_chg), vec_avg(fnd90_game_asset_turnover_chg))",
+      "field_ids_exist": true,
+      "fields_are_VECTOR": true,
+      "all_vectors_wrapped": true,
+      "field_reference_match": true,
+      "ast_operator_count_including_vector_casts": 3,
+      "operator_budget_max": 4,
+      "unknown_operators": [],
+      "pv_contamination_fields": [],
+      "dimension_auditor": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd90_game_asset_turnover_chg",
+          "fnd90_game_gma_chg"
+        ],
+        "used_pv_fields": [],
+        "group_vars": []
+      },
+      "technical_pass": true
+    },
+    {
+      "seed_id": "SEED_Q3_ANOMALY",
+      "expression": "add(vec_avg(fnd90_game_gross_margin_vol), vec_avg(fnd90_game_eps_vol))",
+      "field_ids_exist": true,
+      "fields_are_VECTOR": true,
+      "all_vectors_wrapped": true,
+      "field_reference_match": true,
+      "ast_operator_count_including_vector_casts": 3,
+      "operator_budget_max": 4,
+      "unknown_operators": [],
+      "pv_contamination_fields": [],
+      "dimension_auditor": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd90_game_eps_vol",
+          "fnd90_game_gross_margin_vol"
+        ],
+        "used_pv_fields": [],
+        "group_vars": []
+      },
+      "technical_pass": true
+    },
+    {
+      "seed_id": "SEED_Q4_INTERACTION",
+      "expression": "subtract(vec_avg(fnd90_game_gma_chg), vec_avg(fnd90_game_accruals_vol))",
+      "field_ids_exist": true,
+      "fields_are_VECTOR": true,
+      "all_vectors_wrapped": true,
+      "field_reference_match": true,
+      "ast_operator_count_including_vector_casts": 3,
+      "operator_budget_max": 4,
+      "unknown_operators": [],
+      "pv_contamination_fields": [],
+      "dimension_auditor": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd90_game_accruals_vol",
+          "fnd90_game_gma_chg"
+        ],
+        "used_pv_fields": [],
+        "group_vars": []
+      },
+      "technical_pass": true
+    },
+    {
+      "seed_id": "SEED_Q5_STRUCTURE",
+      "expression": "add(vec_avg(fnd90_game_inventory_days), vec_avg(fnd90_game_receivable_days))",
+      "field_ids_exist": true,
+      "fields_are_VECTOR": true,
+      "all_vectors_wrapped": true,
+      "field_reference_match": true,
+      "ast_operator_count_including_vector_casts": 3,
+      "operator_budget_max": 4,
+      "unknown_operators": [],
+      "pv_contamination_fields": [],
+      "dimension_auditor": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd90_game_receivable_days",
+          "fnd90_game_inventory_days"
+        ],
+        "used_pv_fields": [],
+        "group_vars": []
+      },
+      "technical_pass": true
+    },
+    {
+      "seed_id": "SEED_Q6_ACCUMULATION",
+      "expression": "ts_mean(subtract(vec_avg(fnd90_game_optimism_sale), vec_avg(fnd90_game_eps_sur_vol)), 20)",
+      "field_ids_exist": true,
+      "fields_are_VECTOR": true,
+      "all_vectors_wrapped": true,
+      "field_reference_match": true,
+      "ast_operator_count_including_vector_casts": 4,
+      "operator_budget_max": 4,
+      "unknown_operators": [],
+      "pv_contamination_fields": [],
+      "dimension_auditor": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd90_game_eps_sur_vol",
+          "fnd90_game_optimism_sale"
+        ],
+        "used_pv_fields": [],
+        "group_vars": []
+      },
+      "technical_pass": true
+    },
+    {
+      "seed_id": "SEED_Q7_RELATIVE",
+      "expression": "group_rank(subtract(vec_avg(fnd90_game_labor_efficiency_chg), vec_avg(fnd90_game_sg_a_inefficiency)), subindustry)",
+      "field_ids_exist": true,
+      "fields_are_VECTOR": true,
+      "all_vectors_wrapped": true,
+      "field_reference_match": true,
+      "ast_operator_count_including_vector_casts": 4,
+      "operator_budget_max": 4,
+      "unknown_operators": [],
+      "pv_contamination_fields": [],
+      "dimension_auditor": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd90_game_sg_a_inefficiency",
+          "fnd90_game_labor_efficiency_chg"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "subindustry"
+        ]
+      },
+      "technical_pass": true
+    },
+    {
+      "seed_id": "SEED_Q8_ESSENCE",
+      "expression": "subtract(vec_avg(fnd90_qes_gamef_icfroe_1y), vec_avg(fnd90_qes_gamef_icfroe_3y))",
+      "field_ids_exist": true,
+      "fields_are_VECTOR": true,
+      "all_vectors_wrapped": true,
+      "field_reference_match": true,
+      "ast_operator_count_including_vector_casts": 3,
+      "operator_budget_max": 4,
+      "unknown_operators": [],
+      "pv_contamination_fields": [],
+      "dimension_auditor": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd90_qes_gamef_icfroe_3y",
+          "fnd90_qes_gamef_icfroe_1y"
+        ],
+        "used_pv_fields": [],
+        "group_vars": []
+      },
+      "technical_pass": true
+    }
+  ],
+  "red_team_results": [
+    {
+      "seed_id": "SEED_Q1_INVARIANCE",
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "8d6f0e8073ffff5400bdc93fa867e605bbb2f20817b92821774db525ca504031",
+      "reviewed_expr": "subtract(vec_avg(fnd90_game_cash_flow_coverage), vec_avg(fnd90_game_short_term_debt))"
+    },
+    {
+      "seed_id": "SEED_Q2_DYNAMICS",
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "c13feb4b6545ede3c24ba587bb6a4afdc22200678760d944c8136520f7900604",
+      "reviewed_expr": "subtract(vec_avg(fnd90_game_gma_chg), vec_avg(fnd90_game_asset_turnover_chg))"
+    },
+    {
+      "seed_id": "SEED_Q3_ANOMALY",
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "978d783211bdfeb177da550d8c4dff6bf713bc49810c18786a544732c8dea42d",
+      "reviewed_expr": "add(vec_avg(fnd90_game_gross_margin_vol), vec_avg(fnd90_game_eps_vol))"
+    },
+    {
+      "seed_id": "SEED_Q4_INTERACTION",
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "a2d7edb593345dd7cdec42823327a383d87960f61a120341edcf1c2a0290858b",
+      "reviewed_expr": "subtract(vec_avg(fnd90_game_gma_chg), vec_avg(fnd90_game_accruals_vol))"
+    },
+    {
+      "seed_id": "SEED_Q5_STRUCTURE",
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "29afa2141b899b921e73a8cc76a33f464d898daf425afd952d1a8041217fb594",
+      "reviewed_expr": "add(vec_avg(fnd90_game_inventory_days), vec_avg(fnd90_game_receivable_days))"
+    },
+    {
+      "seed_id": "SEED_Q6_ACCUMULATION",
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "2f775944f1aca43182484600ce96353280fee3819d3f984f82a9d98bc2487556",
+      "reviewed_expr": "ts_mean(subtract(vec_avg(fnd90_game_optimism_sale), vec_avg(fnd90_game_eps_sur_vol)), 20)"
+    },
+    {
+      "seed_id": "SEED_Q7_RELATIVE",
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "98baab32dd1c5b32e3c055d67a54ab6618e40780aa2b54174407cbd5fc6938f5",
+      "reviewed_expr": "group_rank(subtract(vec_avg(fnd90_game_labor_efficiency_chg), vec_avg(fnd90_game_sg_a_inefficiency)), subindustry)"
+    },
+    {
+      "seed_id": "SEED_Q8_ESSENCE",
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "46cb023059e31846c1ad42749f405dfdac0e23224f6391f12e60dfe0238f6b58",
+      "reviewed_expr": "subtract(vec_avg(fnd90_qes_gamef_icfroe_1y), vec_avg(fnd90_qes_gamef_icfroe_3y))"
+    }
+  ],
+  "skeleton_frequency": {
+    "subtract(vec_avg(fnd90_game_cash_flow_coverage),vec_avg(fnd90_game_short_term_debt))": 1,
+    "subtract(vec_avg(fnd90_game_gma_chg),vec_avg(fnd90_game_asset_turnover_chg))": 1,
+    "add(vec_avg(fnd90_game_gross_margin_vol),vec_avg(fnd90_game_eps_vol))": 1,
+    "subtract(vec_avg(fnd90_game_gma_chg),vec_avg(fnd90_game_accruals_vol))": 1,
+    "add(vec_avg(fnd90_game_inventory_days),vec_avg(fnd90_game_receivable_days))": 1,
+    "ts_mean(subtract(vec_avg(fnd90_game_optimism_sale),vec_avg(fnd90_game_eps_sur_vol)),NUM)": 1,
+    "group_rank(subtract(vec_avg(fnd90_game_labor_efficiency_chg),vec_avg(fnd90_game_sg_a_inefficiency)),subindustry)": 1,
+    "subtract(vec_avg(fnd90_qes_gamef_icfroe_1y),vec_avg(fnd90_qes_gamef_icfroe_3y))": 1
+  },
+  "all_green": true,
+  "limitations": [
+    "No raw daily panel distribution or point-in-time field history was examined; data-shape/time semantics remain to be confirmed.",
+    "Static passes establish syntax and metadata consistency only, not alpha profitability or absence of out-of-sample decay.",
+    "The legacy stage2 report excluded vector casts from its <=4 operator budget; this audit counts them and can fail candidates accordingly."
+  ]
+}

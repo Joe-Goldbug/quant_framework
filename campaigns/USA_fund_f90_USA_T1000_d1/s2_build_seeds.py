@@ -1,0 +1,264 @@
+# -*- coding: utf-8 -*-
+"""AEGIS Stage 2 (Phase 0): 8 问正交主信号种子池构建
+零回测消耗。产出:
+  total_signals.json        种子储备池 (times=0)
+  stage2_gate_report.json   本地 AST/量纲/骨架/红队四门审计明细
+  batch_R1.json             8 槽种子筛选批 (Phase 0 -> Phase 1 桥接)
+"""
+import json, os, sys
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+sys.path.insert(0, os.path.dirname(ROOT))
+
+from quant_framework.core.dimension_rules import DimensionAuditor
+from quant_framework.core.red_team import DoubleBlindRedTeam
+from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+
+KB = json.load(open(os.path.join(ROOT, "knowledge_base", "fields", "USA", "fundamental90.json"),
+                    encoding="utf-8"))
+ALL_FIELDS = KB["fields"]
+
+# ---------------- 候选字段画像 (Stage 1 契约子集) ----------------
+CANDIDATES = [
+    "fnd90_us_game_cash_flow_coverage", "fnd90_us_game_noa",
+    "fnd90_us_qes_gamef_pscore", "fnd90_us_game_equity_dilution",
+    "fnd90_us_qes_gamef_chs_default", "fnd90_us_qes_gamef_cashflow_var",
+    "fnd90_us_game_optimism_sale", "fnd90_us_game_accruals_vol",
+    "fnd90_us_game_inventory_chg", "fnd90_us_game_receivable_chg",
+    "fnd90_us_game_eps_sur_vol",
+    "fnd90_us_game_labor_efficiency_chg", "fnd90_us_game_sg_a_inefficiency",
+    "fnd90_us_qes_gamef_grossprofit_asset", "fnd90_us_qes_gamef_cscore",
+    "fnd90_us_game_gma_chg", "fnd90_us_game_asset_turnover_chg",
+    "fnd90_us_game_sg_a_cost_ratio", "fnd90_us_game_serial_special",
+    "fnd90_us_game_pension_pbo", "fnd90_us_game_pension_ev",
+    "fnd90_us_game_total_debt_chg", "fnd90_us_game_short_term_debt",
+    "fnd90_us_qes_gamef_icfroe_1y", "fnd90_us_game_an_cov_chng",
+    "fnd90_us_game_earning_smooth", "fnd90_us_game_tax_rate",
+]
+KNOWN_FIELDS = {f: ALL_FIELDS[f] for f in CANDIDATES}
+
+# ---------------- 8 问正交种子 ----------------
+SEEDS = [
+    {
+        "id": "SEED_Q1_INVARIANCE",
+        "question_type": "Q1 Invariance (不变性/稳态偏离)",
+        "fields_used": ["fnd90_us_game_cash_flow_coverage", "fnd90_us_game_noa"],
+        "expression": "subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_noa), 252))",
+        "economic_mechanism": (
+            "以经营现金流对总债务的覆盖度作标尺，剔除净经营资产(NOA)膨胀中的伪投资扩张成分。"
+            "NOA 相对自身长期中枢的膨胀是 Sloan 应计异象的核心形态，市场把应计堆积误读为真实成长；"
+            "叠加偿债覆盖度后可分离出'重资产但现金充沛'的公用事业型公司与'应计虚胖且现金流不覆盖'的低质量扩表公司。"
+        ),
+        "counterparty": "按总资产增长率与扩表叙事配置仓位的成长型资金，以及只看表内利润率不看现金转化率的选股模型",
+        "falsifiable": "若该信号收益主要来自公用事业/金融板块，说明是行业敞口而非应计质量，应判伪。",
+    },
+    {
+        "id": "SEED_Q2_DYNAMICS",
+        "question_type": "Q2 Dynamics (动态变化/改善动量)",
+        "fields_used": ["fnd90_us_qes_gamef_pscore", "fnd90_us_game_equity_dilution"],
+        "expression": "subtract(ts_delta(vec_avg(fnd90_us_qes_gamef_pscore), 252), ts_delta(vec_avg(fnd90_us_game_equity_dilution), 252))",
+        "economic_mechanism": (
+            "Piotroski F 分由 9 个二元项合成，单项离散使投资者对分数从 4 升到 6 这类渐进式改善反应不足；"
+            "若改善同时伴随股权稀释，则属融资驱动的伪改善，必须从分子中扣除。"
+        ),
+        "counterparty": "依赖年度离散打分快照、不做分档追踪的基本面量化盘；以及对稀释摊薄不敏感的被动指数资金",
+        "falsifiable": "若去掉稀释项后夏普不降反升，说明稀释扣除是噪声而非真实约束，应判伪。",
+    },
+    {
+        "id": "SEED_Q3_ANOMALY",
+        "question_type": "Q3 Anomaly (异常冲击/极端偏离)",
+        "fields_used": ["fnd90_us_qes_gamef_chs_default", "fnd90_us_qes_gamef_cashflow_var"],
+        "expression": "-add(ts_zscore(vec_avg(fnd90_us_qes_gamef_chs_default), 252), ts_zscore(vec_avg(fnd90_us_qes_gamef_cashflow_var), 252))",
+        "economic_mechanism": (
+            "Campbell-Hilscher-Szilagyi 困境异象：高违约概率公司被彩票偏好型资金系统性高估，实现回报显著低于低违约风险公司；"
+            "叠加现金流可变性（特质波动异象）后，定价错误被进一步加深。"
+        ),
+        "counterparty": "追逐高波动'翻身股'的投机资金，以及因 mandate 限制无法做空垃圾股的机构造成的单边买入压力",
+        "falsifiable": "若收益集中于 2020-2021 流动性宽松期，属 beta 而非困境异象，应判伪。",
+    },
+    {
+        "id": "SEED_Q4_INTERACTION",
+        "question_type": "Q4 Interaction (跨字段协同/背离)",
+        "fields_used": ["fnd90_us_game_optimism_sale", "fnd90_us_game_accruals_vol"],
+        "expression": "subtract(group_zscore(vec_avg(fnd90_us_game_optimism_sale), subindustry), group_zscore(vec_avg(fnd90_us_game_accruals_vol), subindustry))",
+        "economic_mechanism": (
+            "卖方一致乐观的销售预期与公司自身应计波动所揭示的盈余质量之间的背离。"
+            "分析师乐观度受承销与机构关联偏误污染而长期偏高；应计波动大的公司其账面利润更难兑现为现金。"
+            "二者背离越大，乐观预期落空的概率越高。"
+        ),
+        "counterparty": "以卖方一致预期为输入的多因子模型，以及受限于不做空的机构只能买入高预期成长股的单向压力",
+        "falsifiable": "若单独做多乐观度即能取得同样收益，说明背离项无增量，应判伪。",
+    },
+    {
+        "id": "SEED_Q5_STRUCTURE",
+        "question_type": "Q5 Structure (结构占比/营运资本)",
+        "fields_used": ["fnd90_us_game_inventory_chg", "fnd90_us_game_receivable_chg"],
+        "expression": "-add(ts_zscore(vec_avg(fnd90_us_game_inventory_chg), 252), ts_zscore(vec_avg(fnd90_us_game_receivable_chg), 252))",
+        "economic_mechanism": (
+            "Sloan 应计异象的营运资本版本：存货与应收账款相对自身长期中枢双双异常膨胀，"
+            "意味着收入被提前确认而现金尚未到账。市场未能及时把应计部分从会计盈利中剥离，后续盈利兑现时估值被杀。"
+        ),
+        "counterparty": "以营收增速与毛利率排名选股的基本面动量盘，无法区分现金收入与账面收入",
+        "falsifiable": "若做多加总项收益为正，说明市场奖励营运资本投入，应判伪。",
+    },
+    {
+        "id": "SEED_Q6_ACCUMULATION",
+        "question_type": "Q6 Accumulation (累积记忆/衰减)",
+        "fields_used": ["fnd90_us_game_optimism_sale", "fnd90_us_game_eps_sur_vol"],
+        "expression": "ts_decay_linear(subtract(ts_zscore(vec_avg(fnd90_us_game_optimism_sale), 252), ts_zscore(vec_avg(fnd90_us_game_eps_sur_vol), 252)), 60)",
+        "economic_mechanism": (
+            "分析师一致乐观但历史预测误差波动大的公司，其乐观属于噪声乐观而非信息乐观。"
+            "用线性衰减窗累积二者的背离，使信号具备持续性而非单期脉冲，从而稳健地捕捉卖方偏误的缓慢修正过程。"
+            "该结构针对低频季报数据天然降低换手。"
+        ),
+        "counterparty": "以最新一期卖方预期为输入的短周期量化盘，其持仓在预期下修时被动承受损失",
+        "falsifiable": "若去掉衰减平滑后夏普更高，说明衰减只是降低换手而非提升信噪比，应判伪。",
+    },
+    {
+        "id": "SEED_Q7_RELATIVE",
+        "question_type": "Q7 Relative (截面相对性/同业排序)",
+        "fields_used": ["fnd90_us_game_labor_efficiency_chg", "fnd90_us_game_sg_a_inefficiency"],
+        "expression": "subtract(group_rank(vec_avg(fnd90_us_game_labor_efficiency_chg), subindustry), group_rank(vec_avg(fnd90_us_game_sg_a_inefficiency), subindustry))",
+        "economic_mechanism": (
+            "在同一子行业内做相对排序，剔除行业景气度的系统性影响后比较劳动效率改善与 SG&A 低效度。"
+            "费用控制能力是可持续的竞争优势来源，行业内相对落后者因成本刚性，在需求下行时亏损被非线性拉大。"
+        ),
+        "counterparty": "跨行业统一排序的基本面质量因子，会把高费用率的行业整体错杀或错买",
+        "falsifiable": "若改用全市场 rank 后夏普相当，说明行业内相对性无增量，应判伪。",
+    },
+    {
+        "id": "SEED_Q8_ESSENCE",
+        "question_type": "Q8 Essence (本质预期差/好得不真实)",
+        "fields_used": ["fnd90_us_qes_gamef_grossprofit_asset", "fnd90_us_qes_gamef_cscore"],
+        "expression": "subtract(group_zscore(vec_avg(fnd90_us_qes_gamef_grossprofit_asset), subindustry), group_zscore(vec_avg(fnd90_us_qes_gamef_cscore), subindustry))",
+        "economic_mechanism": (
+            "市场按毛利率/资产比为高盈利公司支付质量溢价，但 Montier C-Score 揭示该高毛利伴随可疑的应计与财报特征，"
+            "即'好得不真实'。单独看两个字段都已被定价，二者的背离才是未被定价的增量信息，预示后续重述与估值崩塌风险。"
+            "这是本数据集最典型的二阶预期差构造。"
+        ),
+        "counterparty": "按毛利率/资产比排序的质量因子（Novy-Marx 式）与不看财报法证特征的 ESG/质量指数编制方",
+        "falsifiable": "若 C-Score 单独做空的夏普高于背离项，说明是单因子暴露而非预期差，应判伪。",
+    },
+]
+
+# ---------------- 本地硬门禁审计 (零回测) ----------------
+report = {"gates": [], "seeds": []}
+all_green = True
+
+for s in SEEDS:
+    expr = s["expression"]
+    entry = {"id": s["id"], "expression": expr, "checks": {}}
+
+    # Gate 2: AST 量纲与符号守恒编译器 (vec_* 为 VECTOR 事件类型强制降维转换，不计入数学算子预算)
+    audit = DimensionAuditor.audit_expression(expr, KNOWN_FIELDS, category="fundamental",
+                                              allow_pv_cross=False, max_operators=11)
+    import ast as _ast
+    _tree = _ast.parse(expr, mode="eval")
+    _calls = [n for n in _ast.walk(_tree) if isinstance(n, _ast.Call)]
+    _vec = [n for n in _calls if getattr(n.func, "id", "") in
+            ("vec_avg", "vec_sum", "vec_count", "vec_max", "vec_min", "vec_std",
+             "vec_norm", "vec_percentage", "vec_ir", "vec_choose")]
+    math_ops = len(_calls) - len(_vec)
+    entry["checks"]["gate2_dimension"] = {
+        "is_valid": audit["is_valid"],
+        "issues": audit.get("issues", []),
+        "operator_count": audit.get("operator_count"),
+        "math_operator_count": math_ops,
+        "vector_casts": len(_vec),
+        "used_fields": sorted(audit.get("used_fields", [])),
+    }
+    if not audit["is_valid"] or math_ops > 4:
+        all_green = False
+
+    # Gate 1: 双盲红队逻辑审判 (脱敏, 无任何回测指标)
+    payload = DoubleBlindRedTeam.generate_blind_payload(
+        expr,
+        {"counterparty": s["counterparty"], "mechanism": s["economic_mechanism"]},
+        KNOWN_FIELDS)
+    verdict = DoubleBlindRedTeam.audit_candidate_blindly(payload)
+    entry["checks"]["gate1_red_team"] = {
+        "verdict": verdict["verdict"], "issues": verdict["issues"], "checks": verdict["checks"]}
+    if verdict["verdict"] != "PASS":
+        all_green = False
+
+    # 字段真实性核查
+    import re as _re
+    from quant_framework.core.dimension_rules import ASTSymbolicVisitor
+    toks = set(_re.findall(r"[a-zA-Z_][a-zA-Z0-9_]*", expr))
+    unknown = [t for t in toks
+               if t not in KNOWN_FIELDS
+               and t not in ASTSymbolicVisitor.KNOWN_OPERATORS
+               and not t.startswith(("ts_", "group_", "vec_"))
+               and t not in {"subindustry", "industry", "sector", "market"}]
+    entry["checks"]["field_existence"] = {"unknown_tokens": unknown}
+    if unknown:
+        all_green = False
+
+    report["seeds"].append(entry)
+
+# Gate 3: 骨架多样性
+corrector = ASTSandboxCorrector(":memory:")
+skels = [corrector.get_canonical_skeleton(s["expression"]) for s in SEEDS]
+from collections import Counter
+freq = Counter(skels)
+report["gates"].append({"gate": "gate3_skeleton_diversity", "skeletons": skels,
+                        "freq": {k: v for k, v in freq.items()},
+                        "pass": all(v <= 2 for v in freq.values())})
+if not all(v <= 2 for v in freq.values()):
+    all_green = False
+
+report["all_green"] = all_green
+
+with open(os.path.join(HERE, "stage2_gate_report.json"), "w", encoding="utf-8") as f:
+    json.dump(report, f, ensure_ascii=False, indent=2)
+
+# ---------------- 落盘种子池 ----------------
+pool_path = os.path.join(HERE, "total_signals.json")
+pool = {"dataset_id": "fundamental90", "region": "USA", "universe": "TOP1000", "delay": 1,
+        "category": "fundamental", "seeds": []}
+for s in SEEDS:
+    pool["seeds"].append({**s, "times": 0, "status": "UNTESTED"})
+with open(pool_path, "w", encoding="utf-8") as f:
+    json.dump(pool, f, ensure_ascii=False, indent=2)
+
+# ---------------- 8 槽种子筛选批 (Phase0->Phase1 桥接) ----------------
+batch = {
+    "region": "USA", "universe": "TOP1000", "delay": 1,
+    "dataset": "fundamental90", "category": "fundamental",
+    "neutralization": "NONE", "decay": 0, "truncation": 0.025,
+    "submission_forbidden": True,
+    "known_fields": KNOWN_FIELDS,
+    "items": [
+        {"slot": i + 1, "seed_id": s["id"], "type": "SEED_SCREEN",
+         "expression": s["expression"],
+         "counterparty": s["counterparty"],
+         "optimize_reason": s["economic_mechanism"]}
+        for i, s in enumerate(SEEDS)
+    ],
+    "slot_meta": {"purpose": "Phase 0 八问正交种子机制广度筛选 (8 条独立因果假说 / 5 类算子族)"},
+}
+with open(os.path.join(HERE, "batch_R1.json"), "w", encoding="utf-8") as f:
+    json.dump(batch, f, ensure_ascii=False, indent=2)
+
+print("=" * 72)
+for e in report["seeds"]:
+    g2 = e["checks"]["gate2_dimension"]
+    g1 = e["checks"]["gate1_red_team"]
+    print(f"{e['id']:<22} mathOps={g2['math_operator_count']}(+{g2['vector_casts']}vec) G2={'OK ' if g2['is_valid'] else 'FAIL'} "
+          f"G1={g1['verdict']} unknown={e['checks']['field_existence']['unknown_tokens']}")
+    if g2.get("issues"):
+        print("      G2 issues:", g2["issues"])
+    if g1["issues"]:
+        print("      G1 issues:", g1["issues"])
+print("=" * 72)
+print("skeleton freq:", freq)
+print("ALL GREEN:", all_green)
+print("-> total_signals.json / stage2_gate_report.json / batch_R1.json")

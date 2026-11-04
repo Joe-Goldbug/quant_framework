@@ -1,0 +1,212 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "dataset_id": "ai_news_scores",
+  "expected_polarity": 1,
+  "step": 3,
+  "seed_id": "SEED_02",
+  "max_ast_operators": 6,
+  "task_tag": "SEED_02_s3",
+  "known_fields": [
+    "negative_score_average_value",
+    "negative_score_average_value_2",
+    "negative_score_average_value_4",
+    "negative_score_average_value_5",
+    "negative_score_confidence_lower_bound_2",
+    "negative_score_confidence_upper_bound_3",
+    "negative_score_maximum_value",
+    "negative_score_maximum_value_4",
+    "negative_score_median_value_3",
+    "negative_score_median_value_5",
+    "negative_score_minimum_value_2",
+    "negative_score_standard_deviation",
+    "negative_score_standard_deviation_2",
+    "negative_sentiment_dispersion_2",
+    "neutral_score_average_value",
+    "neutral_score_average_value_5",
+    "neutral_score_confidence_lower_bound_2",
+    "neutral_score_confidence_upper_bound_2",
+    "neutral_score_maximum_value_2",
+    "neutral_score_median_value_2",
+    "neutral_score_median_value_3",
+    "positive_score_average_value",
+    "positive_score_average_value_2",
+    "positive_score_average_value_5",
+    "positive_score_confidence_lower_bound_2",
+    "positive_score_confidence_lower_bound_3",
+    "positive_score_confidence_upper_bound_2",
+    "positive_score_confidence_upper_bound_3",
+    "positive_score_maximum_value_2",
+    "positive_score_maximum_value_3",
+    "positive_score_maximum_value_4",
+    "positive_score_median_value",
+    "positive_score_median_value_3",
+    "positive_score_minimum_value_2",
+    "positive_score_standard_deviation",
+    "positive_score_standard_deviation_2"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 120), subindustry)",
+      "optimize_reason": "【处方B·换手根治主线·新闻频率族·N=120】前两轮实证给出决定性线索：把 ts_zscore 差异场放进 group_rank 外壳可得 1.29~1.31 夏普，但换手仍高达 57%，因为 z-score 描述的是「新闻强度相对自身基线的位置」，这个位置在 80% 无新闻股上仍在逐日漂移。本槽改为刻画真正慢变的物理量——新闻发生频率：ts_mean(maximum_value, 120) 近似过去半年「最恶性事件有多坏」的平均水平，等价于该股被负面新闻触达的频次×强度。频率量级在季度尺度上几乎不变，因此同方向暴露无需每日重估，换手预期落入 8%~20%，按 Margin≈19.84×Returns/Turnover 可把 1.07bps 至少放大 3 倍。外层 group_rank(...,subindustry) 做截面排序保留母本已验证有效的拍平结构，行业整体中性化用 COUNTRY 以去除区域暴露（母本 AMER/EMEA 失真的另一半来源）。算子数=2。"
+    },
+    {
+      "slot": 2,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), subindustry)",
+      "optimize_reason": "【处方B·换手根治主线·新闻频率族·2N=250·参数高原】与 slot 1 严格同骨架同字段，仅把频率窗口 120→250 日（一年交易日），构成 (N,2N) 参数高原成对探针。250 日窗口把「事件频次」逼近到年度常态，理论上换手进一步减半；若两窗 |Sharpe| 同号且均 ≥1.0，则证明「新闻频次折价」是结构性溢价而非窗口巧合，可直接作为降低换手的冠军雏形。若 250 窗坍塌到 0.5 以下则判 SPIKE，禁止晋级。该槽保持与 slot 1 完全相同的算子骨架与分组字段（仅窗口不同），确保 (N,2N) 探针可用于判断参数高原。算子数=2。"
+    },
+    {
+      "slot": 3,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "COUNTRY",
+      "expression": "group_neutralize(ts_mean(negative_score_maximum_value, 120), subindustry)",
+      "optimize_reason": "【处方B·连续幅度外壳·新闻频率族·N=120】与 slot 1 同字段同窗口，仅把外层由 group_rank 换成 group_neutralize，是本批最重要的 A/B 对照：铁律 B 要求至少 40% 槽位保留连续幅度，同时也直接回答一个前两轮未能分离的问题——母本 1:4.8 的多空失衡到底来自 rank 拍平，还是来自稀疏场的并列底部？group_neutralize 在子行业内做去均值，天然给出严格 dollar-neutral 的多空对称权重，不会把 80% 并列底噪压进空头。若本槽 Sharpe 接近 slot 1 而多空计数恢复 1:1，则 WARNING 与幅度保留可一次解决。算子数=2。"
+    },
+    {
+      "slot": 4,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "COUNTRY",
+      "expression": "group_neutralize(ts_mean(negative_score_maximum_value, 250), subindustry)",
+      "optimize_reason": "【处方B·连续幅度外壳·新闻频率族·2N=250·参数高原】与 slot 3 同骨架，频率窗口 120→250 日，构成连续幅度族的 (N,2N) 成对探针。该对的核心价值是：在无 rank 拍平的幅度保留形态下，确认长窗口是否同时带来「更低换手 + 更高中性化后的 Margin」。若 3/4 两槽同号且 Sharpe 相近、而 slot 3 的换手落在 10%~25%，则「频率 + 连续中性化」就是最终低换手框架，深水区只需叠加互补数据集。算子数=2。"
+    },
+    {
+      "slot": 5,
+      "type": "explore",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "reverse(group_rank(ts_mean(negative_score_maximum_value, 120), subindustry))",
+      "optimize_reason": "【极性判决·新闻频率族反向·N=120】前两轮所有高夏普槽位都隐含「做多安静股、做空新闻股」的方向，但该方向究竟是真实的低关注度溢价，还是 Brain 对稀疏场并列值的机械排序伪影，从未被正面检验。本槽对 slot 1 做严格极性反转：若 reverse 后 Sharpe 变为强负（|Sharpe| 相当），说明方向由经济学机制决定而非排序伪影，频率族可信；若 reverse 后 Sharpe 接近 0 而原始方向仍正，则说明信号可能来自单侧尾部（只做多安静股），需在深水区改用单侧构造。与 slot 6 构成成对探针，自身也是铁律 B 的第 5、6 个 rank 槽。算子数=3。"
+    },
+    {
+      "slot": 6,
+      "type": "explore",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "reverse(group_rank(ts_mean(negative_score_maximum_value, 250), subindustry))",
+      "optimize_reason": "【极性判决·新闻频率族反向·2N=250·参数高原】与 slot 5 同骨架同极性翻转，窗口 120→250，构成反向族的 (N,2N) 成对探针。作用是把「极性是否由机制决定」这一判断也放到参数高原压力测试下：只有在两个窗口上 reverse 都给出与正向槽位镜像的 Sharpe，才能排除单窗口的方向巧合。与 slot 2 的 group_rank(...,subindustry) 保持同一拓扑，保证骨架对可比。算子数=3。"
+    },
+    {
+      "slot": 7,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_zscore(ts_decay_linear(ts_mean(negative_score_average_value, 120), 20), subindustry)",
+      "optimize_reason": "【处方A+B·平均基调频率·连续壳·N=120】把频率思想从极值场迁移到均值场：average_value 由全部事件聚合而成，覆盖率 0.85、噪声远小于 maximum，其 120 日均值刻画「过去半年该股的负面叙事基调有多重」，是慢变的状态变量。外层 ts_decay_linear(...,20) 再做一次近期加权，使基调的边际变化平滑进入仓位；group_zscore(...,subindustry) 做子行业内连续标准化，既保留幅度（铁律 B 非 rank 槽）又天然 dollar-neutral。经济假设：市场只交易当日基调冲击，却不为「长期被负面叙事包裹」支付应有的风险溢价。算子数=3。"
+    },
+    {
+      "slot": 8,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_zscore(ts_decay_linear(ts_mean(negative_score_average_value, 250), 20), subindustry)",
+      "optimize_reason": "【处方A+B·平均基调频率·连续壳·2N=250·参数高原】与 slot 7 同骨架，均值窗口 120→250，构成均值频率族的 (N,2N) 成对探针。均值场本身已比极值场平滑，若两窗同号且换手低于 slot 3/4，则说明「基调状态变量」比「频率强度变量」更接近低换手甜点区，深水区应优先以此为骨架。若 250 窗坍塌则说明基调记忆只有半年，需回退 120。算子数=3。"
+    },
+    {
+      "slot": 9,
+      "type": "explore",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_neutralize(ts_mean(divide(negative_score_standard_deviation, add(negative_score_average_value, 0.01)), 120), subindustry)",
+      "optimize_reason": "【处方B·叙事分歧度·连续壳·N=120】换一条与「强度」正交的经济通道：同一天内多条新闻被打分的离散度 ÷ 平均基调，即「坏消息内部意见有多不一致」。分母加 0.01 仅为稀疏场避免除零（不同于母本那个无意义的 add(...,1)，这个常数有明确量纲意义）。该比值高说明同一天既有轻微抱怨也有重大诉讼，市场对「到底多坏」无法达成共识，定价迟滞更久。分歧度是慢变量（由叙事结构而非事件频次决定），ts_mean 平滑 120 日后预期换手极低，且与强度族骨干部相关性天然较低，是 ProdCorr<0.65 的种子。算子数=4。"
+    },
+    {
+      "slot": 10,
+      "type": "explore",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_neutralize(ts_mean(divide(negative_score_standard_deviation, add(negative_score_average_value, 0.01)), 250), subindustry)",
+      "optimize_reason": "【处方B·叙事分歧度·连续壳·2N=250·参数高原】与 slot 9 同骨架，窗口 120→250，构成分歧度族的 (N,2N) 成对探针。分歧是一种结构属性、理论上比强度更持久，若 250 窗不弱于 120 窗，则确认其为状态型因子（可长期持有、换手极低、Margin 高），适合作为深水区的正交分量与频率族合成。若 250 窗显著衰减，则说明叙事共识在半年级别完成重估，需回到 120。算子数=4。"
+    },
+    {
+      "slot": 11,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "hump(group_rank(ts_decay_linear(ts_zscore(subtract(negative_score_maximum_value, negative_score_average_value), 120), 20), subindustry), 0.01)",
+      "optimize_reason": "【处方B·换手手术刀·hump 冻结·本批最强对照】直接复刻前一轮实测最优骨架 group_rank(ts_decay_linear(ts_zscore(max-avg,120),20), subindustry)（Sharpe 1.29、换手 57.6%、Margin 1.07bps），只在最外层套 hump(...,0.01)：Brain 的 hump 会把权重变化小于阈值的部分直接冻结，是平台层面最强制、最不损伤截面秩序的换手压缩器。若换手从 57% 降至 20% 以下而 Sharpe 基本不变，则 Margin 按恒等式放大近 3 倍，且证明病灶确实来自日度微幅重排而非信号失效。该槽是本批的「手术前后同刀对照」，也是判断 hump 是否在本符号尺度上生效的量程标定实验（rank 输出为 0~1，hump 0.01 相当于百分位 1%）。算子数=5。"
+    },
+    {
+      "slot": 12,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "hump(group_rank(ts_decay_linear(ts_zscore(subtract(negative_score_maximum_value, negative_score_average_value), 120), 60), subindustry), 0.01)",
+      "optimize_reason": "【处方B·换手手术刀·hump+长衰减·2N 衰减窗口】与 slot 11 同骨架（同为 hump 包裹的 rank 族），把内层线性衰减窗口 20→60，构成衰减维度的 (N,2N) 参数高原探针（20 vs 60，比值 3）。两条降换手杠杆同时打开：hump 冻结 + 60 日长衰减，预期换手压到 5%~15%、Margin 跃升至 3bps 以上。同时该槽回答「hump 之外还需不需要长衰减」：若 11 与 12 换手相近但 12 的 Sharpe 更低，说明 hump 已足够、长衰减只是钝化信号；若 12 明显更优，则两者需叠加进最终冠军。算子数=5。"
+    },
+    {
+      "slot": 13,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "COUNTRY",
+      "expression": "group_neutralize(ts_decay_linear(ts_zscore(subtract(negative_score_maximum_value, negative_score_average_value), 250), 20), subindustry)",
+      "optimize_reason": "【处方B·连续幅度壳对照·尾部意外度·N=250】把前一轮 group_rank 最优拓扑原样搬到连续幅度壳上，并把标准化窗口拉到 250 日。前一轮实测显示同一骨架用 group_neutralize 时 Sharpe 归零（0.05~0.06），但那是在 60/120 窗口下；本槽检验「长窗标准化 + 连续中性化」是否能让幅度信息成立——若成立，则可摆脱 rank 拍平、同时拿到严格对称的多空与更高单笔 Margin（幅度加权而非等权）。这是判断「rank 是救命的，还是掩盖底噪的」这一关键诊断的最后一块拼图。算子数=4。"
+    },
+    {
+      "slot": 14,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "COUNTRY",
+      "expression": "group_neutralize(ts_decay_linear(ts_zscore(subtract(negative_score_maximum_value, negative_score_average_value), 500), 20), subindustry)",
+      "optimize_reason": "【处方B·连续幅度壳对照·尾部意外度·2N=500·参数高原】与 slot 13 同骨架，标准化窗口 250→500 日（约两年），构成连续壳的 (N,2N) 成对探针。500 日基线已接近「多轮财报周期的新闻常态」，个股基线的自我参照最稳定，理论上底噪股被压平得最彻底。若 13/14 同号且 |Sharpe| ≥1.0，则连续壳成立，深水区可放弃 rank；若两窗都归零，则可确定幅度信息只存在于截面排序中，后续所有变体必须保留 rank 外层。算子数=4。"
+    },
+    {
+      "slot": 15,
+      "type": "explore",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(ts_rank(divide(negative_score_maximum_value, add(negative_score_average_value, 0.01)), 250), subindustry)",
+      "optimize_reason": "【处方A·极化率时序分位·有界标准化·N=250】用同源字段构造无量纲极化率 max/avg，再用 ts_rank(...,250) 做时序分位标准化（输出严格有界于 [0,1]，且对 30% 的数据空洞天然稳健，不会像 zscore 那样在均值漂移时产生连续伪信号）。这既剪除母本的异构字段与 +1 钝化（奥卡姆），也从结构上消除「无新闻期 z 值漂移」这一换手根源——无新闻期极化率恒为 1，其分位几乎不动。外层 group_rank 在子行业内排序。经济假设：同日负面叙事严重极化（一条恶性事件 + 多条轻抱怨）意味着市场难以对权重达成共识，定价迟滞换取溢价。算子数=4。"
+    },
+    {
+      "slot": 16,
+      "type": "explore",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(ts_rank(divide(negative_score_maximum_value, add(negative_score_average_value, 0.01)), 500), subindustry)",
+      "optimize_reason": "【处方A·极化率时序分位·有界标准化·2N=500·参数高原】与 slot 15 同骨架，分位窗口 250→500，构成有界标准化族的 (N,2N) 成对探针。500 日分位相当于「过去两年里今天的叙事极化程度排第几」，分母样本更厚、尾部更平滑，预期换手进一步下降且 Sharpe 更稳。若两窗同号且量级相近，则极化率是一个参数稳健的状态因子，可作为冠军的第二个正交分量（与频率族低相关）。算子数=4。"
+    },
+    {
+      "slot": 17,
+      "type": "explore",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(negative_score_maximum_value, negative_score_standard_deviation), 120), subindustry)",
+      "optimize_reason": "【处方B·强度×分歧共振·N=120】前两轮分别验证了强度族（Sharpe 1.29~1.38）与分歧度若单独成立，本槽把两者相乘后再取 120 日均值：只有当「事件足够恶性」且「叙事足够分裂」同时成立时才产生高分，等价于对「重大且争议」的信息给予最高权重。相乘后是慢变量，故换手天然低；同时它在截面上比任何单独分量都更稀疏，远离已被大量发布 alpha 占据的一阶矩字段（该数据集 705 个 alpha 中 average_value 占 153 个，二阶/极值统计量仅 1~4 个），是 ProdCorr 最低的一类构造。算子数=3。"
+    },
+    {
+      "slot": 18,
+      "type": "explore",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(negative_score_maximum_value, negative_score_standard_deviation), 250), subindustry)",
+      "optimize_reason": "【处方B·强度×分歧共振·2N=250·参数高原】与 slot 17 同骨架，窗口 120→250，构成共振族的 (N,2N) 成对探针。共振项的持久性决定它是「事件型」还是「状态型」因子：若 250 窗不弱于 120 窗则为状态型（可长持、换手极低、Margin 高），应进深水区做冠军的第三分量；若长窗坍塌则说明共振只在半年内有效，需要 ts_decay_linear 短衰减配合。算子数=3。"
+    },
+    {
+      "slot": 19,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_neutralize(ts_decay_linear(ts_mean(subtract(negative_score_maximum_value, negative_score_average_value), 120), 20), subindustry)",
+      "optimize_reason": "【处方A+B·尾部厚度频率·连续壳·N=120】把母本真正有信息量的量 max−avg（剔除跨区域异构 median_value_3 后的同源尾部厚度）先用 120 日均值转成慢变状态，再 20 日衰减加权，最后子行业连续中性化。这是对母本最忠实的「结构性修复」：保留了它的经济内核（尾部相对中枢的背离），但用双层长窗把日度脉冲彻底抹平（换手目标 5%~15%），并用 group_neutralize 取代会挤压并列底部的 rank，从结构上消灭 1:4.8 失衡。算子数=4。"
+    },
+    {
+      "slot": 20,
+      "type": "exploit",
+      "original_alpha": "vR1m0ZZa",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_neutralize(ts_decay_linear(ts_mean(subtract(negative_score_maximum_value, negative_score_average_value), 250), 20), subindustry)",
+      "optimize_reason": "【处方A+B·尾部厚度频率·连续壳·2N=250·参数高原】与 slot 19 同骨架，均值窗口 120→250，构成尾部厚度频率族的 (N,2N) 成对探针。该对是「母本内核 + 低换手手术」的最直接候选：若两窗 |Sharpe| 均 ≥1.0 且都保持 1:4.8 以外的对称持仓，则它同时满足处方 A（同源字段）、处方 B（长窗平滑 + 对称中性化）与奥卡姆剃刀（4 个算子），可以直接作为 func2 深水区的冠军母本。算子数=4。"
+    }
+  ]
+}

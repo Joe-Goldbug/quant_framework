@@ -1,0 +1,65 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 18,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.03,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_relevance_score_2",
+    "prob_rank_bin1_10d_img_news"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_B30_S6_TRUNC03",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "B30 S6 prototype (Sharpe 1.52) under tighter 3% truncation to eliminate single-stock idiosyncratic variance."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_B34_S6_TRUNC03",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 8), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "B34 S6 prototype (Sharpe 1.50) under 3% truncation."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_B28_S4_TRUNC03",
+      "expression": "group_rank(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "B28 S4 prototype (Sharpe 1.50) under 3% truncation."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_B27_S2_TRUNC03",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "B27 S2 prototype (Sharpe 1.48, 2Y 2.16) under 3% truncation."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_WINSOR25_DECAY6_TRUNC03",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 6), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Dual 2.5-sigma winsorization with 6-day sentiment decay under 3% truncation."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_PRODUCT_WINSOR_TRUNC03",
+      "expression": "group_rank(winsorize(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), std=3), subindustry)",
+      "optimize_reason": "Direct winsorization on the interaction product before subindustry group ranking."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_DUAL_ZSCORE_TRUNC03",
+      "expression": "group_rank(multiply(group_zscore(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 5), subindustry), group_zscore(multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2)), subindustry)), subindustry)",
+      "optimize_reason": "Subindustry Z-score standardized interaction under 3% truncation."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_FORECAST_SMOOTH3_TRUNC03",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 5), multiply(ts_mean(winsorize(prob_rank_bin1_10d_img_news, std=3), 3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "3-day moving average on 10d forecast interacted with 5-day decayed cubic sentiment under 3% truncation."
+    }
+  ]
+}

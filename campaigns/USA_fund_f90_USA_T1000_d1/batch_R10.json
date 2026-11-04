@@ -1,0 +1,100 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "fundamental90+other466",
+  "category": "fundamental",
+  "neutralization": "SUBINDUSTRY",
+  "decay": 4,
+  "truncation": 0.08,
+  "submission_forbidden": true,
+  "known_fields": [
+    "fnd90_us_game_accruals_vol",
+    "fnd90_us_game_debt_convertible",
+    "fnd90_us_game_deferred_sal_chg",
+    "fnd90_us_game_earning_smooth",
+    "fnd90_us_game_eps_vol",
+    "fnd90_us_game_inc_cash_tax",
+    "fnd90_us_game_interest_investment_inc",
+    "fnd90_us_game_inventory_chg",
+    "fnd90_us_game_pension_expense",
+    "fnd90_us_game_receivable_chg",
+    "oth466_bs_cash_only_q",
+    "oth466_bs_cash_st_invest",
+    "oth466_bs_receiv_tot_q",
+    "oth466_cf_cash",
+    "oth466_cf_fin",
+    "oth466_is_gross_prof",
+    "oth466_is_oper_inc_q"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "seed_id": "R10_C01",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_interest_investment_inc),252), ts_zscore(vec_avg(fnd90_us_game_deferred_sal_chg),252)), ts_zscore(oth466_cf_cash,252)), 10)",
+      "counterparty": "对手盘只看现金流量表总额的惯性交易者；季报现金科目有确认时滞与重分类空间，使模型前瞻估计持续偏离已披露现金，该背离在现金稀缺阶段转化为可交易定价误差",
+      "optimize_reason": "模型由利息与投资收入推算的现金自给度，扣除递延收入虚增部分后形成内部现金结构，再减去报表真实现金余额，得到模型读数与现实的差。对手盘是只看现金流量表总额的惯性交易者；季报现金科目有确认时滞与重分类空间，使模型前瞻估计持续偏离已披露现金，该背离在现金稀缺阶段转化为可交易定价误差。"
+    },
+    {
+      "slot": 2,
+      "seed_id": "R10_C02",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_interest_investment_inc),252), ts_zscore(vec_avg(fnd90_us_game_receivable_chg),252)), ts_zscore(oth466_bs_cash_only_q,252)), 10)",
+      "counterparty": "对手盘忽视应收账期恶化的价值型买方；应收账款占用推高账面利润却削弱真实现金，模型据此预判的现金紧张相对报表净现金存在系统性偏离，形成跨期可证伪信号",
+      "optimize_reason": "模型侧以利息投资收入代表现金造血、以应收变动代表现金被客户占用，两相抵消得内部现金净结构，再减报表净现金。对手盘是忽视应收账期恶化的价值型买方；应收账款占用推高账面利润却削弱真实现金，模型据此预判的现金紧张相对报表净现金存在系统性偏离，形成跨期可证伪信号。"
+    },
+    {
+      "slot": 3,
+      "seed_id": "R10_C03",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_debt_convertible),252), ts_zscore(vec_avg(fnd90_us_game_pension_expense),252)), ts_zscore(oth466_cf_fin,252)), 10)",
+      "counterparty": "对手盘仅盯资产负债率的传统信用分析师；可转债与养老金属表外或半显性负债，真实融资现金流已反映再融资难易，模型对隐性债务的高估相对现实筹资能力构成可交易背离",
+      "optimize_reason": "模型以可转债占比刻画潜在稀释式杠杆、以养老金支出刻画刚性现金负担，二者相减得内部债务压力结构，再减报表筹资现金流。对手盘是仅盯资产负债率的传统信用分析师；可转债与养老金属表外或半显性负债，真实融资现金流已反映再融资难易，模型对隐性债务的高估相对现实筹资能力构成可交易背离。"
+    },
+    {
+      "slot": 4,
+      "seed_id": "R10_C04",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_debt_convertible),252), ts_zscore(oth466_bs_cash_st_invest,252)), 10)",
+      "counterparty": "对手盘依据评级符号静态持仓的被动资金；可转债在股价上行时转股权使真实负担低于模型预警，现金类资产提供缓冲，该模型与现实流动性的错位具备时序可重复性",
+      "optimize_reason": "模型估得的可转债占总债比重代表稀释式杠杆风险，减去报表真实的现金及短期投资余额，得到杠杆读数相对流动性的偏差。对手盘是依据评级符号静态持仓的被动资金；可转债在股价上行时转股权使真实负担低于模型预警，现金类资产提供缓冲，该模型与现实流动性的错位具备时序可重复性。"
+    },
+    {
+      "slot": 5,
+      "seed_id": "R10_C05",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_accruals_vol),252), ts_zscore(vec_avg(fnd90_us_game_eps_vol),252)), ts_zscore(oth466_is_oper_inc_q,252)), 10)",
+      "counterparty": "对手盘追逐盈余惊喜的趋势账户；应计与盈余的高波动预示利润靠一次性项目支撑而非经营，模型据此看空的标的相对已披露营业利润存在质量层面的预期差，该差在业绩变脸前持续存在",
+      "optimize_reason": "模型以应计波动与盈余波动刻画利润稳固度，二者相减得盈利质量结构，再减报表真实营业利润。对手盘是追逐盈余惊喜的趋势账户；应计与盈余的高波动预示利润靠一次性项目支撑而非经营，模型据此看空的标的相对已披露营业利润存在质量层面的预期差，该差在业绩变脸前持续存在。"
+    },
+    {
+      "slot": 6,
+      "seed_id": "R10_C06",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_earning_smooth),252), ts_zscore(vec_avg(fnd90_us_game_inc_cash_tax),252)), ts_zscore(oth466_is_gross_prof,252)), 10)",
+      "counterparty": "对手盘只比市盈率的散户与量化中性盘；平滑利润与税会差异是典型盈余粉饰痕迹，报表毛利尚未暴露该水分，模型的质量预警相对真实毛利形成可证伪背离",
+      "optimize_reason": "模型侧用盈余平滑度与所得税对现金税偏离双指标刻画盈余管理程度，相减得内部质量结构后减报表真实毛利。对手盘是只比市盈率的散户与量化中性盘；平滑利润与税会差异是典型盈余粉饰痕迹，报表毛利尚未暴露该水分，模型的质量预警相对真实毛利形成可证伪背离。"
+    },
+    {
+      "slot": 7,
+      "seed_id": "R10_C07",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_accruals_vol),252), ts_zscore(oth466_is_gross_prof,252)), 10)",
+      "counterparty": "对手盘依据毛利同比做调仓的基本面基金；高应计波动预示毛利中含大量未实现项目，模型读数与已披露毛利之间的差在审计季与业绩下修窗口稳定显现",
+      "optimize_reason": "模型估得的应计波动代表利润中不可持续的非现金成分，直接减去报表真实毛利，得到质量瑕疵相对经营成果的偏离。对手盘是依据毛利同比做调仓的基本面基金；高应计波动预示毛利中含大量未实现项目，模型读数与已披露毛利之间的差在审计季与业绩下修窗口稳定显现。"
+    },
+    {
+      "slot": 8,
+      "seed_id": "R10_C08",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_inventory_chg),252), ts_zscore(vec_avg(fnd90_us_game_receivable_chg),252)), ts_zscore(oth466_bs_receiv_tot_q,252)), 10)",
+      "counterparty": "对手盘仅看营收增速的成长股选手；存货与应收同步堆积暗示渠道压货与回款恶化，模型读数与已披露应收账款规模之间的错位反映真实周转压力，具备跨季可重复性",
+      "optimize_reason": "模型以存货变动与应收变动刻画营运资金占用方向，相减得内部周转结构后减报表真实应收总额。对手盘是仅看营收增速的成长股选手；存货与应收同步堆积暗示渠道压货与回款恶化，模型读数与已披露应收账款规模之间的错位反映真实周转压力，具备跨季可重复性。"
+    }
+  ],
+  "slot_meta": {
+    "purpose": "R10 第一轮: 红队全 PASS 的 8 条正交候选 (现金/债务/盈利质量/运营资本)",
+    "label": "R10"
+  }
+}

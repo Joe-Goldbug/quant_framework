@@ -1,0 +1,20 @@
+{
+  "wave": 26,
+  "seed_id": "GATE1_WAVE26",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "j2YAbw6W",
+  "hypothesis": "盲区5/6：结构轴 (subtract -> divide 比值结构) 与字段维度轴 (笔数计数比率 / 成交量比率 / 绝对卖出量) 从未测试。insider 字段本身是比率，比值结构 scale-invariant，且计数维度 (alphaCount=0) 可能同时抬 Margin 与降 ProdCorr。",
+  "items": [
+    {"id": "w26_div", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(divide(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "结构轴主槽：subtract -> divide。两窗同量纲比率相除得到 scale-invariant 的短期/长期信念比，理论上去掉了个股比率水平差异。算子 4。"},
+    {"id": "w26_div_safe", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(divide(add(vec_avg(buy_sell_ratio_top5_20d_filled),0.001),add(vec_avg(buy_sell_ratio_top5_60d_filled),0.001)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "数值稳定性版：分母 +0.001 防除零/极小值爆炸，用于区分『比值结构真实增益』与『极值偶然』。算子 6 卡上限。"},
+    {"id": "w26_div_log", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(s_log_1p(divide(add(vec_avg(buy_sell_ratio_top5_20d_filled),0.001),add(vec_avg(buy_sell_ratio_top5_60d_filled),0.001))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "比值后接 s_log_1p 凹压缩，把重尾的比率比压成近对称分布，测『结构 + 分布整形』是否进一步抬 Margin。算子 6。"},
+    {"id": "w26_cnt20_60", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_top20_20d_filled),vec_avg(buy_sell_tx_count_ratio_top20_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "字段维度：笔数计数比率 (交易笔数而非金额) 20d-60d。金额口径会被单笔大额交易主导，笔数口径衡量『参与广度』，且 alphaCount=0。"},
+    {"id": "w26_cnt60_250", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_top20_60d_filled),vec_avg(buy_sell_tx_count_ratio_top20_250d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "笔数口径的长窗对 (60d-250d)，与上一槽构成窗口谱；若 60-250 也成立则说明笔数维度的信号是结构性的而非单窗巧合。"},
+    {"id": "w26_cnt_all_20_60", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "全体内部人笔数比率 (all 队列)，检验信号是否只在 top20 队列存在；all 队列覆盖 0.8833、alphaCount=0。"},
+    {"id": "w26_vol_10_250", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled),vec_avg(top20_buy_to_sell_volume_ratio_lookback_250)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "绝对成交量比率维度 (10d vs 250d)：金额加权的信念强度，与金额/笔数两条口径构成第三维度对照。"},
+    {"id": "w26_absvol", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),divide(vec_avg(total_insider_sale_volume_lookback_20),add(vec_avg(total_insider_sale_volume_lookback_10),1))),20), subindustry)", "optimize_reason": "绝对卖出量维度替代确认通道：20d/10d 卖出股数比作为『抛压变化』确认，检验弱化后的绝对量通道能否提供与笔数比率正交的信息。算子 6。"}
+  ]
+}

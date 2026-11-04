@@ -1,0 +1,25 @@
+{
+  "symptoms": [
+    "operator_count_overflow"
+  ],
+  "allowed_mutations": [
+    "PRUNE_REDUNDANT_OPERATOR_TO_LE_8",
+    "group_rank",
+    "industry",
+    "subindustry"
+  ],
+  "rag_prescriptions": [
+    {
+      "card_id": "CARD_OP_OVERFLOW",
+      "tag": "operator_count_overflow",
+      "domain": "ast_pruning",
+      "title": "算子嵌套过多元气剪枝处方",
+      "one_line": "算子嵌套过多 (>8)：剪枝无效的嵌套归一化，保留核心 因果乘积 + 时序平滑 + 截面中性化 三段式",
+      "symptom": "operator_count > 8，违反 Power Pool 合规上限，产生过拟合风险",
+      "authorized_operators": [
+        "PRUNE_REDUNDANT_OPERATOR_TO_LE_8"
+      ],
+      "prescription_recipe": "剥离无意义的多重嵌套，还原为：group_rank(ts_decay_exp_window(因果微核, 10), subindustry)，算子数严格 <= 6。"
+    }
+  ]
+}

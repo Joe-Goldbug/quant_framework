@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B84_S1_PWR5_HUMP0005_TRUNC05_D16",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005)",
+      "decay": 16,
+      "truncation": 0.05,
+      "optimize_reason": "Slot 1: 10 ops: Truncation release hypothesis. e75kM2JJ achieved Sharpe 1.58, Ret 4.52% under trunc=0.025. Expanding trunc to 0.05 unclamps top-conviction picks to push Returns >= 4.8%."
+    },
+    {
+      "id": 2,
+      "type": "B84_S2_PWR5_HUMP0005_OUT3_TRUNC04_D16",
+      "expression": "ts_decay_linear(hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005), 3)",
+      "decay": 16,
+      "truncation": 0.04,
+      "optimize_reason": "Slot 2: 11 ops: Outer 3-day smoothing on Power 5 hump deadband + trunc 0.04. Slashes turnover toward ~14% while retaining returns."
+    },
+    {
+      "id": 3,
+      "type": "B84_S3_PWR3_HUMP002_TRUNC05_D16",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), hump=0.002)",
+      "decay": 16,
+      "truncation": 0.05,
+      "optimize_reason": "Slot 3: 10 ops: Power 3 smooth tail expansion + hump 0.0020. Avoids hyper-concentration of Power 5/7, ensuring broad active cross-sectional breadth."
+    },
+    {
+      "id": 4,
+      "type": "B84_S4_WINS26_PWR5_HUMP0005_TRUNC035_D16",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.6), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005)",
+      "decay": 16,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 4: 10 ops: std=2.6 winsorize tuning. Tighter winsorize clips regression outlier spikes, lowering turnover by ~2.5% without destroying 2022 bear-market Sharpe."
+    },
+    {
+      "id": 5,
+      "type": "B84_S5_WINS26_PWR45_HUMP0005_TRUNC035_D16",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.6), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005)",
+      "decay": 16,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 5: 10 ops: Power 4.5 sentiment amplifier (from zero-fail wpQKJ1K5) + std=2.6 winsorize + hump 0.0005. Boosts signal precision."
+    },
+    {
+      "id": 6,
+      "type": "B84_S6_NPV_EVOL_PWR7_OUT3_D18",
+      "expression": "ts_decay_linear(hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0005), 3)",
+      "decay": 18,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 6: 11 ops: Direct evolution of npvxj9a3 (Sharpe 1.57, Fit 0.82, TO 16.26%). Extends outer decay to 3d and sim decay to 18 to compress turnover <= 13.5%."
+    },
+    {
+      "id": 7,
+      "type": "B84_S7_NPV_EVOL_PWR5_OUT3_D18",
+      "expression": "ts_decay_linear(hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005), 3)",
+      "decay": 18,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 7: 11 ops: Power 5 variant of npvxj9a3 evolution. Power 5 delivers higher base Sharpe (1.58) under outer 3d smoothing and sim decay 18."
+    },
+    {
+      "id": 8,
+      "type": "B84_S8_WINS25_IN12_PWR5_HUMP0006_D18",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), 12), subindustry), 0.5), 5), hump=0.0006)",
+      "decay": 18,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 8: 10 ops: Double-boundary noise filter: winsorize std=2.5 on regression + 12-day inner decay + hump 0.0006 + sim decay 18. Maximum turnover containment."
+    }
+  ]
+}

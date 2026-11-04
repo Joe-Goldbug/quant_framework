@@ -1,0 +1,161 @@
+"""
+prescription_g2.py — Gate 1 · Batch 2：期望差机制的去相关重构
+Batch 1 结论:
+  - vROQVzlA (max PT dev6 + sector) Sh 1.86 / Fit 1.09 / 2Y 2.19 / TO 20.5% → 0 fail 0 warn (PASS_ALL)
+  - xA1ZaznN(mean dev4 1.95/1.00) · O0J3vm9g(dispersion 1.98/1.04) · e76jJ2OJ(coverage 2.01/1.06) → 仅剩 CLUSTER_TEST 警告
+  - 但族内 PnL 相关 0.82~0.95: 共同驱动源是 "close 短期反转", 任何 PT/close 短窗缺口本质都是反转因子
+本批目标: 保留分析师预期差的经济学内核, 但把信号源从"价格反转"迁走 → 拉低与母本的相关性
+"""
+F = "median_bias_adjusted_price_target"
+SD = "stddev_bias_adjusted_price_target"
+FV = "median_bias_adjusted_fundamental_estimate"
+AF = "avg_first_biasfree_price_target_estimate"
+
+BATCH = {
+    "seed_id": "bl8Wd2Nq",
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "decay": 18,
+    "neutralization": "STATISTICAL",
+    "truncation": 0.08,
+    "nan_handling": "ON",
+    "category": "pv",
+    "known_fields": [F, SD, FV, AF, "close"],
+    "items": [
+        {
+            "id": 1,
+            "type": "PT_GROWTH_MINUS_PRICE_GROWTH",
+            "expression": (
+                f"group_rank(subtract(divide({F}, ts_mean({F}, 20)), "
+                f"divide(close, ts_mean(close, 20))), industry)"
+            ),
+            "optimize_reason": (
+                "把共同驱动源从『价格水平反转』换成『目标价增速与股价增速之差』："
+                "母本及 Batch 1 全族的收益都来自 close 的短期下跌（PT/close 被动抬高），本质是反转因子，"
+                "因此彼此相关 0.82~0.95。本条改为比较两条 20 日增长路径——分析师目标价的 20 日涨幅"
+                "减去股价的 20 日涨幅。经济含义：当分析师持续上调目标价而股价没跟上时，"
+                "预期修正尚未被定价（revision drift 的经典形态）；当股价涨得比目标价快时，安全边际被吃掉。"
+                "两者相除都做了自身时序归一，量纲抵消，且价格只以『增速』形式进入，"
+                "不再承担水平反转的角色，与母本的相关性应在结构上明显下降。"
+            ),
+        },
+        {
+            "id": 2,
+            "type": "LONG_HORIZON_GAP_120",
+            "expression": f"group_rank(subtract(divide({F}, close), ts_mean(divide({F}, close), 120)), industry)",
+            "optimize_reason": (
+                "把折价窗口从 5 日拉到 120 日（半年）：短窗缺口捕捉的是『这几天股价被砸』的一次性冲击，"
+                "与反转因子高度同源；120 日窗口度量的则是『当前隐含上涨空间相对过去半年的常态偏离多少』，"
+                "这是一个慢变量——它识别的是经历了长期阴跌、分析师目标价却始终未被下调的标的，"
+                "即市场情绪与分析师基本面判断的长期背离。经济上这属于价值修复（缓慢均值回归），"
+                "时间尺度与短反转完全不同，因此理论上与母本的低频段相关性低；"
+                "同时长窗口本身换手极低，能把 Margin 抬起来。风险是信号钝化导致 Sharpe 下滑，"
+                "本槽即为该权衡的实测点。"
+            ),
+        },
+        {
+            "id": 3,
+            "type": "REVERSAL_NEUTRALIZED_GAP",
+            "expression": (
+                f"group_rank(vector_neut(subtract(divide({F}, close), ts_mean(divide({F}, close), 5)), "
+                f"rank(reverse(ts_delta(close, 5)))), industry)"
+            ),
+            "optimize_reason": (
+                "显式正交化：既然族内共同驱动源是『5 日价格反转』，就用 vector_neut 把缺口对 5 日反转因子"
+                "做截面正交投影，只保留与反转无关的残差部分。数学上这是把 gap 分解为"
+                "『反转可解释的成分』+『分析师预期残差』，后者才是真正的分析师信息："
+                "同样的折价幅度，如果只是因为股价刚跌（反转可解释），权重被削掉；"
+                "如果是目标价相对基本面偏高而股价未动（反转无法解释），权重保留。"
+                "经济学上这是标准的因子中性化思路（把已知风险因子从 alpha 中剥离），"
+                "也是本批最直接的去相关手段——理论上它与母本的相关性会显著低于 0.855。"
+            ),
+        },
+        {
+            "id": 4,
+            "type": "DISAGREEMENT_TREND",
+            "expression": (
+                f"group_rank(subtract(divide({SD}, {F}), ts_mean(divide({SD}, {F}), 20)), industry)"
+            ),
+            "optimize_reason": (
+                "分析师分歧度的变化（纯分析师两字段，完全不含价格）：stddev_PT / median_PT 是目标价的"
+                "变异系数，刻画分析师之间的意见分裂程度。经济假设来自『分歧消散』效应："
+                "当变异系数相对自身 20 日常态下降时，说明分析师正在形成共识，"
+                "共识形成过程伴随资金流入（不确定性折价被压缩，Miller 1977 的经典机制）；"
+                "反之分歧扩大意味着分歧加剧、卖压上升。这条信号完全不依赖股价，"
+                "因此在截面上与所有 PT/close 缺口变体正交，是理论上最彻底的去相关通道；"
+                "同时它交易的是『不确定性』这一独立风险维度，与动量/反转的共线性天然很低。"
+            ),
+        },
+        {
+            "id": 5,
+            "type": "FV_IMPLIED_VALUE_GAP",
+            "expression": f"group_rank(subtract(divide({FV}, close), ts_mean(divide({FV}, close), 20)), industry)",
+            "optimize_reason": (
+                "换字段族：用 bias-adjusted 基本面估值（DCF/倍数内在价值）替代价格目标。"
+                "两者的关键差异是——价格目标是 12 个月的前瞻判断、含催化剂与情绪，调整较快；"
+                "内在价值估计锚定财报与模型，调整极慢、几乎不含情绪成分。"
+                "因此 FV/close 的 20 日偏离更接近纯粹的『基本面价值 vs 市场价格』缺口，"
+                "是价值因子的分析师版本。它与 PT 族共享 close 分母但分子动力学完全不同，"
+                "相关性会明显低于 PT 族内部；同时价值缺口在 20 日尺度上比 5 日更稳，换手更低。"
+                "这条同时检验：家族 alpha 是否可以是『分析师确认过的价值回归』而非『情绪反转』。"
+            ),
+        },
+        {
+            "id": 6,
+            "type": "OPTIMISM_IN_DISAGREEMENT_UNITS",
+            "expression": f"group_rank(divide(subtract({F}, {FV}), add({SD}, 0.01)), industry)",
+            "optimize_reason": (
+                "纯分析师三字段、零价格：把目标价与内在价值之差（分析师乐观溢价）除以目标价分歧度，"
+                "得到『每单位分析师分歧承载多少乐观溢价』。经济含义：当全体分析师一致地把目标价定得"
+                "远高于自己算出的内在价值时，说明股价已被情绪充分反映、后续下调风险大（负向）；"
+                "当溢价被压缩到分歧度以内时，安全边际充足。用分歧度做分母是精度加权，"
+                "使信号在分析师意见分歧时自动钝化。由于完全不含 close，它与母本的价格反转成分正交，"
+                "是本批第二条纯分析师去相关样本，且量纲完全无量纲化，不受股价水平影响。"
+            ),
+        },
+        {
+            "id": 7,
+            "type": "DISPERSION_NORM_LONG_GAP_SUBIND",
+            "expression": (
+                f"group_rank(divide(subtract(divide({F}, close), ts_mean(divide({F}, close), 60)), "
+                f"add(divide({SD}, close), 0.01)), subindustry)"
+            ),
+            "optimize_reason": (
+                "三重去相关叠加：60 日慢窗（脱离短反转）+ 除以分析师分歧度（精度加权）"
+                "+ subindustry 细颗粒度中性化（剥离细分行业中枢）。三者各自独立地降低了与母本的共同变异："
+                "慢窗换时间尺度、分歧度换信息权重、细分组换截面参照系。"
+                "经济叙事上这是『在细分行业同侪中，相对自身三个月的常态被显著低估、"
+                "且分析师高度共识』的股票——共识 + 折价是价值修复最强的组合。"
+                "该槽是把 Batch 1 里唯一只剩 CLUSTER_TEST 警告的两个方向（分歧度归一、细中性化）"
+                "合并到慢窗上的合成体，专门检验去相关是否必然牺牲 Sharpe。"
+            ),
+        },
+        {
+            "id": 8,
+            "type": "FIRST_ESTIMATE_GAP_20",
+            "expression": (
+                f"group_rank(subtract(divide({AF}, close), ts_mean(divide({AF}, close), 20)), industry)"
+            ),
+            "optimize_reason": (
+                "换统计口径：avg_first_biasfree_price_target_estimate 是当期最早一批分析师目标价的均值，"
+                "它保留了最多『未经共识污染』的原始判断——中位数会被后期跟风调整拉平，"
+                "而首批估计更接近独立分析师的第一反应，信息含量更高、噪声也更独特。"
+                "用 20 日窗口与其自身常态比较，构成『前瞻判断 vs 近期共识』的偏离。"
+                "由于分子序列的更新节奏（new estimate 到达的时点）与中位数不同，"
+                "这条的换手与持仓周期天然与母本错开，是一条成本很低的结构性去相关槽；"
+                "同时也检验『取统计量』这一维度是否还有剩余 alpha。"
+            ),
+        },
+    ],
+}
+
+if __name__ == "__main__":
+    import json
+    import os
+
+    out = os.path.join(os.path.dirname(__file__), "batch_g2.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(BATCH, f, ensure_ascii=False, indent=2)
+    print(f"batch written -> {out} ({len(BATCH['items'])} slots)")
+    assert len(BATCH["items"]) == 8

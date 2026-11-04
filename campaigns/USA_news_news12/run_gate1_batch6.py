@@ -1,0 +1,137 @@
+"""
+run_gate1_batch6.py
+Gate 1: AEGIS 多 Agent 研发攻坚多重回测 (批次 6)
+数据集: USA / news12 / delay 1 / TOP1000
+重大微观结构发现与机制攻坚:
+此前高换手的终极隐蔽病灶：
+母本 mLYNEWjW 的 rank 是正数 (0~1)，而无新闻标的为 0。
+当平台执行 neutralization: INDUSTRY 时，正均值强行迫使 800 支无新闻标的变成负持仓 (-0.15)，每日被动调仓，导致 93% 顽固换手！
+本批次核心药方：零均值内生对称化！
+通过 subtract(reverse(rank(...)), 0.5) 使发生事件的股票在 [-0.5, +0.5] 之间严格零均值对称！
+全市场均值为 0，行业均值为 0，800 支无新闻标的严格保持 0 权重，永不参与被动调仓！
+从数学物理底层终结被动换手，预期换手率断崖式下探，直接撬动 Margin >= 10.0 bps 与 Fitness >= 1.00！
+"""
+
+import asyncio
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, r"D:\brain-mcp")
+os.environ["BRAIN_MCP_CONFIG"] = r"D:\brain-mcp\user_config.json"
+
+from quant_framework.core.dimension_rules import DimensionAuditor
+from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+from quant_framework.core.gatekeeper import Gatekeeper
+from quant_framework.core.sim_runner import SimBatchRunner
+
+PRESCRIPTIONS_GATE1_B6 = [
+    {
+        "slot": 1,
+        "seed_id": "GATE1_B6_S1",
+        "question_type": "Q1_ZERO_MEAN_SYMMETRIC_10D",
+        "name": "零均值内生对称化 (减0.5) + 10日线性平滑",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), subtract(reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0.5), 0), 10)",
+        "optimize_reason": "【零均值内生对称化阻断全市场被动做空】破解 93% 顽固换手的底层钥匙：母本直接使用 rank (0~1)，导致事件池均值为正，平台行业中性化时强行迫使 800 支无新闻标的变成负持仓 (-0.15) 每日被动调仓。本处方前置减去 0.5，使事件个股在 [-0.5, +0.5] 之间完美零均值对称！全市场事件均值为 0，行业中性化时无新闻个股严格维持 0 权重不被动建仓！外层包裹 10 日平滑退场，从数学根源上消除 800 支标的的无效摩擦，预期换手率断崖式暴跌至 15%~25%，直接释放深厚 Margin。"
+    },
+    {
+        "slot": 2,
+        "seed_id": "GATE1_B6_S2",
+        "question_type": "Q2_ZERO_MEAN_SYMMETRIC_15D",
+        "name": "零均值对称化 + 15日平滑退场",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), subtract(reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0.5), 0), 15)",
+        "optimize_reason": "【15日渐进衰减与零均值双重低摩擦】在零均值内生对称化基础之上，平滑窗口延展至 15 日。在确保无新闻标的绝对零持仓的前提下，对 200 支真正持有头寸的事件标的实施 15 日均匀三角形渐进退出。每笔交易持仓时间拉长至 2~3 周套利黄金周期，日均换手率压制在 10%~15% 极限区间，年化回报 7.5% 直接撬动 Margin 冲刺 10~15 bps 生产死线。"
+    },
+    {
+        "slot": 3,
+        "seed_id": "GATE1_B6_S3",
+        "question_type": "Q3_ZERO_MEAN_SYMMETRIC_20D",
+        "name": "零均值对称化 + 20日极限平滑",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), subtract(reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0.5), 0), 20)",
+        "optimize_reason": "【20日长周期零均值压力测试】将持仓退场周期推向 20 日极限。零均值对称化消除了无事件个股的被动翻仓，20 日平滑进一步将活跃事件标的的日调仓量压缩至 5%。检验母本高夏普内核在超长持有期下的耐受力，若 Sharpe 维持 1.4+，Margin 将突破 15.0 bps，实现无死角合规。"
+    },
+    {
+        "slot": 4,
+        "seed_id": "GATE1_B6_S4",
+        "question_type": "Q4_ZERO_MEAN_RELATIVE_15D",
+        "name": "相对收益零均值对称化 + 15日衰减",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), subtract(reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0.5), 0), 15)",
+        "optimize_reason": "【百分比收益率标准化与零均值对称协同】结合相对百分比标准化 (除以 news_ton_last) 消除名义股价尺度异方差，配合 rank 减 0.5 零均值对称化。三层因果闭环：百分比化消除股票规模歧视，减 0.5 消除无新闻标的被动做空，15 日衰减消除脉冲退出摩擦，理论上具备最完美的数理结构。"
+    },
+    {
+        "slot": 5,
+        "seed_id": "GATE1_B6_S5",
+        "question_type": "Q5_ZERO_MEAN_RELATIVE_20D",
+        "name": "相对收益零均值对称化 + 20日极限衰减",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), subtract(reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0.5), 0), 20)",
+        "optimize_reason": "【相对收益 20 日极限零均值形态】将三层因果闭环推向 20 日极限持有期。在消除了所有名义量纲和被动中性化扭曲的前提下，把资本纯粹投资于真实新闻反转的长期均值回归深度，全力冲击 Margin >= 10.0 bps 与 Fitness >= 1.20。"
+    },
+    {
+        "slot": 6,
+        "seed_id": "GATE1_B6_S6",
+        "question_type": "Q6_ZERO_MEAN_RAW_PULSE",
+        "name": "纯粹零均值对称脉冲 (无外层平滑对照基准)",
+        "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), subtract(reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0.5), 0)",
+        "optimize_reason": "【单变量因果消融基准对照】仅对母本实施 subtract(rank, 0.5) 零均值对称化，完全不施加外层时间平滑。纯粹检验「消除无事件标的被动做空」对换手率与 Margin 的独立因果贡献。若换手率直接由 114% 减半，则彻底实证该机制的决定性作用。"
+    },
+    {
+        "slot": 7,
+        "seed_id": "GATE1_B6_S7",
+        "question_type": "Q7_ZERO_MEAN_VEC_AVG_15D",
+        "name": "平均偏离度阻尼 + 零均值对称化 + 15日平滑",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), subtract(reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_avg(high_price_excursion_stddev), 1)))), 0.5), 0), 15)",
+        "optimize_reason": "【平均标准差偏离阻尼与零均值结合】以 vec_avg 替代 vec_count 作为分母阻尼系数，更精细地刻画日内平均冲顶强度的阻力，配合 rank 减 0.5 零均值对称化与 15 日平滑，探索最佳阻尼结构与对称性的融合效果。"
+    },
+    {
+        "slot": 8,
+        "seed_id": "GATE1_B6_S8",
+        "question_type": "Q8_ZERO_MEAN_SLOG_15D",
+        "name": "凹函数压缩 + 零均值对称化 + 15日平滑",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), s_log_1p(subtract(reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0.5)), 0), 15)",
+        "optimize_reason": "【对称凹压缩与零均值双重风控】在 [-0.5, +0.5] 零均值对称分布上施加 s_log_1p 对称对数凹压缩变换，削平两侧极端头寸，防止黑天鹅跳空侵蚀收益，配合 15 日平滑退场，全维度打造稳健的生产级 Alpha。"
+    }
+]
+
+async def main():
+    campaign_dir = os.path.join("quant_framework", "campaigns", "USA_news_news12")
+    os.makedirs(campaign_dir, exist_ok=True)
+    batch_file = os.path.join(campaign_dir, "batch_gate1_b6.json")
+
+    payload = {
+        "seed_id": "GATE1_CAMPAIGN_BATCH6",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "category": "news",
+        "known_fields": [
+            "news_eod_close", "news_ton_last", "high_price_excursion_stddev"
+        ],
+        "items": PRESCRIPTIONS_GATE1_B6
+    }
+
+    with open(batch_file, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+    print(f"✅ Gate 1 Batch 6 配置文件生成完毕: {batch_file}")
+    print("🚀 启动 SimBatchRunner 后台静默执行批次 (decay=6, neutralization=INDUSTRY)...")
+
+    res = await SimBatchRunner.run_batch_silently(
+        batch_file_path=batch_file,
+        region="USA",
+        universe="TOP1000",
+        delay=1,
+        category="news",
+        neutralization="INDUSTRY",
+        decay=6,
+        truncation=0.025,
+        nan_handling="ON"
+    )
+
+    print("\n🏁 Gate 1 Batch 6 回测与门禁终审完成!")
+    output_summary = batch_file.replace(".json", "_summary.json")
+    with open(output_summary, "w", encoding="utf-8") as f:
+        json.dump(res, f, ensure_ascii=False, indent=2)
+
+if __name__ == "__main__":
+    asyncio.run(main())

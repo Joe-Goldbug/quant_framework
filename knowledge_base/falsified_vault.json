@@ -1,0 +1,222 @@
+[
+  {
+    "id": "FALS_001",
+    "target": "concentrated_weight",
+    "rule": "CW (持仓集中度) 对仿射变换（zscore、winsorize、设置层 truncation）完全不敏感！只有凹压缩（s_log_1p 或 rank）能压降 CW。",
+    "evidence": "pv109 数据集实测 98 次：所有尝试用 winsorize/zscore 压 CW 均告失败，收益率绝对偏离主导了极值。"
+  },
+  {
+    "id": "FALS_002",
+    "target": "operator:trade_when",
+    "rule": "严禁在低频稀疏事件上无脑使用 trade_when！这会导致持仓跌入个位数，看似回测 Sharpe 极高，实则严重过拟合且必被平台 CW 或 LOW_SHARPE 门禁判死。",
+    "evidence": "trade_when 只有在连续密集事件流（如高频新闻数）或自带安全基准持仓时合规。"
+  },
+  {
+    "id": "FALS_003",
+    "target": "structure:dimensionless_add",
+    "rule": "严禁无量纲相加 add(rank(A), rank(B)) 或多信号线性加权。",
+    "evidence": "纯数学拟合，破坏了因果逻辑，样本外 (IS_LADDER) 必崩塌。"
+  },
+  {
+    "id": "FALS_004",
+    "target": "operator:group_neutralize",
+    "rule": "严禁使用 group_neutralize(·, subindustry)。",
+    "evidence": "细分行业层面的中性化会导致严重的矩阵奇异与多重共线性，招致平台警告并劣化表现。"
+  },
+  {
+    "id": "FALS_005",
+    "target": "turnover_floor",
+    "rule": "TO < 12.5% 会触发 Brain 物理地板惩罚 (Fitness 严重打折)。",
+    "evidence": "低频财务或分析师预测必须引入日频 close 或 adv20 作分母归一化，既消除规模量纲，又将换手拉过 12.5% 地板。"
+  },
+  {
+    "id": "FALS_NEWS12_001",
+    "target": "news12_event_reversal_smoothing",
+    "rule": "news12 事件反应反转边缘是瞬态的（只存在于最近一个事件日），任何 ts_mean 长窗平滑都单调杀死它：MA20 Sh 0.25 / MA60 0.11 / MA250 -0.25（原始 +1.37）。",
+    "evidence": "USA/TOP1000/delay1 三批 24 次回测：reverse(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt))) 原始 Sh -1.37 / TO 129.9%；ts_mean 20/60/250 后 Sh 0.25/0.11/-0.25，TO 16.0%/8.8%/4.8%。"
+  },
+  {
+    "id": "FALS_NEWS12_002",
+    "target": "news12_TO_floor",
+    "rule": "news12 原始事件字段换手率结构性锁死在 110-130%（多数 TOP1000 个股多数交易日有事件，信号日频刷新）。Fit=Sh×sqrt(Ret/max(TO,0.125)) 决定 TO 必须 <=12.5% 才能过 Fit 门，与保边缘不可兼得。",
+    "evidence": "8 条原始主信号 TO 90.7-129.9%（decay=6 已施加）；阈值粘性 trade_when 可压到 13% 但 Sh 仅 0.30/0.28（极端事件不承载边缘）；group_rank 包装 TO 49.9% 但 Sh 1.37→0.71。"
+  },
+  {
+    "id": "FALS_NEWS12_003",
+    "target": "news12_family_map",
+    "rule": "news12 已验证机制族全景：①冲测不对称度反转（最强，原始 |Sh|1.37）②收盘冲高回让度 fade（风险轮廓最优：rnSh 1.04/InvSh 0.71/DD 10.3%）③事件超额动量回吐（|Sh|0.72）④慢扩散漂移回吐（|Sh|0.49）。未证伪但无边缘：反应速度族（-0.32）、空头兴趣条件化（0.09）、趋势-事件背离反向（+0.86 但 TO 122.5%/DD 116.8%）、隔夜跳空反转（-0.26）、组内排序（0.00）。",
+    "evidence": "Phase3 批次 Step1 熔断（最高 |Sh| 0.86 < 1.0）。"
+  },
+  {
+    "id": "FALS_NEWS12_004",
+    "target": "ZYm1pn3n_seed_optimization",
+    "rule": "种子 ZYm1pn3n（冲测不对称度）定向优化 18 次回测全部失败：8 条表达式级处方 + STATISTICAL 配对消融无一过 Step 2。裸反向对照锚（Sh 1.37/TO 129.9%/DD 8.4%/2Y 1.68/rnSh 1.65）依然是全场最佳——降换手与保边缘不可兼得再次确认。",
+    "evidence": "Wave1 @INDUSTRY: 指数半衰期平滑 Sh 0.35(TO 30.3%)、时序自秩 1.16(TO 131.7%不降)、关注度门控 0.13(TO 6.5%)、关注度缩放 -0.44(引入波动率因子暴露)、缩放+组排 0.05、winsorize -0.43、门控+组排 0.30。Wave2 @STATISTICAL: 对照锚 1.37->1.03 全面净负。"
+  },
+  {
+    "id": "FALS_NEWS12_005",
+    "target": "attention_conditioning_hypothesis",
+    "rule": "关注度条件化假说证伪：news12 不对称度边缘与成交量关注度无关。以 news_vol_stddev（成交量 30 日 z 分数）门控（trade_when>0.5）Sh 1.37->0.13；连续缩放（multiply）Sh -0.44 且 DD 35.2%——乘性交互把波动率因子暴露引入信号（高波动低收益，乘上后信号翻负）。",
+    "evidence": "Wave1 槽4/5/6/8 全部远低于对照锚；缩放族 Margin -0.52bp、2Y -0.76。门控族 Margin 1.19-2.82bp 但 Sh 0.13-0.30。"
+  },
+  {
+    "id": "FALS_NEWS12_006",
+    "target": "decay_smoothing_physics",
+    "rule": "衰减平滑的保边-降换手权衡极度依赖权重结构：ts_decay_linear(A,20) 线性衰减保边 98.5%（Sh 1.35）但 TO 仅降 12%（114.2%）；ts_decay_exp_window(A,20,factor=0.5) 指数衰减降换手 77%（TO 30.3%）但边缘尽毁（Sh 0.35）。news12 边缘只认最近事件日，任何把权重摊到历史的平滑都自杀。",
+    "evidence": "探针伙伴槽 reverse(ts_decay_linear(A,20)): Sh 1.35/Fit 0.30/TO 114.2%/Mgn 1.01bp；Wave1 槽2 指数写法 Sh 0.35/TO 30.3%。官方文档 ts_decay_exp_window(x,d,factor=1.0,nan=True) 关键字参数写法。"
+  },
+  {
+    "id": "FALS_NEWS12_007",
+    "target": "statistical_neut_negative_news12",
+    "rule": "STATISTICAL 中性化对 news12 事件反应族全面净负：对照锚 Sh 1.37->1.03、Margin 1.01->0.47bp、2Y 1.68->0.59，8/8 槽无一改善。rnSh 全部归零（该设置本身就是剔除风险中性化分量）。与 news29 战役 STATISTICAL 是钥匙的结论不冲突——那里信号含价量字段，此处纯事件快照。",
+    "evidence": "Wave2 @STATISTICAL/decay=6/trunc=0.025 与 Wave1 @INDUSTRY 配对消融，8 槽同表达式。"
+  },
+  {
+    "id": "FALS_NEWS21_001",
+    "target": "structure:group_rank_outermost",
+    "rule": "严禁让 group_rank(·, group) 位于表达式最外层。其输出恒落在 [0,1] ⇒ 组合必然单边（longCount≈持仓数、shortCount=0）⇒ Ret/Margin/Ret-TO 全部是市场 Beta 的幻觉。判定铁证：risk_neutralized_sharpe 转负。",
+    "evidence": "news21 Wave1 槽1/6/8：Ret 25.3-27.0%、Margin 24.9-34.2 bps、Ret/TO 1.24-1.71（看似远超 USA 10bps 死线），但 long437/short0、RN_sh 分别为 -0.17/-0.10/-0.02、DD 54-67%。双层布线后真实两侧版本 RN_sh 达 +0.78。",
+    "countermeasure": "顶层必须换成零均值构造：zscore / ts_zscore / group_zscore / ts_delta；或依赖设置层 neutralization 强制中性化。"
+  },
+  {
+    "id": "FALS_NEWS21_002",
+    "target": "structure:affine_equivalence_trap",
+    "rule": "组合（正–负）/(正+负) 与 正/(正+负) 互为仿射变换（tone = 2*share – 1）。任何对外层为 zscore / rank / group_zscore 等仿射不变或保序算子的表达式，两者在数学上完全等价，绝不可当作两个正交因子去做 ensemble。",
+    "evidence": "news21 Wave3 槽1 与槽8 指标逐位雷同（Sh 0.99 / Ret 2.69 / TO 22.9 / long523 / short512），两者分别使用 event_overall_tone_score 与 正负词占比。",
+    "countermeasure": "候选入库前做本体审查：若两个换元的 GDP series 之间存在仿射关系，只保留一个做主变量。"
+  },
+  {
+    "id": "FALS_NEWS21_003",
+    "target": "operator:ts_delta_on_backfilled",
+    "rule": "严禁把 ts_delta 直接打在 ts_backfill 后的稀疏序列上：事件日之间的值被回填成常数 ⇒ 差分为 0 ⇒ 持仓塌缩到数十只，而换手反而升高。",
+    "evidence": "news21 Wave1 槽7 ts_delta(ts_backfill(...),5)：long22/short37 共 59 只，TO 却高达 66.5%。先做 ts_zscore 再 ts_delta 可修复（改为 long173/short178）。",
+    "countermeasure": "先用 ts_zscore / zscore 把序列做成连续且零均值，再施加差分。"
+  },
+  {
+    "id": "FALS_NEWS21_004",
+    "target": "structure:decay_inside_backfill",
+    "rule": "禁止把 ts_decay_* 放在 ts_backfill 内部（两层时间算子互相污染），会得到灾难性的换手爆炸。",
+    "evidence": "news21 Wave3 槽4 reverse(zscore(ts_backfill(ts_decay_exp_window(vec_avg(tone),10,0.5),20)))：Sh 0.12、TO 70.6%。把 decay 移到最终信号外层后同 concept 的 Sharpe 达 1.22。",
+    "countermeasure": "正确的算子顺序：vec 归约 → ts_backfill → 标准化（zscore/ts_zscore）→ 最外层再施加衰减。"
+  },
+  {
+    "id": "FALS_NEWS21_005",
+    "target": "news21:field_scope",
+    "rule": "news21 的「负面措辞效应」是 FAM_A（event_*，覆盖度 0.831）独有的构造细节，不可跨信源复现。禁止在表达式内混用不同家族的 VECTOR 字段（事件向量不兼容会整批 CANCEL）。",
+    "evidence": "同源同配方在三个不同供应商上：FAM_A Sh 1.17；FAM_B streetevents_info_negative_sentiment_score Sh -0.01；FAM_D negative_sentiment_score_1_fast_d1 Sh 0.46 / _new_ 0.54。两个团队独立复现失败。",
+    "countermeasure": "预算全部押 FAM_A；新未知的归一化的 tried in FAM 外一律先走 2 条探针。"
+  },
+  {
+    "id": "FALS_NEWS21_006",
+    "target": "news21:asymmetry_and_normalization",
+    "rule": "在本数据集上：(a) 效应只在负面侧——正面情感 score 侧 Sh 仅 0.18；(b) 主变量必须是已归一化的情感 score，原始词数（vec_sum 0.47 / vec_avg 0.57）远弱于 score 版（1.17）；(c) 修改归一化分母（neg/(neg+pos)）劣于原生的 neg/总词数（1.00 vs 1.17）。",
+    "evidence": "news21 Wave4 槽4-6 与 Wave5 槽4-5 的成对对照。",
+    "countermeasure": "停止在归一化分母上做文章；改用 vec_max（显著性归约）等真正改变归约维度的手段。"
+  },
+  {
+    "id": "FALS_NEWS21_007",
+    "target": "setting:sharpe_margin_exclusivity",
+    "rule": "**在 news21 语调轴上，Sharpe 与 Margin(Ret/TO) 通过 neutralization 轴互斥，不存在单一设置同时达标。** NONE 与 MARKET 给 Ret/Margin，STATISTICAL 给 Sharpe。",
+    "evidence": "同表达式 zscore(ts_backfill(vec_avg(event_negative_sentiment_score),20)) 及其衰减版：NONE Sh0.60/Ret4.36%/Mgn4.8；MARKET Sh0.73/Ret6.04%/Mgn6.4；STATISTICAL Sh1.17-1.22/Ret3.31-3.49%/Mgn2.8-3.2。",
+    "countermeasure": "突破口不在表达式层面。优先考虑 universe 轴（多个候选 subU > raw Sharpe），其次改为周频/双周频持仓（低 TO 时 Ret 未同步坍塌，说明收益来自中低频配置）。"
+  },
+  {
+    "id": "FALS_NEWS21_008",
+    "target": "engineering:unknown_operator_batch_risk",
+    "rule": "**任何从未在本账户成功跑通过的算子，禁止直接进入 8 槽主力批** —— 单条语法/参数错误会导致整批所有子仿真被平台 CANCELLED，一次损失 8 个配额。新算子必须先走 2 条探针批验证。",
+    "evidence": "news21 Wave6 引入 ts_av_diff 与双 ts_backfill/vec_stddev 嵌套后，8 条全部 CANCELLED（含 5 条逐字重复前序成功表达式）。事后用 2 条已知可用表达式组成的探针批在相同 MARKET 设置下正常完成，完成根因隔离。",
+    "countermeasure": "同$NINFO：sim_runner 在提交前即写 MD5，被取消的批次会留下「幻影指纹」，须用 purge 脚本清理后才能重试。"
+  },
+  {
+    "id": "FALS_NEWS21_009",
+    "target": "structure:subindustry_centering",
+    "rule": "下沉到 subindustry 做组内标准化劣于全截面；industry 层同样劣于全截面。跨行业对比是本数据集不可分割的收益来源。",
+    "evidence": "news21 Wave4 槽8 group_zscore(neg_score, subindustry) Sh 0.77；Wave3 槽6 group_zscore(tone, industry) Sh 0.85；两者均低于同数据源全截面版的 1.17。",
+    "countermeasure": "默认走全截面 zscore；组内标准化只在明确需要剔除行业固定效应时才用。"
+  },
+  {
+    "id": "FALS_NEWS21_010",
+    "target": "news21:attention_axis",
+    "rule": "news21 的**关注度轴**（事件条数、vec_count）不含独立 alpha，也不适合做分母。",
+    "evidence": "唯一新增 MATRIX 字段 event_frequency_label_fast_d1 的 ts_zscore 版 Sh 0.01；以 vec_count 作分母的 Q4 交互版 Sh -0.36 且 TO 192%、持仓仅 29 只。",
+    "countermeasure": "与 news12 FALS_NEWS12_005 呼应：新闻集中度类数据集中，Attention 不是可交易维度，至少不应以 multiply 方式进入信号。"
+  },
+  {
+    "id": "FALS_NEWS12_008",
+    "target": "news12_cumulative_horizon_physics",
+    "rule": "news12 事件反应的「每笔收益」被结构性锁死在约 2bps，与累积视界无关：TO 与 Ret 同比例下降，Margin 恒为 1.7~2.4bps。累积（ts_sum）视界 3→5→10→20 日，Sharpe 单调衰减 0.75→0.54→0.00→-0.01，且 Ret/TO 恒定 0.095~0.118。结论：任何通过「延长持有期」把该族 Margin 抬到 10bps 以上的方案在物理上不可能，news12 的最高价值口径就是 1-3 日反转（Sh 1.11~1.37，Margin 2.4bps）。",
+    "evidence": "Gate1 Batch n4 实测 8 槽（USA/TOP1000/d1/decay6/INDUSTRY/trunc0.025）：CUM3 Sh0.75/TO43.0%/Mgn1.89；CUM5 0.54/33.5%/1.74；CUM10 0.00/21.2%/0.01；CUM20 -0.01/13.9%/-0.09；VWAP 口径 0.08；ATR 归一 0.05；CLV 累积 -0.28（并触发 UNITS 警告）；超额/量能 0.08。"
+  },
+  {
+    "id": "FALS_NEWS_TEXT_001",
+    "target": "news_text_sentiment_family",
+    "rule": "新闻文本情感/语调谱系在本账户已三源一致证伪，勿再烧配额：us_equity_news（VECTOR 情感 ensemble）、ai_news_scores（RavenPack 式情感+置信区间）、other635（Benzinga headline 情感/词数）。峰值 |Sharpe| 分别 0.62 / 0.37 / 未过 Step1，TO 79~126%。同时 sentiment21（TRNA 派生，258 字段含置信区间上下界）属同一机制，不建议重复。",
+    "evidence": "Gate1 Batch n1（8 槽 us_equity_news）最高 |Sh| 0.62；Batch n2（8 槽 ai_news_scores）最高 0.37、2Y 全负。"
+  },
+  {
+    "id": "FALS_MARGIN_001",
+    "target": "margin_invariance_to_smoothing",
+    "rule": "Margin 是信号族的**内在不变量**，靠延长持有期（平滑/衰减）在族内换不来 Margin：平滑把 Ret 与 TO 同向压低且 Ret 衰减更快，Ret/TO 反而下降。要过 15bps 必须换「单笔报酬本身巨大」的驱动（稀发跳跃型事件）。",
+    "evidence": "分析师族骨架（vROQVzlA，STATISTICAL/trunc0.08/decay18）仅改表达式内 ts_decay_linear：3→TO20.55%/Ret7.00%/Mgn6.82/Sh1.86；15→14.09%/3.97%/5.64/1.20；25→12.02%/3.13%/5.20/0.96；40→10.39%/2.75%/5.28/0.85（Ret/TO 0.341→0.265）。"
+  },
+  {
+    "id": "FALS_MARGIN_002",
+    "target": "ma_target_likelihood_family",
+    "rule": "acquisition_model（M&A 目标概率，news/NLP 派生）在 TOP1000/SUBINDUSTRY/decay0 下 Sharpe 上限仅 0.39，但**Margin 物理达标**：概率×估值 槽 TO 4.55% / Margin 13.08bps。方向性已确认（概率×估值 +0.39 vs 概率÷估值 −0.25）。结论：该族可解决 Margin、解决不了 Sharpe，不宜作为主攻信号；但其低换手骨架可作为「Margin 达标容器」复用于其它强信号。",
+    "evidence": "Gate2 Batch A2 8 槽：行业超额 −0.23；÷规模 −0.04；×估值 +0.39（Mgn13.1）；×文本 +0.04；÷信用 +0.31（Mgn7.3）；×基本面 +0.06；全球−母国 +0.13；÷估值 −0.25。"
+  },
+  {
+    "id": "FALS_OP_001",
+    "target": "operator:bucket",
+    "rule": "bucket(group_rank(x, sector), range=\"0,1,0.1\") 在本账户产出恒定值：8 槽全部 Sharpe 0.00 / TO 0.0% / Ret 0.00%（持仓完全不动），整批作废。bucket 的 range 关键字实参在该平台不产生可交易的数值输出，**禁止再用 bucket 做离散化/迟滞带**。",
+    "evidence": "Gate2 Batch A3（USA/TOP1000/d1/decay0/STATISTICAL/trunc0.08）8 槽：台阶 0.1/0.2/0.34 三档 + median/mean/覆盖加权/分歧归一/12日基准窗，全部 TO 0.0%。"
+  },
+  {
+    "id": "FALS_F90_001",
+    "target": "dataset:fundamental90 / type:VECTOR",
+    "rule": "fundamental90 的 133 个字段物理类型是 VECTOR(event input)。ts_zscore / ts_delta 等 ts_* 算子直接吃裸字段会被平台拒绝：'Operator ts_zscore does not support event inputs'。必须先用 vec_avg / vec_sum 等 vec_* 降维。平台 datafields 元数据 type 字段即可预判，无需试探。",
+    "evidence": "2026-10-28 USA/TOP1000/d1 实测: ts_zscore(fnd90_game_noa,252) 全批 8 条 ERROR；ts_zscore(vec_avg(fnd90_game_noa),252) 回测成功 (alpha ZYQGwX9n)。"
+  },
+  {
+    "id": "FALS_F90_002",
+    "target": "operator:外层时序平滑 (稀疏事件序列死重)",
+    "rule": "在稀疏事件型 VECTOR 数据集中，若不在因果合成【最外层】施加 ts_mean / ts_backfill，持仓会在 NaN 进出之间反复重排，制造 42~52% 的伪换手并吃光 Margin，同时诱发 CONCENTRATED_WEIGHT。处方：平滑一律外移。",
+    "evidence": "R3/R4 对照: -rank(add(vec_avg(A),vec_avg(B))) 换手 42.5% / Margin -0.18bps / CW FAIL；-rank(add(ts_mean(vec_avg(A),20),ts_mean(vec_avg(B),20))) 换手 2.4% / Margin 3.26bps / 无 CW。"
+  },
+  {
+    "id": "FALS_F90_003",
+    "target": "backtest settings (USA/TOP1000/d1)",
+    "rule": "回测物理条件必须先对齐账户已验证的生产设置再判信号生死。本账户 70 条已提交 alpha 中 SUBINDUSTRY 34 条、decay=4 共 25 条、truncation=0.08 共 40 条；用 NONE/decay0/0.025 会人为制造 43~52% 换手与 0.x bps Margin 的假死。",
+    "evidence": "同一批表达式由 NONE/0/0.025 改 SUBINDUSTRY/4/0.08 后，最优槽位 Sharpe 由 -0.00 升至 0.46。"
+  },
+  {
+    "id": "FALS_F90_004",
+    "target": "dataset:fundamental90 信号上限",
+    "rule": "fundamental90 在 USA/TOP1000/d1 的一阶与二阶构造实测天花板约 Sharpe 0.65 (10/10 年正收益但振幅仅 1.98%/年)。Margin 与换手存在数学耦合 margin_bps ≈ returns_bps / (504 × turnover_frac)，在 AEGIS 换手下限 5% 下要求年化收益 >= 2.52% 才能同时满足 Margin >= 10bps，而 Sharpe 1.58 要求 ~4.8%/年，故该数据集在此宇宙下不具备提交级可行性。",
+    "evidence": "5 批 40 条实测 (R1/R3/R4/R5 + 种子筛选)，最高 Sharpe 0.65 (ZYQGlpXQ)，最高 Margin 12.99bps (MPYm8pdr, Sharpe 仅 0.25)。"
+  },
+  {
+    "id": "FALS_FIT_TO_FLOOR_001",
+    "target": "turnover_floor_deadlock",
+    "rule": "当换手率 Turnover <= 12.50% 时，Brain 的 Fitness 公式分母锁定在 max(TO, 0.125) = 0.125，分母边际导数恒等于 0。继续叠加多层平滑压低换手（如 12.8% -> 11.6%）在数学上收益率为 0，且会因低通滤波时滞加剧导致 Sharpe 与 Returns 双杀。",
+    "evidence": "Batch 77~79 及 Batch 88~91 实测：wpQKbj7d (TO 11.6%, Ret 4.15%, Sharpe 1.51) Fitness 仍为 0.87；而将精力转向 Returns 分子（高阶凸性+hump剪枝）后，6XdV13M5 年化收益达 4.46%，以 TO 12.32% 完美突破 Fitness 1.00。"
+  },
+  {
+    "id": "FALS_LAG_MISMATCH_001",
+    "target": "lowpass_filter_horizon_mismatch",
+    "rule": "严禁对具有明确事件有效期的模型（如 prob_rank_bin1_10d_img_news 预测 10 天）施加总时滞超过其半衰期 2 倍以上的多重平滑（如内层 11 + 外层 8 + 仿真器 15 = 34 天）。这会造成灾难性的时滞错配，严重钝化新闻脉冲 Alpha 锐度。",
+    "evidence": "Batch 78 实测：34 天低通滤波使 Sharpe 暴跌 0.05，Returns 锁死在 4.20% 以下。优化为内层 10d + 外层 10d + Decay 13d 时滞对齐后，Sharpe 恢复并冲高至 1.67。"
+  },
+  {
+    "id": "FALS_NOOP_001",
+    "target": "nested_group_neutralize_noop",
+    "rule": "严禁编写数学恒等空操作 (No-Op)：1. group_neutralize(group_neutralize(X, industry), sector) 是 100% 空操作，因为 industry 严格内嵌于 sector；2. 在没有非线性算子隔开时编写 group_neutralize(subtract(X, 0.5), group)，常数 -0.5 在去均值时被 100% 抵消。此类代码纯属浪费算子预算。",
+    "evidence": "Batch 80 审计证实：去除嵌套中性化和裸常数减法后直接节省 2 个算子槽位，为注入高阶凸性与去噪算子腾出空间。"
+  },
+  {
+    "id": "FALS_PRE_SMOOTH_001",
+    "target": "news_sentiment_pre_smoothing",
+    "rule": "严禁在与预测模型相乘前对突发新闻情感字段做单腿预平滑（如 ts_decay_linear(mean_sentiment, 3)）。新闻爆发首日的离散脉冲定价差会被预平滑瞬间抹平，导致 Sharpe 严重劣化。",
+    "evidence": "Batch 92~95 对照实测：裸情绪输入 Sharpe 达 1.66~1.67；对情绪单腿平滑 3 天后 Sharpe 直接下跌至 1.58~1.62。"
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "card_id": "CARD_FIT_FLOOR_01",
+  "tag": "fitness_denominator_floor",
+  "domain": "fitness_optimization",
+  "title": "Turnover <= 12.5% 分母锁死与收益率攻坚处方",
+  "one_line": "换手率 <= 12.5% 时 Fitness 分母固定为 0.125 (边际导数为 0)，严禁盲目降换手，必须攻坚分子年化收益率 Returns >= 4.5%~5.0%",
+  "symptom": "Sharpe >= 1.55 但 Fitness 徘徊在 0.85~0.96，继续加外层平滑或增大 Decay 换手率由 12.8% 降至 11.5%，但 Fitness 毫无提升反而因时滞错配导致 Sharpe 倒退",
+  "authorized_operators": ["power", "hump", "group_rank", "winsorize"],
+  "prescription_recipe": "1. 终止无效降换手：将 simulation decay 锁定在 12~13（将换手精准固定在 12.3%~12.5% 区间）；2. 释放高阶凸性：外层施加奇数幂次 power(..., 5) 拉大强催化事件的多空权重；3. 放宽截断容积：将 truncation 放宽至 0.040 避免极值收益被切平；4. 引入 hump(..., 0.0003) 剔除近零无新闻个股死重持仓，单向提纯年化收益 Returns。"
+}

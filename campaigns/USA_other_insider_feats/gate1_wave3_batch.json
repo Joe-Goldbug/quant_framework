@@ -1,0 +1,67 @@
+{
+  "wave": 3,
+  "seed_id": "GATE1_WAVE3",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "冠军骨架保留(group_rank+ts_arg_max+top5+60d-250d),变基信号:广度通道单独/置信加权共振/窗口/择时类型",
+  "items": [
+    {
+      "id": 1,
+      "type": "breadth_only_top5",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(buy_sell_tx_count_ratio_top5_60d_filled), vec_avg(buy_sell_tx_count_ratio_top5_250d_filled)), add(vec_avg(buy_sell_tx_count_ratio_top5_250d_filled), 1)),5), subindustry)",
+      "optimize_reason": "W3-1 广度通道单独(笔数count ratio top5 60d-250d动量) — 检验count口径是否独立正信号;与冠军value口径正交"
+    },
+    {
+      "id": 2,
+      "type": "breadth_weighted_value",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(divide(subtract(vec_avg(buy_sell_ratio_top5_60d_filled), vec_avg(buy_sell_ratio_top5_250d_filled)), add(vec_avg(buy_sell_ratio_top5_250d_filled), 1)), vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),5), subindustry)",
+      "optimize_reason": "W3-2 冠军value动量 × 当前广度水平(笔数60d) 置信加权共振 — 价值信号在高交易频次时更强(协调信念);10op上限"
+    },
+    {
+      "id": 3,
+      "type": "champion_control",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(buy_sell_ratio_top5_60d_filled), vec_avg(buy_sell_ratio_top5_250d_filled)), add(vec_avg(buy_sell_ratio_top5_250d_filled), 1)),5), subindustry)",
+      "optimize_reason": "W3-3 冠军精确复现(对照组) 确认基线0.88/6.92/7.7%可重复 + 干净度量"
+    },
+    {
+      "id": 4,
+      "type": "value_20_250",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(buy_sell_ratio_top5_20d_filled), vec_avg(buy_sell_ratio_top5_250d_filled)), add(vec_avg(buy_sell_ratio_top5_250d_filled), 1)),5), subindustry)",
+      "optimize_reason": "W3-4 value动量收紧窗(20d-250d) — 更近期基线对比,检验60d是否最优"
+    },
+    {
+      "id": 5,
+      "type": "champion_argmax10",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(buy_sell_ratio_top5_60d_filled), vec_avg(buy_sell_ratio_top5_250d_filled)), add(vec_avg(buy_sell_ratio_top5_250d_filled), 1)),10), subindustry)",
+      "optimize_reason": "W3-5 冠军ts_arg_max窗5→10 — 择时窗口敏感性,更宽峰捕捉"
+    },
+    {
+      "id": 6,
+      "type": "value_level_no_timing",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(divide(subtract(vec_avg(buy_sell_ratio_top5_60d_filled), vec_avg(buy_sell_ratio_top5_250d_filled)), add(vec_avg(buy_sell_ratio_top5_250d_filled), 1)), subindustry)",
+      "optimize_reason": "W3-6 value动量水平直接rank(无择时) — 检验ts_arg_max是否Sharpe来源;若水平已正且强则可弃离散择时"
+    },
+    {
+      "id": 7,
+      "type": "champion_tsrank10",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_rank(divide(subtract(vec_avg(buy_sell_ratio_top5_60d_filled), vec_avg(buy_sell_ratio_top5_250d_filled)), add(vec_avg(buy_sell_ratio_top5_250d_filled), 1)),10), subindustry)",
+      "optimize_reason": "W3-7 冠军ts_arg_max→ts_rank(10) 分位择时 — 对arg_max离散跳变更稳健"
+    },
+    {
+      "id": 8,
+      "type": "breadth_only_all",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(buy_sell_tx_count_ratio_all_60d_filled), vec_avg(buy_sell_tx_count_ratio_all_250d_filled)), add(vec_avg(buy_sell_tx_count_ratio_all_250d_filled), 1)),5), subindustry)",
+      "optimize_reason": "W3-8 广度通道全口径(all) 60d-250d — 对照W3-1 top5口径,检验集中度层级"
+    }
+  ]
+}

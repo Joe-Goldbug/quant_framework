@@ -1,0 +1,155 @@
+{
+  "dataset": {
+    "id": "news29",
+    "name": "Significant Developments Data",
+    "category": "news",
+    "subcategory": "news-news",
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "field_count": 12,
+    "pyramid_multiplier": 1.2,
+    "themes": []
+  },
+  "source": "knowledge_base/fields/USA/news29_raw_full.json (2026-10-28 零配额实读)",
+  "role_classification": {
+    "USABLE": [
+      {
+        "field": "nws29_significance",
+        "role": "[Signal_Flow] / [Catalyst_Event]",
+        "type": "VECTOR",
+        "true_range": "有序整数 1=High, 2=Medium, 3=Low（方向已由官方描述锁定：值↑ 重要性↓）",
+        "coverage": 0.8608,
+        "dateCoverage": 1.0,
+        "alphaCount": 2,
+        "userCount": 1,
+        "dateCreated": "2026-03-01",
+        "zero_inflation": "低（事件存在即有值）；非事件日为 NaN",
+        "reduction": "vec_avg / vec_sum / vec_count",
+        "verdict": "✅ 数值语义明确、低拥挤(ac=2)、方向编码可知 —— 本战役主信号源"
+      },
+      {
+        "field": "nws29_frontpage",
+        "role": "[Catalyst_Event]",
+        "type": "VECTOR",
+        "true_range": "二值 0/1（1=登上 Reuters 头版）",
+        "coverage": 0.8608,
+        "dateCoverage": 1.0,
+        "alphaCount": 2,
+        "userCount": 2,
+        "dateCreated": "2026-03-01",
+        "zero_inflation": "🔴 极端零膨胀：绝大多数 (股票,日) 组合为 0，头版是稀缺信息位",
+        "reduction": "vec_avg / vec_sum / vec_count",
+        "verdict": "✅ 二值语义明确、低拥挤(ac=2) —— 事件冲击强度源；必须配 ts_backfill / ts_sum 解决 Tied Zeros"
+      }
+    ],
+    "QUARANTINED_SYNTAX_RISK": [
+      {
+        "field": "nws29_full_frontpage",
+        "role": "[Catalyst_Event]",
+        "type": "VECTOR",
+        "coverage": 0.9776,
+        "dateCoverage": 0.9507,
+        "alphaCount": 3,
+        "dateCreated": "2025-11-01",
+        "verdict": "🟡 语义明确(0/1)但属另一数据版本(dateCoverage 0.9507)，与 nws29_* 混用会造成日期错配；本战役不采用"
+      },
+      {
+        "field": "nws29_full_significance",
+        "role": "[Signal_Flow]",
+        "type": "VECTOR",
+        "description": "Event importance level code: High, Medium, Low relevance to market (must decode)",
+        "coverage": 0.9776,
+        "dateCoverage": 0.9507,
+        "alphaCount": 3,
+        "dateCreated": "2025-11-01",
+        "verdict": "🔴 编码方向未披露('must decode')，若为字符串型 VECTOR 则 vec_avg 直接语法错误并 CANCEL 整批；本战役物理隔离"
+      }
+    ],
+    "NOMINAL_ILLEGAL": [
+      {
+        "field": "nws29_topic1",
+        "role": "[Catalyst_Event] 名义分类码",
+        "type": "VECTOR",
+        "coverage": 0.8608,
+        "alphaCount": 0,
+        "verdict": "🔴 名义变量 —— 码值大小无经济学含义，ts_mean / vec_stddev 一律为代数幻觉；BRAIN 无等值比较算子可做门控 ⇒ 物理不可用"
+      },
+      {
+        "field": "nws29_topic2",
+        "type": "VECTOR",
+        "coverage": 0.252,
+        "alphaCount": 0,
+        "verdict": "🔴 名义变量 + 覆盖仅 0.252 ⇒ 双重不可用"
+      },
+      {
+        "field": "nws29_full_topic1",
+        "type": "VECTOR",
+        "coverage": 0.9776,
+        "alphaCount": 0,
+        "verdict": "🔴 名义变量，不可用"
+      },
+      {
+        "field": "event_secondary_topic_code",
+        "type": "VECTOR",
+        "coverage": 0.9776,
+        "alphaCount": 0,
+        "verdict": "🔴 名义变量，不可用"
+      },
+      {
+        "field": "event_tertiary_topic_code",
+        "type": "VECTOR",
+        "coverage": 0.9776,
+        "alphaCount": 0,
+        "verdict": "🔴 名义变量，不可用"
+      }
+    ],
+    "TEXT_ILLEGAL": [
+      {
+        "field": "company_event_description_text_full",
+        "type": "VECTOR",
+        "coverage": 0.8608,
+        "alphaCount": 0,
+        "verdict": "🔴 自由文本，无数值归约算子可用"
+      },
+      {
+        "field": "company_event_headline_text_full",
+        "type": "VECTOR",
+        "coverage": 0.8608,
+        "alphaCount": 1,
+        "verdict": "🔴 自由文本，无数值归约算子可用"
+      },
+      {
+        "field": "company_event_structured_fields_full",
+        "type": "VECTOR",
+        "coverage": 0.2619,
+        "alphaCount": 0,
+        "verdict": "🔴 结构化标签，无数值归约算子可用"
+      }
+    ]
+  },
+  "physical_contract": {
+    "usable_atom_count": 2,
+    "usable_concepts": [
+      "significance：事件重要性有序等级（1=High,2=Medium,3=Low）",
+      "frontpage：是否登上 Reuters 头版（0/1，极端稀疏）"
+    ],
+    "usable_atoms": [
+      "S = vec_avg(nws29_significance)",
+      "Sc = vec_count(nws29_significance)",
+      "F = vec_avg(nws29_frontpage)",
+      "Fs = vec_sum(nws29_frontpage)",
+      "Fc = vec_count(nws29_frontpage)"
+    ],
+    "hard_constraints": [
+      "100% VECTOR 字段 ⇒ 所有字段必须 vec_* 归约",
+      "零外部 PV（新闻集内无 close/vwap/volume 等）",
+      "字段数严格 = 2（significance + frontpage）",
+      "frontpage 极端零膨胀 ⇒ 铁律 2 死重清除为必做项（ts_backfill / ts_sum / 比例分母 +1）",
+      "significance 方向：值↑ = 重要性↓（1=High/3=Low），不可裸用正向解读"
+    ],
+    "crowding": "ac ≤ 2，全部满足反拥挤定律（Alphas 使用数 ≤ 5）✅ —— 本数据集最大优势",
+    "coverage_risk": "cov=0.8608 ⇒ 14% 的 (股票,日) 无数据，缺失与股票规模正相关；@STATISTICAL 中性化部分对冲",
+    "structural_verdict": "12 个字段中仅 2 个具物理可用性（8 个名义/文本字段数学上非法，2 个跨版本字段语法风险）。本数据集的信息容量在字段层面即被物理限制在 2 个概念上。"
+  }
+}

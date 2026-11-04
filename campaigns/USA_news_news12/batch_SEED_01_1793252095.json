@@ -1,0 +1,170 @@
+{
+  "seed_id": "SEED_01",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "news",
+  "known_fields": {},
+  "items": [
+    {
+      "slot_id": "Slot_1",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_rank(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=0.8), subindustry)",
+      "neutralization": "REVERSION_AND_MOMENTUM",
+      "optimize_reason": "【探索】5日一阶差分捕捉时序动量，10日指数衰减平滑噪声并压制换手率。"
+    },
+    {
+      "slot_id": "Slot_2",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_neutralize(winsorize(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=1.0), std=3), subindustry)",
+      "neutralization": "STATISTICAL",
+      "optimize_reason": "【探索】时序差分衰减前置 winsorize(std=3) 抑制极值震荡，外层包裹 subindustry 结合高阶风险中性化。"
+    },
+    {
+      "slot_id": "Slot_3",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_rank(ts_zscore(subtract(news12_feat_1, news12_feat_2), 60), subindustry)",
+      "neutralization": "CROWDING",
+      "optimize_reason": "【探索】60日滚动 Z-Score 自归一，有效消除单边多头偏倚与死重持仓。"
+    },
+    {
+      "slot_id": "Slot_4",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_rank(ts_decay_linear(subtract(subtract(news12_feat_1, news12_feat_2), ts_mean(subtract(news12_feat_1, news12_feat_2), 20)), 15), subindustry)",
+      "neutralization": "FAST",
+      "optimize_reason": "【探索】20日中枢差分过滤长期低频漂移，15日线性衰减稳健持仓。"
+    },
+    {
+      "slot_id": "Slot_5",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_rank(s_log_1p(winsorize(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 3), 10, factor=1.0), std=3)), subindustry)",
+      "neutralization": "SLOW",
+      "optimize_reason": "【探索】引入 s_log_1p 凹函数压缩极端头部权重，专门规避 CONCENTRATED_WEIGHT 集中度违规。"
+    },
+    {
+      "slot_id": "Slot_6",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_rank(signed_power(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=1.0), 0.5), subindustry)",
+      "neutralization": "REVERSION_AND_MOMENTUM",
+      "optimize_reason": "【探索】带符号开方提升弱信号敏感度，平滑长尾波动。"
+    },
+    {
+      "slot_id": "Slot_7",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_neutralize(ts_decay_linear(ts_delta(subtract(news12_feat_1, news12_feat_2), 2), 5), subindustry)",
+      "neutralization": "STATISTICAL",
+      "optimize_reason": "【探索】2日超短期边际差分捕捉快变量突变。"
+    },
+    {
+      "slot_id": "Slot_8",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_rank(ts_decay_linear(subtract(news12_feat_1, news12_feat_2), 40), subindustry)",
+      "neutralization": "CROWDING",
+      "optimize_reason": "【探索】40日深度平滑吸收高频随机游走，沉淀低频基本面趋势。"
+    },
+    {
+      "slot_id": "Slot_9",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_rank(divide(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), add(ts_std_dev(subtract(news12_feat_1, news12_feat_2), 20), 1e-4)), subindustry)",
+      "neutralization": "FAST",
+      "optimize_reason": "【探索】滚动波动率逆向调节动量，高波环境下自动降权。"
+    },
+    {
+      "slot_id": "Slot_10",
+      "type": "EXPLORATION",
+      "original_alpha": "",
+      "expression": "group_rank(winsorize(ts_decay_exp_window(subtract(news12_feat_1, news12_feat_2), 12, factor=0.7), std=2.5), subindustry)",
+      "neutralization": "SLOW",
+      "optimize_reason": "【探索】严格 2.5 倍标差去极值，极速压低子池波动率。"
+    },
+    {
+      "slot_id": "Slot_11",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_rank(winsorize(subtract(news12_feat_1, news12_feat_2), std=3), subindustry)",
+      "neutralization": "STATISTICAL",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 注入 winsorize(std=3) 抑制极值震荡并提升 Sub-universe 夏普。"
+    },
+    {
+      "slot_id": "Slot_12",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_rank(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=0.8), subindustry)",
+      "neutralization": "CROWDING",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 平替为指数半衰衰减，显著压制换手率至 10%~40% 黄金区间。"
+    },
+    {
+      "slot_id": "Slot_13",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_neutralize(ts_decay_linear(ts_delta(subtract(news12_feat_1, news12_feat_2), 3), 10), subindustry)",
+      "neutralization": "FAST",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 外层追加 subindustry 分组中性化结合高阶风险中性化。"
+    },
+    {
+      "slot_id": "Slot_14",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_rank(s_log_1p(winsorize(group_rank(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=0.8), subindustry), std=3)), subindustry)",
+      "neutralization": "SLOW",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 施加 s_log_1p 凹压缩消除持仓过度集中 (CW)。"
+    },
+    {
+      "slot_id": "Slot_15",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_neutralize(ts_decay_linear(ts_delta(subtract(news12_feat_1, news12_feat_2), 3), 10), subindustry)",
+      "neutralization": "REVERSION_AND_MOMENTUM",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 调整时序差分窗口以精确契合事件消化半衰期。"
+    },
+    {
+      "slot_id": "Slot_16",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_rank(winsorize(subtract(news12_feat_1, news12_feat_2), std=3), subindustry)",
+      "neutralization": "STATISTICAL",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 注入 winsorize(std=3) 抑制极值震荡并提升 Sub-universe 夏普。"
+    },
+    {
+      "slot_id": "Slot_17",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_rank(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=0.8), subindustry)",
+      "neutralization": "CROWDING",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 平替为指数半衰衰减，显著压制换手率至 10%~40% 黄金区间。"
+    },
+    {
+      "slot_id": "Slot_18",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_neutralize(ts_decay_linear(ts_delta(subtract(news12_feat_1, news12_feat_2), 3), 10), subindustry)",
+      "neutralization": "FAST",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 外层追加 subindustry 分组中性化结合高阶风险中性化。"
+    },
+    {
+      "slot_id": "Slot_19",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_rank(s_log_1p(winsorize(group_rank(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=0.8), subindustry), std=3)), subindustry)",
+      "neutralization": "SLOW",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 施加 s_log_1p 凹压缩消除持仓过度集中 (CW)。"
+    },
+    {
+      "slot_id": "Slot_20",
+      "type": "EXPLOITATION",
+      "original_alpha": "SEED_01",
+      "expression": "group_neutralize(ts_decay_linear(ts_delta(subtract(news12_feat_1, news12_feat_2), 3), 10), subindustry)",
+      "neutralization": "REVERSION_AND_MOMENTUM",
+      "optimize_reason": "【母本演进】基于母本 SEED_01 演进: 调整时序差分窗口以精确契合事件消化半衰期。"
+    }
+  ]
+}

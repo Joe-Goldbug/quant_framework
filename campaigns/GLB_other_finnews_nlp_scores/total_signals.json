@@ -1,0 +1,663 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL1M",
+  "category": "other",
+  "dataset_id": "finnews_nlp_scores",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "净乐观度极性 (Net Polarity Optimism)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "median_positive_sentiment_score_2（COLD 主锚，alpha_pct=0.00）代表模型变体 2 下正面情绪分数中枢，median_negative_sentiment_score_2 代表同变体负面情绪中枢——两者同定义域 [0,1]、同覆盖率、同更新频率，相减剥离共同的语言模型偏倚与新闻覆盖水平，保留纯净乐观方向。fnd23_tot_assets（cov=0.9601）为内生规模锚，作分母剥离规模噪音（大票新闻多、情绪分数更稳定，不除以规模会混入 size tilt）。因资产为亿元级正数，直接作分母安全，无需平移。",
+      "economic_mechanism": "个股正面新闻情绪中枢显著高于负面（净乐观）-> 代表近期文本信息流整体偏正面 -> 市场对新闻情绪突变存在反应不足（PEAD 式漂移），正面情绪未被当期完全定价 -> 预期后续正向超额收益，做多极性 +1。除以总资产剥离规模效应后，该信号在截面内反映纯情绪方向而非公司大小。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(median_positive_sentiment_score_2, median_negative_sentiment_score_2), fnd23_tot_assets)",
+      "fields_used": [
+        "median_positive_sentiment_score_2",
+        "fnd23_tot_assets",
+        "median_negative_sentiment_score_2"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "median_positive_sentiment_score_2",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "净乐观度极性 (Net Polarity Optimism)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "median_positive_sentiment_score_3（COLD，alpha_pct=0.00）为模型变体 3 正面情绪中枢，median_negative_sentiment_score_3 为同变体负面中枢。相减得到净乐观方向。fnd23_tot_assets 作分母，add(fnd23_tot_assets,1) 仅作除零/平移保护（资产为亿元级正数，+1 不改变量级与符号），剥离规模噪音。变体 3 与变体 2 为平行 NLP 模型设置，数值不同但语义等价，用于跨模型稳健性验证。",
+      "economic_mechanism": "同 SEED_01 因果链：净乐观情绪中枢 -> 市场反应不足 -> 正向超额收益，极性 +1。本种子以不同平行模型变体（v3）复现，验证信号不依赖单一 NLP 设置。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(median_positive_sentiment_score_3, median_negative_sentiment_score_3), add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "median_negative_sentiment_score_3",
+        "fnd23_tot_assets",
+        "median_positive_sentiment_score_3"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "median_positive_sentiment_score_3",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "净乐观度极性 (Net Polarity Optimism)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "median_positive_sentiment_score_4（COLD，alpha_pct=0.00）为变体 4 正面中枢，median_negative_sentiment_score_5 为变体 5 负面中枢——跨变体剪刀差同时剥离共同偏倚与模型特异性噪音，是更严苛的正交性检验。fnd23_tot_assets 作分母，subtract(fnd23_tot_assets,1) 仅作平移保护。",
+      "economic_mechanism": "正面中枢（v4）高于负面中枢（v5）-> 跨模型稳健的净乐观信号 -> 情绪反应不足带来正向漂移，极性 +1。跨变体组合证明信号非单一模型伪影。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "fnd23_tot_assets",
+        "median_negative_sentiment_score_5",
+        "median_positive_sentiment_score_4"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "median_positive_sentiment_score_4",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "净乐观度极性 (Net Polarity Optimism)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "median_positive_sentiment_score_2（COLD，alpha_pct=0.00）为正面中枢，minimum_negative_sentiment_score_5（COLD，alpha_pct=0.00）为负面尾部下限（最强烈的负面单条新闻分数）。subtract(正面中枢, 负面下限) = 正面中枢 + 负面强度的绝对值，放大净乐观度对负面极端的敏感度。reverse(fnd23_tot_assets)=1/assets，等价于除以规模锚，作分母剥离规模噪音。",
+      "economic_mechanism": "正面中枢高且存在强烈负面尾部（minimum_negative 低）-> 文本信息流方向分化但中枢偏正 -> 市场低估正面中枢的持续性，负面极端被视为噪音 -> 预期正向超额收益，极性 +1。",
+      "expected_polarity": 1,
+      "expression": "multiply(subtract(median_positive_sentiment_score_2, minimum_negative_sentiment_score_5), reverse(fnd23_tot_assets))",
+      "fields_used": [
+        "minimum_negative_sentiment_score_5",
+        "median_positive_sentiment_score_2",
+        "fnd23_tot_assets"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "minimum_negative_sentiment_score_5",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "情绪离散度 (Sentiment Dispersion)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "stddev_positive_sentiment_score_4（COLD，alpha_pct=0.00）为正面情绪标准差，stddev_negative_sentiment_score_2（COLD，alpha_pct=0.00）为负面情绪标准差——两者相减剥离共同波动环境，保留『乐观情绪内部不一致 vs 悲观情绪内部不一致』的结构差异。fnd23_tot_assets 作分母剥离规模噪音。该剪刀差是『分布离散度与信息不确定性』母题的方向性形态。",
+      "economic_mechanism": "正面情绪离散度显著高于负面 -> 乐观情绪内部观点不一致（多头信息分裂）-> 市场对乐观分歧定价不足，分歧后续趋同 -> 高分歧预示均值回归向下，做空极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(subtract(stddev_positive_sentiment_score_4, stddev_negative_sentiment_score_2), fnd23_tot_assets)",
+      "fields_used": [
+        "fnd23_tot_assets",
+        "stddev_positive_sentiment_score_4",
+        "stddev_negative_sentiment_score_2"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "stddev_positive_sentiment_score_4",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "情绪离散度 (Sentiment Dispersion)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "stddev_positive_sentiment_score_5（COLD，alpha_pct=0.00）为变体 5 正面标准差，stddev_negative_sentiment_score_3（COLD，alpha_pct=0.00）为变体 3 负面标准差——跨变体离散度剪刀差，剥离共同偏倚与模型特异性。fnd23_tot_assets 作分母，add(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "同 SEED_05：正面离散度相对负面更高 -> 多头信息分裂 -> 分歧趋同向下 -> 极性 -1。跨变体复现验证稳健性。",
+      "expected_polarity": -1,
+      "expression": "divide(subtract(stddev_positive_sentiment_score_5, stddev_negative_sentiment_score_3), add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "stddev_negative_sentiment_score_3",
+        "stddev_positive_sentiment_score_5",
+        "fnd23_tot_assets"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "stddev_negative_sentiment_score_3",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "情绪离散度 (Sentiment Dispersion)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "stddev_positive_sentiment_score_6（COLD，alpha_pct=0.00）为变体 6 正面标准差，stddev_negative_sentiment_score_1（COLD，alpha_pct=0.20）为变体 1 负面标准差——最远跨变体组合，最大程度剥离模型特异性噪音。fnd23_tot_assets 作分母，subtract(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "同 SEED_05 因果链，最严苛跨变体离散度信号 -> 分歧趋同 -> 极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(subtract(stddev_positive_sentiment_score_6, stddev_negative_sentiment_score_1), subtract(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "stddev_positive_sentiment_score_6",
+        "stddev_negative_sentiment_score_1",
+        "fnd23_tot_assets"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "stddev_positive_sentiment_score_6",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "情绪离散度 (Sentiment Dispersion)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "stddev_positive_sentiment_score_2（COLD，alpha_pct=0.20）与 stddev_negative_sentiment_score_4（COLD，alpha_pct=0.20）分别为正/负面情绪标准差，两者相乘刻画总离散度（多空分歧叠加），非剪刀差形态——对应『分布离散度』母题的对称不确定性形态。fnd23_tot_assets 作分母剥离规模噪音。",
+      "economic_mechanism": "正负面情绪标准差同时高 -> 新闻情绪内部总分歧最大（多空观点均不统一）-> 市场定价效率最低 -> 分歧趋同带来均值回归，做空极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(multiply(stddev_positive_sentiment_score_2, stddev_negative_sentiment_score_4), fnd23_tot_assets)",
+      "fields_used": [
+        "stddev_positive_sentiment_score_2",
+        "stddev_negative_sentiment_score_4",
+        "fnd23_tot_assets"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "stddev_positive_sentiment_score_2",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "极端尾部情绪 (Extreme Tail Sentiment)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "maximum_positive_sentiment_score_3（COLD，alpha_pct=0.20）与 maximum_positive_sentiment_score_4（COLD，alpha_pct=0.20）为两个平行变体的正面情绪尾部峰值，相加得到极端乐观催化强度。fnd23_tot_assets 作分母剥离规模噪音（大票新闻基数大，极值天然更高）。",
+      "economic_mechanism": "极端正面单条新闻出现（max 正高）-> 边际乐观冲击未被当期完全定价 -> 市场对尾部事件反应不足 -> 预期正向漂移，做多极性 +1。双变体相加强化极端催化信号。",
+      "expected_polarity": 1,
+      "expression": "divide(add(maximum_positive_sentiment_score_3, maximum_positive_sentiment_score_4), fnd23_tot_assets)",
+      "fields_used": [
+        "maximum_positive_sentiment_score_3",
+        "fnd23_tot_assets",
+        "maximum_positive_sentiment_score_4"
+      ],
+      "times": 1,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "maximum_positive_sentiment_score_3",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "极端尾部情绪 (Extreme Tail Sentiment)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "maximum_positive_sentiment_score_5（COLD，alpha_pct=0.20）与 maximum_positive_sentiment_score_6（COLD，alpha_pct=0.20）为另两个平行变体正面峰值，相加为纯正面极端催化。fnd23_tot_assets 作分母，add(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "同 SEED_09：极端乐观尾部 -> 反应不足 -> 正向漂移，极性 +1。不同变体组合验证稳健性。",
+      "expected_polarity": 1,
+      "expression": "divide(add(maximum_positive_sentiment_score_5, maximum_positive_sentiment_score_6), add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "maximum_positive_sentiment_score_6",
+        "fnd23_tot_assets",
+        "maximum_positive_sentiment_score_5"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "maximum_positive_sentiment_score_6",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "极端尾部情绪 (Extreme Tail Sentiment)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "maximum_positive_sentiment_score_3（COLD，alpha_pct=0.20）为正面峰值，maximum_negative_sentiment_score_6（COLD，alpha_pct=0.20）为负面峰值，两者相加刻画极端多空并存的两极化环境——对应『尾心曲率与两极分化』母题。fnd23_tot_assets 作分母，subtract(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "正面与负面极端新闻同时出现（双尾部并存）-> 极端多空分歧 -> 市场处于高不确定状态 -> 两极分化后均值回归，做空极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(add(maximum_positive_sentiment_score_3, maximum_negative_sentiment_score_6), subtract(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "maximum_negative_sentiment_score_6",
+        "maximum_positive_sentiment_score_3",
+        "fnd23_tot_assets"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "maximum_negative_sentiment_score_6",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "极端尾部情绪 (Extreme Tail Sentiment)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "maximum_positive_sentiment_score_4（COLD，alpha_pct=0.20）为变体 4 正面峰值，maximum_negative_sentiment_score_6（COLD，alpha_pct=0.20）为变体 6 负面峰值——跨变体双尾部并置，剥离模型特异性。reverse(fnd23_tot_assets)=1/assets 作分母剥离规模噪音。",
+      "economic_mechanism": "同 SEED_11：极端多空并存 -> 高不确定 -> 均值回归向下，极性 -1。",
+      "expected_polarity": -1,
+      "expression": "multiply(add(maximum_positive_sentiment_score_4, maximum_negative_sentiment_score_6), reverse(fnd23_tot_assets))",
+      "fields_used": [
+        "maximum_negative_sentiment_score_6",
+        "fnd23_tot_assets",
+        "maximum_positive_sentiment_score_4"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "maximum_negative_sentiment_score_6",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "中性情绪基线 (Neutral Sentiment Baseline)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "median_neutral_sentiment_score_1（COLD，alpha_pct=0.00）与 median_neutral_sentiment_score_3（COLD，alpha_pct=0.00）为两个平行变体的中性情绪中枢，相加刻画信息覆盖的广谱性/平静度。fnd23_tot_assets 作分母剥离规模噪音。",
+      "economic_mechanism": "中性情绪基线高 -> 新闻覆盖充分但无方向性观点 -> 信息真空/横盘定价环境 -> 缺乏催化后出现方向性漂移（信息真空后的定价修正）-> 做空极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(add(median_neutral_sentiment_score_1, median_neutral_sentiment_score_3), fnd23_tot_assets)",
+      "fields_used": [
+        "median_neutral_sentiment_score_3",
+        "fnd23_tot_assets",
+        "median_neutral_sentiment_score_1"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "median_neutral_sentiment_score_3",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "中性情绪基线 (Neutral Sentiment Baseline)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "median_neutral_sentiment_score_4（COLD，alpha_pct=0.00）与 median_neutral_sentiment_score_5（COLD，alpha_pct=0.00）为另两个平行变体中性中枢，相加为平静度基线。fnd23_tot_assets 作分母，add(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "同 SEED_13：中性基线高 -> 信息真空 -> 方向性漂移，极性 -1。不同变体复现。",
+      "expected_polarity": -1,
+      "expression": "divide(add(median_neutral_sentiment_score_4, median_neutral_sentiment_score_5), add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "fnd23_tot_assets",
+        "median_neutral_sentiment_score_4",
+        "median_neutral_sentiment_score_5"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "median_neutral_sentiment_score_4",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "中性情绪基线 (Neutral Sentiment Baseline)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "average_neutral_sentiment_score_2（COLD，alpha_pct=0.20）为中性情绪均值，minimum_neutral_sentiment_score_3（COLD，alpha_pct=0.00）为中性情绪最小值——均值与下限相加表征中性档的整体水平与底部支撑。fnd23_tot_assets 作分母，subtract(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "中性均值与下限均高 -> 信息流平静且无强烈方向性文本 -> 定价效率高但缺乏催化 -> 后续方向性漂移，极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(add(average_neutral_sentiment_score_2, minimum_neutral_sentiment_score_3), subtract(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "average_neutral_sentiment_score_2",
+        "minimum_neutral_sentiment_score_3",
+        "fnd23_tot_assets"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "average_neutral_sentiment_score_2",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "中性情绪基线 (Neutral Sentiment Baseline)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "minimum_neutral_sentiment_score_1（COLD，alpha_pct=0.20）与 minimum_neutral_sentiment_score_2（COLD，alpha_pct=0.20）为两个变体的中性档下限，相乘刻画中性基线的最低支撑面（非剪刀差形态）。fnd23_tot_assets 作分母，add(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "中性档下限高 -> 即使最中性的新闻也接近中性上界 -> 文本整体无方向 -> 信息真空后方向性漂移，极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(multiply(minimum_neutral_sentiment_score_1, minimum_neutral_sentiment_score_2), add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "minimum_neutral_sentiment_score_1",
+        "fnd23_tot_assets",
+        "minimum_neutral_sentiment_score_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "minimum_neutral_sentiment_score_1",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "情绪不确定性/置信带 (Sentiment Uncertainty / Confidence Band)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "upper_confidence_neutral_sentiment_2（COLD，alpha_pct=0.20）与 lower_confidence_neutral_sentiment_2（COLD，alpha_pct=0.20）为同一变体的中性情绪置信区间上下界，相乘刻画置信带面积（上界高 × 下界高 = 区间整体右移且宽 = 高不确定性）。fnd23_tot_assets 作分母剥离规模噪音。",
+      "economic_mechanism": "中性情绪置信带面积大 -> 情绪均值估计高度不确定 -> 市场对该公司新闻解读分歧大、定价效率低 -> 不确定性风险溢价为负，做空极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(multiply(upper_confidence_neutral_sentiment_2, lower_confidence_neutral_sentiment_2), fnd23_tot_assets)",
+      "fields_used": [
+        "lower_confidence_neutral_sentiment_2",
+        "fnd23_tot_assets",
+        "upper_confidence_neutral_sentiment_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "lower_confidence_neutral_sentiment_2",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "情绪不确定性/置信带 (Sentiment Uncertainty / Confidence Band)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "upper_confidence_neutral_sentiment_3（COLD，alpha_pct=0.20）与 lower_confidence_neutral_sentiment_4（COLD，alpha_pct=0.20）为跨变体中性置信上下界，相乘刻画跨模型置信带面积，剥离模型特异性。fnd23_tot_assets 作分母，subtract(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "同 SEED_17：置信带面积大 -> 高不确定性 -> 负风险溢价，极性 -1。跨变体复现。",
+      "expected_polarity": -1,
+      "expression": "divide(multiply(upper_confidence_neutral_sentiment_3, lower_confidence_neutral_sentiment_4), subtract(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "upper_confidence_neutral_sentiment_3",
+        "fnd23_tot_assets",
+        "lower_confidence_neutral_sentiment_4"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "upper_confidence_neutral_sentiment_3",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "情绪不确定性/置信带 (Sentiment Uncertainty / Confidence Band)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "lower_confidence_negative_sentiment_3（COLD，alpha_pct=0.20）为负面情绪下界，lower_confidence_positive_sentiment_3（COLD，alpha_pct=0.20）为正面情绪下界，相乘刻画多空双侧置信下界的联合宽度（负面下界低 × 正面下界低 = 双侧均不确定）。fnd23_tot_assets 作分母，subtract(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "多空双侧置信下界同时偏低 -> 正负面情绪估计均高度不确定 -> 市场分歧最大化 -> 不确定性折价，做空极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(multiply(lower_confidence_negative_sentiment_3, lower_confidence_positive_sentiment_3), subtract(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "lower_confidence_positive_sentiment_3",
+        "lower_confidence_negative_sentiment_3",
+        "fnd23_tot_assets"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "lower_confidence_positive_sentiment_3",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "情绪不确定性/置信带 (Sentiment Uncertainty / Confidence Band)",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "upper_confidence_negative_sentiment_5（COLD，alpha_pct=0.00）为负面情绪上界，upper_confidence_neutral_sentiment_2（COLD，alpha_pct=0.20）为中性情绪上界，相乘刻画负面与中性置信上界联合面积（跨极性跨变体）。fnd23_tot_assets 作分母，add(fnd23_tot_assets,1) 作平移保护。",
+      "economic_mechanism": "负面与中性置信上界同时高 -> 悲观与中性情绪估计的上限均宽 -> 不确定性高企 -> 负风险溢价，做空极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(multiply(upper_confidence_negative_sentiment_5, upper_confidence_neutral_sentiment_2), add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "upper_confidence_neutral_sentiment_2",
+        "fnd23_tot_assets",
+        "upper_confidence_negative_sentiment_5"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "upper_confidence_neutral_sentiment_2",
+        "normalizer": "fnd23_tot_assets",
+        "main_anchor_alpha_pct": 0.2037,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.96,
+        "pairing_score": 1.398,
+        "issues": []
+      }
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "finnews_nlp_scores 是 GLB 区域金融新闻语义打分的每日面板：对每条道琼斯/路透新闻语料，经多套平行 NLP 模型将文章极性归类为 negative/neutral/positive 三档，每档再聚合为 7 个统计量（average/median/maximum/minimum/stddev/lower_confidence/upper_confidence），共 21 族 × 5 个平行模型变体 = 105 个字段。全部字段定义域 [0,1]（情绪分数），覆盖率恒等 0.4621（新闻映射天然稀疏：仅约 46% 的股票在任意时点有可映射新闻），更新频率 daily，属高时效、低持久性的情绪流数据。核心商业实质：该数据集度量的是『市场参与者对个股新闻文本的情绪极性分布与内部一致性』——median/average 反映方向性中枢，stddev/confidence band 反映分歧度与置信度，maximum/minimum 反映极端尾部事件。关键信息摩擦点：新闻情绪分数是『当期已实现文本情绪』而非『预期』，市场对情绪突变存在反应不足（PEAD 式漂移）；且情绪与规模强相关（大票新闻多、情绪分数更稳定），必须剥离规模噪音才能暴露纯情绪截面信号。本数据集自身无 coverage>=0.80 的总量字段（全 105 字段 cov=0.4621），经用户授权引入 GLB fundamental23 的 fnd23_tot_assets（cov=0.9601, alpha_count=22, HOT）作为跨数据集归一锚，仅作分母剥离规模偏倚，严禁作分子主信号。",
+    "economic_clusters": [
+      {
+        "cluster_name": "净乐观度极性 (Net Polarity Optimism)",
+        "fields": [
+          "median_positive_sentiment_score_2",
+          "median_positive_sentiment_score_3",
+          "median_positive_sentiment_score_4",
+          "median_negative_sentiment_score_2",
+          "median_negative_sentiment_score_3",
+          "median_negative_sentiment_score_5",
+          "minimum_negative_sentiment_score_5"
+        ],
+        "cluster_logic": "同一模型变体内，正面情绪中位数与负面情绪中位数构成方向性剪刀差。两字段同定义域 [0,1]、同覆盖率、同更新频率，直接相减可剥离共同的语言模型偏倚与新闻覆盖水平，保留纯粹的净乐观方向。minimum_negative_sentiment_score_5 提供负面尾部下限，作为乐观度的放大锚。该簇捕捉『多空文本情绪的相对强弱』，是新闻情绪最直接的方向性表征。"
+      },
+      {
+        "cluster_name": "情绪离散度 (Sentiment Dispersion)",
+        "fields": [
+          "stddev_positive_sentiment_score_2",
+          "stddev_positive_sentiment_score_4",
+          "stddev_positive_sentiment_score_5",
+          "stddev_positive_sentiment_score_6",
+          "stddev_negative_sentiment_score_1",
+          "stddev_negative_sentiment_score_2",
+          "stddev_negative_sentiment_score_3",
+          "stddev_negative_sentiment_score_4"
+        ],
+        "cluster_logic": "同股票同日内多条新闻的正面/负面情绪分数的标准差，刻画市场参与者对该公司观点的一致性程度。正面 stddev 与负面 stddev 的剪刀差剥离共同波动环境，暴露『乐观情绪内部不一致 vs 悲观情绪内部不一致』的结构差异；两者相乘则刻画总离散度。高离散度 = 市场定价效率低下期，符合『分布离散度与信息不确定性』经济学母题，通常预示后续均值回归。"
+      },
+      {
+        "cluster_name": "极端尾部情绪 (Extreme Tail Sentiment)",
+        "fields": [
+          "maximum_positive_sentiment_score_3",
+          "maximum_positive_sentiment_score_4",
+          "maximum_positive_sentiment_score_5",
+          "maximum_positive_sentiment_score_6",
+          "maximum_negative_sentiment_score_6"
+        ],
+        "cluster_logic": "maximum 统计量捕捉当日最极端单条新闻的情绪分数（尾部峰值）。极值对新闻流突变高度敏感，是『边际冲击』的情绪代理。纯正面极值组合（正 max + 正 max）表征极端乐观催化，正面与负面极值并置则表征极端多空并存的高分歧环境。该簇对应『尾心曲率与两极分化』母题，刻画新闻分布的两极化程度。"
+      },
+      {
+        "cluster_name": "中性情绪基线 (Neutral Sentiment Baseline)",
+        "fields": [
+          "median_neutral_sentiment_score_1",
+          "median_neutral_sentiment_score_3",
+          "median_neutral_sentiment_score_4",
+          "median_neutral_sentiment_score_5",
+          "average_neutral_sentiment_score_2",
+          "minimum_neutral_sentiment_score_1",
+          "minimum_neutral_sentiment_score_2",
+          "minimum_neutral_sentiment_score_3"
+        ],
+        "cluster_logic": "中性档情绪分数衡量新闻文本『无明确方向性观点』的程度，代表信息覆盖的广谱性与平静度而非方向性。median/average 中性值高 = 新闻覆盖充分但无观点（信息真空/横盘环境），minimum 中性值低 = 存在明确方向性文本。该簇是情绪数据集的『基线锚』，用于识别哪些股票处于定价效率较高的信息充分披露状态。"
+      },
+      {
+        "cluster_name": "情绪不确定性/置信带 (Sentiment Uncertainty / Confidence Band)",
+        "fields": [
+          "upper_confidence_neutral_sentiment_2",
+          "upper_confidence_neutral_sentiment_3",
+          "lower_confidence_neutral_sentiment_2",
+          "lower_confidence_neutral_sentiment_4",
+          "lower_confidence_negative_sentiment_3",
+          "lower_confidence_positive_sentiment_3",
+          "upper_confidence_negative_sentiment_5"
+        ],
+        "cluster_logic": "上下置信界宽度直接度量情绪均值的统计不确定性。上界与下界同侧相乘（均为中性档，或同为负/正档）刻画置信区间面积，面积越大 = 情绪估计越不确定 = 市场对该股票新闻解读分歧越大。该簇对应『分布离散度与信息不确定性』母题的置信度形态，捕捉预期迷茫度与定价效率低下期，通常伴随负向风险溢价。"
+      }
+    ]
+  },
+  "crowding_profile": {
+    "field_total": 108,
+    "alpha_count_known": 108,
+    "tier_counts": {
+      "COLD": 46,
+      "WARM": 39,
+      "HOT": 23,
+      "UNKNOWN": 0
+    }
+  },
+  "pairing_candidates": [
+    {
+      "main_anchor": "median_neutral_sentiment_score_1",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.462,
+      "normalizer": "assets_total_2",
+      "normalizer_coverage": 0.96,
+      "normalizer_alpha_pct": 0.9352
+    },
+    {
+      "main_anchor": "median_neutral_sentiment_score_3",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.462,
+      "normalizer": "fnd23_tot_assets",
+      "normalizer_coverage": 0.96,
+      "normalizer_alpha_pct": 0.9815
+    },
+    {
+      "main_anchor": "median_neutral_sentiment_score_4",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.462,
+      "normalizer": "fnd23_tot_revenue",
+      "normalizer_coverage": 0.912,
+      "normalizer_alpha_pct": 0.9352
+    },
+    {
+      "main_anchor": "median_neutral_sentiment_score_5",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.462,
+      "normalizer": "assets_total_2",
+      "normalizer_coverage": 0.96,
+      "normalizer_alpha_pct": 0.9352
+    },
+    {
+      "main_anchor": "median_positive_sentiment_score_2",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.462,
+      "normalizer": "fnd23_tot_assets",
+      "normalizer_coverage": 0.96,
+      "normalizer_alpha_pct": 0.9815
+    },
+    {
+      "main_anchor": "median_positive_sentiment_score_3",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.462,
+      "normalizer": "fnd23_tot_revenue",
+      "normalizer_coverage": 0.912,
+      "normalizer_alpha_pct": 0.9352
+    },
+    {
+      "main_anchor": "median_positive_sentiment_score_4",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.462,
+      "normalizer": "assets_total_2",
+      "normalizer_coverage": 0.96,
+      "normalizer_alpha_pct": 0.9352
+    },
+    {
+      "main_anchor": "minimum_negative_sentiment_score_5",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.462,
+      "normalizer": "fnd23_tot_assets",
+      "normalizer_coverage": 0.96,
+      "normalizer_alpha_pct": 0.9815
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "locations": [
+    "https://api.worldquantbrain.com/simulations/1wDiVL72Q4hE9zRwFfzyFSY",
+    "https://api.worldquantbrain.com/simulations/minTk7dQ57iaHtDSwqTKzx",
+    "https://api.worldquantbrain.com/simulations/76CLOgTh5ag9fwCTFCXu7c",
+    "https://api.worldquantbrain.com/simulations/eIB9754y4lKaukA1zd6Ved",
+    "https://api.worldquantbrain.com/simulations/YVJdp9o34tsabpmIfienZg",
+    "https://api.worldquantbrain.com/simulations/3rR6qMeDK4Aq8W21dtlH3PsF",
+    "https://api.worldquantbrain.com/simulations/4AMLVe7Gg4h0cdeD57LldkJ",
+    "https://api.worldquantbrain.com/simulations/gbBg76954pibMPOwiLpRlT"
+  ],
+  "submitted_at": 1793114720,
+  "items": [
+    {
+      "id": 1,
+      "type": "B91_S1_PWR4_D13_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 11 ops: Crown Synthesis. Direct fusion of Sharpe 1.66 (88Romwl7) with Decay 13 TO 12.6% lock (E5675W7r), targeting Fitness >= 0.98."
+    },
+    {
+      "id": 2,
+      "type": "B91_S2_PWR4_D13_OUT9",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 11 ops: Outer 9d horizon release. Reduces outer smoothing lag by 1 day to boost Returns toward 4.45% while holding TO at ~12.7%."
+    },
+    {
+      "id": 3,
+      "type": "B91_S3_PWR4_D13_OUT8",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 8)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 11 ops: Outer 8d horizon. Outer 8d previously generated 4.38% return, testing if fusion with Power 4.0 and Decay 13 breaks Returns >= 4.50%."
+    },
+    {
+      "id": 4,
+      "type": "B91_S4_PWR38_D13_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 3.8), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 11 ops: Sentiment Power 3.8 under Decay 13. Broadens headline activation window to test if Sharpe rises to >= 1.68."
+    },
+    {
+      "id": 5,
+      "type": "B91_S5_PWR38_D12_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 3.8), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 11 ops: Sentiment Power 3.8 under Decay 12. Pure signal SNR response benchmark for exponent 3.8."
+    },
+    {
+      "id": 6,
+      "type": "B91_S6_PWR4_WINS27_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.7), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 11 ops: Power 4.0 + Winsorize std=2.7 under Decay 13. Fuses higher returns of std=2.7 (4.35%) with Sharpe 1.66 and TO 12.6%."
+    },
+    {
+      "id": 7,
+      "type": "B91_S7_PWR4_TRUNC020_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.02,
+      "optimize_reason": "Slot 7: 11 ops: Power 4.0 with 2% truncation and Decay 13. Reduces portfolio tail volatility to push Sharpe towards 1.70."
+    },
+    {
+      "id": 8,
+      "type": "B91_S8_PWR42_D13_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.2), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 11 ops: Sentiment Power 4.2 under Decay 13. Concentrates conviction onto the absolute top tier headlines."
+    }
+  ]
+}

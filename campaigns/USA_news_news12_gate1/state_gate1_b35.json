@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/1d4myPgCs5ilb35jExhBOWC",
+  "submitted_at": 1792994541,
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_REL_SQUARED_D24",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), power(divide(news_relevance_score_2, 100), 2)), 8), subindustry)",
+      "optimize_reason": "Squared normalized relevance (rel/100)^2. Aggressively filters out low-relevance noise (<50) to fix 2015-2017 and 2020 drawdowns."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_REL_LINEAR_D24",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), divide(news_relevance_score_2, 100)), 8), subindustry)",
+      "optimize_reason": "Linear normalized relevance (rel/100) weighting under 8-day decay and decay 24."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_REL_CUBIC_D24",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), power(divide(news_relevance_score_2, 100), 3)), 8), subindustry)",
+      "optimize_reason": "Cubic relevance filter: only acts on pristine high-relevance breaking news (>80)."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_COUNT_WEIGHTED_CUBIC",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), log(add(news_item_count_transfer, 1))), 8), subindustry)",
+      "optimize_reason": "Item count logarithm weighting: stocks with 0 PR events receive 0 weight, completely silencing quiet-period noise."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_COUNT_FILTERED_D24",
+      "expression": "group_rank(ts_decay_linear(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), news_item_count_transfer)), 8), subindustry)",
+      "optimize_reason": "Linear PR event count weighting: proportional exposure to event frequency."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_SQRT_COUNT_D24",
+      "expression": "group_rank(ts_decay_linear(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_item_count_transfer))), 8), subindustry)",
+      "optimize_reason": "Square root event count filter: completely zeros out quiet stocks while concave damping active event counts."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_REL_GATE_THRESHOLD",
+      "expression": "group_rank(ts_decay_linear(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), trade_when(greater(news_relevance_score_2, 50), 1, 0))), 8), subindustry)",
+      "optimize_reason": "Hard relevance gate: only trades when relevance exceeds 50, zero weight otherwise."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_SUM_SENT_REL_CUBIC",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(sum_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 8), subindustry)",
+      "optimize_reason": "Total volume-aggregated sentiment (sum_sentiment) naturally zeros out on zero-event days."
+    }
+  ]
+}

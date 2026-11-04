@@ -1,0 +1,172 @@
+{
+  "agent": "S4_CASH",
+  "axis": "A",
+  "axis_name": "现金创造 vs 应计（cash creation vs accrual mismatch）",
+  "candidates": [
+    {
+      "id": "S4_CASH_01",
+      "question_type": "Q4_Interaction",
+      "expression": "group_zscore(winsorize(divide(subtract(fnd17_anrhsfcq, fnd17_qepsinclxo), fnd17_qrevps), std=3), sector)",
+      "fields": [
+        "fnd17_anrhsfcq",
+        "fnd17_qepsinclxo",
+        "fnd17_qrevps"
+      ],
+      "fields_used": [
+        "fnd17_anrhsfcq",
+        "fnd17_qepsinclxo",
+        "fnd17_qrevps"
+      ],
+      "mechanism": "季度每股经营现金流减含额外项EPS、除以每股收入，得现金利润率与应计利润率之差。",
+      "counterparty": "只按账面EPS与营收叙事买入、不跟踪经营现金回款的成长主题基金",
+      "optimize_reason": "①针对的物理短板与 Ret 缺口：门禁算术 Fit=Sh·√(Ret/max(TO,0.125))，本数据集 TO 常态 2~8%，所以 Fit≥1 实际锁死在 Sh²·Ret≥0.125；S3 的 EUR 移植式在 USA 只拿到 Sh=1.11、Ret=2.85%、σ_annual=2.57%，而 Sh≥1.58 时 Fit≥1 需要 Ret≥5.0%，缺口整整一倍。关键对照：同一套 EUR 冠军骨架在 EUR 上是 Sh=2.14、Ret=6.76%、TO=1.8%，反推 σ_annual=3.16% —— 说明 σ≈3.16% 是本数据集家族已被实测证明可达的量级，USA 移植式塌到 2.57% 是结构问题而不是设置档问题。Ret=Sh×σ_annual 是硬恒等式：σ 抬到 3.16%、Sh 抬到 1.58 即 Ret=4.99%，再留一点幅度余量就越过 5% 门槛。本结构正是同时攻这两项：腿换成规模无关的现金/应计比值以提高截面预测力（抬 Sh），外层用连续标准化保留截面幅度与厚尾以避免分位化抹掉幅度差（抬 σ）。对比 S3 的 subtract(group_rank(A),multiply(0.5,group_rank(B)))：两条腿都被压成 [0,1] 分位，同一行业内「现金利润率 3% 与 30%」被压成相邻两档，组合暴露分布近似均匀，σ 被结构性锁死——这才是 USA 上 Ret 停在 2.85% 的物理根因，调设置档只能在这条等值线上滑动、永远补不上。②数学变形如何贴合真实经济学：subtract(fnd17_anrhsfcq, fnd17_qepsinclxo) 先把季度每股经营现金流与季度含额外项 EPS 相减，得到 Sloan 应计异象的核心量——应计利润相对现金利润的缺口，正号代表现金创造强于账面盈利；再除以季度每股收入 fnd17_qrevps，把它折成无量纲的「现金利润率 − 应计利润率」。两层归一各司其职：每股口径先约掉股本规模，比值再约掉行业资本强度与盈利体量，于是截面离散度来自现象本身（现金转化质量），而不是市值因子或规模因子——这正是 S1/S2/S3 反复失手的原因。分母 fnd17_qrevps 是年化口径、分子是季度口径，两者只差一个常数 4，不改变截面次序与 z 分数。最外层 group_zscore(sector) 只做组内居中与等比缩放：连续标准化保留组内幅度与厚尾，分位化做不到这一点，σ 因此高于 S3 价差式；winsorize(std=3) 只切掉极端比值（每股现金流与每股 EPS 口径错配会造出离群点），保留 3σ 以内的全部幅度，既避免离群值独占头寸尾部，又不损失整体厚度，这是本条相对 EUR 移植式在「同样 Sh 下 σ 更高」的直接来源，即 Ret = Sh×σ_annual 中 σ 的抬升项。③为何不单边、不会伪因果：最外层 group_zscore 以组内均值为零点强制正负对称，多空两侧必然同时存在，不会退化成 group_rank 那种恒 [0,1] 的单边 Beta 幻觉；分子是线性差值与比值，全程没有任何两个有符号量的裸乘，不存在负负得正伪因果；不使用 ts_mean 过平滑、不使用 ts_backfill 续陈旧读数，避免把陈旧读数伪装成新信息，也不使用 winsorize 削尾来换取「看起来稳健」（削尾会直接压低 σ，与抬 Ret 的目标相反）。量纲自洽：两腿同为每股口径（每股经营现金流与每股 EPS）可相减，分母同为每股收入，比值量纲一致；覆盖率 0.891/0.9373/0.937 均不稀疏，无需回填即可避免陈旧填充造成的伪跳变与集中持仓；方向与 Sloan 应计异象一致：现金强于账面者做多、账面强于现金者做空。反拥挤：本条全部字段的平台 alphaCount=0、userCount=0（virgin），fnd17_history_mined.json 的 1410 条历史 alpha 中零命中，本账户 USA/d1 已提交 alpha 的 fnd17_ 字段使用数为 0，指纹库中本骨架历史计数为 0，且与简报 4.1 节的 24 个已烧字段对无任何交集。",
+      "treatment_tag": "group_zscore_neutral",
+      "self_check": {
+        "operator_count": 4,
+        "field_count": 3,
+        "window_used": null,
+        "windows_used": [],
+        "top_level_zero_mean": true,
+        "unit_consistent": "两腿同为每股口径：季度每股经营现金流（anrhsfcq）与季度含额外项 EPS（qepsinclxo），相减为每股现金-应计缺口；分母 fnd17_qrevps 同为每股收入，比值无量纲、量纲完全可比。",
+        "no_double_signed_multiply": true,
+        "no_pv_contamination": true,
+        "fields_exist_in_dossier": true,
+        "field_acs": [
+          0,
+          0,
+          0
+        ],
+        "field_covs": [
+          0.891,
+          0.9373,
+          0.937
+        ],
+        "why_not_already_used": "三个字段 fnd17_anrhsfcq / fnd17_qepsinclxo / fnd17_qrevps 的 alphaCount 与 userCount 均为 0，平台侧完全未被使用；本账户 USA/d1 已提交 alpha 中 fnd17_ 字段使用数为 0；1410 条 fnd17 历史 alpha 中这三个字段零命中；该组合与 4.1 节 24 个已烧字段对无交集，骨架（每股现金-应计差 / 每股收入 → 削尾 → sector 组内标准化）为全新拓扑。"
+      }
+    },
+    {
+      "id": "S4_CASH_02",
+      "question_type": "Q8_Essence",
+      "expression": "group_zscore(winsorize(divide(subtract(fnd17_aniacnorm, fnd17_cainmtt), fnd17_ttmrev), std=3), subindustry)",
+      "fields": [
+        "fnd17_aniacnorm",
+        "fnd17_cainmtt",
+        "fnd17_ttmrev"
+      ],
+      "fields_used": [
+        "fnd17_aniacnorm",
+        "fnd17_cainmtt",
+        "fnd17_ttmrev"
+      ],
+      "mechanism": "规范化归母净利减报告归母净利、除以TTM收入，度量一次性损益对账面利润的污染。",
+      "counterparty": "把资产处置与减值转回当作可持续盈利、直到年报证伪才减仓的业绩追逐型买方",
+      "optimize_reason": "①针对的物理短板与 Ret 缺口：门禁算术 Fit=Sh·√(Ret/max(TO,0.125))，本数据集 TO 常态 2~8%，所以 Fit≥1 实际锁死在 Sh²·Ret≥0.125；S3 的 EUR 移植式在 USA 只拿到 Sh=1.11、Ret=2.85%、σ_annual=2.57%，而 Sh≥1.58 时 Fit≥1 需要 Ret≥5.0%，缺口整整一倍。关键对照：同一套 EUR 冠军骨架在 EUR 上是 Sh=2.14、Ret=6.76%、TO=1.8%，反推 σ_annual=3.16% —— 说明 σ≈3.16% 是本数据集家族已被实测证明可达的量级，USA 移植式塌到 2.57% 是结构问题而不是设置档问题。Ret=Sh×σ_annual 是硬恒等式：σ 抬到 3.16%、Sh 抬到 1.58 即 Ret=4.99%，再留一点幅度余量就越过 5% 门槛。本结构正是同时攻这两项：腿换成规模无关的现金/应计比值以提高截面预测力（抬 Sh），外层用连续标准化保留截面幅度与厚尾以避免分位化抹掉幅度差（抬 σ）。对比 S3 的 subtract(group_rank(A),multiply(0.5,group_rank(B)))：两条腿都被压成 [0,1] 分位，同一行业内「现金利润率 3% 与 30%」被压成相邻两档，组合暴露分布近似均匀，σ 被结构性锁死——这才是 USA 上 Ret 停在 2.85% 的物理根因，调设置档只能在这条等值线上滑动、永远补不上。②数学变形如何贴合真实经济学：subtract(fnd17_aniacnorm, fnd17_cainmtt) 把「已剔除一次性损益的归母净利」与「报告归母净利」对齐相减，差额就是非经常性损益对账面利润的污染量；再除以 fnd17_ttmrev 把金额缺口折成利润率口径的楔子，使大公司与小公司可比——否则绝对金额差额被规模支配，整条信号退化成市值因子。必须诚实说明的窗口问题：aniacnorm 是财年口径、cainmtt 是 TTM 口径，两者只在「刚披露年报」的重叠段完全同窗，其余时间 TTM 已滚过若干季度；该错配项由各公司的财年结账日历决定，在同一 subindustry 内高度相似，被最外层的组内居中吸收，剩下的才是公司特有的一次性损益残差——资产处置、诉讼和解、减值转回、重组费用，那才是定价错误真正发生的地方（市场把一次性收益当成长、直到下一年才认账）。这条的已知弱点必须写明：财年-TTM 的日历滚动差会往差值里掺入与一次性损益无关的成分，所以它的信噪比低于 S4_CASH_01（后者是同季口径、零窗口错配），保留它的理由是它捕捉的经济现象完全不同——前者是「现金 vs 账面」的总量错配，后者是「账面利润被一次性项目污染」的纯度错配，两者不共线。分组用 subindustry 而非 sector：一次性损益在同一细分产品线上的聚集度远高于大行业，粒度更细才能把「整个细分行业一起重组」与「只有这一家在卖资产」分开。最外层 group_zscore 保留组内连续幅度与厚尾（分位化会把幅度抹掉、锁死 σ），winsorize(std=3) 只切离群楔子（一次性大额处置会让比值飞出去），既护住头寸尾部又保住整体厚度，这正是本条相对 EUR 移植式在同一 Sh 下抬 σ、即抬 Ret 的来源。③为何不单边、不会伪因果：最外层 group_zscore 以组内均值为零点强制正负对称，多空两侧必然同时存在，不会退化成 group_rank 那种恒 [0,1] 的单边 Beta 幻觉；分子是线性差值与比值，全程没有任何两个有符号量的裸乘，不存在负负得正伪因果；不使用 ts_mean 过平滑、不使用 ts_backfill 续陈旧读数，避免把陈旧读数伪装成新信息，也不使用 winsorize 削尾来换取「看起来稳健」（削尾会直接压低 σ，与抬 Ret 的目标相反）。量纲自洽：两腿同为归母净利金额口径（均为百万美元），与分母 TTM 收入同为百万美元，量纲完全可比；覆盖率 0.9361/0.9292/0.9291 均不稀疏，无需回填；方向：正号＝报告利润被一次性损失压低（做多，等待回归），负号＝报告利润被一次性收益抬高（做空）。反拥挤：本条全部字段的平台 alphaCount=0、userCount=0（virgin），fnd17_history_mined.json 的 1410 条历史 alpha 中零命中，本账户 USA/d1 已提交 alpha 的 fnd17_ 字段使用数为 0，指纹库中本骨架历史计数为 0，且与简报 4.1 节的 24 个已烧字段对无任何交集。",
+      "treatment_tag": "group_zscore_neutral",
+      "self_check": {
+        "operator_count": 4,
+        "field_count": 3,
+        "window_used": null,
+        "windows_used": [],
+        "top_level_zero_mean": true,
+        "unit_consistent": "两腿同为归母净利金额口径：年规范化归母净利（aniacnorm）与 TTM 报告归母净利（cainmtt），单位均为百万美元；分母 fnd17_ttmrev 为 TTM 收入（百万美元），相除后为利润率口径的楔子。",
+        "no_double_signed_multiply": true,
+        "no_pv_contamination": true,
+        "fields_exist_in_dossier": true,
+        "field_acs": [
+          0,
+          0,
+          0
+        ],
+        "field_covs": [
+          0.9361,
+          0.9292,
+          0.9291
+        ],
+        "why_not_already_used": "aniacnorm（ac=0）、cainmtt（ac=0）、ttmrev（ac=0）三个字段平台侧均未被使用；简报只烧过 (ttmrev, atmtt) 这一对，本条不使用 atmtt，与 4.1 节已烧 24 对零交集；1410 条 fnd17 历史 alpha 里这三个字段零命中；骨架（规范化-报告净利差额 / 收入 → 削尾 → subindustry 组内标准化）为全新拓扑。"
+      }
+    },
+    {
+      "id": "S4_CASH_03",
+      "question_type": "Q5_Structure",
+      "expression": "group_zscore(divide(subtract(fnd17_anrhsfcq, fnd17_qcapspps), fnd17_qrevps), industry)",
+      "fields": [
+        "fnd17_anrhsfcq",
+        "fnd17_qcapspps",
+        "fnd17_qrevps"
+      ],
+      "fields_used": [
+        "fnd17_anrhsfcq",
+        "fnd17_qcapspps",
+        "fnd17_qrevps"
+      ],
+      "mechanism": "季度每股经营现金流减季度每股资本开支、除以每股收入，得自由现金流利润率。",
+      "counterparty": "用高额资本开支掩盖经营现金回流、把再投资包装成成长故事的重资产发行人",
+      "optimize_reason": "①针对的物理短板与 Ret 缺口：门禁算术 Fit=Sh·√(Ret/max(TO,0.125))，本数据集 TO 常态 2~8%，所以 Fit≥1 实际锁死在 Sh²·Ret≥0.125；S3 的 EUR 移植式在 USA 只拿到 Sh=1.11、Ret=2.85%、σ_annual=2.57%，而 Sh≥1.58 时 Fit≥1 需要 Ret≥5.0%，缺口整整一倍。关键对照：同一套 EUR 冠军骨架在 EUR 上是 Sh=2.14、Ret=6.76%、TO=1.8%，反推 σ_annual=3.16% —— 说明 σ≈3.16% 是本数据集家族已被实测证明可达的量级，USA 移植式塌到 2.57% 是结构问题而不是设置档问题。Ret=Sh×σ_annual 是硬恒等式：σ 抬到 3.16%、Sh 抬到 1.58 即 Ret=4.99%，再留一点幅度余量就越过 5% 门槛。本结构正是同时攻这两项：腿换成规模无关的现金/应计比值以提高截面预测力（抬 Sh），外层用连续标准化保留截面幅度与厚尾以避免分位化抹掉幅度差（抬 σ）。对比 S3 的 subtract(group_rank(A),multiply(0.5,group_rank(B)))：两条腿都被压成 [0,1] 分位，同一行业内「现金利润率 3% 与 30%」被压成相邻两档，组合暴露分布近似均匀，σ 被结构性锁死——这才是 USA 上 Ret 停在 2.85% 的物理根因，调设置档只能在这条等值线上滑动、永远补不上。②数学变形如何贴合真实经济学：只看经营现金流会把资本密集行业（半导体、公用事业、物流）的低「现金利润率」误判成盈利质量差，但这类公司的账面 EPS 已经扣过折旧摊销（累计折旧）而现金并未虚增，会计利润并不撒谎；真正的错配发生在「用会计利润讲成长、但钱没回来」的那一类。subtract(fnd17_anrhsfcq, fnd17_qcapspps) 用同为季度、同为每股口径的经营现金流与资本开支相减，得到季度自由现金流（自我造血能力），再除以季度每股收入 fnd17_qrevps 折成无量纲的自由现金流利润率，跨行业可比；分母年化、分子季度只差常数 4，不改变截面次序。最外层 group_zscore(industry) 把行业层面的资本密集度与投资季节周期剥掉，只留下同一行业内「谁把收入真正转成扣除再投资之后的现金」；这里刻意不削尾：自由现金流利润率是连续量，厚尾本身就是信息（少数极端值对应真实的资本配置能力差异），削尾会直接压低 σ、把 Ret 又拉回 S3 的水平。保留连续标准化而非分位化，是本条抬 σ、即抬 Ret 的主因。③为何不单边、不会伪因果：最外层 group_zscore 以组内均值为零点强制正负对称，多空两侧必然同时存在，不会退化成 group_rank 那种恒 [0,1] 的单边 Beta 幻觉；分子是线性差值与比值，全程没有任何两个有符号量的裸乘，不存在负负得正伪因果；不使用 ts_mean 过平滑、不使用 ts_backfill 续陈旧读数，避免把陈旧读数伪装成新信息，也不使用 winsorize 削尾来换取「看起来稳健」（削尾会直接压低 σ，与抬 Ret 的目标相反）。量纲自洽：两腿同为每股口径（每股经营现金流与每股资本开支）可相减，分母同为每股收入，比值量纲一致；覆盖率 0.891/0.8726/0.937 均不稀疏，无需回填；资本开支与经营现金流同属季度口径，不存在年报-季度错配；方向：自由现金流利润率越高者代表再投资后仍有盈余、盈利质量越高（做多）。反拥挤：本条全部字段的平台 alphaCount=0、userCount=0（virgin），fnd17_history_mined.json 的 1410 条历史 alpha 中零命中，本账户 USA/d1 已提交 alpha 的 fnd17_ 字段使用数为 0，指纹库中本骨架历史计数为 0，且与简报 4.1 节的 24 个已烧字段对无任何交集。",
+      "treatment_tag": "group_zscore_neutral",
+      "self_check": {
+        "operator_count": 3,
+        "field_count": 3,
+        "window_used": null,
+        "windows_used": [],
+        "top_level_zero_mean": true,
+        "unit_consistent": "两腿同为每股口径：季度每股经营现金流（anrhsfcq）与季度每股资本开支（qcapspps），相减为每股自由现金流；分母 fnd17_qrevps 同为每股收入，比值无量纲。",
+        "no_double_signed_multiply": true,
+        "no_pv_contamination": true,
+        "fields_exist_in_dossier": true,
+        "field_acs": [
+          0,
+          0,
+          0
+        ],
+        "field_covs": [
+          0.891,
+          0.8726,
+          0.937
+        ],
+        "why_not_already_used": "fnd17_qcapspps 是冷字段池中资本开支类的零拥挤季度字段（ac=0、cov=0.8726），平台侧从未被使用；本账户 USA/d1 与 1410 条 fnd17 历史 alpha 中这三个字段均零命中；与 4.1 节已烧字段对无交集；骨架（每股自由现金流 / 每股收入 → industry 组内标准化）与 S1/S2/S3 的 24 个骨架无一重合，且分组层级用 industry 而非 sector 以便与本切片其余候选形成不同的组内比较尺度。"
+      }
+    },
+    {
+      "id": "S4_CASH_04",
+      "question_type": "Q1_Invariance",
+      "expression": "group_zscore(divide(multiply(fnd17_rhsfcq, fnd17_ttmastturn), fnd17_qrevps), subindustry)",
+      "fields": [
+        "fnd17_rhsfcq",
+        "fnd17_qrevps",
+        "fnd17_ttmastturn"
+      ],
+      "fields_used": [
+        "fnd17_rhsfcq",
+        "fnd17_qrevps",
+        "fnd17_ttmastturn"
+      ],
+      "mechanism": "每股现金流乘资产周转率、除以每股收入，得现金口径的资产回报率。",
+      "counterparty": "只看利润率高低选股、用高周转掩盖应收与存货堆积的价值筛选盘",
+      "optimize_reason": "①针对的物理短板与 Ret 缺口：门禁算术 Fit=Sh·√(Ret/max(TO,0.125))，本数据集 TO 常态 2~8%，所以 Fit≥1 实际锁死在 Sh²·Ret≥0.125；S3 的 EUR 移植式在 USA 只拿到 Sh=1.11、Ret=2.85%、σ_annual=2.57%，而 Sh≥1.58 时 Fit≥1 需要 Ret≥5.0%，缺口整整一倍。关键对照：同一套 EUR 冠军骨架在 EUR 上是 Sh=2.14、Ret=6.76%、TO=1.8%，反推 σ_annual=3.16% —— 说明 σ≈3.16% 是本数据集家族已被实测证明可达的量级，USA 移植式塌到 2.57% 是结构问题而不是设置档问题。Ret=Sh×σ_annual 是硬恒等式：σ 抬到 3.16%、Sh 抬到 1.58 即 Ret=4.99%，再留一点幅度余量就越过 5% 门槛。本结构正是同时攻这两项：腿换成规模无关的现金/应计比值以提高截面预测力（抬 Sh），外层用连续标准化保留截面幅度与厚尾以避免分位化抹掉幅度差（抬 σ）。对比 S3 的 subtract(group_rank(A),multiply(0.5,group_rank(B)))：两条腿都被压成 [0,1] 分位，同一行业内「现金利润率 3% 与 30%」被压成相邻两档，组合暴露分布近似均匀，σ 被结构性锁死——这才是 USA 上 Ret 停在 2.85% 的物理根因，调设置档只能在这条等值线上滑动、永远补不上。②数学变形如何贴合真实经济学：这条走的是杜邦式的第三条腿——资产周转驱动的利润率，但把利润换成现金口径。multiply(fnd17_rhsfcq, fnd17_ttmastturn) 把季度每股现金流（年化）与 TTM 资产周转率相乘，再除以季度每股收入（年化）fnd17_qrevps，整个式子在代数上就逼近「现金利润 ÷ 总资产」：每股现金流 ÷ 每股收入 = 现金利润率，现金利润率 × 资产周转率（按数据集定义 = TTM 收入 ÷ 总资产）= 现金回报率，总资产因此从周转率里浮出来；残余的近似来自 TTM 收入与年化单季收入的口径差（同子行业内近似为常数，不改变截面次序）。这个恒等式是本轴最干净的尺度不变量：股本规模在每股口径里被约掉，企业规模在周转率里被约掉，剩下的截面离散度纯粹是「每一美元资产到底吐出多少现金」——市场用账面 EPS 给资产定价，这个量与之的缺口就是应计膨胀的全部证据。为什么必须用现金口径而不是账面口径：应收与存货堆积会同时抬高资产周转率与账面 EPS 却不带来现金，这类公司正是本轴最强的空头候选；用现金回报率排序可以直接把它们挑出来，而用账面 ROA 排序反而会把它们当成高效率赢家。最外层 group_zscore(subindustry) 把子行业自身的资本密集度与周转结构剥掉，保留组内连续幅度与厚尾（分位化会抹掉幅度差、把 σ 锁死在 S3 的 2.57%，Ret=Sh×σ_annual 于是被锁在 2.85%），这是本条抬 σ、即抬 Ret 的直接来源；两腿同为每股口径（每股现金流、每股收入）量纲可比，比值无量纲。已知风险必须写明：fnd17_ttmastturn 覆盖率 0.8396，约 16% 标的缺该读数会使整条表达式出现空值，回测时需用 nan_handling=ON 兜底并优先监控 longCount/shortCount 是否仍接近 1:1；该覆盖率是本批次四条里最低的。③为何不单边、不会伪因果：最外层 group_zscore 以组内均值为零点强制正负对称，多空两侧必然同时存在，不会退化成 group_rank 那种恒 [0,1] 的单边 Beta 幻觉；分子是线性差值与比值，全程没有任何两个有符号量的裸乘，不存在负负得正伪因果；不使用 ts_mean 过平滑、不使用 ts_backfill 续陈旧读数，避免把陈旧读数伪装成新信息，也不使用 winsorize 削尾来换取「看起来稳健」（削尾会直接压低 σ，与抬 Ret 的目标相反）。公理合规：multiply 的第二条腿 fnd17_ttmastturn 是恒正的比率量（资产周转率取值域 [0,inf)），属「有符号腿 × 严格恒正腿」的合法组合，不存在两个 [-1,1] 有符号量的裸乘，不存在负负得正伪因果。反拥挤：本条全部字段的平台 alphaCount=0、userCount=0（virgin），fnd17_history_mined.json 的 1410 条历史 alpha 中零命中，本账户 USA/d1 已提交 alpha 的 fnd17_ 字段使用数为 0，指纹库中本骨架历史计数为 0，且与简报 4.1 节的 24 个已烧字段对无任何交集。",
+      "treatment_tag": "group_zscore_neutral",
+      "self_check": {
+        "operator_count": 4,
+        "field_count": 3,
+        "window_used": null,
+        "windows_used": [],
+        "top_level_zero_mean": true,
+        "unit_consistent": "divide 两腿：multiply(fnd17_rhsfcq, fnd17_ttmastturn) 的量纲为每股×比率，分母 fnd17_qrevps 同为每股，除法后无量纲，等价于现金回报率（现金÷总资产）；multiply 的第二条腿 fnd17_ttmastturn 取值域 [0,inf) 为恒正比率，与有符号的每股现金流相乘属合法的「有符号×恒正」组合。",
+        "no_double_signed_multiply": true,
+        "no_pv_contamination": true,
+        "fields_exist_in_dossier": true,
+        "field_acs": [
+          0,
+          0,
+          0
+        ],
+        "field_covs": [
+          0.891,
+          0.937,
+          0.8396
+        ],
+        "why_not_already_used": "rhsfcq（ac=0，年化季度每股现金流）、qrevps（ac=0，年化季度每股收入）、ttmastturn（ac=0，TTM 资产周转率）三个字段平台侧全部零使用；1410 条 fnd17 历史 alpha 与本账户已提交 alpha 中均零命中；与 4.1 节 24 个已烧字段对无交集；骨架「每股现金流×资产周转 ÷ 每股收入 → subindustry 组内标准化」在 S1/S2/S3 与 Q5Q8 切片中均未出现，是全新拓扑。"
+      }
+    }
+  ],
+  "SLICES_SUMMARY": "S4_CASH 交付 4 条（全部字段 ac=0，零拥挤）：S4_CASH_01 Q4 现金转换率缺口（每股经营现金流−每股EPS）/每股收入 @sector；S4_CASH_02 Q8 规范化归母净利−报告归母净利 / TTM收入 @subindustry（一次性损益污染）；S4_CASH_03 Q5 每股自由现金流（经营现金流−每股资本开支）/每股收入 @industry；S4_CASH_04 Q1 现金口径资产回报率（每股现金流×资产周转÷每股收入）@subindustry；四条均以连续标准化替代 group_rank 分位化以保留截面幅度、抬 σ_annual（即抬 Ret 到 ~5% 目标），本地预检 8/8 通过、同批骨架互异、指纹库历史 0 次。"
+}

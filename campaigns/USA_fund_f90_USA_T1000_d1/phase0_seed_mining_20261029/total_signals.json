@@ -1,0 +1,132 @@
+{
+  "dataset_id": "fundamental90",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "phase": "PHASE_0_OFFLINE",
+  "submission_forbidden": true,
+  "all_green": true,
+  "seeds": [
+    {
+      "id": "SEED_Q1_INVARIANCE",
+      "question_type": "Q1 Invariance",
+      "fields_used": [
+        "fnd90_game_cash_flow_coverage",
+        "fnd90_game_short_term_debt"
+      ],
+      "expression": "subtract(vec_avg(fnd90_game_cash_flow_coverage), vec_avg(fnd90_game_short_term_debt))",
+      "idea": "Liquidity capacity relative to refinancing pressure.",
+      "rationale": "Cash-flow debt coverage is a solvency buffer, while short-term debt is a near-term refinancing burden. Their within-dataset spread encodes the balance-sheet resilience that broad leverage screens miss; both fields have adequate coverage and only 1-2 recorded alphas.",
+      "counterparty": "Investors extrapolating reported profitability without separating cash conversion from maturity concentration.",
+      "falsifiable": "Reject if results are explained by financial-sector exposure or if either component alone accounts for the spread's performance.",
+      "times": 0,
+      "status": "UNTESTED"
+    },
+    {
+      "id": "SEED_Q2_DYNAMICS",
+      "question_type": "Q2 Dynamics",
+      "fields_used": [
+        "fnd90_game_gma_chg",
+        "fnd90_game_asset_turnover_chg"
+      ],
+      "expression": "subtract(vec_avg(fnd90_game_gma_chg), vec_avg(fnd90_game_asset_turnover_chg))",
+      "idea": "Profitability improvement not accompanied by asset-use improvement.",
+      "rationale": "Gross-margin change captures pricing/cost economics; asset-turnover change captures utilization. Their divergence separates margin-led improvement from broad operational improvement, where the former may prove less durable. Both are direct change features rather than extra transforms of old levels.",
+      "counterparty": "Simple profitability-momentum allocators that treat all margin improvement as durable operating progress.",
+      "falsifiable": "Reject if the divergence is just a sector composition proxy or if asset-turnover change adds no independent information.",
+      "times": 0,
+      "status": "UNTESTED"
+    },
+    {
+      "id": "SEED_Q3_ANOMALY",
+      "question_type": "Q3 Anomaly",
+      "fields_used": [
+        "fnd90_game_gross_margin_vol",
+        "fnd90_game_eps_vol"
+      ],
+      "expression": "add(vec_avg(fnd90_game_gross_margin_vol), vec_avg(fnd90_game_eps_vol))",
+      "idea": "Joint instability in operating economics and reported earnings.",
+      "rationale": "Gross-margin volatility represents instability in unit economics; EPS volatility represents instability in the bottom line. A high joint level flags firms where operating noise propagates into earnings, potentially underpriced by investors who focus on average profitability. The signal is deliberately an anomaly/risk construct, not a claim of a single causal shock.",
+      "counterparty": "Quality screens based on average margins or earnings levels that overlook instability around those averages.",
+      "falsifiable": "Reject if the signal merely loads on size/industry or if either volatility field fully explains the joint score.",
+      "times": 0,
+      "status": "UNTESTED"
+    },
+    {
+      "id": "SEED_Q4_INTERACTION",
+      "question_type": "Q4 Interaction",
+      "fields_used": [
+        "fnd90_game_gma_chg",
+        "fnd90_game_accruals_vol"
+      ],
+      "expression": "subtract(vec_avg(fnd90_game_gma_chg), vec_avg(fnd90_game_accruals_vol))",
+      "idea": "Reported margin improvement discounted by accrual-quality uncertainty.",
+      "rationale": "Gross-margin improvement is a positive operating signal, but high accrual volatility weakens confidence that accounting earnings convert into repeatable cash economics. A difference of the two economic legs tests whether the market distinguishes credible improvement from fragile reported improvement; no PV input is used.",
+      "counterparty": "Investors buying margin acceleration without checking the reliability of accrual-based earnings.",
+      "falsifiable": "Reject if the accrual-quality leg has no incremental explanatory value or sign direction is unstable across subindustries.",
+      "times": 0,
+      "status": "UNTESTED"
+    },
+    {
+      "id": "SEED_Q5_STRUCTURE",
+      "question_type": "Q5 Structure",
+      "fields_used": [
+        "fnd90_game_inventory_days",
+        "fnd90_game_receivable_days"
+      ],
+      "expression": "add(vec_avg(fnd90_game_inventory_days), vec_avg(fnd90_game_receivable_days))",
+      "idea": "Working-capital cash-conversion drag from inventory and collections.",
+      "rationale": "Inventory days proxy time capital is tied in unsold goods; receivable days proxy time until sales become cash. Together they describe two distinct legs of the operating cash-conversion cycle, and a high combined burden can precede margin or liquidity stress. The form avoids a fragile ratio with uncertain denominator semantics.",
+      "counterparty": "Revenue-growth strategies that reward sales expansion without accounting for inventory accumulation or collection delays.",
+      "falsifiable": "Reject if industry business-model differences dominate and the two components do not add complementary information.",
+      "times": 0,
+      "status": "UNTESTED"
+    },
+    {
+      "id": "SEED_Q6_ACCUMULATION",
+      "question_type": "Q6 Accumulation",
+      "fields_used": [
+        "fnd90_game_optimism_sale",
+        "fnd90_game_eps_sur_vol"
+      ],
+      "expression": "ts_mean(subtract(vec_avg(fnd90_game_optimism_sale), vec_avg(fnd90_game_eps_sur_vol)), 20)",
+      "idea": "Persistent analyst optimism discounted by forecast-error instability.",
+      "rationale": "The spread contrasts a positive sales-expectation signal with instability in historical EPS forecast errors; a short moving mean is intended to retain a persistent miscalibration state rather than react to one noisy update. Fundamental event data are VECTOR, so both inputs are explicitly reduced before time-series processing.",
+      "counterparty": "Consensus-following portfolios that assume analyst optimism is equally informative across firms.",
+      "falsifiable": "Reject if field definitions reveal incompatible scales or if the moving average adds no stability relative to the raw spread.",
+      "times": 0,
+      "status": "UNTESTED"
+    },
+    {
+      "id": "SEED_Q7_RELATIVE",
+      "question_type": "Q7 Relative",
+      "fields_used": [
+        "fnd90_game_labor_efficiency_chg",
+        "fnd90_game_sg_a_inefficiency"
+      ],
+      "expression": "group_rank(subtract(vec_avg(fnd90_game_labor_efficiency_chg), vec_avg(fnd90_game_sg_a_inefficiency)), subindustry)",
+      "idea": "Within-subindustry operating-efficiency improvement net of overhead inefficiency.",
+      "rationale": "Subindustry ranks compare labor-efficiency change and SG&A inefficiency against peers facing similar production and cost structures. The rank spread reduces raw scale mismatch and asks whether a firm improves labor productivity while keeping overhead discipline; both fields have broad coverage in the local catalog.",
+      "counterparty": "Cross-industry quality models that compare structurally different cost bases on raw levels.",
+      "falsifiable": "Reject if the peer-relative construction is no better than either leg alone or if small peer groups create unstable ranks.",
+      "times": 0,
+      "status": "UNTESTED"
+    },
+    {
+      "id": "SEED_Q8_ESSENCE",
+      "question_type": "Q8 Essence",
+      "fields_used": [
+        "fnd90_qes_gamef_icfroe_1y",
+        "fnd90_qes_gamef_icfroe_3y"
+      ],
+      "expression": "subtract(vec_avg(fnd90_qes_gamef_icfroe_1y), vec_avg(fnd90_qes_gamef_icfroe_3y))",
+      "idea": "Near-term cash-return improvement relative to the longer-horizon baseline.",
+      "rationale": "The 1-year incremental cash-flow return captures recent change, while its 3-year counterpart anchors the longer-horizon path. Their spread targets the essence of an expectation gap: recent cash-return improvement or deterioration beyond the broader trend, without importing price data or assuming accounting quality equals market surprise.",
+      "counterparty": "Slow-moving quality allocators that rely on long-horizon averages and underweight recent fundamental inflection.",
+      "falsifiable": "Reject if the 1-year and 3-year fields are constructionally redundant or if their spread is dominated by reporting cadence artifacts.",
+      "times": 0,
+      "status": "UNTESTED"
+    }
+  ]
+}

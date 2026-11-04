@@ -1,0 +1,101 @@
+{
+  "batch_size": 8,
+  "all_passed": false,
+  "verdicts": [
+    {
+      "verdict": "REJECT",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": false,
+        "parsimony_check": true
+      },
+      "issues": [
+        "假设声称施加催化剂门控或非线性放大，但 AST 缺乏乘积/条件门控结构！"
+      ],
+      "signature": "a885cd497248aa8fb75c3e25a812533d42e3062e39ba8cb9f5faf5fc94f53443",
+      "reviewed_expr": "-group_rank(ts_decay_linear(ts_rank(ts_delta(pv96_acquisition_status,120),20),5), subindustry)"
+    },
+    {
+      "verdict": "REJECT",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": false,
+        "parsimony_check": true
+      },
+      "issues": [
+        "假设声称施加催化剂门控或非线性放大，但 AST 缺乏乘积/条件门控结构！"
+      ],
+      "signature": "e8af839cf4fcd0eceaa68614f55726447c12ca7cafe3f629d432265a61922122",
+      "reviewed_expr": "-group_rank(ts_backfill(ts_rank(ts_delta(pv96_acquisition_status,120),20),120), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "3dbb8ea62e114fc79a260e80c36527926e9889631127e15f7a6ee647a247b230",
+      "reviewed_expr": "add(subtract(group_rank(ts_rank(ts_delta(pv96_acquisition_status,120),60), subindustry), 0.5), ts_zscore(divide(pv96_ds12mnet, add(close,0.01)), 250))"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "fb768f4fdc5eb758d43a99290f2ff4e8e0748b1508a5cf3895c4469066de9651",
+      "reviewed_expr": "-ts_decay_linear(ts_rank(ts_delta(pv96_acquisition_status,60),20),10)"
+    },
+    {
+      "verdict": "REJECT",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": false,
+        "parsimony_check": true
+      },
+      "issues": [
+        "假设声称施加催化剂门控或非线性放大，但 AST 缺乏乘积/条件门控结构！"
+      ],
+      "signature": "a01e34230722a462db0fe8542623f1ad36c1af49687adb3cb6224415963545cd",
+      "reviewed_expr": "ts_zscore(divide(pv96_ds12mnet, add(close,0.01)), 250)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "e9ed3db43f52354ff7e4ca99acaa5bec6586a2cd5af49db08b21d29401525d62",
+      "reviewed_expr": "-group_rank(ts_backfill(ts_rank(ts_delta(pv96_acquisition_cp_stat,120),20),120), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "d7acea381916f9e3c145ade1afb9059c36e61578d0524ff099284447e477768e",
+      "reviewed_expr": "-group_zscore(ts_decay_linear(ts_rank(ts_delta(pv96_acquisition_status,120),20),5), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "a6bfc521a7f2f07c1a04f00a3a5b6e80f07efdb728cb334e157818463c5c4068",
+      "reviewed_expr": "-ts_decay_linear(ts_rank(ts_delta(pv96_acquisition_status,120),120),10)"
+    }
+  ],
+  "summary_hash": "fb2eebf947a39e9a7fd215071671ec12df84f55c8bc888f1bdf569ce8a970975"
+}

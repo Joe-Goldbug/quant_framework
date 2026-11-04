@@ -1,0 +1,376 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL10M",
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "正常化盈余与报表底线错配 (Normalization Gap)",
+      "field_semantics_mapping": "caiv 是剔除特殊/非常项目后的归属普通股正常化收益，代表可持续盈利能力；cinx 是含特殊项目的报表底线，是媒体、卖方与散户实际引用的 EPS 口径；eltq 是账面总权益，作为内生规模锚把\"两套口径之差\"转为可跨公司比较的净资产收益率差。三者同属损益-权益闭环，不需要任何外部量价字段。",
+      "economic_mechanism": "当公司连续计提重组、减值、诉讼和解等被归类为\"非常项目\"的损失时，cinx 被系统性压低而 caiv 保持稳定，差额为正且跨季度持续。市场锚定含特殊项目的报表底线，倾向于把\"反复出现的一次性损失\"当作永久性盈利能力衰减，过度下调估值与预期；而正常化口径显示核心盈利能力并未受损。随着后续季度不再计提，报表底线向正常化口径回归，形成正向盈利修正与估值修复。差额占权益比例越高，被错杀的幅度越大，未来超额收益越高。",
+      "expression": "divide(subtract(fnd23_intfvalld1_caiv, fnd23_intfvalld1_cinx), fnd23_intfvalld1_eltq)",
+      "fields_used": [
+        "fnd23_intfvalld1_caiv",
+        "fnd23_intfvalld1_cinx",
+        "fnd23_intfvalld1_eltq"
+      ],
+      "times": 2
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "正常化盈余与报表底线错配 (Normalization Gap)",
+      "field_semantics_mapping": "caiv 与 cinx 分别代表\"可持续盈利\"与\"报表盈利\"两套口径；tota 为总资产锚。此处刻意不用权益作分母：资不抵债公司的 eltq 为负，会使比率整体翻转符号，而总资产恒为正，可保住 GLB 全样本（含高杠杆周期行业）的一致性。两条腿各自除以同一资产锚，得到的是\"两种盈利口径下的资产回报率之差\"。",
+      "economic_mechanism": "这是 SEED_01 的资产口径稳健化表达。经济机理一致：特殊项目的反复计提让报表 ROA 与正常化 ROA 出现系统性裂口，而市场只对报表 ROA 定价。差别在于，用资产锚后信号捕捉的是\"资产创造可持续收益的能力\"，而非\"股东权益的账面回报\"，因此对杠杆结构差异免疫——在高杠杆的重资产行业（GLB 中占比很高）不会被债务放大效应扭曲，能更干净地隔离出\"会计口径错配\"这一单一风险源。",
+      "expression": "subtract(divide(fnd23_intfvalld1_caiv, fnd23_intfvalld1_tota), divide(fnd23_intfvalld1_cinx, fnd23_intfvalld1_tota))",
+      "fields_used": [
+        "fnd23_intfvalld1_caiv",
+        "fnd23_intfvalld1_cinx",
+        "fnd23_intfvalld1_tota"
+      ],
+      "times": 2
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "正常化盈余与报表底线错配 (Normalization Gap)",
+      "field_semantics_mapping": "caiv 与 cinx 之差是\"口径错配信号\"本身；eltq 是规模锚；ists(特殊项目合计，可正可负)是这批差额的来源与噪声强度。把 |ists| 加进分母，构造的是信噪比结构：当特殊项目规模相对权益巨大时，正常化与报表口径的差额更多来自会计分类的任意性而非真实经营差异，信号可信度应被自动压缩。",
+      "economic_mechanism": "并非所有\"正常化差额\"都值得下注。当一次性项目规模温和且反复出现时，它反映的是真实的持续经营摩擦（如年年重组的传统制造企业），市场对报表底线的过度反应最明显，修复弹性最大；而当特殊项目规模巨大（大额商誉减值、资产处置），其会计分类本身高度主观，且往往伴随真实的资产价值毁损，此时正常化口径的\"美化\"反而不可信。信噪比加权后，信号自动偏向\"温和而持续的口径错配\"，避开\"巨额一次性\"的伪信号，这是对 SEED_01 的重要风险修正。",
+      "expression": "divide(subtract(fnd23_intfvalld1_caiv, fnd23_intfvalld1_cinx), add(fnd23_intfvalld1_eltq, abs(fnd23_intfvalld1_ists)))",
+      "fields_used": [
+        "fnd23_intfvalld1_caiv",
+        "fnd23_intfvalld1_cinx",
+        "fnd23_intfvalld1_eltq",
+        "fnd23_intfvalld1_ists"
+      ],
+      "times": 2
+    },
+    {
+      "id": "SEED_21",
+      "cluster_ref": "正常化盈余与报表底线错配 (Normalization Gap) — 定向精修支线",
+      "fields_used": [
+        "fnd23_intfvalld1_caiv",
+        "fnd23_intfvalld1_cinx",
+        "fnd23_intfvalld1_tota"
+      ],
+      "field_semantics_mapping": "caiv 为剔除特殊项目后的正常化归属普通股收益，cinx 为含特殊项目的报表底线，tota 为总资产锚。二者之差除以总资产，得到\"两套利润口径下的资产回报率裂口\"。实测表明资产锚（tota）显著优于权益锚（eltq），且不加信噪比分母（|ists|）时信号最强——因为一次性项目规模本身就是裂口的经济来源，把它放进分母会稀释信号。",
+      "economic_mechanism": "公司在连续计提重组/减值/诉讼等非常项目时，报表底线被系统性压低而正常化利润保持稳定，形成持续的资产回报率裂口。市场锚定报表底线并把反复出现的一次性损失当作永久性盈利能力衰减，过度下调估值；随着计提停止，报表底线向正常化口径回归，形成正向盈利修正。SEED_02 实测：504 日裂口差分 + sector 组内排序 + COUNTRY 中性化取得 Sharpe 0.95、Margin 17.1bp、换手 4.5%，为全战役最强结构。本种子围绕该结构做窗口（252/504/630/756）×分组（sector/subindustry/market）×中性化（COUNTRY/SUBINDUSTRY/MARKET）×平滑（线性衰减/指数半衰/等权）的邻域精修，目标是跨过 |Sharpe|>=1.0 的初筛门槛。",
+      "expression": "divide(subtract(fnd23_intfvalld1_caiv, fnd23_intfvalld1_cinx), fnd23_intfvalld1_tota)",
+      "times": 0
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "费用刚性与经营杠杆不对称 (Cost Stickiness)",
+      "field_semantics_mapping": "rltr 是季度总营收（流量规模锚），agss 是销售/管理/行政费用合计（准固定成本）。两者同频同源，直接相减再相加构成有界的\"收入对管理开销的覆盖度\"：分子为收入扣除管理开销后的剩余，分母为收入与管理开销之和，本质上是对称化后的费用覆盖率，取值落在 (-1, 1) 且不依赖任何外部规模锚。",
+      "economic_mechanism": "SG&A 具有成本粘性：扩张时随收入同步增加，收缩时因人员与组织刚性难以下调。因此费用覆盖率高的公司在收入下行期利润下滑更平缓（缓冲厚），在收入上行期利润弹性更大（费用被摊薄）。卖方分析师普遍采用\"费用率线性外推\"，系统性低估这种不对称性，导致正向盈利惊喜集中在高覆盖率公司。该信号刻画的是经营杠杆的方向而非水平，因此对行业费用结构差异（重销售 vs 重研发）具有较强免疫力。",
+      "expression": "divide(subtract(fnd23_icsm_m_rltr, fnd23_icsm_m_agss), add(fnd23_icsm_m_rltr, fnd23_icsm_m_agss))",
+      "fields_used": [
+        "fnd23_icsm_m_rltr",
+        "fnd23_icsm_m_agss"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "费用刚性与经营杠杆不对称 (Cost Stickiness)",
+      "field_semantics_mapping": "prgs 是毛利（收入减营业成本），agss 是管理/销售费用，rltr 是营收。prgs - agss 得到\"扣除管理开销后、尚未计提研发与折旧摊销的核心经营利润\"，再除以 rltr 转为利润率。三者构成完整的\"收入-成本-费用\"三级漏斗，且全部为季度同频口径，不存在年报与季报混用的时点错配。",
+      "economic_mechanism": "市场最常用的是净利率，但净利率被税项、利息与非经常项目三重污染，尤其在 GLB 这种税率与资本结构差异极大的区域，净利率的跨公司可比性很差。核心经营利润率剥离了这三层噪声，直接反映\"主营业务的定价权与成本控制力\"。高核心经营利润率的公司在需求波动中更可能维持分红与回购（价值属性的现金来源），而低者即使净利率因税收优惠暂时好看，也缺乏可持续的现金生成能力。因此该信号是价值因子中\"盈利质量\"维度的干净代理。",
+      "expression": "divide(subtract(fnd23_icsm_m_prgs, fnd23_icsm_m_agss), fnd23_icsm_m_rltr)",
+      "fields_used": [
+        "fnd23_icsm_m_prgs",
+        "fnd23_icsm_m_agss",
+        "fnd23_icsm_m_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "费用刚性与经营杠杆不对称 (Cost Stickiness)",
+      "field_semantics_mapping": "rltr/agss 是\"每单位管理开销支撑的收入\"，prgs/rltr 是毛利率。二者相乘在代数上收敛为 prgs/agss，即\"每单位管理开销创造的毛利\"。这里刻意用两个比率的乘积而非直接相除：乘性结构保留了\"规模效率\"与\"单位盈利能力\"两个独立维度，且两个因子各自已无量纲，相乘后仍是纯强度指标，不会因分母接近零而爆炸。",
+      "economic_mechanism": "单看费用率会误判两类公司：一类是低毛利但极高周转（零售），费用率天然低；另一类是高毛利但重销售（制药），费用率天然高。两者都可能是优秀的经营杠杆标的。乘性结构把\"收入放大能力\"与\"毛利转化能力\"合成一个效率度量，识别出真正\"以小博大\"的组织：用有限的管理开销同时撬动高收入与高毛利。这类公司在需求复苏初期的利润跃升幅度最大，而市场因静态费用率标签而系统性低估其弹性。",
+      "expression": "multiply(divide(fnd23_icsm_m_rltr, fnd23_icsm_m_agss), divide(fnd23_icsm_m_prgs, fnd23_icsm_m_rltr))",
+      "fields_used": [
+        "fnd23_icsm_m_rltr",
+        "fnd23_icsm_m_agss",
+        "fnd23_icsm_m_prgs"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "审计费用结构与治理摩擦 (Audit Fee Structure)",
+      "field_semantics_mapping": "uatv 是当期支付给外部审计师的审计费用（治理成本的现金体现），rltr 是营收（规模锚）。审计费用/营收即\"单位收入所对应的报表验证成本\"，它同时吸收了三件事：业务复杂度（并表主体数量、跨境结构）、审计师议价能力（风险溢价加价）与治理强度。",
+      "economic_mechanism": "审计费用是极少数\"必须现金支付、且由独立第三方定价\"的治理变量。当审计费用率显著高于同业，通常意味着报表复杂度高（多层SPV、跨境关联交易）或审计师已识别出重大错报风险而收取风险溢价；这两种情形都对应更高的信息不对称与更脆弱的盈余可信度。市场几乎不对该科目定价（它既不在利润表主线，也不进任何常用财务比率），因此折价长期存在。高审计强度对应后续的治理折价与负向超额收益；反向的低审计强度对应\"干净报表\"溢价。极性最终由 Step 1 实证裁定。",
+      "expression": "divide(fnd23_icsm_m_uatv, fnd23_icsm_m_rltr)",
+      "fields_used": [
+        "fnd23_icsm_m_uatv",
+        "fnd23_icsm_m_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "审计费用结构与治理摩擦 (Audit Fee Structure)",
+      "field_semantics_mapping": "fotv 是支付给审计师的\"其他费用\"（咨询、税务筹划等非审计服务），uatv 是纯审计费用。二者之和是全部审计关系支出，fotv 占其中的份额即\"非审计服务占比\"。用 add(uatv, fotv) 作分母而非直接 fotv/uatv，是为了把指标约束在 [0,1] 内，避免小审计费用公司产生极端值。",
+      "economic_mechanism": "审计独立性依赖于审计师与管理层的商业关系边界。非审计服务（尤其咨询）占比越高，审计师对客户管理层的收入依赖越多元，对盈余操纵说\"不\"的经济动机越弱；同时，高非审计支出也反映管理层倾向于\"购买\"会计与税务处理意见。这会系统性削弱财务报告的约束力，使报表盈余更易被美化。该摩擦在 GLB 区域尤为显著——各国对非审计服务的监管强度差异极大，形成了可被横截面捕捉的制度套利空间。高非审计占比对应盈余可信度折价。",
+      "expression": "divide(fnd23_fotv, add(fnd23_icsm_m_uatv, fnd23_fotv))",
+      "fields_used": [
+        "fnd23_fotv",
+        "fnd23_icsm_m_uatv"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "审计费用结构与治理摩擦 (Audit Fee Structure)",
+      "field_semantics_mapping": "把审计关系支出拆成三档：uatv 纯审计（法定刚需）、ratv 审计相关（合规延伸，如内控审阅、申报审阅）、fotv 其他（可选商业采购）。分子 fotv - ratv 剥离出\"纯可选采购\"部分，分母 uatv + ratv 是\"合规性支出\"，二者之比即治理支出的\"商业化纯度\"。",
+      "economic_mechanism": "审计相关费用与纯审计费用同属合规刚需，二者之和代表\"为满足外部监管而不得不付的钱\"；而其他费用属于管理层可自由裁量的商业采购。当可选采购显著超过合规支出时，说明审计关系已被商业化重塑：审计师的角色从\"外部监督者\"滑向\"服务供应商\"。这种角色漂移不会立刻反映在任何财务指标上，却会在后续的报表重述、监管问询与盈余质量下滑中体现。该结构比单纯的费用率更精准，因为它把\"业务复杂导致的审计加价\"（合规侧）与\"关系绑定\"（商业侧）分离开来。",
+      "expression": "divide(subtract(fnd23_fotv, fnd23_ratv), add(fnd23_icsm_m_uatv, fnd23_ratv))",
+      "fields_used": [
+        "fnd23_fotv",
+        "fnd23_ratv",
+        "fnd23_icsm_m_uatv"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "少数股东权益漏损 (Minority Claim Leakage)",
+      "field_semantics_mapping": "niml 是少数股东在子公司中的累积权益（对合并净资产的索取权），eltq 是归属母公司股东的总权益。分母取 eltq + niml 而非单独 eltq，得到的是\"少数股东在全部合并账面权益中的份额\"，天然有界于 [0,1]，且不会因母公司权益为负而符号翻转。",
+      "economic_mechanism": "合并报表把子公司的全部资产与利润并入，但市值只对应母公司普通股。少数股东权益占比高的公司，其账面净资产中有很大一块永远无法归属于流通股东——这正是经典价值陷阱的会计根源：以 P/B 筛选时，这类公司看起来\"便宜\"，但账面价值的可实现部分远低于表面数字。更隐蔽的是，当子公司盈利能力优于母公司时，合并利润的增长大部分流向少数股东，EPS 增长被系统性稀释。因此该份额越高，未来估值折价与盈利稀释风险越大，对应负向超额收益。",
+      "expression": "divide(fnd23_intfvalld1_niml, add(fnd23_intfvalld1_eltq, fnd23_intfvalld1_niml))",
+      "fields_used": [
+        "fnd23_intfvalld1_niml",
+        "fnd23_intfvalld1_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "少数股东权益漏损 (Minority Claim Leakage)",
+      "field_semantics_mapping": "niml 为少数股东累积索取权，tota 为合并总资产。改用资产锚度量\"少数股东索取权相对整体资产池的稀释度\"：它回答的是\"这块资产池里有多少比例的经济利益不属于母公司股东\"，与权益口径互为稳健性对照。",
+      "economic_mechanism": "与 SEED_10 同一经济机理，但换了分母后捕捉的是不同侧面。权益口径衡量\"账面净值的归属纯度\"，资产口径衡量\"资产池的归属纯度\"。后者对高杠杆的合资型结构（如基建、公用事业、地产合资项目）更敏感——这类公司的少数股东权益可能不大，但对应的是大量表内资产，其经营现金流的分流比例远高于权益占比所示。两条腿并行可以区分\"账面稀释\"与\"现金流分流\"两种不同的漏损形态，避免单一锚点的口径偏差。",
+      "expression": "divide(fnd23_intfvalld1_niml, fnd23_intfvalld1_tota)",
+      "fields_used": [
+        "fnd23_intfvalld1_niml",
+        "fnd23_intfvalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "资本开支-折旧错配与净资产膨胀 (Asset Inflation)",
+      "field_semantics_mapping": "xecs 是资本开支，peds 是折旧。折旧近似\"维持现有产能所需的年度重置成本\"，资本开支是\"实际投入\"，二者之差即\"净新增资产\"。xecs 在现金流表中常以负值列示（现金流出），故先取 abs 统一符号口径，再与折旧相减，最后除以总资产锚转为\"净资产膨胀率\"。",
+      "economic_mechanism": "当资本开支长期显著超过折旧，公司账面的资产基数在持续膨胀，但新增投资的边际回报通常低于存量资产（管理层倾向于在现金流充裕时扩张产能、并购或进入新领域，即\"帝国建造\"）。资产增长异象的核心在于：市场把\"资产规模扩大\"误读为\"成长\"，而实际是资本回报率的稀释。用折旧作基准可剥离行业资本密集度差异（重资产行业天然高 capex，但只要与折旧匹配就不是膨胀）。净膨胀率越高，未来 ROA 下滑与估值回落压力越大。",
+      "expression": "divide(subtract(abs(fnd23_intfvalld1_xecs), fnd23_intfvalld1_peds), fnd23_intfvalld1_tota)",
+      "fields_used": [
+        "fnd23_intfvalld1_xecs",
+        "fnd23_intfvalld1_peds",
+        "fnd23_intfvalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "资本开支-折旧错配与净资产膨胀 (Asset Inflation)",
+      "field_semantics_mapping": "xecs 为资本开支（取绝对值消除符号口径差异），pedv 为折旧补充口径（覆盖率 100%，比 peds 更完整）。分子 |capex| - 折旧 是净扩张额，分母 |capex| + 折旧 是总投资规模，二者之比是\"再投资不对称度\"，有界于 (-1,1)，是 SEED_12 的对称化版本。",
+      "economic_mechanism": "SEED_12 用资产锚归一，会在小资产公司上放大极端值；此处改用\"总投资规模\"作分母，把指标转为纯结构比：它衡量的是\"扩张性投资在总投资中的净占比\"，与公司体量完全无关。经济含义更锐利——一家公司把 90% 的投资用于扩张、只有 10% 用于维持，与另一家 55%/45% 的公司，其资产久期与未来折旧压力截然不同，但二者的 capex/资产 可能相同。对称化后，极值受控且跨行业可比，适合在 GLB 这种行业结构高度异质的池子里做横截面排序。",
+      "expression": "divide(subtract(abs(fnd23_intfvalld1_xecs), fnd23_intfvalld1_pedv), add(fnd23_intfvalld1_pedv, abs(fnd23_intfvalld1_xecs)))",
+      "fields_used": [
+        "fnd23_intfvalld1_xecs",
+        "fnd23_intfvalld1_pedv"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "资本开支-折旧错配与净资产膨胀 (Asset Inflation)",
+      "field_semantics_mapping": "|xecs| + pedv 是\"扩张性投资 + 维持性投资\"的总再投资规模，除以 tota 得到\"总再投资强度\"。与 SEED_12/13 关注错配不同，此式度量的是绝对再投资水平，是资产久期与资本锁定程度的代理。",
+      "economic_mechanism": "高再投资强度意味着每单位资产每年有更大比例被重新锁进长期资产，自由现金流被结构性压缩。在贴现率上行或资本成本抬升的环境里，这类公司的估值弹性显著更大（长久期资产对折现率更敏感），且一旦行业景气回落，前期投入的产能会转化为折旧与减值压力。反过来，低再投资强度的公司现金回收快、分红与回购能力强，天然具备价值属性。因此在 GLB 的跨市场比较中，该信号承担的是\"现金流久期\"维度的定价修正。",
+      "expression": "divide(add(abs(fnd23_intfvalld1_xecs), fnd23_intfvalld1_pedv), fnd23_intfvalld1_tota)",
+      "fields_used": [
+        "fnd23_intfvalld1_xecs",
+        "fnd23_intfvalld1_pedv",
+        "fnd23_intfvalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "营运资本与存货沉淀 (Working Capital Absorption)",
+      "field_semantics_mapping": "iucs 是流动资产扣除存货后的余额，acta 是流动资产合计。二者之比即\"非存货流动资产占比\"，直接度量流动资产结构中\"可变现部分\"的权重。存货作为最难变现、最易减值的科目被显式剔除，因此该比率越高，流动资产的清算价值越接近其账面值。",
+      "economic_mechanism": "价值投资的核心假设是\"账面价值可信\"，而账面价值的可信度取决于资产的可实现性。存货面临三重折价：技术过时（电子、服装）、价格下行（大宗）、以及跌价准备计提不足。当流动资产中存货占比过高时，账面净值在经济下行期会被快速侵蚀，P/B 的\"便宜\"是假象。非存货占比高的公司，其账面价值更接近清算价值，价值因子的信号强度更高。这解释了为什么同样的低 P/B 组合中，轻存货公司的超额收益显著更稳定。",
+      "expression": "divide(fnd23_intfvalld1_iucs, fnd23_intfvalld1_acta)",
+      "fields_used": [
+        "fnd23_intfvalld1_iucs",
+        "fnd23_intfvalld1_acta"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "营运资本与存货沉淀 (Working Capital Absorption)",
+      "field_semantics_mapping": "fcos 是营运资本变动（现金流口径，占用现金时为负），rltr 是营收。分母刻意取 rltr + |fcos| 而非单纯 rltr：营运资本占用强度被约束在 (-1,1) 内，既避免小收入公司的比率爆炸，也让\"占用\"与\"释放\"两种极端在同一尺度上对称可比。",
+      "economic_mechanism": "收入增长并不等于现金增长。当增长主要被应收账款与存货吸收时，经营现金流与利润出现背离，公司必须依靠外部融资（债务或增发）维持运转——这正是\"增长陷阱\"的现金流根源。市场习惯用收入增速与利润增速定价，对营运资本占用这一\"增长的质量\"关注不足。营运资本吸收强度高的公司，其增长不可持续且伴随融资风险；反之，负占用（客户预付、供应商账期）的公司享有\"负营运资本\"的免费融资，是高质量成长的标志。该信号在 GLB 的制造业与贸易类标的中区分度尤其明显。",
+      "expression": "divide(fnd23_intfvalld1_fcos, add(fnd23_intfvalld1_rltr, abs(fnd23_intfvalld1_fcos)))",
+      "fields_used": [
+        "fnd23_intfvalld1_fcos",
+        "fnd23_intfvalld1_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "研发费用化折价与隐形资产 (R&D Expensing Discount)",
+      "field_semantics_mapping": "darv 是当期费用化的研发支出（流量投入），tnia 是无形资产净额（历史资本化残余，存量），tota 是总资产锚。分子把\"当期投入\"与\"历史累积\"相加，构成\"表内可见的无形投入总强度\"；分母用资产锚保证跨公司可比。",
+      "economic_mechanism": "会计保守主义要求研发当期全额费用化，只有并购取得的部分才形成无形资产。结果是：内生研发密集的公司，其知识资本几乎完全不在资产负债表上，账面资产被系统性低估，当期利润被压低。用 P/B 或 EV/账面资产筛选时，这类公司看起来\"极其昂贵\"，而实际持有大量未入账的生产性资产。市场对费用化研发存在系统性折价（R&D 异象）：研发投入的市场估值乘数长期低于其真实边际产出。因此无形投入强度高的公司，其\"表面昂贵\"是会计假象，未来存在重估空间——这直接服务于高 Value Factor 目标：避免价值筛选用会计账面误杀无形密集公司。",
+      "expression": "divide(add(fnd23_intfvalld1_darv, fnd23_intfvalld1_tnia), fnd23_intfvalld1_tota)",
+      "fields_used": [
+        "fnd23_intfvalld1_darv",
+        "fnd23_intfvalld1_tnia",
+        "fnd23_intfvalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "研发费用化折价与隐形资产 (R&D Expensing Discount)",
+      "field_semantics_mapping": "darv 为费用化研发，rltr 为营收。分母取 darv + rltr 而非单纯 rltr，使指标成为\"研发在（研发+收入）中的份额\"，有界于 [0,1]。这样做的目的是避免小收入公司产生极端值，同时让不同规模、不同行业的公司在同一尺度上可比。",
+      "economic_mechanism": "这是 SEED_17 的纯流量版本，剔除了无形资产存量受并购会计与历史摊销政策污染的噪声。研发强度是\"未来增长期权\"的代理：它当期压利润、未来产生超额回报，因此形成\"短期看贵、长期看便宜\"的估值错配。市场对这类\"费用化期权\"的定价存在系统性滞后，尤其在分析师覆盖不足的中小市值标的中。有界化处理后，信号在 GLB 横截面上具有稳定的可比性，适合作为价值组合中的\"反误杀\"过滤器。",
+      "expression": "divide(fnd23_intfvalld1_darv, add(fnd23_intfvalld1_darv, fnd23_intfvalld1_rltr))",
+      "fields_used": [
+        "fnd23_intfvalld1_darv",
+        "fnd23_intfvalld1_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "合同负债在手订单 (Contract Liability Backlog)",
+      "field_semantics_mapping": "两个合同负债字段分别是中期与年度口径的\"客户已付款、收入未确认\"余额，相加得到在手订单的完整会计投影（避免单一口径的季节性缺口）；分母取流动资产 + 流动负债，即营运资本的\"毛规模\"，作为经营性资产负载能力的锚。",
+      "economic_mechanism": "合同负债是需求能见度的硬证据：客户必须先付钱，公司才会计入该科目。它不进入利润表，因此完全不在任何盈利类因子的视野内，却是未来 1-3 年收入的约束性证据。合同负债相对营运资本规模高，说明公司在产业链中占据预收地位（议价权强）、且订单储备厚，未来收入确定性显著高于同业。市场对预收款的定价滞后，因为它的信息藏在资产负债表脚注而非利润表主线。在工程、软件、专用设备等长周期交付行业，这一信号的区分度最高。",
+      "expression": "divide(add(interim_long_term_contract_liabilities, long_term_contract_liabilities), add(fnd23_intfvalld1_acta, fnd23_intfvalld1_lctl))",
+      "fields_used": [
+        "interim_long_term_contract_liabilities",
+        "long_term_contract_liabilities",
+        "fnd23_intfvalld1_acta",
+        "fnd23_intfvalld1_lctl"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "股东净回报强度 (Shareholder Return Intensity)",
+      "field_semantics_mapping": "cstq 是库存股金额（历史回购的累积证据，存量），dgcd 是普通股现金股利（流量），cisf 是发行普通股的现金流入（流量，代表稀释与融资依赖）。分子 cstq + dgcd - cisf 即\"不含股价的净股东回报\"；分母取 eltq + dgcd，用股利做缓冲避免小权益公司的比率爆炸。",
+      "economic_mechanism": "这是价值投资最核心的\"管理层资本配置投票\"：真正相信自家股票便宜、且现金流真实充裕的管理层，会持续回购与分红，而不是增发。库存股累积反映历史回购意愿的持续性，股利反映现金分配的稳定性，股权融资流入则暴露\"靠外部输血维持\"的脆弱性。三者合成后，得到的是不依赖任何市值数据的\"股东收益率\"代理——这恰恰是纯基本面价值因子最需要的：它保留了价值属性（资本回报给股东），却与市值、股价完全正交，从而避免与已有量价类价值因子产生高相关。净回报强度高的公司，股本收缩提升每股价值，且在下行期具备估值支撑。",
+      "expression": "divide(subtract(add(fnd23_intfvalld1_cstq, fnd23_intfvalld1_dgcd), fnd23_intfvalld1_cisf), add(fnd23_intfvalld1_eltq, fnd23_intfvalld1_dgcd))",
+      "fields_used": [
+        "fnd23_intfvalld1_cstq",
+        "fnd23_intfvalld1_dgcd",
+        "fnd23_intfvalld1_cisf",
+        "fnd23_intfvalld1_eltq"
+      ],
+      "times": 0
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "fundamental23 是 GLB 区域的全球标准化财务报表数据集（1748 字段），由三大报表的标准化科目构成：损益表与现金流（intfvalld1，536 项，覆盖率多在 0.95~1.00）、资产负债表存量（intfvm/intfvmalld1，518 项，覆盖 0.55~0.96）、季度损益明细（icsm_m，69 项，覆盖 0.80~0.92），以及少量补充比率与低频科目（cf/blsm，覆盖 0.15~0.30，稀疏不宜主用）。全部字段更新频率为 quarterly。该数据集真正的信息摩擦不在\"有没有数据\"，而在\"同一经济实质存在多套平行会计口径\"：① 报表底线 vs 正常化底线（cinx/caiv/xbin）；② 合并口径 vs 归属母公司口径（xbin/cnin/niml）；③ 流量（损益/现金流）与存量（资产/负债/权益）的记账时点错配（capex 与折旧、合同负债与收入、递延税与当期税）；④ 会计保守主义造成的表外化（研发费用化、经营租赁、养老金缺口、少数股东权益）。这些平行口径之间的\"差额\"才是可交易的信号：市场与卖方锚定的是单一报表口径，而差额项被系统性忽略或误读。同时，tota/eltq/rltr/acta/lctl/itpv 提供了完整的内生规模锚体系（覆盖 0.92~1.00），使所有信号可在不引入任何外部量价字段的前提下完成规模归一——这正是构建高 Value Factor 载荷因子的前提：账面价值类信号必须用内生锚自归一，才能既保留价值属性又不被市值共线性污染。",
+    "economic_clusters": [
+      {
+        "cluster_name": "正常化盈余与报表底线错配 (Normalization Gap)",
+        "fields": [
+          "fnd23_intfvalld1_caiv",
+          "fnd23_intfvalld1_cinx",
+          "fnd23_intfvalld1_xbin",
+          "fnd23_intfvalld1_ists",
+          "fnd23_intfvalld1_eius",
+          "fnd23_intfvalld1_eltq",
+          "fnd23_intfvalld1_tota"
+        ],
+        "cluster_logic": "同一期利润被拆成\"剔除特殊项目后的可持续口径(caiv)\"与\"含特殊/非常项目的报表口径(cinx)\"。二者之差 = 本期一次性损益的方向与规模(ists/eius 为其构成)。差额本身是无量纲的会计事实，必须除以权益或资产锚才能跨公司比较；这是本数据集最纯净的\"同一实质、两套口径\"摩擦点。"
+      },
+      {
+        "cluster_name": "费用刚性与经营杠杆不对称 (Cost Stickiness)",
+        "fields": [
+          "fnd23_icsm_m_agss",
+          "fnd23_icsm_m_agse",
+          "fnd23_icsm_m_prgs",
+          "fnd23_icsm_m_rltr"
+        ],
+        "cluster_logic": "季度口径下收入(rltr)、毛利(prgs)与管理费用(agss)同频同源。SG&A 是准固定成本：收入下行时费用难以下调，收入上行时被摊薄。费用/收入的结构比单纯利润率更能刻画\"利润对收入的弹性\"，且不受税项与非经常项目污染。"
+      },
+      {
+        "cluster_name": "审计费用结构与治理摩擦 (Audit Fee Structure)",
+        "fields": [
+          "fnd23_icsm_m_uatv",
+          "fnd23_fotv",
+          "fnd23_ratv"
+        ],
+        "cluster_logic": "审计费用(uatv)、审计相关费用(ratv)、其他费用(fotv)三项同源同期，构成\"审计关系现金流结构\"。合规刚需部分与可选商业采购部分的比例，是审计独立性与报表复杂度的可观测代理，属于典型的\"已披露但无人定价\"科目。"
+      },
+      {
+        "cluster_name": "少数股东权益漏损 (Minority Claim Leakage)",
+        "fields": [
+          "fnd23_intfvalld1_niml",
+          "fnd23_intfvalld1_cnin",
+          "fnd23_intfvalld1_xbin",
+          "fnd23_intfvalld1_eltq",
+          "fnd23_intfvalld1_tota"
+        ],
+        "cluster_logic": "合并报表的资产与利润包含少数股东份额，而市值只对应母公司普通股股东。niml 是少数股东在子公司中的累积索取权，与 eltq/tota 同尺度。该比例刻画\"账面价值对普通股股东的可实现度\"，是价值类因子最常见的陷阱来源。"
+      },
+      {
+        "cluster_name": "资本开支-折旧错配与净资产膨胀 (Asset Inflation)",
+        "fields": [
+          "fnd23_intfvalld1_xecs",
+          "fnd23_intfvalld1_peds",
+          "fnd23_intfvalld1_pedv",
+          "fnd23_intfvalld1_tota"
+        ],
+        "cluster_logic": "折旧是\"维持性投资\"的会计基准，资本开支是\"实际再投资\"。二者之差刻画净资产的膨胀速度：差额持续为正说明公司在扩张资产基数，而新增资产的边际回报通常低于存量。xecs 在现金流表中符号口径不统一（常以负值列示），必须取绝对值后再与 pedv 比较。"
+      },
+      {
+        "cluster_name": "营运资本与存货沉淀 (Working Capital Absorption)",
+        "fields": [
+          "fnd23_intfvalld1_ltia",
+          "fnd23_intfvalld1_iucs",
+          "fnd23_intfvalld1_acta",
+          "fnd23_intfvalld1_fcos",
+          "fnd23_intfvalld1_rltr"
+        ],
+        "cluster_logic": "流动资产中存货最难变现、最易减值；iucs(流动资产扣除存货)刻画剔除最难变现项目后的流动性缓冲。fcos 是营运资本变动的现金流口径，与收入相比即\"增长的现金转化率\"。存量结构 + 流量占用共同定义资产质量的可靠度。"
+      },
+      {
+        "cluster_name": "研发费用化折价与隐形资产 (R&D Expensing Discount)",
+        "fields": [
+          "fnd23_intfvalld1_darv",
+          "fnd23_intfvalld1_dare",
+          "fnd23_intfvalld1_tnia",
+          "fnd23_intfvalld1_rltr",
+          "fnd23_intfvalld1_tota"
+        ],
+        "cluster_logic": "会计保守主义要求研发当期全额费用化，导致高研发公司的账面资产被低估、当期利润被压低。darv(流量)与 tnia(无形存量)分别刻画\"当期投入\"与\"历史资本化残余\"，二者对 tota 的强度是\"会计账面与实际知识资本\"缺口的方向标。"
+      },
+      {
+        "cluster_name": "合同负债在手订单 (Contract Liability Backlog)",
+        "fields": [
+          "interim_long_term_contract_liabilities",
+          "long_term_contract_liabilities",
+          "fnd23_intfvalld1_acta",
+          "fnd23_intfvalld1_lctl"
+        ],
+        "cluster_logic": "合同负债是客户已付款但收入尚未确认的部分，等价于在手订单的会计投影。它不进利润表，因此不在任何盈利类因子的视野内，却是未来收入的硬约束证据。以营运资本规模(acta+lctl)归一后可跨公司比较。"
+      },
+      {
+        "cluster_name": "股东净回报强度 (Shareholder Return Intensity)",
+        "fields": [
+          "fnd23_intfvalld1_cstq",
+          "fnd23_intfvalld1_dgcd",
+          "fnd23_intfvalld1_cisf",
+          "fnd23_intfvalld1_eltq"
+        ],
+        "cluster_logic": "库存股累积(cstq，历史回购)、现金股利(dgcd)、股权融资流入(cisf)三者构成不含股价的股东净回报现金流：回购+分红-增发。以权益(加股利防止小分母)归一后，即为价值投资最核心的\"管理层资本配置投票\"证据。"
+      }
+    ]
+  }
+}

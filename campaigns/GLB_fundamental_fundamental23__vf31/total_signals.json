@@ -1,0 +1,363 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL10M",
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "signals": [
+    {
+      "id": "VF31_01",
+      "cluster_ref": "账面价值的硬度：有形背书 vs 商誉无形",
+      "field_semantics_mapping": "fnd23_blsm_vbts 是有形账面价值（普通股权益剔除商誉与无形资产），代表有可辨认资产背书的「硬账面」；total_equity_book_value 是报表口径总权益，含并购溢价资本化的商誉与无形资产；fnd23_intfvalld1_letq 是总负债加总权益的资本基数，用作内生规模标尺。必须先做差再除以资本基数，因为差额的绝对值随公司规模线性放大，只有相对资本的比重才具备跨公司可比性；直接相除 vbts/权益 会把「资本结构差异」混入「账面硬度」，故采用流量存量差除以规模锚的结构。",
+      "economic_mechanism": "并购形成的商誉与无形资产不产生独立现金流，其账面值依赖减值测试的主观假设。当一家公司「看起来便宜」主要来自高企的商誉与无形占比时，这个便宜是会计幻觉：一旦经营预期下修触发减值，账面价值会在单季度内塌陷，而市场在减值公告前往往仍按账面净资产定价（锚定偏误＋减值披露的滞后性）。因此高无形占比的「低估值」组合存在系统性负向漂移；反之有形资产背书强的公司，其账面价值具备清算意义上的下界，估值修复更可靠。预期收益方向：做多硬账面、做空虚账面。",
+      "expression": "divide(subtract(total_equity_book_value, fnd23_blsm_vbts), fnd23_intfvalld1_letq)",
+      "fields_used": [
+        "total_equity_book_value",
+        "fnd23_blsm_vbts",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_02",
+      "cluster_ref": "盈余的非经常性成分：报表口径 vs 正常化口径",
+      "field_semantics_mapping": "fnd23_intfvm_tbie 是报表税前利润（总收入减总费用，含全部非经常与特殊项）；fnd23_intfvm_itpv 是正常化税前利润（已剔除全部非经常/一次性/特殊损益）。二者是同一期间利润的「含裁量」与「去裁量」两个版本，其差额即管理层归类裁量所影响的净额；fnd23_intfvalld1_letq 作为资本基数把该差额标准化为「每单位资本的裁量性利润」。不用比率而用差额，是因为比率会在正常化利润接近零或为负时爆炸，而差额在两种口径下都稳定可比。",
+      "economic_mechanism": "管理层在利润承压年份有强动机把一次性处置收益、资产重估、诉讼赔偿等计入报表利润，使报表 EPS 维持增长表象；卖方与被动资金锚定的是报表口径而非正常化口径，因此定价错误在当期不会被纠正。但这类收益不可重复，下一期基数效应必然反转，同时正常化利润的持续下滑终将暴露。传导链：裁量性非经常收益抬高报表利润 → 市场按报表口径外推 → 后续基数反转与正常化利润下修 → 负向超额收益。预期收益方向：做空裁量性非经常利润占比高的公司。",
+      "expression": "divide(subtract(fnd23_intfvm_tbie, fnd23_intfvm_itpv), fnd23_intfvalld1_letq)",
+      "fields_used": [
+        "fnd23_intfvm_tbie",
+        "fnd23_intfvm_itpv",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_03",
+      "cluster_ref": "再投资强度与资产更新周期",
+      "field_semantics_mapping": "fnd23_intfvm_xecs 是资本开支（购建固定资产的现金流出），代表新增产能的流量投入；fnd23_intfvm_peds 是当期折旧，代表存量资产的会计消耗速度；fnd23_intfvalld1_letq 是资本基数。以「资本开支减折旧」除以资本基数，得到净再投资强度：它剔除了维持性重置投资（折旧）后的真实扩张部分，避免了 capex/折旧 这种比率在折旧极小时爆炸的缺陷，也避免了直接用 capex/资产 把维持性投资误当扩张。",
+      "economic_mechanism": "净再投资强度高意味着企业把大量资本重新投入自身经营。基本面资产增长异象的机制有二：其一，扩张期的资本开支往往伴随过度乐观的需求预期，项目回报率在竞争中被侵蚀，且折旧与利息负担后置；其二，高再投资率公司自由现金流被压缩，缺乏回购与分红能力，在贴现率上行阶段估值弹性最大。反之净再投资为负（折旧大于资本开支）的公司处于收割期，是典型的现金牛价值形态，其账面价值被市场以「衰退行业」折价，形成估值修复空间。预期收益方向：做空高净再投资、做多收割型现金牛。",
+      "expression": "divide(subtract(fnd23_intfvm_xecs, fnd23_intfvm_peds), fnd23_intfvalld1_letq)",
+      "fields_used": [
+        "fnd23_intfvm_xecs",
+        "fnd23_intfvm_peds",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_04",
+      "cluster_ref": "自我融资成熟度：留存收益 vs 实收股本 vs 负债",
+      "field_semantics_mapping": "fnd23_blsm_derq 是留存收益（累计净利减累计分红，可能为负＝累计亏损），度量企业靠自身盈利积累了多少资本；fnd23_intfvalld1_lltl 是总负债，度量债权人垫付的资本；两者都以 fnd23_intfvalld1_letq 为共同分母。此处刻意采用「相对基准偏离差」结构：先各自对同一资本基数归一，再相减，从而在消除规模差异的同时保留「内部积累 vs 外部负债」的结构性剪刀差——若改用 derq/负债 的单比率，会在负债接近零的净现金公司上产生极端值。",
+      "economic_mechanism": "留存收益占资本比重高、负债占比低的公司，是靠自身利润滚出来的复利机器：无需再融资、无到期墙、在信用收缩时具备逆势扩张能力。反之留存收益薄（甚至为负）而负债占比高的公司，其账面权益主要由债权人垫资支撑，融资自主性极低；一旦利差走阔或再融资窗口关闭，估值会从「资产端」直接切换到「清偿端」。市场对这两类公司在平静期给予相似的市净率，忽略了融资自主性在压力情景下的巨大差异。传导链：融资自主性低 → 信用周期反转时被动去杠杆 → 折价扩大。预期收益方向：做多内部积累型、做空负债依赖型。",
+      "expression": "subtract(divide(fnd23_blsm_derq, fnd23_intfvalld1_letq), divide(fnd23_intfvalld1_lltl, fnd23_intfvalld1_letq))",
+      "fields_used": [
+        "fnd23_blsm_derq",
+        "fnd23_intfvalld1_lltl",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_05",
+      "cluster_ref": "税务现金化缺口：账面计提 vs 实付现金",
+      "field_semantics_mapping": "fnd23_intfvalld1_ptcs 是实付现金税（已扣退税），属收付实现制下的真实现金流出；fnd23_intfvm_xatt 是所得税费用（权责发生制下的账面计提）；两者同除以 fnd23_intfvalld1_letq 后相减，得到「现金税强度减账面税强度」的缺口。选择同一规模锚做双归一后取差，而不是 ptcs/xatt 直接相除，是因为后者在账面税费用接近零或为负（税务亏损）时完全失效，而缺口结构在两种情形下都保持经济含义。",
+      "economic_mechanism": "现金税长期低于账面计提税，意味着企业通过加速折旧、研发抵免、跨境利润转移等方式把税负向后递延，形成一块「迟早要付」的隐性负债；这块负债不出现在资产负债表正面，市场在给现金流估值时通常按当期低税率外推，从而系统性高估其永续自由现金流。当税收优惠到期、折旧税盾耗尽或全球最低税率规则落地时，现金税率向账面税率收敛，现金流出现无预警下修。反之现金税高于账面计提（保守会计、税务争议已结清）的公司，其盈余质量与现金流可持续性被低估。预期收益方向：做空税务递延型、做多现金税已充分实现型。",
+      "expression": "subtract(divide(fnd23_intfvalld1_ptcs, fnd23_intfvalld1_letq), divide(fnd23_intfvm_xatt, fnd23_intfvalld1_letq))",
+      "fields_used": [
+        "fnd23_intfvalld1_ptcs",
+        "fnd23_intfvm_xatt",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_06",
+      "cluster_ref": "外部股权融资 vs 内部资本返还",
+      "field_semantics_mapping": "fnd23_intfvm_sspf 是股票发行与回购的净额（正为净发行、负为净回购），代表企业与股东之间的股权资金净流向；fnd23_intfvm_dgcd 是普通股现金分红总额，代表内部资本向股东的返还；两者同除以 fnd23_intfvalld1_letq 后相减，得到「净外部股权索取强度」。双归一后取差而非净额相加再除，是因为发行与分红在会计符号与量级上并不对称（回购常为负），缺口结构能同时保留两个方向的独立信息。",
+      "economic_mechanism": "逆向选择理论指出，管理层在自家股价高于内在价值时更愿意发行股票，在低估时更愿意回购。因此净发行强度是管理层私有估值判断的外溢信号，且被实证反复验证为横截面负向预测因子（发行异象）。同时，持续净发行叠加低分红意味着股东回报被稀释、每股价值被摊薄，而市场常把「融资扩张」误读为成长。反向的「净回购＋高分红」组合则同时传递低估与现金流充裕两重信息。传导链：高净发行 → 稀释与高估信号 → 后续回报走弱；高净返还 → 低估与现金牛信号 → 回报走强。预期收益方向：做空净发行型、做多净返还型。",
+      "expression": "subtract(divide(fnd23_intfvm_sspf, fnd23_intfvalld1_letq), divide(fnd23_intfvm_dgcd, fnd23_intfvalld1_letq))",
+      "fields_used": [
+        "fnd23_intfvm_sspf",
+        "fnd23_intfvm_dgcd",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_07",
+      "cluster_ref": "自我融资成熟度：留存收益 vs 实收股本 vs 负债",
+      "field_semantics_mapping": "fnd23_blsm_derq 是留存收益存量（累计净利减累计分红，负值即累计亏损），fnd23_intfvalld1_letq 是资本基数。这是本轮唯一的纯粹「存量除以规模锚」形态，用于给同簇的剪刀差结构提供最干净的基准读数：若带符号的留存收益占资本比重本身就具备预测力，说明效应来自留存水平本身而非与负债的相对结构；若只在剪刀差形式下有效，则说明信息在结构对比中。",
+      "economic_mechanism": "留存收益占资本比重是「企业生命周期位置」的纯会计刻度：高比重意味着长期盈利且以内部资金扩张，是成熟现金牛与价值型公司的典型形态；低比重或负值意味着长期亏损、依赖外部输血，是典型的价值陷阱候选。行为层面，市场对累计亏损公司的定价往往锚定「重组/反转」叙事，高估其困境反转概率（基率忽视），而实证上负留存公司后续回报显著偏弱。预期收益方向：做多高留存、做空负留存。",
+      "expression": "divide(fnd23_blsm_derq, fnd23_intfvalld1_letq)",
+      "fields_used": [
+        "fnd23_blsm_derq",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_08",
+      "cluster_ref": "资本结构不对称与股东权益的期权性",
+      "field_semantics_mapping": "fnd23_intfvalld1_lltl 是总负债（全部债权索取），fnd23_intfvalld1_letq 是总负债加总权益的总资本。两者相除即负债占总资本的比重，是本轮唯一的纯杠杆水平读数，用于把「杠杆水平」与同簇的「杠杆不对称」结构区分开：前者是水平，后者是索取权顺序。",
+      "economic_mechanism": "负债占总资本比重高意味着固定索取权在资本结构中占主导，股东剩余索取权对资产端波动的弹性被放大，同时面临到期再融资与契约条款约束。在贴现率上行或行业冲击期，高杠杆公司的账面权益最先被侵蚀，且被动基金与风险预算型资金会机械减仓，形成流动性驱动的超调。但需注意杠杆也承载税盾与经营效率信息，故该读数的极性应留给实证检验，本轮仅提供干净的水平基准。预期收益方向：待实证确定（理论上偏负向）。",
+      "expression": "divide(fnd23_intfvalld1_lltl, fnd23_intfvalld1_letq)",
+      "fields_used": [
+        "fnd23_intfvalld1_lltl",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_09",
+      "cluster_ref": "少数股东权益的归属错觉",
+      "field_semantics_mapping": "fnd23_intfvm_lltq 是总权益加非控股权益（合并口径的全部权益），total_equity_book_value 是归属普通股股东的账面总权益，两者之差即少数股东权益规模；除以 fnd23_intfvalld1_letq 得到其占资本的比重。用「加一」的平滑分母而非裸资本基数，是因为该差额可为负（NCI 为负的资不抵债子公司），裸分母在小资本公司上会放大噪声。",
+      "economic_mechanism": "合并报表把非全资子公司的 100% 资产与收入并入，但其中一部分利润归属少数股东，不进入普通股股东可分配现金流。当少数股东权益占资本比重很高时，公司「看起来的净资产与利润」中有相当比例其实不归普通股东，市场用合并口径的账面价值或市盈率做横向比较时会产生系统性高估（归属错觉）。此外高 NCI 常伴随复杂的少数股权收购与关联交易，治理折价与后续增发收购少数股权的现金流出风险更高。预期收益方向：做空高 NCI 占比的「表面便宜」公司。",
+      "expression": "divide(subtract(fnd23_intfvm_lltq, total_equity_book_value), add(fnd23_intfvalld1_letq, 1))",
+      "fields_used": [
+        "fnd23_intfvm_lltq",
+        "total_equity_book_value",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_10",
+      "cluster_ref": "表外净浮存：递延收入 vs 递延所得税负债",
+      "field_semantics_mapping": "deferred_income_noncurrent 是非流动递延收入，代表客户已付款但收入尚未确认的预收浮存（对现金流的正贡献）；fnd23_intfvm_tdbs 是递延所得税长期负债与递延投资税抵免之和，代表税务递延形成的隐性义务（对现金流的负贡献）；两者相减后除以资本基数，得到「表外净浮存强度」。用差额而非两个独立比率，是因为二者同属「尚未在利润表兑现的跨期科目」，净头寸才对应真实的经济敞口。",
+      "economic_mechanism": "递延收入规模大且持续增长，通常意味着订阅/预付/长期合同的在手订单充裕，客户在交付前就已付款——这是需求前置与议价力的硬证据，且这部分现金已流入但未计入收入，市场按收入与利润估值时会系统性低估其真实现金创造力。递延所得税负债则相反，是未来要付的税。两者做差后的净浮存为正，刻画「企业已经拿到钱但还没认收入、且没欠税务局多少」的有利跨期头寸。传导链：净浮存为正 → 未来收入确认具备高确定性 + 现金已到手 → 盈利与现金流上修 → 正向超额收益。",
+      "expression": "divide(subtract(deferred_income_noncurrent, fnd23_intfvm_tdbs), add(fnd23_intfvalld1_letq, 1))",
+      "fields_used": [
+        "deferred_income_noncurrent",
+        "fnd23_intfvm_tdbs",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_11",
+      "cluster_ref": "贸易营运资本占用：应收、存货、应付三角",
+      "field_semantics_mapping": "fnd23_intfvalld1_crta 是应收账款净额，代表被客户信用占用的资金；存货由 fnd23_intfvalld1_acta（流动资产合计）减去 fnd23_intfvalld1_iucs（流动资产剔除存货）精确还原，代表被实物库存占用的资金；两者相加是被经营锁定的贸易资本，除以 fnd23_intfvalld1_letq 得到占用强度。此处用「相加再除」而非分别归一，是为了刻画「应收＋存货」作为一个整体的资金占用总量，避免两条通道此消彼长时被相互抵消。",
+      "economic_mechanism": "应收与存货合计占资本比重高，意味着企业的现金转换周期长、资本被经营环节锁定，其经营杠杆与存货减值/坏账风险同时偏高。更关键的是时点信息：在需求转弱的早期，销售放缓先体现为存货周转下降与应收账款账龄拉长，而收入与利润表仍维持惯性，市场在利润表恶化前无法识别；等到减值与坏账计提，股价已完成下修。因此高占用强度是盈余质量恶化与后续减值的领先指标。反之占用极低甚至为负（预收＋应付主导）的公司拥有供应商与客户的净浮存融资，抗周期能力强。预期收益方向：做空高贸易资本占用、做多净浮存型。",
+      "expression": "divide(add(fnd23_intfvalld1_crta, subtract(fnd23_intfvalld1_acta, fnd23_intfvalld1_iucs)), fnd23_intfvalld1_letq)",
+      "fields_used": [
+        "fnd23_intfvalld1_crta",
+        "fnd23_intfvalld1_acta",
+        "fnd23_intfvalld1_iucs",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_12",
+      "cluster_ref": "再投资强度与资产更新周期",
+      "field_semantics_mapping": "fnd23_intfvm_nppa 是净不动产厂房设备（重资产存量），fnd23_intfvm_peds 是当期折旧（存量资产的消耗流量），二者相加除以 fnd23_intfvalld1_letq，得到「重资产存量加年度消耗」占资本的比重。加入折旧项是为了让该读数同时包含存量规模与消耗速度，避免两家净PPE相同但资产年龄迥异的公司被同等对待。",
+      "economic_mechanism": "重资产存量占资本比重高，是典型的价值型行业形态：账面资产有实物背书、进入壁垒来自资本强度、且折旧提供税盾。但同一读数也承载相反信息——沉没资本难以重配、产能退出缓慢，在需求下行期形成长期产能过剩与价格战。因此该维度是「资产硬度」的纯刻度，与同簇的无形占比维度构成一对镜像：一个度量硬资产的厚度，一个度量商誉的虚度。极性交由实证检验，本轮只负责把「重资产厚度」从「再投资强度」中干净地分离出来。",
+      "expression": "divide(add(fnd23_intfvm_nppa, fnd23_intfvm_peds), fnd23_intfvalld1_letq)",
+      "fields_used": [
+        "fnd23_intfvm_nppa",
+        "fnd23_intfvm_peds",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_13",
+      "cluster_ref": "盈余的非经常性成分：报表口径 vs 正常化口径",
+      "field_semantics_mapping": "fnd23_intfvm_ists 是特殊/非经常性项目合计（全部一次性损益的净额），fnd23_intfvm_cets 是特殊项目对所得税的影响；两者相加得到特殊项目的税后净影响，再除以 fnd23_intfvalld1_letq。这是与 VF31_02 完全不同的观测角度：VF31_02 从「报表利润与正常化利润的总额差」反推裁量成分，本条直接读取「特殊项目明细及其税盾」，两者在会计勾稽上应当一致但受不同科目覆盖与归类影响，互为交叉验证。",
+      "economic_mechanism": "集中计提特殊项目的公司通常处于重组、减值或诉讼周期，报表利润被一次性压低（俗称洗大澡），当期市盈率看起来极高甚至为负，被动筛股与简单估值模型会把这类公司排除或严重折价。但会计上的大额计提往往伴随资产负债表出清：减值后资产基数下降、未来折旧减少、盈利基数极低，随后几个季度的同比增速在统计上呈现机械反转（低基数效应），而市场对反转的定价存在滞后。同时，若特殊项目为正向（处置收益），则未来基数被抬高、反转方向相反。预期收益方向：做多深度计提后出清的公司，做空靠一次性收益托住报表的公司——本条读数带符号，方向交由实证检验。",
+      "expression": "divide(add(fnd23_intfvm_ists, fnd23_intfvm_cets), fnd23_intfvalld1_letq)",
+      "fields_used": [
+        "fnd23_intfvm_ists",
+        "fnd23_intfvm_cets",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_14",
+      "cluster_ref": "账面价值的硬度：有形背书 vs 商誉无形",
+      "field_semantics_mapping": "fnd23_blsm_vbts 是有形账面价值，fnd23_intfvalld1_letq 是资本基数。此处采用对称分母 divide(vbts, letq + vbts)，而不是 vbts/letq：因为 letq 包含权益与负债，当杠杆极高时 vbts/letq 会被机械压低，把杠杆信息混进「账面硬度」；对称分母把读数压缩到 [0,1] 且对杠杆的敏感度显著下降，是同一经济含义的另一种标量化表达。",
+      "economic_mechanism": "有形账面占资本比重直接对应「清算意义上的价值下界」：有形资产可被抵押、可被拆分出售、在困境中提供回收率支撑。因此该比重高的公司在信用收缩与风险厌恶上升阶段具备防御性，其估值下修幅度显著小于商誉主导型公司。行为层面，投资者在给「便宜」定价时普遍使用账面净资产，却很少区分账面里有多少是可回收的硬资产，导致商誉主导型公司被系统性高估。预期收益方向：做多高有形背书、做空低有形背书。",
+      "expression": "divide(fnd23_blsm_vbts, add(fnd23_intfvalld1_letq, fnd23_blsm_vbts))",
+      "fields_used": [
+        "fnd23_blsm_vbts",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_15",
+      "cluster_ref": "资本结构不对称与股东权益的期权性",
+      "field_semantics_mapping": "fnd23_intfvalld1_lltl 是总负债，fnd23_intfvalld1_letq 是总资本。此处用对称分母 divide(lltl, lltl + letq) 表达「负债在自身与总资本构成的总量中的占比」，与 VF31_08 的 lltl/letq 是同一经济量的两种标量化：前者被限制在 [0,0.5] 区间内、对极端杠杆不敏感，后者在高杠杆端线性放大。两条并存可检验该维度是否只是杠杆水平的单调映射。",
+      "economic_mechanism": "负债占总资本比重度量固定索取权对剩余索取权的挤压程度。高杠杆公司的股东权益具有期权性：其价值随资产端波动率上升而上升、随到期临近而下降，因此在市场波动率抬升时表现非线性；同时高杠杆触发契约条款与评级下调的阈值效应，会带来被动卖出的流动性冲击。低杠杆公司则在信用收缩期拥有逆势并购与回购的期权价值。预期收益方向：待实证确定（理论上高杠杆在压力期偏负向）。",
+      "expression": "divide(fnd23_intfvalld1_lltl, add(fnd23_intfvalld1_lltl, fnd23_intfvalld1_letq))",
+      "fields_used": [
+        "fnd23_intfvalld1_lltl",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_16",
+      "cluster_ref": "再投资强度与资产更新周期",
+      "field_semantics_mapping": "fnd23_intfvm_xecs 是资本开支，fnd23_intfvm_peds 是折旧，fnd23_intfvm_nppa 是净PPE。第一个分项 capex/折旧 度量扩张倾向（大于1为净扩张），第二个分项 折旧/净PPE 度量折旧率即资产年龄的倒数（越高越老、越接近重置）；两者相减得到「扩张倾向减资产老化程度」的剪刀差。两个分项各自内部归一，量纲均为无量纲比率，因此可以直接相减；「加一」仅用于防止折旧或净PPE 为零时除零爆炸。",
+      "economic_mechanism": "这两个比率共同定位企业在资产更新周期中的位置。高 capex/折旧 ＋ 低折旧/净PPE ＝ 年轻资产高速扩张：市场按成长叙事给予高倍数，但自由现金流被吞掉，且产能投放期恰是行业供给集中释放期，回报率被竞争侵蚀。低 capex/折旧 ＋ 高折旧/净PPE ＝ 老旧资产收割：账面价值被市场按衰退折价，但资本开支需求低、现金流充沛，且存在资产重估与重置成本支撑（托宾Q 意义上的价值形态）。剪刀差把「扩张」与「老化」这两个常被混为一谈的维度分离，从而识别出「假装成长的扩张」与「被误判为衰退的现金牛」。预期收益方向：做空剪刀差高（扩张且资产年轻但回报被侵蚀）、做多剪刀差低（收割型价值）。",
+      "expression": "subtract(divide(fnd23_intfvm_xecs, add(fnd23_intfvm_peds, 1)), divide(fnd23_intfvm_peds, add(fnd23_intfvm_nppa, 1)))",
+      "fields_used": [
+        "fnd23_intfvm_xecs",
+        "fnd23_intfvm_peds",
+        "fnd23_intfvm_nppa"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_17",
+      "cluster_ref": "税务现金化缺口：账面计提 vs 实付现金",
+      "field_semantics_mapping": "第一个分项 所得税费用/税前利润 是账面有效税率（权责发生制）；第二个分项 实付现金税/税后利润 是现金有效税率（收付实现制）。两者分母不同但都是利润口径，故可直接相减比较两种税基下的真实税负强度。与 VF31_05 用资本基数做分母不同，本条用利润做分母，度量的是「税率」而非「税负规模」，两者正交：一家公司可以税负规模很小但有效税率极高（利润微薄），也可以税负规模很大但有效税率正常（利润丰厚）。",
+      "economic_mechanism": "账面有效税率显著低于现金有效税率，说明此前的税务递延开始回吐——过去靠加速折旧与抵免压低的账面税负正在被现金支付追平，未来自由现金流将承受额外压力，而市场通常把当前的低账面税率当作可持续状态外推。反之账面税率高于现金税率，说明企业仍在享受税盾或存在未确认的税务资产，现金创造力被低估。此外，异常低的账面有效税率也可能是盈余管理的信号（通过税务科目调节利润），其可持续性同样存疑。预期收益方向：做空「账面税率低而现金税率高」的递延回吐型公司。",
+      "expression": "subtract(divide(fnd23_intfvm_xatt, add(fnd23_intfvm_tbie, 1)), divide(fnd23_intfvalld1_ptcs, add(fnd23_intfvm_taiv, 1)))",
+      "fields_used": [
+        "fnd23_intfvm_xatt",
+        "fnd23_intfvm_tbie",
+        "fnd23_intfvalld1_ptcs",
+        "fnd23_intfvm_taiv"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_18",
+      "cluster_ref": "贸易营运资本占用：应收、存货、应付三角",
+      "field_semantics_mapping": "存货由 fnd23_intfvalld1_acta 减 fnd23_intfvalld1_iucs 还原，除以资本基数得到存货强度；fnd23_intfvalld1_crta 是应收净额，同法归一得到应收强度；两者相减为「存货减应收」剪刀差。与 VF31_11 的「合计占用」不同，本条度量的是占用结构：资金是压在仓库里还是压在客户账上。两者分母一致、量纲一致，故可直接相减；「加一」仅用于除零保护。",
+      "economic_mechanism": "存货强度相对应收强度上升，是需求端走弱的早期信号：产品卖不动先堆在仓库，而销售尚未确认所以应收未同步增长；随后才是降价促销、毛利率下滑与存货减值。反之应收强度相对存货上升，说明企业为抢收入放宽信用条件，短期收入好看但坏账风险后置。两条通道的会计确认时点不同，导致市场对存货积压的反应慢于对应收放宽的反应（存货减值需等审计与盘点），因此「存货相对应收上升」具备更强的可预测性。预期收益方向：做空存货相对积压型、做多应收相对收缩型。",
+      "expression": "subtract(divide(subtract(fnd23_intfvalld1_acta, fnd23_intfvalld1_iucs), add(fnd23_intfvalld1_letq, 1)), divide(fnd23_intfvalld1_crta, add(fnd23_intfvalld1_letq, 1)))",
+      "fields_used": [
+        "fnd23_intfvalld1_acta",
+        "fnd23_intfvalld1_iucs",
+        "fnd23_intfvalld1_crta",
+        "fnd23_intfvalld1_letq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_19",
+      "cluster_ref": "资本结构不对称与股东权益的期权性",
+      "field_semantics_mapping": "fnd23_intfvalld1_lltl 是总负债，total_equity_book_value 是账面总权益。分子为负债减权益（净索取权差），分母为二者之和即总资本。这是以总资本为尺度的「净杠杆不对称」读数，取值在 (-1,1)：为正表示债权人索取已超过股东账面，为负表示股东账面厚于负债。用对称分母而非除以权益，是为了避免权益接近零（甚至为负的资不抵债公司）时读数发散。",
+      "economic_mechanism": "当负债超过账面权益时，股东权益在经济学上已退化为一份价外期权：其价值几乎全部来自资产端波动率与时间价值，对基本面改善的敏感度极低，而对下行冲击的敏感度极高。这类公司是价值陷阱的高发区——它们往往市净率极低、看起来「极度便宜」，但便宜的原因是剩余索取权本身已接近一文不值，任何资产减值都会直接归零。反之净杠杆为负（股东账面厚于负债）的公司具备真实的资产负债表缓冲，其低估值更可能来自暂时性错杀。传导链：净杠杆为正且高 → 权益期权化 → 下行尾部风险被低估 → 负向偏度与负向均值。预期收益方向：做空权益期权化型、做多净现金型。",
+      "expression": "divide(subtract(fnd23_intfvalld1_lltl, total_equity_book_value), add(fnd23_intfvalld1_lltl, total_equity_book_value))",
+      "fields_used": [
+        "fnd23_intfvalld1_lltl",
+        "total_equity_book_value"
+      ],
+      "times": 0
+    },
+    {
+      "id": "VF31_20",
+      "cluster_ref": "自我融资成熟度：留存收益 vs 实收股本 vs 负债",
+      "field_semantics_mapping": "fnd23_blsm_derq 是留存收益（累计利润积累），fnd23_intfvm_smcq 是普通股股本（实收资本，即历次发行形成的原始投入）。分子为二者之差、分母为二者之和，得到 (-1,1) 区间的「自我积累相对外部注资」读数：接近 +1 表示资本几乎全部由利润滚成，接近 -1 表示资本几乎全部由增发注入且累计亏损严重。两个科目都是权益内部的存量项，量纲一致，故对称分母相减在会计恒等式上严格可比。",
+      "economic_mechanism": "这是「企业生命周期位置」最纯粹的会计刻度，且完全不依赖任何价格信息。留存远超股本的公司，是靠产品与经营现金流自我造血长大的成熟企业，其账面价值由已实现利润背书，无需持续向市场融资，因而不受股权融资窗口开合的约束——这类公司在风险偏好下行时反而受益（资金从成长叙事回流现金牛）。股本远超留存的公司，其扩张依赖持续的股权融资，一旦融资窗口关闭或估值下修，扩张计划被迫中止，且历史增发形成的股本在每股口径上持续稀释。市场往往把「不断融资扩张」解读为成长性，低估了其对融资环境的路径依赖。预期收益方向：做多自我积累型、做空外部注资依赖型。",
+      "expression": "divide(subtract(fnd23_blsm_derq, fnd23_intfvm_smcq), add(fnd23_blsm_derq, fnd23_intfvm_smcq))",
+      "fields_used": [
+        "fnd23_blsm_derq",
+        "fnd23_intfvm_smcq"
+      ],
+      "times": 0
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "fundamental23 是全球多口径合并的季度财务报表库：同一会计科目往往存在 fnd23_intfvalld1_*（工业/通用口径，覆盖率最高 0.89~1.00）、fnd23_intfvm_*（含正常化与稀释调整口径）、fnd23_blsm_*（标准化季度摘要口径）三套平行实现，另有 fnd23_cf_m_* 真实现金流量表（覆盖率仅 0.15~0.26，在 MINVOL10M 低波池中会造成大面积空值死重，本轮整体弃用）。该数据集不含任何价格与成交量信息，因此本轮的「价值」必须完全由会计恒等式的内部结构生成——即资本从哪来（留存收益 vs 实收股本 vs 负债 vs 外部增发）、资本沉在哪（有形硬资产 vs 商誉无形 vs 存货应收）、以及账面利润与现金/税款的偏离程度。这三类结构差异是纯粹的「账面价值质量」信息，与任何价格类估值倍数无关，因而天然具备与生产库量价/现金流类 Alpha 的低相关潜力。本轮统一以 fnd23_intfvalld1_letq（总负债+总权益＝总资本，覆盖率 1.00，生产库 alpha_count=0）作为内生规模标尺，刻意回避前序研究高频共享的分母 fnd23_tot_assets（ac=22）与 fnd23_intfvalld1_eltq（ac=7）——共享分母是 ProdCorr 高企的结构性来源。",
+    "economic_clusters": [
+      {
+        "cluster_name": "账面价值的硬度：有形背书 vs 商誉无形",
+        "fields": [
+          "total_equity_book_value",
+          "fnd23_blsm_vbts",
+          "fnd23_intfvalld1_letq"
+        ],
+        "cluster_logic": "报表权益含并购形成的商誉与无形资产，有形账面(vbts)只保留可辨认硬资产。两者之差占资本基数的比重，度量「便宜」这个判断里有多少是会计幻觉。"
+      },
+      {
+        "cluster_name": "盈余的非经常性成分：报表口径 vs 正常化口径",
+        "fields": [
+          "fnd23_intfvm_tbie",
+          "fnd23_intfvm_itpv",
+          "fnd23_intfvm_ists",
+          "fnd23_intfvm_cets"
+        ],
+        "cluster_logic": "tbie 含全部非经常项，itpv 已剔除；两者差额与 ists+cets 是同一裁量空间的两种观测角度（一个来自利润表总额差，一个来自特殊项目明细）。管理层归类裁量权集中于此。"
+      },
+      {
+        "cluster_name": "再投资强度与资产更新周期",
+        "fields": [
+          "fnd23_intfvm_xecs",
+          "fnd23_intfvm_peds",
+          "fnd23_intfvm_nppa"
+        ],
+        "cluster_logic": "资本开支(流量投入)、折旧(存量消耗)、净PPE(存量基数)构成资产更新周期的三个坐标：capex/折旧 度量扩张倾向，折旧/净PPE 度量资产年龄倒数，净再投资占资本比重度量资本沉淀速度。"
+      },
+      {
+        "cluster_name": "自我融资成熟度：留存收益 vs 实收股本 vs 负债",
+        "fields": [
+          "fnd23_blsm_derq",
+          "fnd23_intfvm_smcq",
+          "fnd23_intfvalld1_lltl",
+          "fnd23_intfvalld1_letq"
+        ],
+        "cluster_logic": "资本来源的三分法：留存收益(靠自身利润长大)、实收股本(靠外部增发输血)、总负债(靠债权人垫资)。三者的相对结构刻画企业在生命周期中的位置与融资自主性。"
+      },
+      {
+        "cluster_name": "税务现金化缺口：账面计提 vs 实付现金",
+        "fields": [
+          "fnd23_intfvm_xatt",
+          "fnd23_intfvalld1_ptcs",
+          "fnd23_intfvm_tbie",
+          "fnd23_intfvm_taiv"
+        ],
+        "cluster_logic": "所得税费用是权责发生制计提，实付现金税是收付实现制。两者的跨期缺口既是税收激进度的度量，也是未来现金税回吐的领先指标；两种分母口径（资本基数 / 税前利润）分别刻画规模强度与有效税率。"
+      },
+      {
+        "cluster_name": "外部股权融资 vs 内部资本返还",
+        "fields": [
+          "fnd23_intfvm_sspf",
+          "fnd23_intfvm_dgcd"
+        ],
+        "cluster_logic": "净股票发行(回购)与现金分红是企业与股东之间资金流向的两个方向。净发行＋少分红＝向股东索取；净回购＋多分红＝向股东返还。逆向选择理论下这是管理层私有估值信息的外溢。"
+      },
+      {
+        "cluster_name": "表外净浮存：递延收入 vs 递延所得税负债",
+        "fields": [
+          "deferred_income_noncurrent",
+          "fnd23_intfvm_tdbs"
+        ],
+        "cluster_logic": "递延收入是客户预付款形成的负营运资本浮存（需求前置与议价力的证据）；递延所得税负债是税务递延形成的隐性义务。两者之差是一张不在资产负债表正面显现的净头寸。"
+      },
+      {
+        "cluster_name": "贸易营运资本占用：应收、存货、应付三角",
+        "fields": [
+          "fnd23_intfvalld1_crta",
+          "fnd23_intfvalld1_acta",
+          "fnd23_intfvalld1_iucs",
+          "trade_payables_short_term"
+        ],
+        "cluster_logic": "存货可由 流动资产(acta) − 流动资产剔除存货(iucs) 精确还原，从而在不引入外部数据的前提下拆出「应收」与「存货」两条独立的资金占用通道；应付贸易款则是反向的供应商融资通道。三者组合刻画现金转换周期的结构，而非水平。"
+      },
+      {
+        "cluster_name": "少数股东权益的归属错觉",
+        "fields": [
+          "fnd23_intfvm_lltq",
+          "total_equity_book_value",
+          "fnd23_intfvalld1_niml"
+        ],
+        "cluster_logic": "合并报表的总权益含非控股权益，而归属普通股东的只是其中一部分。用 (总权益+NCI) − 普通股账面权益 可还原少数股东权益规模，度量「报表利润有多少其实不归你」。"
+      },
+      {
+        "cluster_name": "资本结构不对称与股东权益的期权性",
+        "fields": [
+          "fnd23_intfvalld1_lltl",
+          "total_equity_book_value",
+          "fnd23_intfvalld1_letq"
+        ],
+        "cluster_logic": "以总资本为分母的索取权结构：负债索取超过股东账面时，股东权益实质是一份价外期权，其价值对资产端波动高度敏感。这是价值陷阱的高发区，与杠杆水平本身（负债/资本）是不同的信息。"
+      }
+    ]
+  }
+}

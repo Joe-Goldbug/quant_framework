@@ -1,0 +1,58 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "task_tag": "BATCH05_SETTINGS_SWEEP",
+  "note": "最佳核心 E1 = group_rank(ts_mean(negative_score_maximum_value,250), industry) (Sh1.54/Fit0.76/Mgn25.1)。本批并行单点扫描中性化与 decay, 并测试 is_nan/if_else 只填坑不稀释的拓扑。",
+  "items": [
+    {
+      "slot": 1,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0, "neutralization": "SUBINDUSTRY", "truncation": 0.025,
+      "optimize_reason": "中性化扫描: 表达式已按 industry 分组, 再叠 SUBINDUSTRY 风控, 检验残余行业暴露是否是 EMEA 失效来源"
+    },
+    {
+      "slot": 2,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0, "neutralization": "INDUSTRY", "truncation": 0.025,
+      "optimize_reason": "中性化扫描: 分组与风控同构于 industry, 最大化行业中性纯度, 理论上最贴合信号的可比组定义"
+    },
+    {
+      "slot": 3,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0, "neutralization": "MARKET", "truncation": 0.025,
+      "optimize_reason": "中性化扫描: 仅剥离市场 beta, 保留行业与国别暴露, 检验 EMEA 截面是否被过度中性化抹平"
+    },
+    {
+      "slot": 4,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.025,
+      "optimize_reason": "中性化扫描: 统计风险模型剥离主成分暴露, 通常能同时降低 ProdCorr 并改善跨区稳健性"
+    },
+    {
+      "slot": 5,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 20, "neutralization": "COUNTRY", "truncation": 0.025,
+      "optimize_reason": "decay 扫描 20: 轻度平滑截面排序抖动, 在不显著抬高换手的前提下压低日均波动"
+    },
+    {
+      "slot": 6,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 60, "neutralization": "COUNTRY", "truncation": 0.025,
+      "optimize_reason": "decay 扫描 60: 中度平滑, 目标是在保持 2.4% 换手的同时把 Sharpe 推过 1.58"
+    },
+    {
+      "slot": 7,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0, "neutralization": "CROWDING", "truncation": 0.025,
+      "optimize_reason": "中性化扫描: CROWDING 专门剥离全平台拥挤因子暴露, 是击穿 0.6945 ProdCorr 红线的对症处方"
+    },
+    {
+      "slot": 8,
+      "expression": "group_rank(if_else(is_nan(ts_mean(negative_score_maximum_value, 250)), ts_mean(dividend_growth_factor_score, 250), ts_mean(negative_score_maximum_value, 250)), industry)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.025,
+      "optimize_reason": "只填坑不稀释: 用 is_nan 判断母本是否缺数据, 仅在 2014-2016 空窗期切换到股息预期通道, 2017+ 完全保持 1.54 核心不变"
+    }
+  ]
+}

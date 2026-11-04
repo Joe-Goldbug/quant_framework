@@ -1,0 +1,142 @@
+"""
+prescription_w4.py — Wave 4：settings 层 decay 平滑度攻坚（decay 20 → 8）
+Wave 3 结论: (1) 全市场 zscore(1.01 / Fit 0.64 / Mgn 8.04bp / 收益 8.03%) 的收益-换手效率显著优于
+  sector 分组 (1.03 / 0.58 / 6.25bp / 6.93%)，且 Close 检查全清 → 母本的分组标准化本身在削弱效率;
+  (2) 基线窗口 30/60/120 三点几乎同分 (1.03/1.04/1.02) → 分母记忆尺度不是瓶颈;
+  (3) 所有时间序列重排 (半衰期/IR/rank) 均下滑 → alpha 只活在 level 信号里。
+本波唯一未测维度: settings.decay=20 与 5 日均值双重平滑后的有效记忆约 15 天，对日频新闻过钝。
+"""
+
+SEED_ID = "58jYLNXn"
+PTC = "headline_positive_term_count_v2"
+PSV = "headline_positive_score_value_v2"
+NMC = "headline_news_mention_count_v2"
+
+
+def core(base_d=30):
+    return f"divide(multiply(s_log_1p({PTC}), {PSV}), add(ts_mean({NMC}, {base_d}), 0.1))"
+
+
+BATCH = {
+    "seed_id": SEED_ID,
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "decay": 8,              # 唯一改动：母本 decay=20 砍半，减少双重平滑
+    "neutralization": "SECTOR",
+    "truncation": 0.05,
+    "category": "news",
+    "known_fields": [PTC, PSV, NMC, "headline_negative_term_count_v2", "headline_sentiment_value_v2"],
+    "items": [
+        {
+            "id": 1,
+            "type": "MARKET_Z_DECAY8_MEAN5",
+            "expression": f"zscore(ts_mean({core()}, 5))",
+            "optimize_reason": (
+                "decay 归因锚点：与 Wave 3 第 1 条表达式完全相同，唯一差异是 settings.decay 由 20 降到 8。"
+                "这是整条处方链上唯一能把『平滑度』这一维度单独隔离出来的实验——母本 5 日均值 + decay 20 "
+                "叠加后的有效记忆约 15 个交易日，对日频新闻等于把事件信息抹平掉三分之二，"
+                "只在非常慢的情绪趋势上留残差。若本条 Sharpe 明显高于 Wave 3 的 1.01，"
+                "则证明母本 1.03 的天花板主要来自 settings 过平滑，而非信号本身无效；"
+                "若持平或更低，则平滑度也只是伪线索，瓶颈在信号内容。同时它继续沿用全市场 zscore，"
+                "锁定 Wave 3 已证更优的截面口径。"
+            ),
+        },
+        {
+            "id": 2,
+            "type": "MARKET_Z_DECAY8_MEAN10",
+            "expression": f"zscore(ts_mean({core()}, 10))",
+            "optimize_reason": (
+                "平滑补偿：decay 砍半后，用 10 日等权均值部分补回时间维的稳定性，把有效记忆维持在 ~9 天，"
+                "形成『浅 decay + 长均值』与第 1 条『浅 decay + 短均值』的对照。"
+                "日频新闻的 alpha 半衰期通常 3~10 天，10 日均值能覆盖一整周的信息流而不至于像 20 日那样钝化；"
+                "对换手也更友好（均值窗口越长，日间权重漂移越小）。本条用于检验『降 decay 是否会引入过多噪音换手』，"
+                "以及收益-换手比能否在 8 天内保持 Wave 3 全市场口径 8.04bps 的水准。"
+            ),
+        },
+        {
+            "id": 3,
+            "type": "MARKET_Z_DECAY8_WINSOR",
+            "expression": f"zscore(ts_mean(winsorize({core()}, std=3), 5))",
+            "optimize_reason": (
+                "尾部保护：decay 降低后，单日极端情绪值对最终仓位的边际影响被放大（decay 本质是跨日加权平均），"
+                "若不加约束，少数高新闻量公司的极端日会直接冲进仓位，重演母本 Margin 被稀释的老毛病。"
+                "本条在 ts_mean 之前插入 winsorize(std=3)，把原始强度信号的 3σ 之外极端值截断后再平滑，"
+                "既享受浅 decay 带来的新鲜度，又守住权重上限。Wave 2 已证 winsorize 在 decay=20 下中性（1.04 vs 1.03），"
+                "但那是平滑很重的情形；在浅 decay 下它的作用可能完全不同，值得专门占一个卡槽。"
+            ),
+        },
+        {
+            "id": 4,
+            "type": "MARKET_Z_DECAY8_EXP10",
+            "expression": f"zscore(ts_decay_exp_window({core()}, 10, factor=0.6))",
+            "optimize_reason": (
+                "双层衰减的替代方案：settings 的 decay 与表达式内的 ts_decay_exp_window 是两套独立平滑机制，"
+                "本条把 settings.decay 压到 8，同时用表达式内 exp 核（半衰期约 6 天、factor=0.6）承接剩余平滑需求，"
+                "使总平滑预算集中在可控的一端。相比不可见的 settings 黑箱 decay，表达式内的指数核可以精确调参、"
+                "也可以在后续 Wave 里单独标定，工程上更可维护。若它与第 1 条同分，则应把平滑全部交给表达式层，"
+                "settings.decay 归零；若更差，则说明 settings decay 的作用机制与表达式内平滑并不等价，"
+                "可能是平台在组合权重层而非信号层做衰减。"
+            ),
+        },
+        {
+            "id": 5,
+            "type": "MARKET_Z_DECAY8_BASE60",
+            "expression": f"zscore(ts_mean({core(60)}, 5))",
+            "optimize_reason": (
+                "关注度基线与 decay 的交互：Wave 3 在 decay=20 下测得基线 60 日略优（1.04 > 1.03），"
+                "但基线长度与平滑度存在交互——长基线让信号本身更慢，若同时保留重 decay 会双重钝化；"
+                "反之在浅 decay 下，长基线提供的『结构性关注度』分母可能正好补上丢失的稳定性，"
+                "形成『快权重 + 慢基准』的最优组合。本条检验 60 日基线在 decay=8 下是否从 1.04 进一步上升，"
+                "这是本文唯一一条同时改动两个已验证有效旋钮的组合处方。"
+            ),
+        },
+        {
+            "id": 6,
+            "type": "SECTOR_Z_DECAY8",
+            "expression": f"group_zscore(ts_mean({core()}, 5), sector)",
+            "optimize_reason": (
+                "decay 归因的第二个锚点：表达式与 Wave 2 第 1 条（Sharpe 1.03 / Margin 6.25bp）完全一致，"
+                "仅 settings.decay 由 20 降到 8。它与第 1 条构成 2×2 对照（截面口径 × 平滑度），"
+                "可判定『全市场 zscore 的优势』与『浅 decay 的优势』是否可叠加，抑或二者其实在捕捉同一份自由度。"
+                "若本条也随 decay 下降到 1.0 附近而第 1 条升到 1.2+，则口径与平滑度的交互被证实，"
+                "Wave 5 应只在全市场口径上继续加杠杆；若两条同向同幅变化，则说明两者独立可加。"
+            ),
+        },
+        {
+            "id": 7,
+            "type": "MARKET_Z_DECAY8_MEAN20",
+            "expression": f"zscore(ts_mean({core()}, 20))",
+            "optimize_reason": (
+                "平滑度上界扫描：与第 1 条（5 日）、第 2 条（10 日）构成 5/10/20 三点曲线，"
+                "在 decay=8 固定下找出最优均值窗口。20 日窗口在 decay=8 下的总平滑预算约等于母本"
+                "（5 日 + decay 20）的一半，用来验证『母本的有效记忆长度到底该是多少』这一核心问题："
+                "若 20 日显著优于 5 日，则母本的钝化其实是对的、decay 20 才是多余的；"
+                "若 5 日最优，则母本确实被过平滑，降 decay 是正确方向。这条曲线是本轮攻坚的科学收口。"
+            ),
+        },
+        {
+            "id": 8,
+            "type": "MARKET_Z_DECAY8_BASE90",
+            "expression": f"zscore(ts_mean({core(90)}, 5))",
+            "optimize_reason": (
+                "关注度基线外推：90 日≈4.5 个月，逼近季度级媒体关注产能。在浅 decay 下，"
+                "分母越稳，分子的『瞬时超额报道』越清晰，信号就越接近纯粹的信息事件溢价；"
+                "这与母本把分母做成 30 日（含大量事件期污染）形成鲜明对照。"
+                "本条与第 5 条（60 日）一起给出 30/60/90 的基线上探，若分数随基线变长单调上升，"
+                "则说明母本的信号其实被自身 30 日基线里的『事件回声』严重稀释，"
+                "下一轮应直接上 120~250 日的结构性基线；若无差异，则基线维度彻底封盘。"
+            ),
+        },
+    ],
+}
+
+if __name__ == "__main__":
+    import json
+    import os
+
+    out = os.path.join(os.path.dirname(__file__), "batch_w4.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(BATCH, f, ensure_ascii=False, indent=2)
+    print(f"batch written -> {out} ({len(BATCH['items'])} slots)")
+    assert len(BATCH["items"]) == 8, "卡槽未装满 8 条"

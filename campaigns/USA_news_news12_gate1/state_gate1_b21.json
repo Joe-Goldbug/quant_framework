@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/4qXAOef2d4HB9H3bhmqzmoN",
+  "submitted_at": 1792987775,
+  "items": [
+    {
+      "id": 1,
+      "type": "CHAMPION_DEV5_D40",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 5)), sector)",
+      "optimize_reason": "Top champion d5KNe3kx (0 fail, 0 warn, Sh 1.82, Fit 1.12) scaled to decay 40. Targets Turnover <= 11%, Margin >= 13 bps."
+    },
+    {
+      "id": 2,
+      "type": "CHAMPION_DEV6_D40",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), sector)",
+      "optimize_reason": "Top champion omoxQJ8n (0 fail, 0 warn, Sh 1.77, Fit 1.09) scaled to decay 40. Targets Turnover <= 10.5%, Margin >= 14 bps."
+    },
+    {
+      "id": 3,
+      "type": "CHAMPION_DEV7_D40",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 7)), sector)",
+      "optimize_reason": "7-day baseline expectation gap with decay 40. Targets Turnover <= 10.0%, unlocking Margin >= 15.0 bps and Fitness >= 1.25."
+    },
+    {
+      "id": 4,
+      "type": "CHAMPION_DEV8_D40",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 8)), sector)",
+      "optimize_reason": "8-day expectation gap with decay 40. Targets Turnover <= 9.5%, Margin >= 16.0 bps, Fitness >= 1.30."
+    },
+    {
+      "id": 5,
+      "type": "MEDIAN_DEV5_D40",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 5)), sector)",
+      "optimize_reason": "Median target price gap with decay 40. Targets Turnover <= 10.5%, Margin >= 14.5 bps."
+    },
+    {
+      "id": 6,
+      "type": "MEDIAN_DEV7_D40",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 7)), sector)",
+      "optimize_reason": "7-day median target price gap with decay 40. Targets Turnover <= 9.2%, Margin >= 16.5 bps."
+    },
+    {
+      "id": 7,
+      "type": "GAP_DEC2_D40",
+      "expression": "group_rank(ts_decay_linear(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), 2), sector)",
+      "optimize_reason": "Mild in-formula linear decay (2d) on 6-day gap with platform decay 40. Targets Turnover <= 9.0%, Margin >= 17.0 bps."
+    },
+    {
+      "id": 8,
+      "type": "GAP_WINSORIZE_D40",
+      "expression": "group_rank(winsorize(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), std=3), sector)",
+      "optimize_reason": "Winsorized target price gap with decay 40. Protects against tail volatility, targeting 0 warn, Margin >= 14.5 bps."
+    }
+  ]
+}

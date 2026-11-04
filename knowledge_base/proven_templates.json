@@ -1,0 +1,53 @@
+[
+  {
+    "template_id": "TPL_VALUATION_SURPRISE",
+    "name": "估值与预期差偏离通式",
+    "skeleton": "group_rank(subtract(divide(F, close), ts_mean(divide(F, close), W)), subindustry)",
+    "applicable_categories": ["analyst", "fundamental", "estimates"],
+    "economic_mechanism": "每单位股价所隐含的预测修正偏离历史常态，捕捉市场反应迟滞带来的均值修复。",
+    "best_settings": {
+      "neutralization": "STATISTICAL",
+      "decay": 6,
+      "truncation": 0.08
+    },
+    "proven_case": "biasfree_analyst 战役通关冠军 bl8Wd2Nq (Sharpe 2.05, Fit 1.12, 10/10年正收益)"
+  },
+  {
+    "template_id": "TPL_VOLATILITY_RATIO",
+    "name": "预期差对冲分歧度 (信息比)",
+    "skeleton": "group_rank(divide(subtract(F_pred, close), ts_std_dev(close, W)), industry)",
+    "applicable_categories": ["analyst", "news"],
+    "economic_mechanism": "将预期收益用标的自身历史波动率标准化，重仓低波动高预期的确定性标的。",
+    "best_settings": {
+      "neutralization": "INDUSTRY",
+      "decay": 4,
+      "truncation": 0.08
+    }
+  },
+  {
+    "template_id": "TPL_CROSS_DATASET_VOL_REPAIR",
+    "name": "波动正交修复模板",
+    "skeleton": "vector_neut(group_rank(divide(F, close), industry), scale(ts_std_dev(returns, 20)))",
+    "applicable_categories": ["cross_dataset", "event_return"],
+    "economic_mechanism": "在截面组内化后主动剥离短期波动率暴露，大幅提升样本外梯子稳定性且零自相关成本。",
+    "best_settings": {
+      "neutralization": "STATISTICAL",
+      "decay": 4,
+      "truncation": 0.08
+    },
+    "proven_case": "Gate 1 通关冠军 WjLVgnwd (Sharpe 2.41, 10项全过, Pcorr 0.696)"
+  },
+  {
+    "template_id": "TPL_NEWS_EVENT_CONVEX_HUMP",
+    "name": "稀疏事件驱动高阶凸性与近零死重截断模板",
+    "skeleton": "ts_decay_linear(group_neutralize(hump(power(subtract(group_rank(ts_decay_linear(multiply(power(F_sentiment, 4), winsorize(F_pred, std=3.0), sqrt(F_relevance)), W_in), subindustry), 0.5), P_convex), hump=H), subindustry), W_out)",
+    "applicable_categories": ["news", "sentiment", "event_return"],
+    "economic_mechanism": "三元因果高保真交互（情感强度×极端预测×相关度信噪比）+ 组内去偏 + 5阶奇数尾部凸性 + hump 截断近零死重资金 + 细分行业去均值 + 10日双层对齐平滑，彻底攻克新闻事件 12.5% 换手率分母锁死极限与低 Margin 瓶颈。",
+    "best_settings": {
+      "neutralization": "STATISTICAL",
+      "decay": 13,
+      "truncation": 0.04
+    },
+    "proven_case": "USA_news_news12_gate1 战役通关冠军 6XdV13M5 (Sharpe 1.67, Fit 1.00, Margin 7.23 bps, TO 12.32%, 0 FAILS, ProdCorr 0.5479, SelfCorr 0.2466, Ladder 2Y 2.05)"
+  }
+]

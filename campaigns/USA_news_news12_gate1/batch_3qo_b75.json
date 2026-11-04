@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B75_S1_POW5_OUTER_D4_SIM15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 4)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 10 ops: Soft outer smoothing (decay 4) on d5WkjPmJ (Sharpe 1.58). Compresses TO from 20.3% to ~15.5% while preserving 1.58 Sharpe, targeting Fitness >= 0.95."
+    },
+    {
+      "id": 2,
+      "type": "B75_S2_POW5_OUTER_D6_SIM15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 10 ops: Medium outer smoothing (decay 6) on d5WkjPmJ. Targets TO around 14.0%, lifting Fitness past 1.00."
+    },
+    {
+      "id": 3,
+      "type": "B75_S3_POW5_OUTER_D8_SIM15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 10 ops: Strong outer smoothing (decay 8) on d5WkjPmJ. Slashes TO toward 12.8% benchmark."
+    },
+    {
+      "id": 4,
+      "type": "B75_S4_POW5_OUTER_D6_SIM16",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 6)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 10 ops: Simulation decay 16 with outer smoothing 6. Replicates exact simulation setting of d5WkjPmJ (Sharpe 1.58)."
+    },
+    {
+      "id": 5,
+      "type": "B75_S5_POW7_OUTER_D4_SIM15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), 4)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Outer smoothing 4 on KPJlxe5l (Sharpe 1.58, 2Y 2.22). Soft filtering dampens high-power noise."
+    },
+    {
+      "id": 6,
+      "type": "B75_S6_POW7_OUTER_D6_SIM15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 10 ops: Outer smoothing 6 on KPJlxe5l. Balances the 2.22 ladder power with smooth execution."
+    },
+    {
+      "id": 7,
+      "type": "B75_S7_POW7_OUTER_D6_SIM16",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), 6)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 10 ops: KPJlxe5l with sim decay 16 and outer decay 6. Precision frontier for Sharpe >= 1.58 & Fitness >= 1.00."
+    },
+    {
+      "id": 8,
+      "type": "B75_S8_POW7_OUTER_D8_SIM16",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), 8)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 10 ops: Deep outer decay 8 on KPJlxe5l with sim decay 16. Maximum turnover suppression on highest conviction alpha."
+    }
+  ]
+}

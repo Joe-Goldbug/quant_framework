@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/1Zldwm41Q4OqcFHm54aWHPV",
+  "submitted_at": 1793031468,
+  "items": [
+    {
+      "id": 1,
+      "type": "MED_W3_D25",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 3)), sector)",
+      "optimize_reason": "【窗口下探 3】Wave R1 在 MED 上测得窗口单调递减 w5(1.97) > w6(1.92) > w7(1.85)，说明目标价偏离是**短基线更有效**的快变量（与红队“慢变量应取长基线”的预判相反）。沿单调方向继续外探 w3，寻找峰值；若 w3 < w5 则确认 w5 为窗口轴最优点并关闭该轴。"
+    },
+    {
+      "id": 2,
+      "type": "MED_W4_D25",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 4)), sector)",
+      "optimize_reason": "【窗口下探 4】与 Slot1/w5 构成 w3/w4/w5 三点曲线，定位窗口轴峰值的精确位置。机制不变：一致目标价相对收盘价的隐含上行空间，减去其自身近期均值后的上修量，在 sector 内排序。"
+    },
+    {
+      "id": 3,
+      "type": "MED_W5_WINS_D25",
+      "expression": "group_rank(winsorize(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 5)), std=3), sector)",
+      "optimize_reason": "【稳健化】与 Wave R1 Slot1 唯一变量=gap 外层是否加 winsorize(std=3)。先例 88vMgEbm（MAX w6 winsorize @dec25）Sh1.77 全清，证明截尾不伤 Sharpe 且能压极端扰动。目标是保住 Sh1.97 的同时改善年度稳定性与 Margin。"
+    },
+    {
+      "id": 4,
+      "type": "MED_W5_IND_D25",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 5)), industry)",
+      "optimize_reason": "【分组拥挤罚项对照】与 Wave R1 Slot1 唯一变量=分组 sector→industry。CLUSTER_TEST 回归中分组是独立罚项项（subindustry 最差 −0.078、sector −0.016、industry −0.011）。本槽判定 industry 是否比 sector 更省罚项、能否把 Sharpe 或 CLUSTER 再抬一档。"
+    },
+    {
+      "id": 5,
+      "type": "MIN_W5_D25",
+      "expression": "group_rank(subtract(divide(min_bias_adjusted_price_target, close), ts_mean(divide(min_bias_adjusted_price_target, close), 5)), sector)",
+      "optimize_reason": "【零拥挤分子 · 最保守口径】min_bias_adjusted_price_target（ac=0/uc=0/cov 0.9411）。机制：连**最悲观**的分析师给出的目标价相对收盘价都有上行空间、且该空间还在上修时，说明上涨共识已扩散到分歧的下沿，信号比一致预期口径更硬。同时检验「零拥挤分子 ⇒ 无 CLUSTER 警告」这一定律是否可推广到第二个分子。"
+    },
+    {
+      "id": 6,
+      "type": "NETREV_W5_D25",
+      "expression": "group_rank(subtract(subtract(num_upward_biasfree_price_target_revisions, num_downward_biasfree_price_target_revisions), ts_mean(subtract(num_upward_biasfree_price_target_revisions, num_downward_biasfree_price_target_revisions), 5)), sector)",
+      "optimize_reason": "【全新零拥挤腿 · 修正流净额】num_upward(ac=0/uc=0) − num_downward(ac=1) = 净上调次数，取相对自身 5 日均值的偏离。这是与本族前两条腿（目标价**水平**、目标价**变化**）完全不同的第三条轴——**修正行为的发生频率**。机制：分析师上调行为本身比上调幅度更难被即时套利，因为修正流反映的是覆盖深度与信息到达节奏。"
+    },
+    {
+      "id": 7,
+      "type": "UPSHARE_W5_D25",
+      "expression": "group_rank(subtract(divide(num_upward_biasfree_price_target_revisions, add(num_upward_biasfree_price_target_revisions, num_downward_biasfree_price_target_revisions)), ts_mean(divide(num_upward_biasfree_price_target_revisions, add(num_upward_biasfree_price_target_revisions, num_downward_biasfree_price_target_revisions)), 5)), sector)",
+      "optimize_reason": "【全新零拥挤腿 · 修正流占比】上调次数 /（上调+下调次数）= 修正方向占比，自归一化无量纲，天然消除“覆盖人数多则修正次数多”的规模偏差。机制：当修正流中上调占比相对自身近期均值上升时，意味着共识正在向上迁移且尚未被价格吸收。与 Slot6 构成“净额 vs 占比”的口径对照。"
+    },
+    {
+      "id": 8,
+      "type": "MEDxSENT_W5_D25",
+      "expression": "group_rank(subtract(divide(multiply(median_bias_adjusted_price_target, mean_primary_sentiment_score_transfer), close), ts_mean(divide(multiply(median_bias_adjusted_price_target, mean_primary_sentiment_score_transfer), close), 5)), sector)",
+      "optimize_reason": "【种子 rKR1qVWo 情绪核 · 最终尝试（加权分子版）】Wave R1 Slot8 采用的是「情绪 × 差分」，得到 Sh1.67/Fit0.89/CL1.54（三 fail）。本槽改为「情绪加权**分子**」：把 mean_primary_sentiment_score_transfer 乘进目标价本身，构造“经新闻情绪确认的目标价”。机制：一手新闻流情绪强度越高，该目标价的可信度越高，其隐含上行空间更可能兑现。这是种子直系路线的最后一次判决——若仍不过，则出具书面结论：news84 情绪核与 clean 族不可兼容，rKR1qVWo 的直系优化空间已实证穷尽。"
+    }
+  ]
+}

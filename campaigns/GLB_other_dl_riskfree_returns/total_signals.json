@@ -1,0 +1,644 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL1M",
+  "category": "other",
+  "dataset_id": "dl_riskfree_returns",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "尾部不对称：肩部质量 vs 极端桶质量",
+      "field_semantics_mapping": "probability_label1_4quantile_60day_ohlcv_img（COLD，alpha_count=36，coverage=0.956）是 60 日 4 分桶次低档（25-50 分位，'温和下行肩部'）的对数概率，为分子主信号源；probability_label0_2quantile_60day_ohlcv_img（HOT，alpha_count=1606，coverage=1.0）是 60 日粗粒度下半部（bottom 50%）的对数概率，作为差分基准锚——粗桶在集合上包含细肩部桶，两者之差恒<=0，其大小刻画'下行质量中温和部分占比'；quantile_label_4bucket_60day_ohlcv_img_2（coverage=1.0，序数 0-3）作为分母加 1 后的档位贴现项：模型整体判空档位越低，该结构信号越应被放大。",
+      "economic_mechanism": "当 CNN 模型把 60 日下行风险的质量集中到'温和下行肩部'而非深度尾部时，意味着形态上只有正常回撤压力而无崩跌结构。做市商与尾部对冲盘的保护需求随之下降，期权隐含偏度回落前，现货端的风险折价会先行修复——这是分布细节先于价格反映的定价迟滞。分子 log-odds 越大（肩部质量占比越高），未来 60 日超额收益越高；分母按模型序数档位贴现，避免在模型强烈看多时重复计入方向信息。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_label1_4quantile_60day_ohlcv_img, probability_label0_2quantile_60day_ohlcv_img), add(quantile_label_4bucket_60day_ohlcv_img_2, 1))",
+      "fields_used": [
+        "probability_label1_4quantile_60day_ohlcv_img",
+        "quantile_label_4bucket_60day_ohlcv_img_2",
+        "probability_label0_2quantile_60day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label1_4quantile_60day_ohlcv_img",
+        "normalizer": "quantile_label_4bucket_60day_ohlcv_img_2",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 1.0,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "尾部不对称：肩部质量 vs 极端桶质量",
+      "field_semantics_mapping": "probability_label3_5quantile_5day_ohlcv_img（COLD，alpha_count=61）为 5 日 5 分桶次高档（60-80 分位，'温和乐观肩部'）对数概率，作分子主锚；probability_label4_5quantile_5day_ohlcv_img（HOT，alpha_count=468，coverage=1.0）为 5 日顶档（>80 分位，'亢奋档'）对数概率，作差分基准；probability_label0_5quantile_5day_ohlcv_img（WARM，coverage=0.956）为 5 日极端底档对数概率，取 reverse 加 1 构成恒>=1 的尾部惊奇贴现分母（避免 logp 近零导致的除法爆炸）。",
+      "economic_mechanism": "短期形态上，'温和乐观肩部厚、顶档未亢奋'的股票处于趋势确立但未加速阶段，动量追随盘尚未拥挤，未来 5 日延续正漂移且回撤风险小；反之顶档远超肩部则接近短期过热，追高风险大。底部惊奇度（|logp_bottom|）越大说明崩跌概率越高，此结构信号的可信度越低，故以其贴现。分子剪刀差越大，未来收益越高，预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_label3_5quantile_5day_ohlcv_img, probability_label4_5quantile_5day_ohlcv_img), add(reverse(probability_label0_5quantile_5day_ohlcv_img), 1))",
+      "fields_used": [
+        "probability_label0_5quantile_5day_ohlcv_img",
+        "probability_label3_5quantile_5day_ohlcv_img",
+        "probability_label4_5quantile_5day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label3_5quantile_5day_ohlcv_img",
+        "normalizer": "probability_label0_5quantile_5day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.2105,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.395,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "尾部不对称：肩部质量 vs 极端桶质量",
+      "field_semantics_mapping": "quantile_label_4bucket_5day_ohlcv_img_2（WARM，coverage=1.0，序数 0-3）是 5 日 4 分桶 argmax 标签，作为方向门控权重；probability_label0_4quantile_5day_ohlcv_img（COLD，alpha_count=75）为 5 日 4 分桶极端底档对数概率（分子主锚）；probability_label1_2quantile_5day_ohlcv_img（HOT，alpha_count=2074，coverage=0.984）为 5 日粗粒度上半部对数概率（差分基准）。标签为非负整数，乘以有符号 log-odds 差项，符号完全由差项驱动，不违反双对称字段相乘禁令。",
+      "economic_mechanism": "当模型的序数标签判高（看多）但同时极端底档概率仍厚于上半部概率时，分类头与分布细节出现内部矛盾——表面看多、底层分布却左偏，这是典型的'虚多'形态：价格被标签跟风的资金推高，而条件分布显示下行尾部未消化。该背离越大，未来 5 日越倾向均值回归向下。预期极性 -1（表达式值越大，未来收益越低）。",
+      "expected_polarity": -1,
+      "expression": "multiply(quantile_label_4bucket_5day_ohlcv_img_2, subtract(probability_label0_4quantile_5day_ohlcv_img, probability_label1_2quantile_5day_ohlcv_img))",
+      "fields_used": [
+        "quantile_label_4bucket_5day_ohlcv_img_2",
+        "probability_label1_2quantile_5day_ohlcv_img",
+        "probability_label0_4quantile_5day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label0_4quantile_5day_ohlcv_img",
+        "normalizer": "quantile_label_4bucket_5day_ohlcv_img_2",
+        "main_anchor_alpha_pct": 0.3333,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 1.0,
+        "pairing_score": 1.333,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "尾部不对称：肩部质量 vs 极端桶质量",
+      "field_semantics_mapping": "probability_label1_5quantile_20day_ohlcv_img_2（COLD，alpha_count=71）为 20 日 5 分桶次低档（20-40 分位，下肩部）对数概率，分子主锚；probability_label0_5quantile_20day_ohlcv_img（WARM，coverage=0.956）为 20 日极端底档（0-20 分位）对数概率，差分基准；quantile_label_5bucket_20day_ohlcv_img（coverage=1.0，序数 0-4）加 1 作档位贴现分母。两 logp 之差即下肩部相对极端底的 log-odds。",
+      "economic_mechanism": "20 日尺度上，下行质量集中于'温和回撤肩部'而非'极端崩跌底档'，说明形态学上的风险是常规波动而非结构性破位。风控模型按极端尾部定价的资金会对这类股票超配保护，当崩跌未发生时保护平仓带来修复性买盘。log-odds 越大（肩部相对极端底越厚），修复性超额收益越高；分母档位越高，方向信息越充分，结构信号边际权重越低。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_label1_5quantile_20day_ohlcv_img_2, probability_label0_5quantile_20day_ohlcv_img), add(quantile_label_5bucket_20day_ohlcv_img, 1))",
+      "fields_used": [
+        "probability_label1_5quantile_20day_ohlcv_img_2",
+        "probability_label0_5quantile_20day_ohlcv_img",
+        "quantile_label_5bucket_20day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label1_5quantile_20day_ohlcv_img_2",
+        "normalizer": "probability_label0_5quantile_20day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.2982,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.351,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "尾部不对称：肩部质量 vs 极端桶质量",
+      "field_semantics_mapping": "probability_label2_5quantile_5day_ohlcv_img（COLD，alpha_count=39，alpha_pct=0.018）为 5 日 5 分桶正中枢档（40-60 分位）对数概率，分子主锚；probability_label2_3quantile_5day_ohlcv_img（HOT，alpha_count=1737）为 5 日 3 分桶顶档（>67 分位）对数概率，差分基准；quantile_label_3bucket_5day_ohlcv_img_2（WARM，coverage=1.0，序数 0-2）加 1 贴现。",
+      "economic_mechanism": "中枢档概率厚而顶档未热，意味着模型判断该股票短期'稳中有升但不爆发'。市场注意力集中于顶档概率高的明星股，中枢厚实型股票被系统性忽视，形成关注度折价；其正漂移在随后数日缓慢兑现。中枢-顶档 log-odds 越大（中枢相对越厚），被忽视程度越高，未来超额越高；以 3 桶序数档位贴现防止与方向信号重复计价。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_label2_5quantile_5day_ohlcv_img, probability_label2_3quantile_5day_ohlcv_img), add(quantile_label_3bucket_5day_ohlcv_img_2, 1))",
+      "fields_used": [
+        "probability_label2_3quantile_5day_ohlcv_img",
+        "quantile_label_3bucket_5day_ohlcv_img_2",
+        "probability_label2_5quantile_5day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label2_5quantile_5day_ohlcv_img",
+        "normalizer": "probability_label2_3quantile_5day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.0175,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.491,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "期限结构：同一桶族的 5d/20d/60d 斜率",
+      "field_semantics_mapping": "single_bucket_60day_return_estimate_ohlcv_img（HOT，alpha_count=453，coverage=0.956）为 60 日连续回归点估计（有符号浮点），作为主比较基准；single_bucket_5day_return_estimate_ohlcv_img（HOT，alpha_count=3341）为 5 日点估计，作被贴现项；probability_label1_3quantile_60day_ohlcv_img（COLD，alpha_count=45）为 60 日 3 分桶中枢档对数概率，取 reverse 加 1 构成恒>=1 的中枢惊奇贴现因子，对短期估计做风险调整。",
+      "economic_mechanism": "期限结构的健康形态是'长期点估计为正且高于经中枢不确定性贴现后的短期点估计'：说明收益预期在长期稳步积累，而非短期脉冲式透支。当 60 日中枢档概率薄（惊奇度高）时，短期信号的可信度被下折，斜率信号自动压缩。该斜率越大，说明长期资金尚未充分定价稳步积累的价值，未来 60 日正超额。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(single_bucket_60day_return_estimate_ohlcv_img, divide(single_bucket_5day_return_estimate_ohlcv_img, add(reverse(probability_label1_3quantile_60day_ohlcv_img), 1)))",
+      "fields_used": [
+        "single_bucket_5day_return_estimate_ohlcv_img",
+        "probability_label1_3quantile_60day_ohlcv_img",
+        "single_bucket_60day_return_estimate_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label1_3quantile_60day_ohlcv_img",
+        "normalizer": "single_bucket_5day_return_estimate_ohlcv_img",
+        "main_anchor_alpha_pct": 0.0877,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.456,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "期限结构：同一桶族的 5d/20d/60d 斜率",
+      "field_semantics_mapping": "probability_label2_4quantile_60day_ohlcv_img（COLD，alpha_count=44）为 60 日 4 分桶中上档（50-75 分位）对数概率，分子主锚；probability_label3_4quantile_5day_ohlcv_img_2（HOT，alpha_count=332）为 5 日 4 分桶顶档对数概率，差分基准；probability_label0_4quantile_60day_ohlcv_img（COLD，alpha_count=75，coverage=0.956）为 60 日极端底档，reverse+1 构成尾部惊奇贴现分母。",
+      "economic_mechanism": "60 日中上档质量厚（中期稳步看多）而 5 日顶档未亢奋（短期未加速），是'慢牛'形态的期限结构特征：短线客尚未涌入，机构建仓盘可持续。反之若短期顶档远超中期中上档，则接近过热拐点。以 60 日极端底惊奇度贴现，是因为尾部风险高的股票即使期限结构健康也应降低信号权重。剪刀差越大，未来正超额越高，预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_label2_4quantile_60day_ohlcv_img, probability_label3_4quantile_5day_ohlcv_img_2), add(reverse(probability_label0_4quantile_60day_ohlcv_img), 1))",
+      "fields_used": [
+        "probability_label0_4quantile_60day_ohlcv_img",
+        "probability_label2_4quantile_60day_ohlcv_img",
+        "probability_label3_4quantile_5day_ohlcv_img_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label0_4quantile_60day_ohlcv_img",
+        "normalizer": "probability_label2_4quantile_60day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.3333,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.333,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "期限结构：同一桶族的 5d/20d/60d 斜率",
+      "field_semantics_mapping": "probability_label2_5quantile_60day_ohlcv_img（COLD，alpha_count=48）为 60 日 5 分桶正中枢（40-60 分位）对数概率，分子主锚；probability_label0_2quantile_60day_ohlcv_img（HOT，alpha_count=1606，coverage=1.0）为 60 日粗粒度下半部对数概率，reverse+1 构成归一锚分母（1+|logp_bottom| 恒>=1）。比值为'中枢质量/底部惊奇'的集中度量纲。",
+      "economic_mechanism": "60 日中枢档概率越厚（logp 越接近 0），同时粗粒度下半部惊奇度越低，说明该股票的长期条件分布是'低不确定性稳态'——既无深度尾部也无爆发预期。此类股票在横截面上被市场按低关注度定价，但其可预期的稳定漂移在风险平价资金眼中价值更高，存在缓慢的重新定价上行。比值越大（中枢越厚/底部越安全），未来收益越高，预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(probability_label2_5quantile_60day_ohlcv_img, add(reverse(probability_label0_2quantile_60day_ohlcv_img), 1))",
+      "fields_used": [
+        "probability_label0_2quantile_60day_ohlcv_img",
+        "probability_label2_5quantile_60day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label2_5quantile_60day_ohlcv_img",
+        "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.1228,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 1.0,
+        "pairing_score": 1.439,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "期限结构：同一桶族的 5d/20d/60d 斜率",
+      "field_semantics_mapping": "quantile_label_2bucket_60day_ohlcv_img（COLD，alpha_count=73，coverage=1.0，序数 0/1）为 60 日粗粒度方向标签，作门控权重；probability_label1_5quantile_60day_ohlcv_img_2（COLD，alpha_count=70，coverage=1.0）为 60 日 5 分桶下肩部对数概率，差分主锚；probability_label4_5quantile_60day_ohlcv_img_2（WARM，coverage=0.956）为 60 日顶档对数概率，差分基准。标签非负整数，符号由剪刀差项驱动。",
+      "economic_mechanism": "仅当粗粒度分类器判多（label=1）时信号激活：此时若概率质量沉淀在下肩部而非顶档，说明模型看多但市场参与者只能观察到标签层面的方向投票，看不到分布内部的'谨慎乐观'细节。这种'看多但未充分定价'的形态会在 60 日内随基本面或资金流验证逐步向上重估。剪刀差越大（肩部相对顶档越厚），修复空间越大。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "multiply(quantile_label_2bucket_60day_ohlcv_img, subtract(probability_label1_5quantile_60day_ohlcv_img_2, probability_label4_5quantile_60day_ohlcv_img_2))",
+      "fields_used": [
+        "probability_label4_5quantile_60day_ohlcv_img_2",
+        "probability_label1_5quantile_60day_ohlcv_img_2",
+        "quantile_label_2bucket_60day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label1_5quantile_60day_ohlcv_img_2",
+        "normalizer": "probability_label4_5quantile_60day_ohlcv_img_2",
+        "main_anchor_alpha_pct": 0.2807,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.36,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "期限结构：同一桶族的 5d/20d/60d 斜率",
+      "field_semantics_mapping": "probability_label2_5quantile_20day_ohlcv_img_2（COLD，alpha_count=55）为 20 日 5 分桶中枢档对数概率，主锚；probability_label2_3quantile_20day_ohlcv_img（HOT，alpha_count=2169，coverage=0.956）为 20 日 3 分桶顶档对数概率，reverse+1 构成惊奇贴现分母；probability_label2_5quantile_5day_ohlcv_img（COLD，alpha_count=39）为 5 日中枢档对数概率，作减项基准。三项量纲同为对数概率域。",
+      "economic_mechanism": "中期中枢质量经自身顶部惊奇贴现后仍高于短期中枢原始水平，说明中期分布的确定性优于短期——短期噪音未污染中期趋势，属于'短期洗筹、中期确立'的形态。此类股票短线波动洗出弱手后，中期漂移兑现。差值越大，中期趋势确认度越高，未来 20 日超额越高。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(probability_label2_5quantile_20day_ohlcv_img_2, add(reverse(probability_label2_3quantile_20day_ohlcv_img), 1)), probability_label2_5quantile_5day_ohlcv_img)",
+      "fields_used": [
+        "probability_label2_5quantile_20day_ohlcv_img_2",
+        "probability_label2_3quantile_20day_ohlcv_img",
+        "probability_label2_5quantile_5day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label2_5quantile_20day_ohlcv_img_2",
+        "normalizer": "probability_label2_3quantile_20day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.1579,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.421,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "分布离散度与不确定性：中枢集中度定价",
+      "field_semantics_mapping": "probability_label1_3quantile_20day_ohlcv_img（COLD，alpha_count=49）为 20 日 3 分桶中枢档对数概率，分子主锚；probability_label2_3quantile_20day_ohlcv_img（HOT，alpha_count=2169，coverage=0.956）为 20 日 3 分桶顶档对数概率，差分基准；probability_label0_3quantile_20day_ohlcv_img_2（WARM，coverage=1.0）为 20 日 3 分桶底档对数概率，reverse+1 构成尾部惊奇放大因子。",
+      "economic_mechanism": "（中枢-顶档）log-odds 度量质量向上集中的程度：越接近 0 说明顶部与中枢几乎等厚，分布整体右移——这是强势形态；再乘以（1+底部惊奇度）作为杠杆：当底部惊奇低（无崩跌风险）时强势信号被全额保留，底部惊奇高时信号被放大为更负（向下集中且无安全垫的强势股被剔出）。该交互项捕捉'有安全垫的集中度溢价'，值越大未来收益越高。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "multiply(subtract(probability_label1_3quantile_20day_ohlcv_img, probability_label2_3quantile_20day_ohlcv_img), add(reverse(probability_label0_3quantile_20day_ohlcv_img_2), 1))",
+      "fields_used": [
+        "probability_label0_3quantile_20day_ohlcv_img_2",
+        "probability_label2_3quantile_20day_ohlcv_img",
+        "probability_label1_3quantile_20day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label1_3quantile_20day_ohlcv_img",
+        "normalizer": "probability_label0_3quantile_20day_ohlcv_img_2",
+        "main_anchor_alpha_pct": 0.1404,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 1.0,
+        "pairing_score": 1.43,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "分布离散度与不确定性：中枢集中度定价",
+      "field_semantics_mapping": "probability_label3_5quantile_20day_ohlcv_img（COLD，alpha_count=56）为 20 日 5 分桶上肩部（60-80 分位）对数概率，分子主锚；probability_label4_5quantile_20day_ohlcv_img（HOT，alpha_count=1831）为 20 日顶档对数概率，差分基准；probability_label0_5quantile_20day_ohlcv_img（WARM，coverage=0.956）为 20 日极端底档，reverse+1 构成尾部惊奇贴现分母。",
+      "economic_mechanism": "上肩部与顶档的剪刀差度量'温和乐观 vs 极端亢奋'：上肩部厚而顶档未爆的股票处于趋势中段，尚未进入情绪拥挤区，20 日内仍有补涨空间；顶档远超肩部则已进入拥挤交易。以极端底惊奇度贴现，剔除那些右尾厚但左尾同样厚（U 形高波分布）的伪强势股。剪刀差越大，未来超额越高。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_label3_5quantile_20day_ohlcv_img, probability_label4_5quantile_20day_ohlcv_img), add(reverse(probability_label0_5quantile_20day_ohlcv_img), 1))",
+      "fields_used": [
+        "probability_label0_5quantile_20day_ohlcv_img",
+        "probability_label4_5quantile_20day_ohlcv_img",
+        "probability_label3_5quantile_20day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label3_5quantile_20day_ohlcv_img",
+        "normalizer": "probability_label0_5quantile_20day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.1754,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.412,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "分布离散度与不确定性：中枢集中度定价",
+      "field_semantics_mapping": "probability_label2_4quantile_20day_ohlcv_img（COLD，alpha_count=47）为 20 日 4 分桶中上档（50-75 分位）对数概率，分子主锚；probability_label0_2quantile_20day_ohlcv_img（HOT，alpha_count=4549，coverage=0.956）为 20 日粗粒度下半部对数概率，reverse+1 构成归一锚分母。比值为'中上质量/下行惊奇'的安静强势度量。",
+      "economic_mechanism": "中上档概率厚（logp 接近 0）且下半部惊奇低的股票，其条件分布呈现'quiet strength'：没有戏剧性右尾，但期望收益为正且方差小。市场对这类股票定价效率最低——既没有动量客追逐的爆发形态，也没有价值客挖掘的深度折价，机构的风险预算却在持续流入。比值越大（质量越集中于中上档/下行风险越低），未来 20 日超额越高。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(probability_label2_4quantile_20day_ohlcv_img, add(reverse(probability_label0_2quantile_20day_ohlcv_img), 1))",
+      "fields_used": [
+        "probability_label0_2quantile_20day_ohlcv_img",
+        "probability_label2_4quantile_20day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label2_4quantile_20day_ohlcv_img",
+        "normalizer": "probability_label0_2quantile_20day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.1053,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.447,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "分布离散度与不确定性：中枢集中度定价",
+      "field_semantics_mapping": "single_bucket_20day_return_estimate_ohlcv_img_2（HOT，alpha_count=3504，coverage=0.956）为 20 日连续回归点估计（有符号浮点），作为方向基准项；probability_label1_4quantile_20day_ohlcv_img（COLD，alpha_count=66）为 20 日 4 分桶下肩部对数概率，其 reverse 经贴现后构成下行薄度加分项；probability_label0_4quantile_20day_ohlcv_img（WARM，coverage=0.956）为 20 日极端底档对数概率，reverse+1 贴现。注意下肩部 logp 为负，除以恒>=1 的分母仍为负，点估计减去一个负数等价于加上其绝对值——即'下行质量越薄，加分越多'。",
+      "economic_mechanism": "点估计为正且下肩部质量薄（下行概率低）的股票，获得方向与安全边际的双重确认：回归头与分布头互相印证。反之点估计为正但下肩部同样厚实的股票，其正估计的方差极大，实现收益未必兑现。该共振项越大，未来 20 日超额越高。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(single_bucket_20day_return_estimate_ohlcv_img_2, divide(probability_label1_4quantile_20day_ohlcv_img, add(reverse(probability_label0_4quantile_20day_ohlcv_img), 1)))",
+      "fields_used": [
+        "single_bucket_20day_return_estimate_ohlcv_img_2",
+        "probability_label1_4quantile_20day_ohlcv_img",
+        "probability_label0_4quantile_20day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label1_4quantile_20day_ohlcv_img",
+        "normalizer": "single_bucket_20day_return_estimate_ohlcv_img_2",
+        "main_anchor_alpha_pct": 0.2632,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.368,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "分类器-回归器背离：序数标签 vs 连续估计",
+      "field_semantics_mapping": "quantile_label_4bucket_60day_ohlcv_img_2（COLD，alpha_count=61，coverage=1.0，序数 0-3）为 60 日 4 分桶 argmax 标签，主锚；single_bucket_60day_return_estimate_ohlcv_img（HOT，alpha_count=453）为 60 日连续回归点估计（量级约百分之几的小数），作减项基准；probability_label1_2quantile_60day_ohlcv_img（WARM，coverage=0.956）为 60 日粗粒度上半部对数概率，reverse+1 构成惊奇贴现分母。由于标签量级远大于点估计，该差值本质上是由序数档位主导、经回归量级微调的'档位溢价'。",
+      "economic_mechanism": "序数标签给出了粗粒度方向投票，连续估计给出量级。当分类器投票高档而回归量级未跟上时，说明模型的分布整体右移但条件均值改善温和——市场如果只交易裸回归估计（全平台拥挤做法），就会系统性错过分类器档位已经确认的股票。该档位溢价经上半部惊奇贴现（惊奇高=信号拥挤度低→贴现弱→信号保留），值越大未来 60 日超额越高。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(quantile_label_4bucket_60day_ohlcv_img_2, add(reverse(probability_label1_2quantile_60day_ohlcv_img), 1)), single_bucket_60day_return_estimate_ohlcv_img)",
+      "fields_used": [
+        "single_bucket_60day_return_estimate_ohlcv_img",
+        "quantile_label_4bucket_60day_ohlcv_img_2",
+        "probability_label1_2quantile_60day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "quantile_label_4bucket_60day_ohlcv_img_2",
+        "normalizer": "single_bucket_60day_return_estimate_ohlcv_img",
+        "main_anchor_alpha_pct": 0.2105,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.395,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "分类器-回归器背离：序数标签 vs 连续估计",
+      "field_semantics_mapping": "quantile_label_2bucket_60day_ohlcv_img（COLD，alpha_count=73，coverage=1.0，序数 0/1）为 60 日二分类方向标签，作门控开关；single_bucket_60day_return_estimate_ohlcv_img（HOT，alpha_count=453，coverage=0.956）为 60 日回归点估计（有符号浮点），作被门控的连续信号。标签非负、估计有符号，乘积符号由估计驱动，不涉及双对称字段相乘的伪因果问题。",
+      "economic_mechanism": "全平台直接使用裸回归估计的因子已极度拥挤（alpha_count 3341~3504）。用独立的粗粒度二分类头做门控后，信号只在分类器与回归器方向一致时激活（label=1 时输出估计值，label=0 时归零）：这等效于对裸估计做了模型内部一致性过滤，剔除了回归头单独发出但被分类头否决的弱信号——这些弱信号恰是拥挤因子的主要构成。门控后的稀疏信号与裸估计因子天然低相关，且方向上：值越大，未来 60 日超额越高。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "multiply(quantile_label_2bucket_60day_ohlcv_img, single_bucket_60day_return_estimate_ohlcv_img)",
+      "fields_used": [
+        "quantile_label_2bucket_60day_ohlcv_img",
+        "single_bucket_60day_return_estimate_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "quantile_label_2bucket_60day_ohlcv_img",
+        "normalizer": "single_bucket_60day_return_estimate_ohlcv_img",
+        "main_anchor_alpha_pct": 0.3158,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.342,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "分类器-回归器背离：序数标签 vs 连续估计",
+      "field_semantics_mapping": "single_bucket_5day_return_estimate_ohlcv_img（HOT，alpha_count=3341，coverage=0.956）为 5 日回归点估计，作主锚分子；probability_label0_4quantile_5day_ohlcv_img（COLD，alpha_count=75）为 5 日 4 分桶极端底档对数概率，reverse+1 构成短期尾部惊奇贴现；single_bucket_20day_return_estimate_ohlcv_img_2（HOT，alpha_count=3504，coverage=0.956）为 20 日点估计，作减项基准。",
+      "economic_mechanism": "短期点估计经短期尾部风险贴现后与中期原始估计之差，度量'每单位下行风险对应的短期预期收益超出中期的部分'——这是风险调整后的期限斜率。短期信号强且短期尾部安全的股票，是事件驱动资金尚未涌入前的最佳介入窗口；若斜率为负（中期更强），则短期追高性价比低。差值越大，未来数日正超额越高。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(single_bucket_5day_return_estimate_ohlcv_img, add(reverse(probability_label0_4quantile_5day_ohlcv_img), 1)), single_bucket_20day_return_estimate_ohlcv_img_2)",
+      "fields_used": [
+        "probability_label0_4quantile_5day_ohlcv_img",
+        "single_bucket_5day_return_estimate_ohlcv_img",
+        "single_bucket_20day_return_estimate_ohlcv_img_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label0_4quantile_5day_ohlcv_img",
+        "normalizer": "single_bucket_5day_return_estimate_ohlcv_img",
+        "main_anchor_alpha_pct": 0.3333,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.333,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "跨粒度重标定：2/3/4/5 分桶的下尾一致性",
+      "field_semantics_mapping": "probability_label0_3quantile_5day_ohlcv_img_2（COLD，alpha_count=80）与 probability_label1_3quantile_5day_ohlcv_img（COLD，alpha_count=64，coverage=1.0）分别为 5 日 3 分桶底档与中枢档对数概率，其和为下半区（底+中枢）联合概率的对数（量纲自洽：log(p_b)+log(p_m)=log(p_b·p_m)，对联合质量单调）；probability_label0_2quantile_5day_ohlcv_img（HOT，alpha_count=2791，coverage=0.956）为 5 日粗粒度下半部对数概率，reverse+1 构成贴现分母。",
+      "economic_mechanism": "细粒度下半区联合质量相对粗粒度底部惊奇越大（比值越接近 0 或绝对值越小），说明两个独立分桶头对'下行'的刻画一致——下尾信号被双重确认。下尾一致的股票，其持仓多头处于信息劣势：他们看到的只是价格尚未破位，而条件分布已一致指向回撤，随后的集中平仓会放大下行。比值越大（下尾确认越强），未来 5 日收益越低。预期极性 -1。",
+      "expected_polarity": -1,
+      "expression": "divide(add(probability_label0_3quantile_5day_ohlcv_img_2, probability_label1_3quantile_5day_ohlcv_img), add(reverse(probability_label0_2quantile_5day_ohlcv_img), 1))",
+      "fields_used": [
+        "probability_label0_3quantile_5day_ohlcv_img_2",
+        "probability_label1_3quantile_5day_ohlcv_img",
+        "probability_label0_2quantile_5day_ohlcv_img"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label0_3quantile_5day_ohlcv_img_2",
+        "normalizer": "probability_label1_3quantile_5day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.3684,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 1.0,
+        "pairing_score": 1.316,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "跨粒度重标定：2/3/4/5 分桶的下尾一致性",
+      "field_semantics_mapping": "probability_label0_3quantile_60day_ohlcv_img_2（COLD，alpha_count=80，coverage=0.984）为 60 日 3 分桶底档（bottom 33%）对数概率，主锚；probability_label0_5quantile_60day_ohlcv_img（WARM，alpha_count=89，coverage=0.956）为 60 日 5 分桶极端底档（bottom 20%）对数概率，取 reverse 作减项。由于 bottom20% ⊂ bottom33%，前者概率恒>=后者，该差值恒>=0，量纲为'中等下行相对极端崩跌的对数概率富余'。",
+      "economic_mechanism": "差值大说明下行质量集中于'中等回撤'而非'极端崩跌'——尾部是薄的。尾部薄的股票不需要深度保护，对冲成本溢价会随波动率曲面回落而修复，60 日内呈现温和正漂移。差值小（极端底部相对厚）则说明分布重尾，后续波动放大、收益下压。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "add(probability_label0_3quantile_60day_ohlcv_img_2, reverse(probability_label0_5quantile_60day_ohlcv_img))",
+      "fields_used": [
+        "probability_label0_5quantile_60day_ohlcv_img",
+        "probability_label0_3quantile_60day_ohlcv_img_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label0_3quantile_60day_ohlcv_img_2",
+        "normalizer": "probability_label0_5quantile_60day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.3684,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.956,
+        "pairing_score": 1.316,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "跨粒度重标定：2/3/4/5 分桶的下尾一致性",
+      "field_semantics_mapping": "probability_label2_4quantile_5day_ohlcv_img_2（COLD，alpha_count=40，alpha_pct=0.035，coverage=1.0）为 5 日 4 分桶中上档（50-75 分位）对数概率，分子主锚；probability_label1_2quantile_5day_ohlcv_img（HOT，alpha_count=2074，coverage=0.984）为 5 日粗粒度上半部（top 50%）对数概率，差分基准。因 top50% ⊇ 中上档，差值恒<=0，其大小度量上半部质量的'温和集中度'。",
+      "economic_mechanism": "差值越接近 0，说明上半部的概率质量几乎全部落在中上档而非亢奋顶档——短期看多但不过热，形态稳健，资金可安心持有，未来 5 日正漂移延续。差值越负，说明上半部中存在大比例亢奋顶档，短期过热回吐风险大。预期极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(probability_label2_4quantile_5day_ohlcv_img_2, probability_label1_2quantile_5day_ohlcv_img)",
+      "fields_used": [
+        "probability_label1_2quantile_5day_ohlcv_img",
+        "probability_label2_4quantile_5day_ohlcv_img_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_label2_4quantile_5day_ohlcv_img_2",
+        "normalizer": "probability_label1_2quantile_5day_ohlcv_img",
+        "main_anchor_alpha_pct": 0.0351,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.984,
+        "pairing_score": 1.482,
+        "issues": []
+      }
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "dl_riskfree_returns 是一个 CNN 图像化 OHLCV 深度学习模型的输出面板：对每只股票、每日给出 5/20/60 日前瞻市场中性（risk-free）收益的分桶概率分布（log-softmax 对数概率，值域 (-inf,0]）、序数分桶标签（整数 0..N-1，coverage≈1.0）以及连续回归点估计（有符号浮点，需 winsorize）。本质上，该数据集不是传统意义上的'基本面流'，而是机器视觉对价格形态未来收益条件分布的完整刻画——其经济价值在于分布的'形状'（尾部厚度、肩部结构、中枢集中度）与'期限结构'（5d/20d/60d 同一桶族之间的斜率），而非任何单一字段的水平值。全平台拥挤度画像高度极化：label0（极端底部）与 label_top（极端顶部）以及 single_bucket 点估计的 alpha_count 在 1600~4549（HOT，alpha_pct>=0.70），而中间肩部桶（label1/label2/label3 of 3/4/5-quantile）与 60 日序数标签的 alpha_count 仅 36~80（COLD，alpha_pct<=0.40，coverage>=0.956）——市场对'极端尾部方向博弈'严重扎堆，而对'分布中段与肩部所隐含的条件矩信息'几乎未挖。核心未充分定价摩擦点：(1) 肩部-极端桶剪刀差所度量的'温和乐观 vs 亢奋'结构差异；(2) 同一桶族跨期限的斜率（长期中枢确认 vs 短期过热）；(3) 序数分类标签与连续回归估计之间的档位背离；(4) 2/3/4/5 分桶粒度间的下尾一致性（粗粒度底部 vs 细粒度极端底部的增量恐慌）。",
+    "economic_clusters": [
+      {
+        "cluster_name": "尾部不对称：肩部质量 vs 极端桶质量",
+        "fields": [
+          "probability_label1_4quantile_60day_ohlcv_img",
+          "probability_label3_5quantile_5day_ohlcv_img",
+          "probability_label0_4quantile_5day_ohlcv_img",
+          "probability_label1_5quantile_20day_ohlcv_img_2",
+          "probability_label2_5quantile_5day_ohlcv_img",
+          "probability_label0_2quantile_60day_ohlcv_img",
+          "probability_label4_5quantile_5day_ohlcv_img",
+          "probability_label1_2quantile_5day_ohlcv_img",
+          "probability_label2_3quantile_5day_ohlcv_img"
+        ],
+        "cluster_logic": "条件分布的中间肩部（次优/次差桶）与极端桶（最好/最差桶）的对数概率剪刀差，度量'温和方向确信'与'极端情绪'的相对强度。两个 log-softmax 输出之差恰为概率比的对数（log-odds），量纲自洽；但极端桶是全平台拥挤赛道，因此以 COLD 肩部桶做分子主锚、HOT 极端/粗粒度桶做差分基准或惊奇度贴现分母，剥离拥挤成分。"
+      },
+      {
+        "cluster_name": "期限结构：同一桶族的 5d/20d/60d 斜率",
+        "fields": [
+          "probability_label1_3quantile_60day_ohlcv_img",
+          "probability_label2_4quantile_60day_ohlcv_img",
+          "probability_label2_5quantile_60day_ohlcv_img",
+          "probability_label1_5quantile_60day_ohlcv_img_2",
+          "probability_label3_4quantile_5day_ohlcv_img_2",
+          "single_bucket_60day_return_estimate_ohlcv_img",
+          "single_bucket_5day_return_estimate_ohlcv_img",
+          "single_bucket_20day_return_estimate_ohlcv_img_2",
+          "quantile_label_2bucket_60day_ohlcv_img"
+        ],
+        "cluster_logic": "模型对同一股票在 5/20/60 日三个期限上各给一套分布。长期中枢质量（60d 中段桶）确认而短期顶部未亢奋，是'慢牛未加速'的形态学特征；反之短期顶部概率远高于长期中枢则接近短期过热。跨期限比较必须保持量纲一致（log 概率对 log 概率、点估计对点估计），并以尾部惊奇度（reverse(底部桶 logp)+1，恒>=1）做贴现，避免用近零的 logp 直接做分母。"
+      },
+      {
+        "cluster_name": "分布离散度与不确定性：中枢集中度定价",
+        "fields": [
+          "probability_label1_3quantile_20day_ohlcv_img",
+          "probability_label3_5quantile_20day_ohlcv_img",
+          "probability_label2_4quantile_20day_ohlcv_img",
+          "probability_label1_4quantile_20day_ohlcv_img",
+          "probability_label2_3quantile_20day_ohlcv_img",
+          "probability_label0_3quantile_20day_ohlcv_img_2",
+          "probability_label0_2quantile_20day_ohlcv_img",
+          "probability_label4_5quantile_20day_ohlcv_img",
+          "probability_label0_4quantile_20day_ohlcv_img"
+        ],
+        "cluster_logic": "概率质量是集中于中枢（mid bucket 厚实）还是铺向两端（U 形分布），决定该信号的条件期望置信度。中枢-顶部剪刀差、下肩部经底部惊奇贴现后的残差，都是对'定价不确定性'的横截面度量；不确定性低的股票，其点估计信号更应被全额定价，不确定性高者存在迟滞与折价。"
+      },
+      {
+        "cluster_name": "分类器-回归器背离：序数标签 vs 连续估计",
+        "fields": [
+          "quantile_label_4bucket_60day_ohlcv_img_2",
+          "quantile_label_2bucket_60day_ohlcv_img",
+          "single_bucket_60day_return_estimate_ohlcv_img",
+          "single_bucket_5day_return_estimate_ohlcv_img",
+          "single_bucket_20day_return_estimate_ohlcv_img_2",
+          "probability_label1_2quantile_60day_ohlcv_img",
+          "probability_label0_4quantile_5day_ohlcv_img",
+          "probability_label0_4quantile_20day_ohlcv_img"
+        ],
+        "cluster_logic": "同一模型同时输出 argmax 序数标签（粗粒度方向投票，COLD：60d 标签 alpha_count 仅 61~73）与连续回归点估计（HOT：alpha_count 3341~3504）。序数档位高但连续估计量级滞后（或反之）构成'档位-量级背离'；用序数标签门控点估计（label in {0,1} × estimate）则得到只在分类器确认方向时激活的稀疏信号，与全平台直接使用裸估计的因子天然低相关。"
+      },
+      {
+        "cluster_name": "跨粒度重标定：2/3/4/5 分桶的下尾一致性",
+        "fields": [
+          "probability_label0_3quantile_5day_ohlcv_img_2",
+          "probability_label1_3quantile_5day_ohlcv_img",
+          "probability_label0_2quantile_5day_ohlcv_img",
+          "probability_label0_3quantile_60day_ohlcv_img_2",
+          "probability_label0_5quantile_60day_ohlcv_img",
+          "probability_label2_4quantile_5day_ohlcv_img_2"
+        ],
+        "cluster_logic": "同一期限、不同分桶粒度（2/3/5 桶）对'下行'的刻画存在包含关系：bottom20%（5桶底）⊂ bottom33%（3桶底）⊂ bottom50%（2桶底）。粗桶底概率与细桶底概率的对数差恒非负，其大小度量'中等下行 vs 极端崩跌'的增量恐慌；细粒度下半区联合质量相对粗粒度底部惊奇的比率则度量下尾一致性。该维度字段的 alpha_count 全部处于 COLD 档（36~80），是几乎未被触及的重标定信息源。"
+      }
+    ]
+  },
+  "crowding_profile": {
+    "field_total": 57,
+    "alpha_count_known": 57,
+    "tier_counts": {
+      "COLD": 23,
+      "WARM": 17,
+      "HOT": 17,
+      "UNKNOWN": 0
+    }
+  },
+  "pairing_candidates": [
+    {
+      "main_anchor": "probability_label1_4quantile_60day_ohlcv_img",
+      "main_anchor_alpha_count": 36.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.956,
+      "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.8246
+    },
+    {
+      "main_anchor": "probability_label2_5quantile_5day_ohlcv_img",
+      "main_anchor_alpha_count": 39.0,
+      "main_anchor_alpha_pct": 0.0175,
+      "main_anchor_coverage": 0.956,
+      "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.8246
+    },
+    {
+      "main_anchor": "probability_label3_5quantile_60day_ohlcv_img",
+      "main_anchor_alpha_count": 40.0,
+      "main_anchor_alpha_pct": 0.0351,
+      "main_anchor_coverage": 0.956,
+      "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.8246
+    },
+    {
+      "main_anchor": "probability_label2_4quantile_5day_ohlcv_img_2",
+      "main_anchor_alpha_count": 40.0,
+      "main_anchor_alpha_pct": 0.0351,
+      "main_anchor_coverage": 1.0,
+      "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.8246
+    },
+    {
+      "main_anchor": "probability_label2_4quantile_60day_ohlcv_img",
+      "main_anchor_alpha_count": 44.0,
+      "main_anchor_alpha_pct": 0.0702,
+      "main_anchor_coverage": 0.956,
+      "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.8246
+    },
+    {
+      "main_anchor": "probability_label1_3quantile_60day_ohlcv_img",
+      "main_anchor_alpha_count": 45.0,
+      "main_anchor_alpha_pct": 0.0877,
+      "main_anchor_coverage": 0.956,
+      "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.8246
+    },
+    {
+      "main_anchor": "probability_label2_4quantile_20day_ohlcv_img",
+      "main_anchor_alpha_count": 47.0,
+      "main_anchor_alpha_pct": 0.1053,
+      "main_anchor_coverage": 0.956,
+      "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.8246
+    },
+    {
+      "main_anchor": "probability_label2_5quantile_60day_ohlcv_img",
+      "main_anchor_alpha_count": 48.0,
+      "main_anchor_alpha_pct": 0.1228,
+      "main_anchor_coverage": 0.956,
+      "normalizer": "probability_label0_2quantile_60day_ohlcv_img",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.8246
+    }
+  ]
+}

@@ -1,0 +1,247 @@
+{
+  "seed_id": "SEED_Q2_DYNAMICS",
+  "seed_expression": "divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "slot_quota": {
+    "parent_evolution": 4,
+    "orthogonal_exploration": 4
+  },
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "PARENT_SUBINDUSTRY_STANDARDIZATION",
+      "expression": "group_zscore(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), subindustry)",
+      "counterparty": "Investors who compare gross debt issuance across firms without netting debt reduction or scaling by firm assets.",
+      "economic_mechanism": "Net long-term debt financing per unit of assets may distinguish expansion of external funding from deleveraging. This form tests whether peer-relative financing posture is absorbed slowly, without assuming issuance or reduction has a fixed return sign.",
+      "optimize_reason": "本槽保留母本“长期债务发行减长期债务减少，再除以总资产”的核心经济量，只在最外层增加子行业组内Z标准化，作为母本纵深组的截面基准。母本可能受不同产业资本结构和债务融资习惯影响；同业中心化可减少行业均值差异，使比较聚焦于公司相对同业的净融资姿态，而不是简单奖励债务规模。数学次序先净额后规模归一，保持融资流量的统一量纲，再做组内标准化；不对两条有符号流量相乘，避免负负得正的伪方向。字段元数据覆盖偏低，且债务减少字段的符号约定未做原值探针，不能把正负直接解释成发行或偿还的实际方向。本槽检验相对融资异常是否有用，具体收益方向、零值比例、披露后更新速度和多空覆盖均交给模拟及后续数据探针验证，不把理论机制写成实证结论。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_q2ysitld",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "712e106b84caf062ab71a5040c2894d999e8de3af09226372be74fcdaf677d3e",
+        "reviewed_expr": "group_zscore(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "PARENT_INDUSTRY_RELATIVE_RANK",
+      "expression": "group_rank(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), industry)",
+      "counterparty": "Investors who treat net financing flows as a market-wide scalar and overlook differences in financing norms between industries.",
+      "economic_mechanism": "An industry-relative ordering of asset-scaled net debt flow tests whether capital-structure context matters more than the raw financing amount. The sign and predictive direction remain empirical questions.",
+      "optimize_reason": "本槽仅改变母本的截面映射方式：保持发行减减少并除以资产的净长期融资比率，改用industry组内排名表达相对位置。相较Slot 1的组内Z分数，排序对极端财务流量幅度不那么敏感，可检验少数极端融资记录是否主导线性标准化；同时行业分组更宽，可能改善组内可比较样本数量，但也可能残留子行业资本结构差异。该变化只针对截面权重函数，未更改财务假设，也没有把排名解释成预测概率。债务发行和债务减少字段都标注季度且覆盖约四成，排序可能由缺失选择或陈旧季度值影响，因此需重点检查平台返回的持仓广度、换手和分年度收益，而不是从表达式结构推断其有效。字段单位通过资产归一后可比，但总资产数值域只依据概念推断，实际异常值和分母边界仍未探测。此处为预先定义的稳健性对照，不是按多个窗口择优调参。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_q2ysitld",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "83acff75af82164a907997aec58586a27f46bba5f33f8c48d999d9d19375fa2d",
+        "reviewed_expr": "group_rank(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), industry)"
+      }
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "PARENT_NET_FINANCING_INNOVATION",
+      "expression": "group_zscore(ts_av_diff(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), 60), subindustry)",
+      "counterparty": "Investors anchored to the latest net debt-flow level who do not distinguish a financing change from a persistent capital-structure baseline.",
+      "economic_mechanism": "The deviation of asset-scaled net debt financing from its recent time-series mean tests whether a financing-regime change carries information beyond a stable debt-flow level.",
+      "optimize_reason": "本槽从母本的净融资水平转为净融资比率相对自身60日均值的偏离，问题是近期融资姿态变化是否比静态水平更能反映企业资本配置转折。先按母本定义形成“发行减减少/资产”，再由ts_av_diff去除个体近期基线，最后按子行业做组内Z标准化；因此它不是简单把任一债务腿的绝对规模放大，而是检验公司融资状态是否相对自身变得异常。季度字段在60个交易日内可能长期重复，导致平均差只在财报数据变化时响应，亦可能因NaN忽略规则改变有效样本，不能假定差分会自动提升换手。债务减少的编码正负尚未实测，且发行与减少报告日期可能不一致，净额变化有可能反映数据时序差而非企业行为。该槽保留母本两腿和资产锚，不添加外部量价变量，窗口采用事先选定的60日作为一个财报间隔附近的研究尺度，不扫描参数。方向、稳定性和有效持仓都需回测确认。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_q2ysitld",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "f6465b5d2c94247b2187964ddb4d0d5853cfa81c7cc36137496cd777bd18e379",
+        "reviewed_expr": "group_zscore(ts_av_diff(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), 60), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "PARENT_OUTER_TEMPORAL_SMOOTHING",
+      "expression": "group_rank(ts_decay_linear(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), 20), subindustry)",
+      "counterparty": "Short-horizon participants who overreact to isolated quarterly financing updates and ignore persistence between disclosures.",
+      "economic_mechanism": "Outer smoothing tests whether persistent net financing information is more useful than a one-day change, while peer ranking controls subindustry capital-structure differences.",
+      "optimize_reason": "本槽沿用母本的净长期债务流量除以总资产，在完成净额和尺度统一后对整个信号施加20日线性衰减，最终按子行业排序。该拓扑专门检验财务披露信息是否在数日内逐步被吸收、或是否需要平滑日间记录噪声；滤波置于完整比率之外，避免只处理发行或减少的一支而留下另一支不同步。季度字段重复会使平滑更多地产生滞后而不是新信息，甚至进一步降低已经可能偏低的换手，所以此操作不是预设改善Fitness的处方。相对排名用于抑制少数大额融资记录决定全组合的风险，但无法弥补字段缺失或符号定义问题。20日是一个预先固定的短期吸收尺度，不与其他窗口做网格挑选；评估时需要同时看换手、Long/Short数量、收益年份和峰值集中度。如果更新稀疏导致输入长期不变，结果应被解释为数据频率限制，而不能把稳定持仓误称为强信号。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_q2ysitld",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "d0b8d85945c46bd96a9a7e27b24a4be05a757991f6e4d11b0a27fc2a73b77f55",
+        "reviewed_expr": "group_rank(ts_decay_linear(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), 20), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "EXPLORATION_DEBT_VS_EQUITY_FUNDING_MIX",
+      "expression": "group_zscore(subtract(divide(fnd69_q2ysitld, fnd69_ta), divide(fnd69_q2yktss, fnd69_ta)), industry)",
+      "counterparty": "Investors who read debt issuance and equity issuance separately without comparing the company's external funding mix.",
+      "economic_mechanism": "The difference between asset-scaled long-term debt issuance and equity sale tests whether firms' external funding composition contains information beyond a single debt-flow measure.",
+      "optimize_reason": "本槽从母本的债务发行与债务减少之差，正交转向债务融资相对于股权融资的结构选择：分别以总资产归一长期债务发行和普通/优先股出售，再计算两种外部资金来源的相对差，并按industry标准化。经济问题不是声称债务或股权发行天然利好，而是测试市场是否只看到融资总量、忽略融资工具组合可能反映的期限、稀释或资金约束差异。两个信号先独立做同一资产尺度归一，再做差，不对有符号现金流相乘；这也避免把两个不同量纲的原始金额直接相减。该探索字段覆盖均约四成，股票出售的会计符号和债务发行记录的时点仍未实测，资产分母共享也可能制造共同尺度效应。若一个字段长期缺失，复合表达式会改变有效股票池，必须将缺失覆盖和持仓宽度与绩效一起阅读。这里仅替换融资腿并采用简洁的一阶结构，不能把相关性解释成融资因果，更不预设正负方向。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yktss",
+          "fnd69_q2ysitld",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "61a33b496153d9d74ac79b261bddc0aebdd672448b5173736979837a8297e0eb",
+        "reviewed_expr": "group_zscore(subtract(divide(fnd69_q2ysitld, fnd69_ta), divide(fnd69_q2yktss, fnd69_ta)), industry)"
+      }
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "EXPLORATION_NET_EQUITY_FINANCING",
+      "expression": "group_rank(divide(subtract(fnd69_q2yktss, fnd69_q2ycktsrp), fnd69_ta), industry)",
+      "counterparty": "Investors who focus on equity issuance or repurchases in isolation and ignore their net balance relative to firm size.",
+      "economic_mechanism": "Asset-scaled stock sales minus stock purchases tests net equity financing posture as a distinct capital-allocation signal, not a debt-flow proxy.",
+      "optimize_reason": "本槽不再变形母本债务指标，而是把正交探索放在普通及优先股净融资：股权出售减股权购买后按总资产归一，并在industry内排序。两条记录概念上代表外部股权资金流入与股票回购/购买相关流量，组合后测试投资者是否分别解读融资和资本回收，忽略公司净股权融资姿态。组内排序减少极端交易金额的影响，但并不解决字段符号或报告口径是否完全对称的问题。两字段覆盖分别约39%，可能只在少部分公司年份同时存在，因此需要观察模拟返回的Long/Short数量、换手和样本稳定性；如果平台输出极少持仓或强烈集中，应视为覆盖限制而非信号优势。表达式只使用当前fundamental69字段和资产锚，没有PV外部变量，也没有对两条流量做乘法。此机制与债务发行减债务减少不同：前者是股权资金的净流，后者是债务结构变化。本槽留下方向待实证检验，并将字段符号验证列为下一轮原值探针的重点。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_q2ycktsrp",
+          "fnd69_q2yktss",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "0ff368bd4af4929158611b14072390f8d740a59d7c74e5edcffea0fb37c81597",
+        "reviewed_expr": "group_rank(divide(subtract(fnd69_q2yktss, fnd69_q2ycktsrp), fnd69_ta), industry)"
+      }
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "EXPLORATION_EXTERNAL_VS_INTERNAL_FUNDING",
+      "expression": "group_zscore(subtract(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_q2yfcnao), subindustry)",
+      "counterparty": "Investors who assess external debt financing and operating cash generation as unrelated balance-sheet facts.",
+      "economic_mechanism": "Net debt financing flow minus operating cash flow contrasts external borrowing posture with internally generated funding capacity using three quarterly flow fields.",
+      "optimize_reason": "This slot contrasts the parent net debt flow with operating cash flow using a three-flow difference, then standardizes within subindustries. The hypothesis is that investors may read debt and cash-flow line items separately and miss their relative financing posture; no signed fields are multiplied. Accounting sign conventions and reporting definitions have not been checked against raw panels, so the difference's direction remains uncertain. Metadata coverage is about 39-43%, and joint coverage, stale quarterly values, and missingness may reduce breadth or concentrate holdings. To stay within the hard limit of three dataset fields, this exploration omits a fourth total-assets anchor, so cross-company size exposure may remain; group z-scoring is not a substitute for scale normalization. Unlike Slot 5's debt-versus-equity financing mix, this tests external debt flow against internal operating funds. Return direction remains empirical.",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_q2yfcnao",
+          "fnd69_q2ysitld"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "ea1570f8c146ae5aedb630c95571446779ca9f7c379078351c16d24a62c36596",
+        "reviewed_expr": "group_zscore(subtract(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_q2yfcnao), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "EXPLORATION_DEBT_FLOW_SYNCHRONY",
+      "expression": "group_zscore(ts_corr(divide(fnd69_q2ysitld, fnd69_ta), divide(fnd69_dltry2q, fnd69_ta), 60), subindustry)",
+      "counterparty": "Investors who treat issuance and reduction as independent headlines and do not examine their temporal coordination.",
+      "economic_mechanism": "The rolling co-movement of asset-scaled debt issuance and debt reduction tests whether financing and deleveraging legs move together or offset each other over time.",
+      "optimize_reason": "本槽保留母本涉及的长期债务发行与债务减少两腿，但把净流量水平改为两项资产归一序列在60日窗口内的时序相关，再按子行业标准化。它回答的是两种债务行为是否协同或互相抵消，而不是哪一项金额更高；对手盘是把每份财报中的发行和减少分开看、未关注其时间协调结构的投资者。相关算子输出有符号且无固定好坏方向，因此不再乘以任一序列，避免双有符号乘积引入伪因果。季度字段的日频重复是主要风险：窗口内有效变化点可能少到不足以估计相关，数值可能退化为缺失或由少数报告日支配；共享资产分母也可能抬高共同变化。需要从模拟结果核对有效持仓和换手，并在有原始数据时先测更新间隔，不能把相关结构自动解释为融资协同的真实经济行为。窗口固定为60日，不做参数网格。该槽虽与母本共享字段，但表征目标从净融资量改为两条流的动态协动，因而属于有明确归因的正交探索。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_q2ysitld",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "b916735a8c89eb3d2ec6f65ea4471c95fdf614b04e5476d5228f8867c7d3d383",
+        "reviewed_expr": "group_zscore(ts_corr(divide(fnd69_q2ysitld, fnd69_ta), divide(fnd69_dltry2q, fnd69_ta), 60), subindustry)"
+      }
+    }
+  ]
+}

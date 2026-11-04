@@ -1,0 +1,114 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "items": [
+    {
+      "id": 1,
+      "type": "B92_S1_BASE_TERNARY_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 1: 10 ops: 88Romwl7 ternary multiply base with truncation relaxed to 0.035 and decay 13. Unlocks head stock weights to elevate Returns >= 4.57% while decay 13 locks TO near 12.6%."
+    },
+    {
+      "id": 2,
+      "type": "B92_S2_20D_HORIZON_D13_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_20d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_20d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 2: 10 ops: 20-day forward return model (prob_rank_bin1_20d_img_news) with trunc 0.035 and decay 13. Matches strategy holding window to sustain multi-week post-earnings drift."
+    },
+    {
+      "id": 3,
+      "type": "B92_S3_PRIMARY_MEAN_D13_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_primary_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "mean_primary_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 3: 10 ops: Primary topic sentiment (mean_primary_sentiment_score_transfer) with trunc 0.035. Isolates headline subject sentiment, stripping out secondary noise to expand Sharpe toward 1.70."
+    },
+    {
+      "id": 4,
+      "type": "B92_S4_PRIMARY_MAX_D13_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "max_primary_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 4: 10 ops: Peak primary sentiment (max_primary_sentiment_score_transfer). Focuses on highest-impact headline for each stock to capture explosive news event elasticity."
+    },
+    {
+      "id": 5,
+      "type": "B92_S5_INDUSTRY_NEUT_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 3), industry), 10)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 5: 10 ops: Industry-level neutralization with trunc 0.035. Cures subindustry micro-bucket short-squeeze in 2017 bull market by de-meaning across broader ~40 stock peer groups."
+    },
+    {
+      "id": 6,
+      "type": "B92_S6_20D_INDUSTRY_NEUT_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_20d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 3), industry), 10)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_20d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 6: 10 ops: 20-day horizon model + Industry neutralization. Synergizes 20d drift with industry de-meaning to eliminate bull year drag and stabilize cluster test."
+    },
+    {
+      "id": 7,
+      "type": "B92_S7_CONVEXITY_PWR5_TRUNC040",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 7: 10 ops: Convexity Power 5 + Truncation 0.040. Allows extreme high-conviction catalysts to take up to 4.0% weight, driving annual returns beyond 4.60%."
+    },
+    {
+      "id": 8,
+      "type": "B92_S8_GRAND_PRIMARY_20D_SYNTH",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_primary_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_20d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "mean_primary_sentiment_score_transfer",
+        "prob_rank_bin1_20d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 8: 10 ops: The Grand Primary-20D Synthesis. Combines primary news sentiment (purest SNR) + 20-day model (longest drift) + relaxed truncation 0.035 + Decay 13."
+    }
+  ]
+}

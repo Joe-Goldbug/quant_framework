@@ -1,0 +1,75 @@
+{
+  "dataset": {
+    "id": "option8",
+    "name": "Volatility Data",
+    "category": "option",
+    "subcategory": "option-option-volatility",
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "field_count": 64,
+    "alphaCount": 15083,
+    "pyramidMultiplier": 1.3,
+    "coverage": 0.9698
+  },
+  "source": "knowledge_base/fields/USA/option8_raw_full.json (2026-10-28 零配额实读)",
+  "type_distribution": {"MATRIX": 64},
+  "dateCoverage": 0.9507,
+  "structure": {
+    "note": "64 字段构成一张极其规整的三维网格：期限 × 品种 × 估计法",
+    "families": {
+      "implied_volatility_call_{N}": "ATM 看涨期权隐含波动率，期限 N ∈ {10,20,30,60,90,120,150,180,270,360,720,1080} 共 12 个",
+      "implied_volatility_put_{N}": "ATM 看跌期权隐含波动率，同 12 个期限",
+      "implied_volatility_mean_{N}": "(IvCallN + IvPutN)/2 均值，同 12 个期限",
+      "implied_volatility_mean_skew_{N}": "隐含波动率偏斜陡峭度（虚值相对 ATM 的溢价），同 12 个期限",
+      "historical_volatility_{N}": "收盘价间历史波动率，N ∈ {10,20,30,60,90,120,150,180} 共 8 个",
+      "parkinson_volatility_{N}": "Parkinson 高低价估计波动率，同 8 个期限"
+    },
+    "count_check": "12+12+12+12+8+8 = 64"
+  },
+  "physical_contract": {
+    "all_matrix": true,
+    "coverage": "0.9507 ~ 0.9808（极好，无稀疏问题）",
+    "value_range": "全部为正值波动率（IV / RV 均为正浮点数），无 [-1,1] 或 [0,1] 中枢问题",
+    "zero_inflation": "无（连续波动率序列，非稀疏事件型）",
+    "aggression": "🔴 全部字段 alphaCount >= 50（最冷 implied_volatility_mean_skew_20 = 50，最热 implied_volatility_call_120 = 5163）⇒ 严重违反反拥挤定律（要求 <= 5）"
+  },
+  "economic_axes": [
+    {
+      "axis": "方差风险溢价 VRP = IV − RV",
+      "fields": ["implied_volatility_mean_{N}", "historical_volatility_{N}", "parkinson_volatility_{N}"],
+      "mechanism": "市场为保险支付的溢价（隐含）相对已实现波动的超出部分。Carr-Wu / Bollerslev-Tauchen-Zhou：VRP 高意味着保险需求被过度定价或尾部风险被高估。",
+      "crowding": "高（mean_30 ac=366 / hist_30 ac=144）"
+    },
+    {
+      "axis": "IV 期限结构斜率",
+      "fields": ["implied_volatility_mean_1080", "implied_volatility_mean_30"],
+      "mechanism": "长端 IV 相对短端 IV 的溢价。陡峭(contango)=市场预期长期波动高于短期；倒挂=恐慌集中在近期。冷门期限（1080 日 ac=95）相对可用。",
+      "crowding": "中（1080 日 ac=95 是本数据集较冷的一端）"
+    },
+    {
+      "axis": "偏斜 Skew（崩盘恐惧）",
+      "fields": ["implied_volatility_mean_skew_{N}"],
+      "mechanism": "虚值 put 相对 ATM 的 IV 溢价 = 尾部风险定价。Bakshi-Kapadia-Madan(2003)：skew 陡峭说明投资者为崩盘保护支付溢价。",
+      "crowding": "🟢 相对最冷（skew_20 ac=50 / skew_150 ac=53 / skew_180 ac=68）—— 本数据集唯一接近反拥挤要求的族"
+    },
+    {
+      "axis": "两种已实现波动率估计的背离",
+      "fields": ["parkinson_volatility_{N}", "historical_volatility_{N}"],
+      "mechanism": "Parkinson 用日内高低价，close-to-close 只用收盘。二者之差捕捉日内反转/隔夜跳空：Parkinson 显著更高说明日内噪声大但收盘回归 = 流动性冲击或日内投机。",
+      "crowding": "中（parkinson_30 ac=120 / hist_30 ac=144）"
+    },
+    {
+      "axis": "低波动率异象",
+      "fields": ["implied_volatility_call_120"],
+      "mechanism": "Ang-Hodrick-Xing-Zhang(2006)：高特质波动股票未来收益更低。做多低 IV。",
+      "crowding": "🔴 极热（call_120 ac=5163）—— 只能做相对自身基线的二阶构造，裸水平值必然 ProdCorr 爆表"
+    }
+  ],
+  "hard_constraints": [
+    "category=option 不在 dimension_rules 的 PV 豁免名单 (pv/price_volume/price/news_pv) 内 ⇒ 本战役不得使用 close/vwap/volume 等外部量价字段",
+    "好消息：option8 自带 historical_volatility / parkinson_volatility，已实现波动无需外部 close 即可获得",
+    "🔴 拥挤度是本数据集的头号风险，不是 Sharpe。开火后必须立即跑 check_correlation（零配额，~5s/条）确认 ProdCorr < 0.70"
+  ],
+  "verdict": "结构规整、覆盖极好、三条经典 alpha 轴清晰（VRP / 期限结构 / Skew），且自带已实现波动率无需外部 PV。唯一且致命的问题是全字段极度拥挤 —— 本战役的成败判据是 ProdCorr 而非 Sharpe。"
+}

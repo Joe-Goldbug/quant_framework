@@ -1,0 +1,40 @@
+======================================================================
+batch_S1.json
+zscore(subtract(fnd17_tcpaormtt, fnd17_aroa5yavg))
+zscore(ts_mean(subtract(fnd17_ghcspemtt, fnd17_ttmnichg), 20))
+zscore(divide(ts_backfill(fnd17_fcfmtt,252), ts_backfill(fnd17_atmtt,252)))
+add(group_zscore(fnd17_tcpaormtt, subindustry), group_zscore(fnd17_qroipct, subindustry))
+group_zscore(ts_backfill(subtract(fnd17_apayratio, fnd17_apayratio2), 120), subindustry)
+zscore(ts_mean(winsorize(subtract(fnd17_cftrendgr, fnd17_revtrendgr), std=3), 60))
+group_zscore(ts_backfill(subtract(fnd17_ttmintcov, fnd17_ptmintcov), 120), subindustry)
+zscore(subtract(fnd17_nichngyr, fnd17_arevchg))
+======================================================================
+batch_S2.json
+subtract(group_rank(divide(fnd17_fcfmtt, fnd17_arev), sector), group_rank(fnd17_ttmopmgn, sector))
+zscore(group_rank(divide(fnd17_fcfmtt, fnd17_arev), sector))
+subtract(group_rank(fnd17_tcpaormtt, sector), group_rank(fnd17_ttmopmgn, sector))
+subtract(group_rank(fnd17_tcpaormtt, sector), group_rank(fnd17_aroa5yavg, sector))
+subtract(group_rank(fnd17_cftrendgr, sector), group_rank(fnd17_revtrendgr, sector))
+subtract(group_rank(fnd17_ghcspemtt, sector), group_rank(fnd17_ttmnichg, sector))
+subtract(group_rank(fnd17_ttmintcov, sector), group_rank(fnd17_qe2dtlq, sector))
+subtract(group_rank(fnd17_ttmopmgn, sector), group_rank(fnd17_grosmgn5yr, sector))
+======================================================================
+batch_S3.json
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_ttmopmgn,250), sector)))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), group_rank(ts_backfill(fnd17_ttmopmgn,250), sector))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_ttmopmgn,250), sector)))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), group_rank(ts_backfill(fnd17_ttmopmgn,250), sector))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_ttmopmgn,250), sector)))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), group_rank(ts_backfill(fnd17_ttmopmgn,250), sector))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_ttmopmgn,250), sector)))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), group_rank(ts_backfill(fnd17_ttmopmgn,250), sector))
+======================================================================
+batch_S3_CAMPAIGN.json
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_ttmopmgn,250), sector)))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), group_rank(ts_backfill(fnd17_ttmopmgn,250), sector))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_atmtt,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_ttmopmgn,250), sector)))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_grosmgn5yr,250), sector)))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_tcpaormtt,250), sector)))
+zscore(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector))
+subtract(group_rank(ts_backfill(fnd17_tcpaormtt,250), sector), multiply(0.5, group_rank(ts_backfill(fnd17_ttmopmgn,250), sector)))
+subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_margin5yr,250), sector)))

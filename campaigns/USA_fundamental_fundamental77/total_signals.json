@@ -1,0 +1,79 @@
+{
+  "dataset_id": "fundamental77",
+  "region": "USA",
+  "category": "fundamental",
+  "signals": [
+    {
+      "id": "SEED_INVARIANCE_1",
+      "question_type": "Invariance",
+      "expression": "divide(ts_delta(lm_antidilutive_securities_sentiment_fast_d1, 66), add(fnd77_q_word_cnt_scheduleofantidilutivesecuritiesexcludedfromcomputationofearningspersharetextblock_fast_d1, 1))",
+      "economic_mechanism": "【Q1 不变性/稀释稳态预期差】反稀释证券(水下期权/可转债)通常处于静默状态，季度语调突发负面跃升伴随附注冗长冗余，揭示管理层通过报表技术掩盖隐性稀释与行权危机，以附注复杂度标准化捕捉纯净稀释预期差。",
+      "times": 0,
+      "status": "APPROVED",
+      "created_at": "2026-10-29 11:25:12"
+    },
+    {
+      "id": "SEED_DYNAMICS_2",
+      "question_type": "Dynamics",
+      "expression": "subtract(ts_delta(fnd77_q_lm_sharebasedcompensationarrangementbysharebasedpaymentawardawardvestingrights_fast_d1, 66), ts_delta(fnd77_q_word_cnt_sharebasedcompensationarrangementbysharebasedpaymentawardawardvestingrights_fast_d1, 66))",
+      "economic_mechanism": "【Q2 动态变化/股权激励加速度】度量高管股权激励文本语调季度变动与披露篇幅变动的时序漂移差分，捕捉代理成本激化与非现金稀释失衡引发的基本面动力转向。",
+      "times": 0,
+      "status": "APPROVED",
+      "created_at": "2026-10-29 11:25:12"
+    },
+    {
+      "id": "SEED_ANOMALY_3",
+      "question_type": "Anomaly",
+      "expression": "ts_delta(divide(fnd77_q_lm_commitmentsandcontingenciesdisclosuretextblock_fast_d1, add(fnd77_q_word_cnt_commitmentsandcontingenciesdisclosuretextblock_fast_d1, 1)), 66)",
+      "economic_mechanism": "【Q3 异常冲击/诉讼或有负债冲击】或有事项与履约承诺附注的季度语调异常恶化，经附注长度平抑后，捕捉突发性法律诉讼与未决监管罚款形成的非流动现金外流冲击。",
+      "times": 0,
+      "status": "APPROVED",
+      "created_at": "2026-10-29 11:25:12"
+    },
+    {
+      "id": "SEED_INTERACTION_4",
+      "question_type": "Interaction",
+      "expression": "multiply(ts_delta(fnd77_q_lm_fairvaluemeasurementinputsdisclosuretextblock_fast_d1, 66), ts_delta(fnd77_q_word_cnt_fairvaluemeasurementinputsdisclosuretextblock_fast_d1, 66))",
+      "economic_mechanism": "【Q4 协同交互/公允价值模型不透明度】通过乘法交互度量 Level 2/3 不透明资产估值语调季度边际与说明复杂度加速度的联合放大效应，刻画管理层调节资产估值形成的复合风险。",
+      "times": 0,
+      "status": "APPROVED",
+      "created_at": "2026-10-29 11:25:12"
+    },
+    {
+      "id": "SEED_STRUCTURE_5",
+      "question_type": "Structure",
+      "expression": "ts_delta(divide(fnd77_q_lm_negative_cnt_fast_d1, add(fnd77_q_valid_tag_cnt_fast_d1, 1)), 66)",
+      "economic_mechanism": "【Q5 结构占比/负向语调密度跃升】全篇 10-K/Q 负面词数与有效 XBRL 标签密度的季度比率变化，度量企业在结构性衰退期语调防守倾向的边际突发恶化。",
+      "times": 0,
+      "status": "APPROVED",
+      "created_at": "2026-10-29 11:25:12"
+    },
+    {
+      "id": "SEED_ACCUMULATION_6",
+      "question_type": "Accumulation",
+      "expression": "ts_decay_linear(subtract(ts_delta(fnd77_q_lm_incometaxdisclosuretextblock_fast_d1, 66), ts_delta(fnd77_q_word_cnt_incometaxdisclosuretextblock_fast_d1, 66)), 10)",
+      "economic_mechanism": "【Q6 累积记忆/所得税激进度审计摩擦】税收附注情绪恶化与避税解释篇幅的时序差分，施加 10 日线性衰减累积，捕捉税务审查摩擦与激进筹划回撤的缓慢性释放。",
+      "times": 0,
+      "status": "APPROVED",
+      "created_at": "2026-10-29 11:25:12"
+    },
+    {
+      "id": "SEED_RELATIVE_7",
+      "question_type": "Relative",
+      "expression": "subtract(ts_delta(lm_common_stock_voting_rights_sentiment_fast_d1, 66), ts_delta(word_count_common_stock_voting_rights_fast_d1, 66))",
+      "economic_mechanism": "【Q7 截面相对性/双重股权与治理防御】普通股表决权条款附注的季度变动差分，度量内部人控制、毒丸防御与中小股东利益侵蚀在治理维度的边际剥离风险。",
+      "times": 0,
+      "status": "APPROVED",
+      "created_at": "2026-10-29 11:25:12"
+    },
+    {
+      "id": "SEED_ESSENCE_8",
+      "question_type": "Essence",
+      "expression": "divide(ts_delta(lm_long_term_debt_sentiment_fast_d1, 66), add(ts_delta(word_count_long_term_debt_fast_d1, 66), 1))",
+      "economic_mechanism": "【Q8 本质预期差/再融资摩擦与契约紧缩】长期债务披露语调季度边际恶化，除以债务条款解释长度增量，精确定位市场对再融资壁垒与债务违约溢价认知滞后的本质预期差。",
+      "times": 0,
+      "status": "APPROVED",
+      "created_at": "2026-10-29 11:25:12"
+    }
+  ]
+}

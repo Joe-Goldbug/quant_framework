@@ -1,0 +1,229 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "TOP3000",
+  "category": "other",
+  "dataset_id": "techindi_model",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "c1",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "map",
+      "economic_mechanism": "mech",
+      "expected_polarity": 1,
+      "expression": "subtract(probability_fifth_quantile_five_day_bucket_zero_22, likelihood_fifth_quantile_five_day_bucket_four_4)",
+      "fields_used": [
+        "likelihood_fifth_quantile_five_day_bucket_four_4",
+        "probability_fifth_quantile_five_day_bucket_zero_22"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_fifth_quantile_five_day_bucket_zero_22",
+        "normalizer": "likelihood_fifth_quantile_five_day_bucket_four_4",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 1.0,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "c3",
+      "hypothesis_type": "SHOCK",
+      "field_semantics_mapping": "map",
+      "economic_mechanism": "mech",
+      "expected_polarity": 1,
+      "expression": "subtract(ts_delta(probability_fifth_quantile_one_day_bucket_four_22, 5), predicted_first_quantile_five_day_return_25)",
+      "fields_used": [
+        "predicted_first_quantile_five_day_return_25",
+        "probability_fifth_quantile_one_day_bucket_four_22"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_fifth_quantile_one_day_bucket_four_22",
+        "normalizer": "predicted_first_quantile_five_day_return_25",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 1.0,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "c6",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "map",
+      "economic_mechanism": "mech",
+      "expected_polarity": 1,
+      "expression": "multiply(probability_fifth_quantile_one_day_bucket_zero_22, reverse(predicted_first_quantile_five_day_return_21))",
+      "fields_used": [
+        "probability_fifth_quantile_one_day_bucket_zero_22",
+        "predicted_first_quantile_five_day_return_21"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "probability_fifth_quantile_one_day_bucket_zero_22",
+        "normalizer": "predicted_first_quantile_five_day_return_21",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 1.0,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "techindi_model 是把技术指标时间序列渲染成图像、再用 16 个独立深度卷积/图像编码器（tm_1, tm_3..tm_19）预测个股未来 1/5/10 日市场中性收益的数据集。它并不直接给出价格，而是给出两套信息：(1) 回归头 q1 的连续预测值（描述『模型认为该股会涨多少』）；(2) 分位分布头 qK 与 qK_pJ（0-based 分位桶指派与 log-softmax 分桶概率，描述『模型对该股落在收益分布哪一段的把握程度与形状』）。本质上它捕捉的是散户视觉形态认知（图形相似度）在横截面上的外推。数据集全体字段 coverage 0.94~1.00，因此拥挤度不体现在覆盖率而体现在 alpha_count：tm_15/tm_16/tm_6 的 q1 回归头已被平台反复挖掘（ac 48~73），而 tm_11/tm_12/tm_13/tm_19 的分桶分布头（q5_p0/p2/p4、q3_p0/p2）几乎无人使用（ac 0~2）。真正的低相关增量信息不在『预测收益均值』这一拥挤赛道上，而在分布头刻画的方向净胜率、尾部分布形状、以及不同编码器之间的分歧度。",
+    "economic_clusters": [
+      {
+        "cluster_name": "分位分布头的方向净胜率（Directional Log-Odds of the Distribution Head）",
+        "fields": [
+          "tm_11_r1_r5_r10_rh_ah3_d1_r10_q5_p4",
+          "tm_11_r1_r5_r10_rh_ah3_d1_r10_q5_p0",
+          "tm_12_r1_r5_r10_rh_ah3_d1_r10_q5_p4",
+          "tm_12_r1_r5_r10_rh_ah3_d1_r10_q5_p0",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p0"
+        ],
+        "cluster_logic": "log-softmax 分桶概率是同一股票同一时点上互补的分布质量。只看最高桶概率会被编码器整体增益漂移污染（某些模型天然输出更尖的分布），而『最高桶 − 最低桶』的对数赔率在编码器内部自相除，天然消除增益与尺度干扰，得到纯粹的看多净胜率。该簇字段 alpha_count 0~1，属于数据集内最冷的可用信息层。"
+      },
+      {
+        "cluster_name": "尾部分布形状与峰度（Tail Shape / Peakedness）",
+        "fields": [
+          "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p2",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p3",
+          "tm_12_r1_r5_r10_rh_ah3_d1_r10_q5_p2",
+          "tm_12_r1_r5_r10_rh_ah3_d1_r10_q5_p3",
+          "tm_11_r1_r5_r10_rh_ah3_d1_r10_q5_p1",
+          "tm_11_r1_r5_r10_rh_ah3_d1_r10_q5_p3"
+        ],
+        "cluster_logic": "同样的『看多概率』可能来自两类完全不同的分布：一类把质量堆在极端顶桶（尾部信念），一类把质量平摊在中间桶（模糊无观点）。用顶桶相对中间桶、或上下中间桶的比值刻画形状，可把『信念集中度』从『方向』中剥离出来，这是回归头 q1 完全无法表达的维度。"
+      },
+      {
+        "cluster_name": "独立编码器间的分歧与共识（Cross-Encoder Disagreement & Consensus）",
+        "fields": [
+          "tm_11_r1_r5_r10_rh_ah3_d1_r10_q1",
+          "tm_3_r1_r5_r10_rh_ah3_d1_r10_q1",
+          "tm_4_r1_r5_r10_rh_ah3_d1_r10_q1",
+          "tm_15_r1_r5_r10_rh_d1_r10_q1",
+          "tm_16_r1_r5_r10_rh_d1_r10_q1",
+          "tm_11_r1_r5_r10_rh_ah3_d1_r10_q5",
+          "tm_12_r1_r5_r10_rh_ah3_d1_r10_q5"
+        ],
+        "cluster_logic": "16 个编码器读的是同一张图但感受野/训练目标不同，其输出差异是免费的『模型不确定性』度量；其中 tm_15/tm_16 的回归头已被全平台过度挖掘（ac 48/73），把这部分作为可被套利掉的『拥挤基准』，而 tm_3/tm_4 的冷门回归头（ac 4/6）与离散分位桶指派（ac 0~2）保留了尚未被定价的读图分歧。分歧度高意味着图形含义模糊、卖空约束与模糊厌恶会压制需求。"
+      },
+      {
+        "cluster_name": "多周期期限结构（Horizon Term Structure r1/r5/r10）",
+        "fields": [
+          "tm_11_r1_r5_r10_rh_ah3_d1_r10_q1",
+          "tm_11_r1_r5_r10_rh_ah3_d1_r1_q1",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r1_q5_p4",
+          "predicted_fifth_quantile_ten_day_return_23",
+          "predicted_fifth_quantile_one_day_return_23"
+        ],
+        "cluster_logic": "同一编码器同时输出 1 日、5 日、10 日三个头。短期头主要吸收隔日噪声与微观结构反弹，长期头才承载趋势与基本面预期。用长周期减短周期（或相除）可把『可持续趋势信念』从『一次性脉冲』中分离，这是纯 q1 单周期因子无法获得的时间维度正交性。"
+      },
+      {
+        "cluster_name": "分位组预测幅度（Quantile-Group Predicted Magnitude）",
+        "fields": [
+          "predicted_fifth_quantile_ten_day_return_23",
+          "predicted_first_quantile_ten_day_return_23",
+          "predicted_fifth_quantile_ten_day_return_241",
+          "predicted_first_quantile_one_day_return_24"
+        ],
+        "cluster_logic": "predicted_*_quantile_*_return 给出该股被归入各分位组时的条件收益幅度。同一股票在顶组与底组条件预测之差，等于模型对该股『可分性』的度量：差值越大，说明模型越能明确区分它是赢家还是输家；差值被压缩则意味着模型对其归属毫无把握。"
+      }
+    ]
+  },
+  "crowding_profile": {
+    "field_total": 1818,
+    "alpha_count_known": 1818,
+    "tier_counts": {
+      "COLD": 1025,
+      "WARM": 305,
+      "HOT": 488,
+      "UNKNOWN": 0
+    }
+  },
+  "pairing_candidates": [
+    {
+      "main_anchor": "probability_fifth_quantile_five_day_bucket_zero_22",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.942,
+      "normalizer": "likelihood_fifth_quantile_five_day_bucket_four_4",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.9978
+    },
+    {
+      "main_anchor": "probability_fifth_quantile_one_day_bucket_four_22",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.942,
+      "normalizer": "predicted_first_quantile_five_day_return_25",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.9945
+    },
+    {
+      "main_anchor": "probability_fifth_quantile_one_day_bucket_zero_22",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.942,
+      "normalizer": "predicted_first_quantile_five_day_return_21",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.9923
+    },
+    {
+      "main_anchor": "probability_fifth_quantile_ten_day_bucket_four_22",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.942,
+      "normalizer": "tm_16_r1_r5_r10_rh_d1_r1_q2_p1",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.9884
+    },
+    {
+      "main_anchor": "probability_fifth_quantile_ten_day_bucket_two_22",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.942,
+      "normalizer": "predicted_first_quantile_ten_day_return_25",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.9851
+    },
+    {
+      "main_anchor": "probability_fourth_quantile_five_day_bucket_three_22",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.942,
+      "normalizer": "tm_11_r1_r5_r10_rh_ah3_d1_r10_q1",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.9807
+    },
+    {
+      "main_anchor": "probability_fourth_quantile_five_day_bucket_zero_22",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.942,
+      "normalizer": "likelihood_fifth_quantile_five_day_bucket_four_4",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.9978
+    },
+    {
+      "main_anchor": "probability_fourth_quantile_one_day_bucket_one_22",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.942,
+      "normalizer": "predicted_first_quantile_five_day_return_25",
+      "normalizer_coverage": 1.0,
+      "normalizer_alpha_pct": 0.9945
+    }
+  ]
+}

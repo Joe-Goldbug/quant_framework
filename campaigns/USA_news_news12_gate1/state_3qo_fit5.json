@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/1JTGdGHc57HaOA4y7yzgux",
+  "submitted_at": 1793071785,
+  "items": [
+    {
+      "id": 1,
+      "type": "FIT5_S1_OUTER_DECAY5_WINSOR30",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 1: \u5916\u5c42 5 \u65e5\u9ad8\u654f\u9510\u5e73\u6ed1 + Winsorize 3.0\u3011\u5c06\u5916\u5c42\u5e73\u6ed1\u7531 10 \u65e5\u7f29\u51cf\u81f3 5 \u65e5\uff0c\u914d\u5408\u4eff\u771f Decay 12 \u5f7b\u5e95\u6d88\u9664\u53cc\u91cd\u8fc7\u5ea6\u5e73\u6ed1\u3002\u65e2\u6d88\u9664\u6781\u503c\u8109\u51b2\u5e76\u538b\u964d\u6362\u624b\u7387\u81f3 13%~14%\uff0c\u53c8\u6062\u590d\u65f6\u5e8f\u7075\u654f\u5ea6\u51b2\u51fb Sharpe >= 1.58 \u4e0e 2Y Ladder >= 1.58\u3002"
+    },
+    {
+      "id": 2,
+      "type": "FIT5_S2_OUTER_DECAY6_WINSOR30",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 6)",
+      "optimize_reason": "\u3010Slot 2: \u5916\u5c42 6 \u65e5\u5e73\u6ed1 + Winsorize 3.0\u30116 \u65e5\u5e73\u6ed1\u7a97\uff08\u8de8\u5468\u7565\u591a\uff09\u63d0\u4f9b\u9002\u5ea6\u6301\u4ed3\u60ef\u6027\uff0c\u5c06\u6362\u624b\u7387\u7cbe\u51c6\u951a\u5b9a\u5728 12.5%~13.5% \u7684 Fitness \u6700\u4f18\u5206\u6bcd\u8fb9\u754c\uff0c\u6d4b\u8bd5 Sharpe \u4e0e Fitness \u6700\u4f73\u5171\u632f\u5e73\u8861\u3002"
+    },
+    {
+      "id": 3,
+      "type": "FIT5_S3_OUTER_DECAY7_WINSOR30",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 7)",
+      "optimize_reason": "\u3010Slot 3: \u5916\u5c42 7 \u65e5\u5e73\u6ed1 + Winsorize 3.0\u30117 \u65e5\u5e73\u6ed1\u5728 Decay 12 \u73af\u5883\u4e0b\u5f62\u6210 19 \u65e5\u7b49\u6548\u534a\u8870\u671f\uff0c\u8fdb\u4e00\u6b65\u5f3a\u5316 Margin \u63d0\u5347\u7a7a\u95f4\uff0c\u4e13\u653b\u9ad8 Margin (6+ bps) \u4e0e Fitness \u7a81\u7834\u3002"
+    },
+    {
+      "id": 4,
+      "type": "FIT5_S4_OUTER_DECAY8_WINSOR30",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 8)",
+      "optimize_reason": "\u3010Slot 4: \u5916\u5c42 8 \u65e5\u5e73\u6ed1 + Winsorize 3.0\u3011\u6d4b\u8bd5 8 \u65e5\u5916\u5c42\u5e73\u6ed1\u7684\u6362\u624b\u7387\u8fb9\u754c\uff0c\u68c0\u9a8c\u5728 Decay 12 \u51cf\u963b\u914d\u7f6e\u4e0b\u662f\u5426\u80fd\u5728\u4fdd\u4f4f Sharpe 1.58 \u7684\u540c\u65f6\u5c06\u6362\u624b\u538b\u81f3 12.5% \u4e0b\u9650\u3002"
+    },
+    {
+      "id": 5,
+      "type": "FIT5_S5_POWER3_OUTER_DECAY5_WINSOR30",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), news_relevance_score_2)), subindustry), 0.5), 3), 5)",
+      "optimize_reason": "\u3010Slot 5: \u6e29\u548c 3 \u6b21\u65b9\u5c3e\u90e8\u805a\u7126 + \u5916\u5c42 5 \u65e5\u5e73\u6ed1\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u4ee5\u7ebf\u6027\u76f8\u5173\u5ea6\u91ca\u653e 1 \u7b97\u5b50\u914d\u989d\uff0c\u5728 group_rank \u540e\u65bd\u52a0\u6e29\u548c 3 \u6b21\u65b9\uff08\u4e0d\u89e6\u53d1 0.02 \u622a\u65ad\u524a\u5e73\uff09\uff0c\u518d\u5728\u6700\u5916\u5c42\u4ee5 5 \u65e5\u5e73\u6ed1\u6ee4\u6ce2\uff0c\u5f62\u6210\u517c\u5177\u9ad8\u6536\u76ca\u4e0e\u4f4e\u6362\u624b\u7684\u7cbe\u70bc\u67b6\u6784\u3002"
+    },
+    {
+      "id": 6,
+      "type": "FIT5_S6_POWER3_OUTER_DECAY7_WINSOR30",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), news_relevance_score_2)), subindustry), 0.5), 3), 7)",
+      "optimize_reason": "\u3010Slot 6: 3 \u6b21\u65b9\u5c3e\u90e8\u805a\u7126 + \u5916\u5c42 7 \u65e5\u5e73\u6ed1\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u30117 \u65e5\u5916\u5c42\u5e73\u6ed1\u5f7b\u5e95\u71a8\u5e73 3 \u6b21\u65b9\u5fae\u89c2\u6392\u5e8f\u8df3\u53d8\uff0c\u5c06\u9ad8\u786e\u4fe1\u5ea6\u80a1\u7968\u7684\u8d85\u989d\u6536\u76ca\u5e73\u6ed1\u91ca\u653e\uff0c\u76f4\u51fb Returns >= 4.5% \u4e0e Fitness >= 1.00\u3002"
+    },
+    {
+      "id": 7,
+      "type": "FIT5_S7_POWER3_OUTER_DECAY8_WINSOR30",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), news_relevance_score_2)), subindustry), 0.5), 3), 8)",
+      "optimize_reason": "\u3010Slot 7: 3 \u6b21\u65b9\u5c3e\u90e8\u805a\u7126 + \u5916\u5c42 8 \u65e5\u5e73\u6ed1\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u8fdb\u4e00\u6b65\u62c9\u957f\u5e73\u6ed1\u5468\u671f\u81f3 8 \u65e5\uff0c\u538b\u4f4e Turnover \u91ca\u653e Margin \u6f5c\u529b\uff0c\u51b2\u51fb\u751f\u4ea7\u7ea7\u5168\u7eff\u3002"
+    },
+    {
+      "id": 8,
+      "type": "FIT5_S8_OUTER_DECAY6_WINSOR35",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.5), sqrt(news_relevance_score_2))), subindustry), 0.5), 6)",
+      "optimize_reason": "\u3010Slot 8: \u5bbd\u677e Winsorize 3.5 + \u5916\u5c42 6 \u65e5\u5e73\u6ed1\u3011\u4ee5 std=3.5 \u5145\u5206\u4fdd\u7559\u718a\u5e02\u622a\u9762\u79bb\u6563\u5ea6\uff0c\u7ed3\u5408 6 \u65e5\u5916\u5c42\u5e73\u6ed1\u4e0e Decay 12\uff0c\u5168\u5929\u5019\u63d0\u5347\u590f\u666e\u97e7\u6027\u4e0e Fitness\u3002"
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "task_tag": "BATCH02_FILTER_TRUE",
+  "note": "BATCH01 结论: add() 默认 filter=false 会传播 NaN, 2014-2016 空窗无法被填; other327 数据实为 2020 年起, 违反铁律1; other635/other424 均有 2014 起数据。本批全部改用 add(..., filter=true) 无损叠加。",
+  "known_fields": [
+    "negative_score_maximum_value",
+    "oth635_sentiment",
+    "oth424_divyld",
+    "dividend_growth_factor_score"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(dividend_growth_factor_score, 250), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "filter=true 等权无损叠加: 2017+ 双通道共存, 2014-2016 仅股息通道独立成像 (该通道 2014/2015 Sharpe 2.37/1.81), 同时填坑与保留母本信息"
+    },
+    {
+      "slot": 2,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(dividend_growth_factor_score, 250), 0.5), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "半权叠加: 让股息通道只作为填坑补丁 (0.5 权重), 2017+ 母本信号占主导, 换取更高 Sharpe 与 Margin"
+    },
+    {
+      "slot": 3,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(vec_avg(oth635_sentiment), 250), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "路透新闻情绪无损叠加: 该数据集 2014/2015 Sharpe 1.11/1.54 且 79% 标的覆盖含欧洲, 目标是同时填坑与唤醒 EMEA"
+    },
+    {
+      "slot": 4,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(vec_avg(oth635_sentiment), 250), 0.5), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "路透情绪半权叠加: 降低该通道 2019-2020 负收益年份对母本的拖累, 只借其早期覆盖与 EMEA 截面"
+    },
+    {
+      "slot": 5,
+      "expression": "group_rank(add(rank(ts_mean(negative_score_maximum_value, 250)), rank(ts_mean(dividend_growth_factor_score, 250)), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "双通道独立秩标准化 + filter=true: 消除 [0,1] 概率与 [0,1] 情绪的量纲偏置, 让两通道各贡献等量截面信息"
+    },
+    {
+      "slot": 6,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(dividend_growth_factor_score, 250), multiply(ts_mean(vec_avg(oth635_sentiment), 250), 0.5), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "三通道融合: AI 新闻 + 股息预期 + 路透情绪, 前两者等权、路透半权, 用多源异构降低单源失效风险与 ProdCorr"
+    },
+    {
+      "slot": 7,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 120), ts_mean(dividend_growth_factor_score, 120), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "短窗 120 日变体: 检验填坑拓扑是否对均值窗口敏感, 120 日可提升对信号漂移的响应速度"
+    },
+    {
+      "slot": 8,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(oth424_divyld, 250), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "股息率通道叠加: 股息率量纲 (0~0.08) 远小于情绪, 2017+ 几乎不扰动母本, 仅在早期提供低换手防御性截面"
+    },
+    {
+      "slot": 9,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(vec_avg(oth635_sentiment), 250), 0.25), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "路透情绪四分之一权: 极限保守填坑, 仅在母本无数据的年份注入 25% 强度的第二通道, 保住 20bps 级 Margin"
+    },
+    {
+      "slot": 10,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "对照槽: 完整复现母本 Vkxp3OWA, 用于确认本次回测设置与平台记录一致 (Sharpe 1.47 / Fit 0.70 / TO 2.72%)"
+    }
+  ]
+}

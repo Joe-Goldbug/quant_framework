@@ -1,0 +1,21 @@
+{
+  "wave": 23,
+  "seed_id": "GATE1_WAVE23",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "j2YAbw6W",
+  "hypothesis": "盲区1/铁律B：非秩外壳 (group_neutralize / group_zscore + winsorize 控 CW) 在 j2YAbw6W 骨架上首次系统性测试。验收：任一槽 Margin >= 20bps 且 Sharpe >= 1.1 且 Fitness >= 0.9 即证伪此前『天花板』判定。设置层中性化固定 INDUSTRY 以与父本可比，表达式层自行做 group 变换。",
+  "items": [
+    {"id": "w23_ne_sub", "neutralization": "INDUSTRY", "expression": "group_neutralize(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "铁律B 主槽：秩壳换 group_neutralize，保留连续残差幅度（秩壳丢掉的 Cardinal Magnitude 正是 Margin 来源）。算子 4。"},
+    {"id": "w23_zs_sub", "neutralization": "INDUSTRY", "expression": "group_zscore(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "group_neutralize 的 z-score 对照：保留截面幅度但按组内标准差标准化，检测 Margin 提升是否来自幅度保留而非去均值。"},
+    {"id": "w23_ne_win", "neutralization": "INDUSTRY", "expression": "group_neutralize(winsorize(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), std=3), subindustry)", "optimize_reason": "非秩外壳的 CW 风险控制：先 winsorize(std=3) 削尾再 group_neutralize，验证『连续幅度 + 尾部截断』能否兼顾 Margin 与集中度合规。算子 5。"},
+    {"id": "w23_zs_win", "neutralization": "INDUSTRY", "expression": "group_zscore(winsorize(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), std=3), subindustry)", "optimize_reason": "z-score + winsorize 组合，与上一槽构成 2x2 对照（去均值/标准化 × 削尾/不削尾）。"},
+    {"id": "w23_ne_ind", "neutralization": "INDUSTRY", "expression": "group_neutralize(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), industry)", "optimize_reason": "分组粒度对照：industry 而非 subindustry。手册记录子行业截面对 insider 同向冲击剥离过度，industry 粒度可能保住更多共同信号 -> Margin。"},
+    {"id": "w23_ne_pow", "neutralization": "INDUSTRY", "expression": "group_neutralize(signed_power(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), 0.5), subindustry)", "optimize_reason": "凹函数压缩：signed_power(0.5) 保留符号同时压尾部，等价于对非秩外壳做温和 winsorize，用于分辨『Margin 提升』与『尾部风险』的权衡曲线。算子 5。"},
+    {"id": "w23_ne_decay", "neutralization": "INDUSTRY", "expression": "group_neutralize(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "平滑壳对照：ts_mean -> ts_decay_linear(20)，同样保留幅度但加权近端信息，检验非秩外壳的优势是否依赖平滑方式。"},
+    {"id": "w23_zs_decay_win", "neutralization": "INDUSTRY", "expression": "group_zscore(winsorize(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), std=3), subindustry)", "optimize_reason": "三条规范化同时上（衰减 + 削尾 + 组内标准化），测非秩外壳的最大 Margin 上限。算子 5。"},
+    {"id": "w23_ne_raw", "neutralization": "INDUSTRY", "expression": "group_neutralize(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), subindustry)", "optimize_reason": "无平滑裸信号 + group_neutralize：分离『非秩外壳增益』与『ts_mean 平滑增益』，同时作为换手上升侧的观测槽。算子 3。"}
+  ]
+}

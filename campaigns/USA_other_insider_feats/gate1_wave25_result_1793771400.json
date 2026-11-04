@@ -1,0 +1,31 @@
+{
+  "wave": 25,
+  "seed_id": "GATE1_WAVE25",
+  "purpose": "blind-spot 4: neutralization axis measured on ProdCorr (not Sharpe)",
+  "fetched_at": "2026-11-04T14:22:00Z",
+  "locations": {
+    "MARKET": "https://api.worldquantbrain.com/simulations/2R0IFs8ox5kac6I5rqOhnQ6",
+    "CROWDING": "https://api.worldquantbrain.com/simulations/4tqNEl3Yl54OaTY11OH8671u",
+    "SECTOR": "https://api.worldquantbrain.com/simulations/4sY8QMa9I4O99QCgZCAubkX"
+  },
+  "settings_common": {"region": "USA", "universe": "TOP1000", "delay": 1, "decay": 4, "truncation": 0.025, "nan_handling": "ON", "pasteurization": "ON", "shell": "group_rank(..., subindustry) + ts_mean(window)"},
+  "matrix": [
+    {"neutralization": "INDUSTRY", "window": 20, "alpha_id": "j2YAbw6W", "sharpe": 1.27, "fitness": 0.74, "margin_bps": 14.66, "turnover": 0.0574, "two_year_sharpe": 1.6, "cluster_test": 0.82, "prod_corr": 0.8178, "prod_corr_pass": false, "self_corr": 0.3446},
+    {"neutralization": "INDUSTRY", "window": 33, "alpha_id": "WjObKP8P", "sharpe": 1.32, "fitness": 0.77, "margin_bps": 17.59, "turnover": 0.0477, "two_year_sharpe": 1.13, "cluster_test": 0.75, "prod_corr": null},
+    {"neutralization": "INDUSTRY", "window": 132, "alpha_id": "9qxjgVLq", "sharpe": 1.28, "fitness": 0.72, "margin_bps": 26.29, "turnover": 0.0299, "two_year_sharpe": 0.7, "cluster_test": 0.77, "prod_corr": null},
+    {"neutralization": "MARKET", "window": 20, "alpha_id": "xAr3wRQm", "sharpe": 1.18, "fitness": 0.72, "margin_bps": 17.17, "turnover": 0.0541, "two_year_sharpe": 1.49, "cluster_test": 0.69, "prod_corr": null},
+    {"neutralization": "MARKET", "window": 33, "alpha_id": "58Ez7M3M", "sharpe": 1.24, "fitness": 0.76, "margin_bps": 20.89, "turnover": 0.0447, "two_year_sharpe": 1.11, "cluster_test": 0.68, "prod_corr": null},
+    {"neutralization": "MARKET", "window": 132, "alpha_id": "vR1rndxQ", "sharpe": 1.21, "fitness": 0.71, "margin_bps": 31.91, "turnover": 0.0271, "two_year_sharpe": 0.71, "cluster_test": 0.68, "prod_corr": null},
+    {"neutralization": "CROWDING", "window": 20, "alpha_id": "P0o2rjXM", "sharpe": 1.15, "fitness": 0.69, "margin_bps": 15.42, "turnover": 0.0575, "two_year_sharpe": 1.51, "cluster_test": 0.62, "prod_corr": null},
+    {"neutralization": "CROWDING", "window": 33, "alpha_id": "A1VNJqaX", "sharpe": 1.21, "fitness": 0.73, "margin_bps": 18.63, "turnover": 0.0482, "two_year_sharpe": 1.15, "cluster_test": 0.59, "prod_corr": 0.7446, "prod_corr_pass": false},
+    {"neutralization": "CROWDING", "window": 132, "alpha_id": "RREbZ0ka", "sharpe": 1.19, "fitness": 0.69, "margin_bps": 27.36, "turnover": 0.0307, "two_year_sharpe": 0.76, "cluster_test": 0.58, "prod_corr": 0.6986, "prod_corr_pass": true, "self_corr": 0.2615, "self_corr_pass": true},
+    {"neutralization": "SECTOR", "window": 20, "alpha_id": "npvdkw6l", "sharpe": 1.26, "fitness": 0.76, "margin_bps": 16.2, "turnover": 0.0556, "two_year_sharpe": 1.53, "cluster_test": 0.81, "prod_corr": null},
+    {"neutralization": "SECTOR", "window": 33, "alpha_id": "88RjkgGz", "sharpe": 1.32, "fitness": 0.79, "margin_bps": 19.61, "turnover": 0.0462, "two_year_sharpe": 1.1, "cluster_test": 0.78, "prod_corr": null},
+    {"neutralization": "SECTOR", "window": 132, "alpha_id": "e75b8e16", "sharpe": 1.28, "fitness": 0.74, "margin_bps": 29.35, "turnover": 0.0286, "two_year_sharpe": 0.68, "cluster_test": 0.77, "prod_corr": null}
+  ],
+  "wave25_verdict": {
+    "acceptance_test": "任一中性化使 ProdCorr < 0.70 -> 推翻『数据源结构性下限』并进入提交流程",
+    "result": "ACCEPTANCE MET — CROWDING x ts_mean(132) = RREbZ0ka, ProdCorr 0.6986 < 0.70 (verified), SelfCorr 0.2615, all_passed true",
+    "finding": "中性化是本族唯一有效的相关性杠杆：INDUSTRY 0.8178 -> CROWDING 0.7446 (33 窗) -> 0.6986 (132 窗)。相关性随中性化粒度 (INDUSTRY -> MARKET/SECTOR -> CROWDING) 与平滑窗长单调下降；代价是 Sharpe 与 2Y 小幅下降。此前用 Sharpe 作判据拦截本轴是方法论错误。"
+  }
+}

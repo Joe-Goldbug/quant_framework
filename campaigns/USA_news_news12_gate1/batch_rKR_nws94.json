@@ -1,0 +1,74 @@
+{
+  "seed": "rKR1qVWo",
+  "batch_id": "rKR_NWS94MIX",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 22,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "test_period": "P0Y0M",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2",
+    "nws94_v2_comp_returnafterevent",
+    "nws94_v2_comp_returnbeforeevent",
+    "nws94_v2_comp_postevlowtoev",
+    "nws94_v2_comp_postevhightoev",
+    "nws94_v2_comp_preevhightoclose",
+    "nws94_v2_comp_dollarvolumeafterevent"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "SEEDRW_GATED_RETURN",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, vec_avg(nws94_v2_comp_returnafterevent))), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "【Slot 1 · 种子忠实正交注入 · 峰值反应确认滤波】整条保留 rKR1qVWo 冠军骨架 (decay10 / subindustry / 双 power 尾部聚焦)，仅将种子壳里的 winsorize 滤波位换为新闻流市场即时反应强度 vec_avg(returnafterevent)（平台实测 54 个 news94 VECTOR 字段，与 mean_sentiment_score_transfer 发布语义端完全正交——一个捕捉'写什么'，一个捕捉'市场怎么交易'）。乘上 returnafterevent 后，无即时反应的模板新闻（定价已失效）信号被自然压制，只留下市场真正用交易投票的新闻。判决价值：这是'情绪核 × 市场反应核'正交注入的忠实基准槽，其 Sharpe/Fitness 相对种子本体 (1.54/0.78) 的增益即市场反应核的真实信息贡献度。"
+    },
+    {
+      "id": 2,
+      "type": "SEEDRW_SQRT_AMPLIFIER",
+      "expression": "group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(sqrt(vec_avg(nws94_v2_comp_returnafterevent)), sqrt(news_relevance_score_2))), 10), subindustry)",
+      "optimize_reason": "【Slot 2 · 反应强度开方平滑版 · 无倍 4 序子壳】放弃偶次 4-幂放大器 (power 4 的信号极尖峰化)，改用 sqrt(returnafterevent) 的凹函数压缩极端反应值，同字段 relevance 保留 sqrt 形态以保持种子壳特征。机制上市场反应返回值通常呈右偏尖峰，sqrt 将尾部反应压缩成更均匀的排序权重，防止单条新闻签约日对整个 quantile 权重端加成。对照组意义：Slot1 是 4-幂放大版，Slot2 是 sqrt 平滑版——二者形成'信号尖峰化 vs 平滑化'的对照博弈。"
+    },
+    {
+      "id": 3,
+      "type": "SEEDRW_PURE_REACTION",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(vec_avg(nws94_v2_comp_returnafterevent), 2), news_relevance_score_2), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "【Slot 3 · 反应强度纯度探针 · 零情绪核】完全剔除情绪核 mean_sentiment_score_transfer，仅保留 vec_avg(returnafterevent)^2 × news_relevance_score_2 的新闻流市场反应核心。判决价值为'反应强度有没有独立预测力'：若无情绪核时本槽 Sharpe 仍能突破种子本体 1.54，则说明市场反应信号本身强于情绪信号——换核方向应彻底转向 news94 而非情绪族的混合注入。若本槽 Sharpe 大幅回退，则说明情绪链路才是信号主体，反应强度只能做滤波门而非核心信息。"
+    },
+    {
+      "id": 4,
+      "type": "SEEDRW_DOLLARVOL_GATE",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(vec_avg(nws94_v2_comp_dollarvolumeafterevent), news_relevance_score_2)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "【Slot 4 · 事件后成交额流动性门 · 反应量不是反应价】将 Slot1 的信号替换 vec_avg(returnafterevent) 为 vec_avg(dollarvolumeafterevent)——新闻发布后到收盘的平均成交美元额。情绪分高但成交额小的新闻是'纸面热度无真实承接'，情绪分高且成交额大才是机构真实介入。判决价值为'反应价格信号 vs 反应现金信号'的二选一裁决，机制与 Slot1 严格同构仅换核字段。"
+    },
+    {
+      "id": 5,
+      "type": "POSTNET_DRIFT_DELTA",
+      "expression": "group_rank(ts_decay_linear(subtract(vec_avg(nws94_v2_comp_postevlowtoev), vec_avg(nws94_v2_comp_postevhightoev)), 10), subindustry)",
+      "optimize_reason": "【Slot 5 · 事件后净漂移腿 · 反弹强度探针】postevlowtoev 是'事件前底部到事件后最低点'的回撤幅度，postevhightoev 是'事件前顶部到事件后最高点'的冲高幅度。二者相减得到'冲高-回撤的净漂移'：净漂移为正说明新闻事件后买方力量彻底压过卖方、信号有真实延续性；净漂移为负则是抛压盖过冲高，情绪拐点被交易的空头确认。判决价值为新机制独立腿（不携带任何情绪字段），验证新闻流事件主导的市场物理结构能否独立成信号。"
+    },
+    {
+      "id": 6,
+      "type": "DOLLARVOL_RELEVANCE_MIX",
+      "expression": "group_rank(ts_decay_linear(multiply(vec_avg(nws94_v2_comp_dollarvolumeafterevent), news_relevance_score_2), 10), subindustry)",
+      "optimize_reason": "【Slot 6 · 纯流动性加权 · 无情绪无反应价】vec_avg(dollarvolumeafterevent) × news_relevance_score_2 的最简流动性加权——新闻相关性分 (relevance, [0,1] 稀疏) 作为权重把高关联新闻的事件后成交额放大、低关联干扰项缩小。判决价值为'纯流动性维度在无任何情绪/反应筹码的情况下能给出多少预测力'，这为 whole news94 数据族的 unique alpha 确立下界。若本槽零效果，则整个 news94 流动性路径关闭。"
+    },
+    {
+      "id": 7,
+      "type": "ATTENTION_SCARCITY_FLIP",
+      "expression": "reverse(group_rank(ts_decay_linear(divide(vec_avg(nws94_v2_comp_preevhightoclose), add(abs(vec_avg(nws94_v2_comp_dollarvolumeafterevent)), 1)), 10), subindustry))",
+      "optimize_reason": "【Slot 7 · 注意力稀缺反转腿 · 新媒体迁移机制】preevhightoclose 是'事件前高位到事件后收盘价'的净回撤，dollarvolumeafterevent 是事件后承接量。比值高 (=事件前冲高强烈+事件后承接薄弱) 说明新闻热度只是纸面爆点、无真实买盘 → 反转做空；比值低 (=事件前冷静+事件后买盘入场) 是真正新鲜信息的慢扩散 → reverse 把'事件前过度自信但无承接'的票做成空头。机制上这是 attention-scarcity inversion (注意力稀缺反转) 在 news94 流动性维度上的独立复刻。"
+    },
+    {
+      "id": 8,
+      "type": "SELFBASE_PRE_EVENT_STD",
+      "expression": "group_rank(multiply(ts_zscore(vec_avg(nws94_v2_comp_returnbeforeevent), 60), mean_sentiment_score_transfer), subindustry)",
+      "optimize_reason": "【Slot 8 · 自身60日基线归一 · 事件前漂移情绪确认】ts_zscore(vec_avg(returnbeforeevent), 60) 度量'今日事件前收益相对自身过去60个交易日的信道暴走多少 sigma'，剥离行业级别的系统性漂移，再乘 mean_sentiment_score_transfer 做情绪方向确认。机制上是'方向来自情绪，信号强度来自统计异常度'的乘性融合——扰动结构完全不同于 1-4 的乘性门控 (那里是 amplitude 乘 amplitude，这里是 anomaly 乘 direction)。判决价值为高阶统计形态的独立变异点。"
+    }
+  ]
+}

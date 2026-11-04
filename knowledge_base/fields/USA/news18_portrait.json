@@ -1,0 +1,53 @@
+{
+  "dataset": "news18",
+  "name": "RavenPack News Analytics (category-split sentiment)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "news",
+  "stage": "Stage1_field_portrait",
+  "date": "2026-10-27",
+  "total_fields": 121,
+  "matrix_fields": 71,
+  "vector_fields": 50,
+  "coverage": {
+    "mean_* group": "1.0 (MATRIX, daily, no NaN)",
+    "rp_css_* / rp_ess_* / rp_nip_* group": "0.5 (MATRIX, needs ts_backfill)"
+  },
+  "alpha_count": {"median": "~19", "max": 380, "zero_alpha": "several (e.g. mean_editorial_commentary_sentiment ac=0)"},
+  "crowding": "rp_css_ratings ac=380 (crowded); mean_* fields ac=0-31 (moderate); several ac=0 fields available",
+  "stage1_verdict": "VIRGIN — zero prior backtest consumption. Highest alpha_max (380) among all virgin news datasets → highest Sharpe ceiling candidate.",
+  "field_groups": {
+    "mean_*_group_cov1.0": [
+      "mean_composite_sentiment_score (ac=22)",
+      "mean_corporate_action_sentiment (ac=10)",
+      "mean_earnings_evaluation_sentiment (ac=12)",
+      "mean_editorial_commentary_sentiment (ac=0) ← UNCROWDED",
+      "mean_entity_relevance_score (ac=18)",
+      "mean_equity_sentiment_score (ac=31)",
+      "mean_event_novelty_score (ac=19)",
+      "mean_event_sentiment_score (ac=17)",
+      "mean_merger_acquisition_sentiment (ac=29)",
+      "mean_news_impact_projection (ac=50)"
+    ],
+    "rp_css_group_cov0.5": ["composite sentiment by category (assets, business, credit, ..., ratings, revenue, ...)", "rp_css_ratings ac=380 (crowded)"],
+    "rp_ess_group_cov0.5": ["event sentiment by category"],
+    "rp_nip_group_cov0.5": ["news impact projection by category"]
+  },
+  "role_classification": {
+    "Signal_Flow": ["mean_composite_sentiment_score", "mean_equity_sentiment_score", "mean_earnings_evaluation_sentiment", "mean_event_sentiment_score"],
+    "Uncertainty_Scale": ["mean_news_impact_projection", "mean_event_novelty_score", "mean_entity_relevance_score"],
+    "Catalyst_Event": ["mean_corporate_action_sentiment", "mean_merger_acquisition_sentiment", "mean_event_novelty_score"],
+    "Dimension_Anchor": ["mean_composite_sentiment_score"]
+  },
+  "design_notes": [
+    "All mean_* fields coverage=1.0 → no vec_* needed, no tied-zeros, safe for direct use.",
+    "Sentiment scores presumed bounded [0,1] or [-1,1] → de-center via subtract(x,0.5) before multiply/divide (Axiom 1).",
+    "ts_rank is shift-invariant → safe on raw bounded fields.",
+    "rp_* fields coverage=0.5 → wrap with ts_backfill(x,120) before use (avoid CONCENTRATED_WEIGHT).",
+    "Multiplicative weights strictly positive: rank() only. No multiply of two signed variables.",
+    "No group_rank output layer; no external close/returns/volume.",
+    "Cross-category structure (css/ess/nip × 10 categories) enables interaction signals unavailable in news83/news59.",
+    "Settings: STATISTICAL / decay 8 / trunc 0.08 (P2/P3/P4 levers)."
+  ]
+}

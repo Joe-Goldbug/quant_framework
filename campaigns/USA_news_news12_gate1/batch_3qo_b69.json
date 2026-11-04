@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B69_S1_TSRANK220_OUTER10_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 220), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 8 ops: 220-day ts_rank to identify 1-year historical peak catalysts per stock. Native percentile mapping eliminates outliers and targets Sharpe >= 1.60 and CLUSTER_TEST PASS."
+    },
+    {
+      "id": 2,
+      "type": "B69_S2_TSRANK120_OUTER10_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 120), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 8 ops: 120-day (semi-annual) ts_rank window, capturing earnings-cycle relative catalyst strength."
+    },
+    {
+      "id": 3,
+      "type": "B69_S3_TSRANK60_OUTER10_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 60), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 8 ops: 60-day (quarterly) ts_rank window, capturing quarterly news surprise relative to peers."
+    },
+    {
+      "id": 4,
+      "type": "B69_S4_TSRANK220_P45_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 220), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 8 ops: 220d ts_rank with sentiment power 4.5 concave optimum to maximize signal contrast."
+    },
+    {
+      "id": 5,
+      "type": "B69_S5_TSRANK220_D10_8OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 220), subindustry), 0.5), 8)",
+      "decay": 10,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 8 ops: ts_rank(220) with tighter outer decay 8 and sim decay 10 for faster post-earnings response."
+    },
+    {
+      "id": 6,
+      "type": "B69_S6_TSRANK220_WINSOR_9OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 220), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 9 ops: Adds winsorize prior to ts_rank to prevent historical window hijacking by single extreme outliers."
+    },
+    {
+      "id": 7,
+      "type": "B69_S7_EXP_DECAY_TSRANK_8OPS",
+      "expression": "ts_decay_exp_window(subtract(group_rank(ts_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 220), subindustry), 0.5), 8, factor=0.75)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 8 ops: ts_decay_exp_window with factor=0.75 (from forum champion recipe) for smooth exponential information decay."
+    },
+    {
+      "id": 8,
+      "type": "B69_S8_TSRANK_OUTER_8OPS",
+      "expression": "ts_rank(ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), subindustry), 0.5), 10), 220)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 8 ops: Applying ts_rank(..., 220) to smoothed cross-sectional rank (forum recipe) for continuous monotonic net asset ascent."
+    }
+  ]
+}

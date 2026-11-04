@@ -1,0 +1,44 @@
+{
+  "wave": 30,
+  "seed_id": "GATE1_WAVE30",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "j2YAbw6W (INDUSTRY base, Margin 14.66 bps, PC 0.8178)",
+  "purpose": "cold-field round: absolute sale-transaction count / volume dimension as the de-correlation lever, keeping INDUSTRY neutralization to protect Margin (target: Margin>=15 AND ProdCorr<0.70)",
+  "neutralization": "INDUSTRY",
+  "decay": 4,
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "pasteurization": "ON",
+  "field_whitelist_verified": {
+    "source": "brain-mcp get_datafields(dataset_id=insider_feats, data_type=VECTOR, search=sale), 84 fields",
+    "note": "all names below confirmed present on platform with alphaCount 0 (except buy_sell_ratio_top5_20d_filled alphaCount=1); prior cache alpha_count values were stale"
+  },
+  "pairs": [
+    {"pair": "A", "leg": "BELIEF x ranked sell-transaction breadth (top20 60d count, cov 0.6904)", "window_pair": [10, 20]},
+    {"pair": "B", "leg": "BELIEF x ranked total disclosure intensity (total sale tx count 250d_2, cov 0.828)", "window_pair": [20, 40]},
+    {"pair": "C", "leg": "cold count-belief term structure top20 5d vs 250d", "window_pair": [20, 40]},
+    {"pair": "D", "leg": "cold ratio-belief term structure top5 5d vs 250d", "window_pair": [20, 40]},
+    {"pair": "E", "leg": "BELIEF x cold count-belief change (6 ops, at Occam limit)", "window_pair": [20, 40]}
+  ],
+  "expressions": [
+    "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),group_rank(vec_avg(top20_sale_tx_count_60d),subindustry)),10),subindustry)",
+    "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),group_rank(vec_avg(top20_sale_tx_count_60d),subindustry)),20),subindustry)",
+    "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),group_rank(vec_avg(total_sale_tx_count_250d_2),subindustry)),20),subindustry)",
+    "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),group_rank(vec_avg(total_sale_tx_count_250d_2),subindustry)),40),subindustry)",
+    "group_rank(ts_mean(subtract(vec_avg(buy_sell_tx_count_ratio_top20_5d_filled),vec_avg(buy_sell_tx_count_ratio_top20_250d_filled)),20),subindustry)",
+    "group_rank(ts_mean(subtract(vec_avg(buy_sell_tx_count_ratio_top20_5d_filled),vec_avg(buy_sell_tx_count_ratio_top20_250d_filled)),40),subindustry)",
+    "group_rank(ts_mean(subtract(vec_avg(buy_sell_ratio_top5_5d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),20),subindustry)",
+    "group_rank(ts_mean(subtract(vec_avg(buy_sell_ratio_top5_5d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),40),subindustry)",
+    "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),subtract(vec_avg(buy_sell_tx_count_ratio_top20_5d_filled),vec_avg(buy_sell_tx_count_ratio_top20_250d_filled))),20),subindustry)",
+    "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),subtract(vec_avg(buy_sell_tx_count_ratio_top20_5d_filled),vec_avg(buy_sell_tx_count_ratio_top20_250d_filled))),40),subindustry)"
+  ],
+  "operator_counts": [5, 5, 5, 5, 4, 4, 4, 4, 6, 6],
+  "acceptance": {
+    "break_through": "Margin >= 15 bps AND ProdCorr < 0.70 on the same alpha",
+    "partial": "one of the two only -> record, not a submission candidate",
+    "lock": "all cold-field INDUSTRY variants fail both -> joint ceiling locked, switch event source"
+  }
+}

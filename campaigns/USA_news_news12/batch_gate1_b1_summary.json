@@ -1,0 +1,104 @@
+{
+  "step1": {
+    "should_prune": false,
+    "max_abs_sharpe": 1.3,
+    "qualified_count": 4,
+    "qualified_seeds": [
+      {
+        "expression": "group_zscore(ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(divide(divide(subtract(news_eod_close, news_ton_last), news_ton_last), add(vec_count(high_price_excursion_stddev), 1))), -1), 15), subindustry)",
+        "sharpe": 1.3,
+        "metrics": {
+          "sharpe": 1.3,
+          "fitness": 0.35,
+          "turnover": 0.859,
+          "returns": 0.0618,
+          "drawdown": 0.093,
+          "margin": 0.000144,
+          "longCount": 278,
+          "shortCount": 269,
+          "pnl": 6166833,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": 0.86,
+          "two_year_sharpe": 1.84,
+          "investability_sharpe": 0.84,
+          "investability_fitness": 0.24,
+          "risk_neutralized_sharpe": 1.51
+        },
+        "status": "STEP1_PASSED"
+      },
+      {
+        "expression": "group_zscore(ts_decay_linear(reverse(divide(news_indx_perf, add(abs(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 0.01))), 15), subindustry)",
+        "sharpe": 1.1,
+        "metrics": {
+          "sharpe": 1.1,
+          "fitness": 0.26,
+          "turnover": 0.8848,
+          "returns": 0.051,
+          "drawdown": 0.0898,
+          "margin": 0.000115,
+          "longCount": 265,
+          "shortCount": 263,
+          "pnl": 5088669,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": 0.48,
+          "two_year_sharpe": 1.61,
+          "investability_sharpe": 0.73,
+          "investability_fitness": 0.18,
+          "risk_neutralized_sharpe": 1.13
+        },
+        "status": "STEP1_PASSED"
+      },
+      {
+        "expression": "group_zscore(ts_decay_linear(reverse(divide(subtract(news_max_up_ret, news_max_dn_ret), add(add(news_max_up_ret, news_max_dn_ret), 0.01))), 15), subindustry)",
+        "sharpe": 1.13,
+        "metrics": {
+          "sharpe": 1.13,
+          "fitness": 0.23,
+          "turnover": 1.0788,
+          "returns": 0.0463,
+          "drawdown": 0.0709,
+          "margin": 8.6e-05,
+          "longCount": 212,
+          "shortCount": 213,
+          "pnl": 4619584,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": 0.7,
+          "two_year_sharpe": 1.18,
+          "investability_sharpe": 0.67,
+          "investability_fitness": 0.14,
+          "risk_neutralized_sharpe": 1.09
+        },
+        "status": "STEP1_PASSED"
+      },
+      {
+        "expression": "group_zscore(ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(s_log_1p(divide(subtract(news_eod_close, news_ton_last), news_ton_last))), -1), 18), subindustry)",
+        "sharpe": 1.06,
+        "metrics": {
+          "sharpe": 1.06,
+          "fitness": 0.28,
+          "turnover": 0.824,
+          "returns": 0.056,
+          "drawdown": 0.0842,
+          "margin": 0.000136,
+          "longCount": 274,
+          "shortCount": 273,
+          "pnl": 5590068,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": 0.39,
+          "two_year_sharpe": 1.68,
+          "investability_sharpe": 0.52,
+          "investability_fitness": 0.12,
+          "risk_neutralized_sharpe": 1.19
+        },
+        "status": "STEP1_PASSED"
+      }
+    ],
+    "message": "【Step 1 通过】捕获 4 条达标种子 (最高 |Sharpe| = 1.30)"
+  },
+  "step2_passed": [],
+  "final_passed": []
+}

@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/3c58wnbxt4XxaaBksFN7Lpx",
+  "submitted_at": 1793031711,
+  "items": [
+    {
+      "id": 1,
+      "type": "MED_W2_D40",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 2)), sector)",
+      "optimize_reason": "【decay40 × 最短窗口】Wave R2 在 decay25 上测得窗口轴单调 w3(2.05)>w4(2.04)>w5(1.97)>w6(1.92)>w7(1.85)。本批把 decay 抬到 40（Margin 主控杠杆：dec40/w5 的 Ret/TO=0.446 显著高于 dec25/w5 的 0.377），沿窗口轴继续下探到 w2（=1 日差分的半量），寻找「高 decay + 极短基线」是否兼得高 Sharpe 与高 Margin。"
+    },
+    {
+      "id": 2,
+      "type": "MED_W3_D40",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 3)), sector)",
+      "optimize_reason": "【decay40 × w3】decay25 下的最优点。本槽是「最优窗口 × 抬高一档 decay」的交叉点，用于测量 decay 轴在 w3 上的 Sharpe 弹性：若 Sh 保持在 1.9 以上而 TO 降到 17% 附近，则 Ret/TO 可望接近 0.47，Margin 提升到 9.4bps 量级。"
+    },
+    {
+      "id": 3,
+      "type": "MED_W4_D40",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 4)), sector)",
+      "optimize_reason": "【decay40 × w4】与 Slot2 构成 w3/w4 两点，定位 decay40 下的窗口峰。decay25 时 w4 的 2Y Sharpe 最高（2.47），本槽检验该性质在 decay40 下是否保持。"
+    },
+    {
+      "id": 4,
+      "type": "MED_W6_D40",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 6)), sector)",
+      "optimize_reason": "【decay40 × w6】窗口轴长端。长窗口压 TO、短窗口抬 Sharpe，本槽与 Slot1-3 共同给出 decay40 下的完整窗口响应曲线，用于判断 Margin 与 Sharpe 的交换前沿形状。"
+    },
+    {
+      "id": 5,
+      "type": "MED_W7_D40",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 7)), sector)",
+      "optimize_reason": "【decay40 × w7】decay25 下 w7 的 Ret/TO 最高（0.379）；配合 decay40 的降换手效应，TO 可望落到 14% 附近。若 Ret 保持在 6.3% 以上，则 Ret/TO≥0.45、Margin≥9bps，同时 Fit=Sh×sqrt(Ret/TO) 将显著高于 dec25 同构型。"
+    },
+    {
+      "id": 6,
+      "type": "MED_W3_IND_D40",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 3)), industry)",
+      "optimize_reason": "【decay40 × w3 × industry】Wave R2 Slot4 已证明 industry 分组在 decay25 下同样 0 warn 且 Sh 达 2.01（比 sector 的 1.97 更高）。本槽把「最优窗口 + 最优分组 + 高 decay」三者叠加，是本批冲击 Margin 与 Sharpe 同时达标的最高期望槽。"
+    },
+    {
+      "id": 7,
+      "type": "MED_W4_WINS_D40",
+      "expression": "group_rank(winsorize(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 4)), std=3), sector)",
+      "optimize_reason": "【decay40 × w4 × winsorize】截尾在 decay25 下已被证明不伤 Sharpe（QPvPL9vg Sh1.98 vs 裸点 1.97）。本槽检验截尾在高 decay 下能否额外压住尾部换手，从而抬升 Ret/TO 与 Margin。"
+    },
+    {
+      "id": 8,
+      "type": "MED_W7_WINS_D40",
+      "expression": "group_rank(winsorize(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 7)), std=3), sector)",
+      "optimize_reason": "【decay40 × w7 × winsorize · Margin 极限配置】把三个已知对 Ret/TO 有利的因素（高 decay、长窗口、截尾）叠加，目标直指 Margin≥10bps（需 Ret/TO≥0.5）。这是本战役对「内部铁律 Margin≥10bps」的最后一次冲击；无论成败，都将给出该族 Margin 天花板的确定读数。"
+    }
+  ]
+}

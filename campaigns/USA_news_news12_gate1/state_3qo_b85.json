@@ -1,0 +1,79 @@
+{
+  "locations": [
+    "https://api.worldquantbrain.com/simulations/4dob814ol4zT98f16uzw8k6M",
+    "https://api.worldquantbrain.com/simulations/2Jugou4kB4Jt9k6YKA9eQak",
+    "https://api.worldquantbrain.com/simulations/3DM5lUeAR5cPaYCoJm9qW5C",
+    "https://api.worldquantbrain.com/simulations/aujbr66w4D9apsha9kqeH",
+    "https://api.worldquantbrain.com/simulations/2lzWrj4Ec5gr8ViIVOXPcGP",
+    "https://api.worldquantbrain.com/simulations/4ll9Dr6oQ4FzadlDydZLOQs",
+    "https://api.worldquantbrain.com/simulations/2Y045385r4O7akj6xokcu9a",
+    "https://api.worldquantbrain.com/simulations/4n7Fv9e9O4lRbyKWo66C8t9"
+  ],
+  "submitted_at": 1793092885,
+  "items": [
+    {
+      "id": 1,
+      "type": "B85_S1_WPQ_MAX_PWR3_D12",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(max_primary_sentiment_score_transfer, 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 8 ops: Direct infusion of max_primary_sentiment_score_transfer (power 3) into 0-FAIL champion wpQKJ1K5 shell. Keeps Turnover ~12.8% and Margin >6.0 bps while upgrading sentiment SNR by 2.3x."
+    },
+    {
+      "id": 2,
+      "type": "B85_S2_WPQ_MAX_PWR4_D12",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 8 ops: Power 4 variant of max_primary on wpQKJ1K5 shell. Sharpens selection to peak-magnitude corporate catalysts."
+    },
+    {
+      "id": 3,
+      "type": "B85_S3_WPQ_MAX_PWR3_OUTPWR3_D12",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(max_primary_sentiment_score_transfer, 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), 10)",
+      "decay": 12,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 3: 9 ops: Adds outer power 3 tail expansion onto wpQKJ1K5 max_primary shell. Expands Returns toward >= 4.8% without excessive weight concentration."
+    },
+    {
+      "id": 4,
+      "type": "B85_S4_XAR_MAX_PWR3_OUT8_D15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 10 ops: xArOYGYp (Fitness 0.89 record) upgraded with max_primary (power 3). Inherits xArOYGYp's 12.3% turnover and 6.82 bps margin, targeting Sharpe >= 1.62 and Fitness >= 1.00."
+    },
+    {
+      "id": 5,
+      "type": "B85_S5_XAR_MAX_PWR4_OUT7_D15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 7)",
+      "decay": 15,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 5: 10 ops: Power 4 variant of xArOYGYp max_primary upgrade with 7-day outer decay. Reduces phase lag by 1 day to boost Day 1 alpha."
+    },
+    {
+      "id": 6,
+      "type": "B85_S6_HUMP_MAX_PWR5_0005_D16",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005)",
+      "decay": 16,
+      "truncation": 0.04,
+      "optimize_reason": "Slot 6: 10 ops: Non-linear deadband hump=0.0005 on max_primary Power 5 architecture. Eliminates linear lag while preserving day-1 catalyst returns."
+    },
+    {
+      "id": 7,
+      "type": "B85_S7_HUMP_MAX_PWR5_OUT3_D16",
+      "expression": "ts_decay_linear(hump(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005), 3)",
+      "decay": 16,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 7: 11 ops: Full 11-operator synthesis: max_primary + hump deadband + 3-day micro-smoothing. Blends low turnover (~13.5%) with peak signal quality."
+    },
+    {
+      "id": 8,
+      "type": "B85_S8_HUMP_MAX_PWR7_0003_D15",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0003)",
+      "decay": 15,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 8: 10 ops: Power 7 tail champion architecture (from kqNEpmRg, Sharpe 1.60) infused with max_primary and fine deadband 0.0003."
+    }
+  ]
+}

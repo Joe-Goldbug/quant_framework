@@ -1,0 +1,137 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "fundamental90+other466",
+  "category": "fundamental",
+  "neutralization": "SUBINDUSTRY",
+  "decay": 4,
+  "truncation": 0.08,
+  "submission_forbidden": true,
+  "known_fields": {
+    "fnd90_us_game_cash_flow_coverage": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of operating cash flow to total debt, measuring how well cash flow covers debt obligations; higher is safer",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_short_term_debt": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of short-term debt to total capitalization, assets, or related base; measures reliance on short-term financing and assesses leverage/liquidity risk",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "oth466_a_tnix": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Interest And Related Expense - Total 利息及相关费用净额",
+      "coverage": 0.88,
+      "alpha_count": 2
+    },
+    "oth466_cf_cash_int_pay": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Cash Interest Paid 实付现金利息",
+      "coverage": 0.95,
+      "alpha_count": 1
+    },
+    "oth466_a_ttld": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Long-Term Debt - Total 长期债务总额",
+      "coverage": 0.86,
+      "alpha_count": 1
+    }
+  },
+  "items": [
+    {
+      "slot": 1,
+      "seed_id": "R8_S1_RANK_WINDOW_10",
+      "type": "CROSS_CONVERGENCE",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_tnix, 252)), 10))",
+      "counterparty": "以年度财报节奏调仓、错失季度间融资成本更新的长期持有盘",
+      "optimize_reason": "R7 已分别验证 rank 映射 (Sharpe 0.73 / Fitness 0.42) 与 窗10 (换手 5.7%) 各自有效，但两者尚未合并。此处把二者叠加，目标是同时拿到 rank 带来的持仓均匀化增益与窗 10 带来的换手合规，是本批最直接的收敛点。"
+    },
+    {
+      "slot": 2,
+      "seed_id": "R8_S2_RANK_PAID_INTEREST_W10",
+      "type": "CROSS_CONVERGENCE",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_cf_cash_int_pay, 252)), 10))",
+      "counterparty": "以应计利息估算融资成本、不看实际现金流出的信用模型",
+      "optimize_reason": "R7 中实付现金利息口径取得全批最高年化 4.66% 与最高 Sub-universe 0.61，说明现金口径的付息比应计口径更贴近真实负担。此处与 rank 映射、窗 10 三者合并，检验收益与换手合规能否同时成立。"
+    },
+    {
+      "slot": 3,
+      "seed_id": "R8_S3_RANK_WINSORIZE_PAID",
+      "type": "CROSS_CONVERGENCE",
+      "expression": "rank(winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_cf_cash_int_pay, 252)), 20), std=3))",
+      "counterparty": "使少数极端付息标的决定组合波动的按量级加权量化盘",
+      "optimize_reason": "R7 中截尾独立使用时把 Margin 由 13.63 抬到 15.50bps，说明尾部脉冲确实在侵蚀单位换手收益。此处把截尾前置到排序之前（而非之后，排序后再截尾是空操作），先削掉两个数据集量纲差异造成的尾部，再均匀映射持仓。"
+    },
+    {
+      "slot": 4,
+      "seed_id": "R8_S4_RANK_TRIPLE_PAID",
+      "type": "CROSS_CONVERGENCE",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_cf_cash_int_pay, 252)), 20)",
+      "counterparty": "把已付利息视作唯一融资成本、忽略到期滚续压力的信用筛选模型",
+      "optimize_reason": "在实付利息腿之上再扣除模型化短期债务占比，形成覆盖度、期限结构、实际付息三道检验。三条腿分别来自模型评分、模型评分与真实科目，任一腿失效都会被另外两腿证伪，从而降低单腿噪声进入组合的概率。"
+    },
+    {
+      "slot": 5,
+      "seed_id": "R8_S5_GROUP_RANK_SUBINDUSTRY",
+      "type": "CROSS_CONVERGENCE",
+      "expression": "group_rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_tnix, 252)), 20), subindustry)",
+      "counterparty": "跨行业统一比较融资成本、因而错杀资本密集行业的量化模型",
+      "optimize_reason": "母本在全市场排序时会把公用事业、银行等天然高付息行业整体压到空头侧，这部分是行业敞口而非公司层面的融资效率差异。改为子行业内排序后，剩余的横截面差异才是同业内真实的相对融资优势。"
+    },
+    {
+      "slot": 6,
+      "seed_id": "R8_S6_RANK_TRIPLE_ACCRUAL",
+      "type": "CROSS_CONVERGENCE",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_a_tnix, 252)), 20)",
+      "counterparty": "把应付利息视作唯一融资成本、忽略到期滚续压力的信用筛选模型",
+      "optimize_reason": "与 Slot4 同为三腿结构，但把真实付息腿换回应计利息费用，构成口径消融：若应计口径三腿优于现金口径三腿，说明市场更看重权责发生制下的负债确认；反之则印证现金口径才是有定价能力的负担度量。"
+    },
+    {
+      "slot": 7,
+      "seed_id": "R8_S7_RANK_WINSORIZE_ACCRUAL",
+      "type": "CROSS_CONVERGENCE",
+      "expression": "rank(winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_tnix, 252)), 20), std=3))",
+      "counterparty": "使少数极端利息负担标的决定组合波动的按量级加权量化盘",
+      "optimize_reason": "与 Slot3 同构但换回应计利息口径，构成截尾处方的口径对照。截尾位置固定在排序之前，保证两次对照之间只有付息口径一个变量不同。"
+    },
+    {
+      "slot": 8,
+      "seed_id": "R8_S8_RANK_LTD_SHORTBASE",
+      "type": "CROSS_CONVERGENCE",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 120), ts_zscore(oth466_a_ttld, 120)), 20))",
+      "counterparty": "按长期负债存量配置、不做自身历史基准比较的杠杆因子",
+      "optimize_reason": "把真实腿由利息费用换成长期债务余额，并把两腿的自身历史基准窗由 252 日缩短到 120 日，构成基线窗消融：短窗让最近一次财报对取值的影响更大，可检验该母本的收益究竟来自长期结构性差异还是来自最近一期报表的增量信息。"
+    }
+  ],
+  "slot_meta": {
+    "purpose": "R8 收敛: rank×窗10 合并 / 付息口径对照 / 三腿 / 行业内排序 / 基线窗消融"
+  }
+}

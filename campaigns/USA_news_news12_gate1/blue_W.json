@@ -1,0 +1,14 @@
+{
+  "direction": "W",
+  "hypothesis": "自身历史极端度过滤机制政权变化、全日多视野位移提供更稳分子、组内化分散权重，三者叠加把2Y夏普修复至1.58以上且守住ProdCorr与SelfCorr",
+  "slots": [
+    {"id": 1, "type": "cvw_tsrank250", "expression": "reverse(ts_rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 250))", "economic_story": "收盘价高于VWAP的幅度达自身250日极值意味着尾盘关注压力异常，因机制政权变化被自身百分位过滤，预期回归"},
+    {"id": 2, "type": "cvw_tsrank120", "expression": "reverse(ts_rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 120))", "economic_story": "收盘价高于VWAP的幅度达自身120日极值意味着中期关注压力异常，因短窗更快捕捉政权转换中的极值位移，预期回归"},
+    {"id": 3, "type": "cvw_tsrank500", "expression": "reverse(ts_rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 500))", "economic_story": "收盘价高于VWAP的幅度达自身500日极值意味着长期罕见的尾盘压力，因只交易相对自身历史异常的位移，预期回归"},
+    {"id": 4, "type": "ctn_tsrank250", "expression": "reverse(ts_rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 250))", "economic_story": "收盘价高于新闻时刻价的幅度达自身极值意味着全日关注偏离异常，因全日位移口径比尾盘压力更稳健，预期回归"},
+    {"id": 5, "type": "eodrng_rank", "expression": "reverse(rank(divide(subtract(news_eod_high, news_eod_low), add(vec_count(high_price_excursion_stddev), 1))))", "economic_story": "全日振幅每关注度高意味着关注峰值伴随情绪化交易，因价格在偏离信息锚最远处关注衰退，预期向公允值回复"},
+    {"id": 6, "type": "copen_rank", "expression": "reverse(rank(divide(subtract(news_eod_close, news_open), add(vec_count(high_price_excursion_stddev), 1))))", "economic_story": "开收盘位移每关注度高意味着全天单边注意力买压已极致，因无新增关注支撑，预期向日内均值回复"},
+    {"id": 7, "type": "cvw_indz", "expression": "reverse(group_zscore(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), industry))", "economic_story": "组内z分数高意味着尾盘压力偏离高于行业同伴，因剔除行业间关注度水平差异，组内分散以降低权重集中度"},
+    {"id": 8, "type": "cth_ext_ind", "expression": "reverse(group_rank(ts_rank(divide(subtract(news_eod_close, news_ton_high), add(vec_count(high_price_excursion_stddev), 1)), 250), industry))", "economic_story": "收盘对新闻时刻高点的拉伸达自身极值且组内偏高意味着注意力惯性延伸，因非信息驱动，组内化后预期回归"}
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin2_label1_10d_img_news",
+    "prob_rank_bin3_label2_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B67_S1_WPQ_DECAY11_T025",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 11,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: Fine-tune decay to 11 on champion wpQKJ1K5 (Sharpe 1.53, Fitness 0.87, 2Y 2.06) to hit the exact Sharpe 1.58+ frontier while keeping turnover ~13%."
+    },
+    {
+      "id": 2,
+      "type": "B67_S2_WPQ_DECAY10_T025",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 10,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: Test decay 10 on wpQKJ1K5 to provide faster reactivity to news drift, aiming for Sharpe >= 1.58."
+    },
+    {
+      "id": 3,
+      "type": "B67_S3_WPQ_OUTER9_DECAY11",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 9)",
+      "decay": 11,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: Outer decay 9 + sim decay 11: total smoothing 20 days (optimal for 20d drift), balancing Turnover and Sharpe."
+    },
+    {
+      "id": 4,
+      "type": "B67_S4_WPQ_SENT42_DECAY11",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.2), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 11,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: Slightly soften sentiment power from 4.5 to 4.2 to capture more moderate positive PR releases."
+    },
+    {
+      "id": 5,
+      "type": "B67_S5_WPQ_SENT48_DECAY11",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.8), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 11,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: Sharpen sentiment power to 4.8 to filter only extreme PR catalysts, boosting Return and Margin."
+    },
+    {
+      "id": 6,
+      "type": "B67_S6_WPQ_POWER3_9OPS",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 9 operators: Adds power 3 to wpQKJ1K5 WITH sqrt(relevance) intact, eliminating 80% dead weight to boost Returns towards 5.0%."
+    },
+    {
+      "id": 7,
+      "type": "B67_S7_WPQ_BIN2_LABEL1",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(subtract(prob_rank_bin2_label1_10d_img_news, 0.5), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: Replace crowded regression field with uncrowded 2-quantile top label probability to target passing CLUSTER_TEST and eliminate warnings."
+    },
+    {
+      "id": 8,
+      "type": "B67_S8_WPQ_BIN3_LABEL2",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(subtract(prob_rank_bin3_label2_10d_img_news, 0.333), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: Replace with 3-quantile top tier probability (natural bounds [0, 1]) centered at 0.333 to bust CLUSTER_TEST warning."
+    }
+  ]
+}

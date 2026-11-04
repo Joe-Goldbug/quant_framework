@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/7BTp53Ly58QaBF37cWata6",
+  "submitted_at": 1792987291,
+  "items": [
+    {
+      "id": 1,
+      "type": "PT_MAX_SECTOR_DEV6",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, news_eod_close), ts_mean(divide(max_bias_adjusted_price_target, news_eod_close), 6)), sector)",
+      "optimize_reason": "Max bias-adjusted price target divided by news_eod_close relative to its 6-day norm. Substitutes raw close with news_eod_close, eliminating PV contamination while maintaining proven 0-fail structure (Sh 1.86, Fit 1.09, TO 20.5%)."
+    },
+    {
+      "id": 2,
+      "type": "PT_MAX_SECTOR_DEV10",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, news_eod_close), ts_mean(divide(max_bias_adjusted_price_target, news_eod_close), 10)), sector)",
+      "optimize_reason": "10-day expectation baseline. Further stabilizes target price gap, compressing Turnover to ~10%, targeting Margin >= 15.0 bps and Fitness >= 1.25."
+    },
+    {
+      "id": 3,
+      "type": "PT_MEDIAN_SECTOR_DEV5",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, news_eod_close), ts_mean(divide(median_bias_adjusted_price_target, news_eod_close), 5)), sector)",
+      "optimize_reason": "Median consensus target price gap relative to 5-day norm. In bl8Wd2Nq this achieved Sharpe 2.05, Fit 1.12, 0 fails. Targets Turnover < 12%, Margin >= 15 bps."
+    },
+    {
+      "id": 4,
+      "type": "PT_MEDIAN_SECTOR_DEV8",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, news_eod_close), ts_mean(divide(median_bias_adjusted_price_target, news_eod_close), 8)), sector)",
+      "optimize_reason": "8-day median expectation baseline. High robustness against outliers, targeting Turnover <= 10%, Margin >= 16.0 bps, Fitness >= 1.30."
+    },
+    {
+      "id": 5,
+      "type": "PT_MEAN_SECTOR_DEV6",
+      "expression": "group_rank(subtract(divide(mean_bias_adjusted_price_target, news_eod_close), ts_mean(divide(mean_bias_adjusted_price_target, news_eod_close), 6)), sector)",
+      "optimize_reason": "Consensus mean target price gap. Focuses on broad institutional consensus rather than extreme optimism. Targets Turnover ~11%, Margin >= 15 bps, 0 fails."
+    },
+    {
+      "id": 6,
+      "type": "CROSS_PT_NEWS_DIP",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, news_eod_close), divide(subtract(news_eod_close, news_ton_last), news_ton_last)), sector)",
+      "optimize_reason": "Synergy of slow analyst upside with fast post-news overreaction dip. Buys high-target stocks that just suffered an intraday negative news overreaction. Targets Turnover < 20%, Sharpe >= 1.90, Margin >= 15 bps."
+    },
+    {
+      "id": 7,
+      "type": "CROSS_PT_NORM_NEWS_DIP",
+      "expression": "group_rank(add(subtract(divide(max_bias_adjusted_price_target, news_eod_close), ts_mean(divide(max_bias_adjusted_price_target, news_eod_close), 6)), reverse(divide(subtract(news_eod_close, news_ton_last), news_ton_last))), sector)",
+      "optimize_reason": "Superimposes mean-reverting PT expectation gap with news reversion signal. Breaks production correlation while retaining 0-fail performance. Targets Turnover < 18%, Margin >= 15 bps."
+    },
+    {
+      "id": 8,
+      "type": "FIRST_PT_SECTOR_DEV6",
+      "expression": "group_rank(subtract(divide(avg_first_biasfree_price_target_estimate, news_eod_close), ts_mean(divide(avg_first_biasfree_price_target_estimate, news_eod_close), 6)), sector)",
+      "optimize_reason": "Initial analyst price target estimate (highest information content before consensus herding). Targets Turnover < 11%, Margin >= 15.5 bps, Fitness >= 1.20."
+    }
+  ]
+}

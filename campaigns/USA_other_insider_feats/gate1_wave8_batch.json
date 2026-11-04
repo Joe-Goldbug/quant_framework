@@ -1,0 +1,66 @@
+{
+  "wave": "8",
+  "seed_id": "GATE1_WAVE8",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "items": [
+    {
+      "id": 1,
+      "type": "w8",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),5), subindustry)",
+      "optimize_reason": "W8-1: 复现top20txn动量@SLOW (0.92/2Y1.06 sanity)"
+    },
+    {
+      "id": 2,
+      "type": "w8",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),3), subindustry)",
+      "optimize_reason": "W8-2: txn动量 ts_arg_max(3)@SLOW (更细择时)"
+    },
+    {
+      "id": 3,
+      "type": "w8",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),add(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),1)),5), subindustry)",
+      "optimize_reason": "W8-3: 归一txn动量(除以t20+1)@SLOW (margin杠杆)"
+    },
+    {
+      "id": 4,
+      "type": "w8",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),add(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled),1)),5), subindustry)",
+      "optimize_reason": "W8-4: txn比值形式(t20/(t60+1))@SLOW (growth形式)"
+    },
+    {
+      "id": 5,
+      "type": "w8",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W8-5: txn动量x全口径笔数@CROWDING decay4"
+    },
+    {
+      "id": 6,
+      "type": "w8",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(buy_sell_ratio_top5_60d_filled)),5), subindustry)",
+      "optimize_reason": "W8-6: txn动量x价值水平@CROWDING decay4"
+    },
+    {
+      "id": 7,
+      "type": "w8",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W8-7: 复现冠军x全口径笔数@CROWDING (0.75/10.55bps decay4)"
+    },
+    {
+      "id": 8,
+      "type": "w8",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top5_buy_to_sell_txn_ratio_lookback_10_filled),vec_avg(top5_buy_to_sell_txn_ratio_lookback_20_filled)),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W8-8: top5txn动量x全口径笔数@CROWDING"
+    }
+  ]
+}

@@ -1,0 +1,1476 @@
+[
+ {
+  "id": "mLYX6n5x",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "USA/D1/PV",
+   "USA/D1/ANALYST"
+  ],
+  "code": "trade_when(volume > ts_mean(volume, 5), group_neutralize(multiply(truncate(reverse(divide(ts_decay_linear(anl39_xlcxspemtt, 252), anl39_atanbvps)), maxPercent=0.09), signed_power(group_rank(anl39_qepsinclxo, subindustry), 1.3), signed_power(group_rank(ts_rank(anl39_qepsinclxo, 42), subindustry), 0.7), signed_power(group_rank(anl39_curperiodtype, subindustry), 0.2)), industry), -1)"
+ },
+ {
+  "id": "bl8Wd2Nq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "USA/D1/PV",
+   "USA/D1/ANALYST"
+  ],
+  "code": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 5)), industry)"
+ },
+ {
+  "id": "GrgEVv9o",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "USA/D1/PV",
+   "USA/D1/ANALYST",
+   "USA/D1/OTHER"
+  ],
+  "code": "signed_power(ts_decay_exp_window(group_rank(group_rank(-returns, group_cartesian_product(anl52_1000_backfill_d1_01c, anl52_1000_backfill_d1_05c)) * 2.0 + group_rank(positive_score_average_value - negative_score_average_value, group_cartesian_product(anl52_1000_backfill_d1_01c, anl52_1000_backfill_d1_05c)), group_cartesian_product(anl52_1000_backfill_d1_01c, anl52_1000_backfill_d1_05c)) - 0.5, 10, factor=0.5), 2.5)"
+ },
+ {
+  "id": "E5RmaA2m",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "ASI/D1/FUNDAMENTAL",
+   "ASI/D1/MODEL",
+   "ASI/D1/OTHER"
+  ],
+  "code": "ts_decay_linear(group_neutralize(group_zscore(regression_neut(regression_neut(quantile_label_1bucket_20day_ohlcv, annualized_asset_drift_pct), assets / equity), subindustry), country), 9)"
+ },
+ {
+  "id": "58gG6VJn",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "ASI/D1/FUNDAMENTAL",
+   "ASI/D1/MODEL",
+   "ASI/D1/OTHER"
+  ],
+  "code": "ts_decay_linear(group_neutralize(group_zscore(regression_neut(regression_neut(quantile_label_1bucket_20day_ohlcv, annualized_asset_drift_pct), assets / equity), subindustry), country), 9)"
+ },
+ {
+  "id": "RR65aLEe",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/FUNDAMENTAL",
+   "EUR/D1/MODEL",
+   "EUR/D1/OTHER"
+  ],
+  "code": "ts_decay_linear(group_neutralize(group_zscore(regression_neut(regression_neut(quantile_label_1bucket_20day_ohlcv, annualized_asset_drift_pct), assets / equity), subindustry), country), 9)"
+ },
+ {
+  "id": "3qVlb3dN",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/FUNDAMENTAL"
+  ],
+  "code": "subtract(group_rank(divide(ts_backfill(fnd17_fcfmtt,250), ts_backfill(fnd17_arev,250)), sector), multiply(0.5, group_rank(ts_backfill(fnd17_ttmopmgn,250), sector)))"
+ },
+ {
+  "id": "N1VpbPX8",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(ts_backfill(fnd89_asset_43_11, 63)) - rank(ts_backfill(fnd89_asset_41_31, 63) + ts_backfill(fnd89_major_11_11, 63))"
+ },
+ {
+  "id": "blbG8GwK",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/SHORTINTEREST",
+   "KOR/D1/OTHER"
+  ],
+  "code": "subtract(rank(ts_av_diff(log(ts_backfill(vec_avg(oth475_export_value), 250)), 16)), rank(vec_avg(shrt3_utilizationpercent_units)))"
+ },
+ {
+  "id": "RRVxloQo",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/OTHER",
+   "KOR/D1/MODEL"
+  ],
+  "code": "group_rank(if_else(ts_backfill(vec_avg(diversity_inclusion_rating), 250) < 3.5, 0, add(ts_zscore(pe_ratio_relative_score_float, 55), ts_zscore(ev_ebitda_relative_score_float, 55))), industry)"
+ },
+ {
+  "id": "A10XwJ5R",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/PV",
+   "GBR/D1/NEWS"
+  ],
+  "code": "ts_target_tvr_decay(group_zscore(ts_zscore(divide(subtract(ts_backfill(vec_avg(mws54_factor), 150), ts_backfill(dividend, 230)), add(ts_std_dev(dividend, 120), 0.01)), 120), market), target_tvr=0.20)"
+ },
+ {
+  "id": "e79GedEp",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/MODEL",
+   "GBR/D1/OTHER"
+  ],
+  "code": "group_neutralize(if_else(ts_zscore(ts_backfill(vec_avg(avg_career_growth_score), 120), 120) > 0.03, ts_zscore(mdl38_rel_val_global_rk, 40), 0), subindustry)"
+ },
+ {
+  "id": "A10QwdnX",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/MODEL",
+   "GBR/D1/NEWS"
+  ],
+  "code": "signed_power(ts_decay_exp_window(winsorize(group_zscore(min(ts_backfill(divide(nws21_tone_tone_sc, nws21_event_freq), 60), ts_zscore(mdl230_allcap_sedol_pedwf_cf, 63)), industry), std=3.2), 18, factor=0.74), 1.5)"
+ },
+ {
+  "id": "9qVr3zYq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/MODEL"
+  ],
+  "code": "ts_zscore(winsorize(divide(ts_backfill(mdl230_allcap_sedol_pedwf_cf, 60), ts_mean(mdl230_allcap_sedol_60dsigma, 42)), std=2), 84)"
+ },
+ {
+  "id": "MP1lAPrM",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/NEWS"
+  ],
+  "code": "signed_power(ts_decay_linear(ts_decay_exp_window(winsorize(ts_regression(vec_avg(nws18_multiple_comp_qmb), ts_arg_max(vec_avg(nws18_multiple_comp_relevance), 16), 38, rettype=0), std=3.4), 25, factor=0.74), 4), 1.85)"
+ },
+ {
+  "id": "58Qo3EKk",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSTITUTIONS"
+  ],
+  "code": "ts_decay_exp_window(group_zscore(divide(divide(vec_avg(boundary_transaction_total_active), vec_avg(transaction_account_total)), s_log_1p(vec_avg(transaction_value_distribution_score_active))), sector), 63, factor=0.5)"
+ },
+ {
+  "id": "e79lnvjN",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSTITUTIONS",
+   "GBR/D1/PV",
+   "GBR/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_decay_linear(group_zscore(signed_power(multiply(ts_backfill(vec_avg(inst1_tradesignificance), 126), ts_zscore(divide(fnd72_s_pit_or_is_a_is_div_per_shr, close), 63)), 1.5), subindustry), 4)"
+ },
+ {
+  "id": "vRjWEORG",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSTITUTIONS",
+   "GBR/D1/PV",
+   "GBR/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_decay_linear(group_zscore(signed_power(min(ts_zscore(ts_backfill(vec_avg(inst1_tradesignificance), 21), 63), ts_zscore(divide(fnd72_s_pit_or_is_a_is_div_per_shr, close), 42)), 0.7), subindustry), 4)"
+ },
+ {
+  "id": "RR7eAPYd",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSTITUTIONS",
+   "GBR/D1/PV",
+   "GBR/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_decay_linear(group_zscore(min(ts_zscore(ts_backfill(vec_avg(inst1_tradesignificance), 21), 63), ts_zscore(ts_av_diff(divide(fnd72_s_pit_or_is_a_is_div_per_shr, close), 42), 63)), subindustry), 20)"
+ },
+ {
+  "id": "LL7K53qa",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSTITUTIONS",
+   "GBR/D1/PV",
+   "GBR/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_decay_linear(group_zscore(min(ts_zscore(ts_backfill(vec_avg(inst1_tradesignificance), 21), 63), ts_zscore(divide(fnd72_s_pit_or_is_a_is_div_per_shr, close), 42)), subindustry), 20)"
+ },
+ {
+  "id": "E5lVOPzr",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/RISK",
+   "GBR/D1/PV"
+  ],
+  "code": "ts_delta(ts_decay_exp_window(hump(s_log_1p(ts_regression(vec_avg(rsk60_crowding), vec_avg(rsk60_last), 42, rettype=1)), hump=0.005), 50, factor=0.88), 15) - ts_decay_linear(returns / ts_std_dev(returns, 20), 6)"
+ },
+ {
+  "id": "MP75QW7z",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/RISK"
+  ],
+  "code": "signed_power(ts_decay_exp_window(ts_regression(ts_av_diff(rsk68_residual_return,14),rsk68_beta,63,rettype=2,lag=2),28,factor=0.7)+hump(ts_decay_exp_window(ts_regression(rsk68_residual_return,rsk68_beta,63,rettype=1),42,factor=0.6))+ts_decay_exp_window(if_else(less(ts_std_dev(rsk68_residual_return,63),ts_mean(rsk68_residual_return,252)),zscore(rsk68_residual_return),reverse(zscore(rsk68_residual_return))),84,factor=0.12)+ts_decay_exp_window(ts_scale(rsk68_weight_dadv,63),21,factor=0.5),0.8)"
+ },
+ {
+  "id": "np7bezKx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSIDERS"
+  ],
+  "code": "ts_zscore(ts_scale(if_else(less(ts_arg_min(vec_avg(insd12_mktprice), 42), 7), ts_std_dev(vec_avg(insd12_percent), 21), reverse(ts_std_dev(vec_avg(insd12_percent), 21))), 252), 252)"
+ },
+ {
+  "id": "blj3oQGq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSIDERS"
+  ],
+  "code": "ts_zscore(if_else(less(ts_arg_min(vec_avg(insd12_mktprice), 84), 15), ts_backfill(vec_avg(insd12_percent), 84), reverse(ts_backfill(vec_avg(insd12_percent), 84))), 252)"
+ },
+ {
+  "id": "kqjlkpkP",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSIDERS"
+  ],
+  "code": "ts_zscore(if_else(less(ts_arg_min(vec_avg(insd12_mktprice), 42), 6), vec_avg(insd12_percent), reverse(vec_avg(insd12_percent))), 252)"
+ },
+ {
+  "id": "Wj7MMbOx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/INSIDERS"
+  ],
+  "code": "ts_zscore(if_else(less(ts_zscore(vec_avg(insd12_mktprice), 90), subtract(-0.55, multiply(0.45, ts_regression(vec_avg(insd12_mktprice), ts_step(1), 90)))), ts_decay_linear(vec_avg(insd12_sharesheld), 120), 0), 252)"
+ },
+ {
+  "id": "xANoaeON",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/FUNDAMENTAL"
+  ],
+  "code": "group_zscore(reverse(ts_rank(ts_zscore(winsorize(ts_backfill(fnd31_o_additionalfactor3_avg10yep, 120), std=4), 70), 70)), INDUSTRY) * (1 + abs(ts_av_diff(fnd31_o_additionalfactor4_slope4qeps5y, 30)))"
+ },
+ {
+  "id": "WjAR19Ax",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/MODEL"
+  ],
+  "code": "a=ts_zscore(winsorize(ts_backfill(divide(mdl31_dps_last_qtr, add(abs(mdl31_gva),1)), 120), std=4), 252); if_else(greater(a, 0), a, ts_zscore(winsorize(ts_backfill(star_eq_ope_rank, 120), std=4), 85))"
+ },
+ {
+  "id": "vRN5REgb",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_zscore(divide(signed_power(ts_zscore(vec_avg(fundamental_semi_annual_total_revenue), 252), 1.5), s_log_1p(reverse(ts_zscore(vec_avg(fundamental_annual_interest_expense_total), 252)))), 252)"
+ },
+ {
+  "id": "MPGlVjbz",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GBR/D1/MODEL"
+  ],
+  "code": "ts_backfill(normalize(quantile(reverse(ts_decay_linear(subtract(ts_zscore(mdl28_sm_structural_credit_structural_asset_drift_pct, 20), ts_scale(mdl28_sm_structural_credit_structural_distance_to_default, 90)), 25)), driver=gaussian)), 8)"
+ },
+ {
+  "id": "xANqnarp",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(reverse(ts_zscore(vec_avg(fundamental_interest_expense_semiannual_total), 252)) * ts_zscore(vec_avg(fundamental_total_revenue), 252))"
+ },
+ {
+  "id": "blQGngVl",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/ANALYST"
+  ],
+  "code": "ts_decay_linear(vec_avg(analyst_net_income_upward_revisions_4_weeks_count) - vec_avg(analyst_lowered_earnings_count_4wks), 10)"
+ },
+ {
+  "id": "bldeEoAq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/ANALYST",
+   "TWN/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n\n@alpha(\n    data=[\n        \"anl10_analyst_innovation_dps_revise_ratio_to_consensus_fy1\",\n        \"anl10_analyst_innovation_sal_revise_ratio_to_consensus_fy1\",\n        \"mdl26_surprise_60_q\",\n    ],\n    store=[],\n)\ndef alpha_v006(data, store) -> npt.NDArray[np.float32]:\n    def cs_rank(arr):\n        arr = np.where(np.isfinite(arr), arr, np.nan).astype(np.float64)\n        valid = ~np.isnan(arr)\n        if not valid.any():\n            return np.full_like(arr, np.nan)\n        out = np.full_like(arr, np.nan)\n        out[valid] = np.argsort(np.argsort(arr[valid])) / max(valid.sum() - 1, 1)\n        return out\n\n    def ts_mean(arr, window):\n        if arr.shape[0] < window:\n            return np.full_like(arr[-1], np.nan)\n        return np.nanmean(arr[-window:], axis=0)\n\n    # analyst10 innovation: 20 day ts_mean (shorter for more signal)\n    dps_raw = data.anl10_analyst_innovation_dps_revise_ratio_to_consensus_fy1.astype(np.float64)\n    sal_raw = data.anl10_analyst_innovation_sal_revise_ratio_to_consensus_fy1.astype(np.float64)\n    dps_20d = ts_mean(dps_raw, 20)\n    sal_20d = ts_mean(sal_raw, 20)\n\n    # mdl26_surprise_60_q: 直接用最新截面\n    surprise = data.mdl26_surprise_60_q[-1].astype(np.float64)\n\n    r1 = cs_rank(dps_20d)\n    r2 = cs_rank(sal_20d)\n    r3 = cs_rank(surprise)\n\n    signal = np.nanmean(np.stack([r1, r2, r3], axis=0), axis=0)\n    u = data.universe[-1].astype(bool)\n    signal = signal.copy()\n    signal[~u] = np.nan\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "78nRbgXx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(fundamental_income_before_extraordinary_items_q) - rank(ts_mean(fundamental_income_before_extraordinary_items_q, 1240))"
+ },
+ {
+  "id": "6XeZL3eG",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/SENTIMENT",
+   "TWN/D1/ANALYST"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(\n    data=[\n        \"secondary_sentiment_average\",\n        \"anl4_fs_detail_estimates_basic_af_v4_nd_eps_mean\",\n        \"anl4_fs_detail_estimates_basic_af_v4_nd_sales_mean\",\n    ],\n    store=[],\n)\ndef alpha_v28(data, store) -> npt.NDArray[np.float32]:\n    \"\"\"\n    V28: 跨数据集Alpha - 分析师EPS主导策略\n    \n    V27分析: Sharpe 1.56接近达标，需最后一击\n    优化方向:\n    1. truncation 0.08 → 0.10 放大极值信号\n    2. INDUSTRY中性化 (比SUBINDUSTRY更稳定)\n    3. EPS动量权重提升 (分析师调整是最直接的基本面信号)\n    \n    经济学假设:\n    1. secondary_sentiment_average: 市场情绪代理\n    2. EPS变化率: 分析师盈利预期的实际调整，直接反映基本面\n    3. sales变化率: 营收增长预期，验证EPS趋势\n    \n    三重验证: 情绪 × 盈利调整 × 营收增长\n    \"\"\"\n    sec = data.secondary_sentiment_average.astype(np.float64)\n    eps = data.anl4_fs_detail_estimates_basic_af_v4_nd_eps_mean.astype(np.float64)\n    sales = data.anl4_fs_detail_estimates_basic_af_v4_nd_sales_mean.astype(np.float64)\n\n    def cs_rank(arr):\n        finite = np.where(np.isfinite(arr), arr, np.nan)\n        valid = ~np.isnan(finite)\n        if not np.any(valid):\n            return np.full_like(arr, np.nan)\n        result = np.full_like(finite, np.nan)\n        sorted_idx = np.argsort(np.argsort(finite[valid]))\n        result[valid] = sorted_idx / max(np.sum(valid) - 1, 1)\n        return result\n\n    def ts_mean(arr, window):\n        if arr.shape[0] < window:\n            return np.full_like(arr[-1], np.nan)\n        return np.nanmean(arr[-window:], axis=0)\n\n    def ts_delta(arr, period):\n        if arr.shape[0] <= period:\n            return np.full_like(arr[-1], np.nan)\n        return arr[-1] - arr[-1 - period]\n\n    # 22天情绪均值\n    sec_22d = ts_mean(sec, 22)\n    \n    # EPS 11天变化率\n    eps_d11 = ts_delta(eps, 11)\n    \n    # Sales 11天变化率\n    sales_d11 = ts_delta(sales, 11)\n    \n    # 截面rank\n    r_sec = cs_rank(sec_22d)\n    r_eps = cs_rank(eps_d11)\n    r_sales = cs_rank(sales_d11)\n    \n    # 信号组合: EPS主导 (40%) + 情绪 (35%) + 销售 (25%)\n    signal = 0.40 * r_eps + 0.35 * r_sec + 0.25 * r_sales\n\n    u = data.universe[-1]\n    signal = signal.copy()\n    signal[~u.astype(bool)] = np.nan\n\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "9q7j5eE1",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/MODEL",
+   "TWN/D1/ANALYST"
+  ],
+  "code": "import numpy as np\nimport numpy.typing as npt\nfrom brain.alphas import alpha\n\n@alpha(data=[\"anl4_afv4_eps_mean\", \"earnings_quality_region_rank_current\"], store=[])\ndef alpha_v115(data, store) -> npt.NDArray[np.float32]:\n    \"\"\"\n    V115: V102 + 21-day EPS revision (instead of 63-day)\n    经济学假设: V102 的 63-day EPS revision 与 prod pool 中的中长期动量 alphas 高度相关.\n    改为 21-day revision (月度) 创造短期反转偏好, 与 prod pool 中的中长期 momentum 结构性正交.\n    \"\"\"\n    eps_mean = data.anl4_afv4_eps_mean[-1].astype(np.float64)\n    if data.anl4_afv4_eps_mean.shape[0] >= 21:\n        eps_past = data.anl4_afv4_eps_mean[-21].astype(np.float64)\n    else:\n        eps_past = eps_mean\n    eq_rank = data.earnings_quality_region_rank_current[-1].astype(np.float64)\n\n    def cs_rank(arr):\n        finite = np.where(np.isfinite(arr), arr, np.nan)\n        valid = ~np.isnan(finite)\n        if not np.any(valid):\n            return arr\n        result = np.full_like(finite, np.nan)\n        sorted_idx = np.argsort(np.argsort(finite[valid]))\n        result[valid] = sorted_idx / max(np.sum(valid) - 1, 1)\n        return result\n\n    def zscore(arr, clip=3.0):\n        valid = ~np.isnan(arr)\n        if valid.sum() < 10:\n            return arr\n        mean = np.nanmean(arr[valid])\n        std = np.nanstd(arr[valid])\n        if std < 1e-8:\n            return arr - mean\n        result = np.full_like(arr, np.nan)\n        result[valid] = np.clip((arr[valid] - mean) / std, -clip, clip)\n        return result\n\n    eps_revision = (eps_mean - eps_past) / (np.abs(eps_mean) + 1e-6)\n\n    z_rev = zscore(eps_revision, 3.0)\n    z_eq = zscore(eq_rank, 3.0)\n    z_mean = zscore(eps_mean, 3.0)\n\n    r_rev = cs_rank(z_rev)\n    r_eq = cs_rank(z_eq)\n    r_mean = cs_rank(z_mean)\n\n    p = 0.30\n    r_rev_p = np.sign(r_rev) * np.power(np.abs(r_rev) + 1e-8, p)\n    r_eq_p = np.sign(r_eq) * np.power(np.abs(r_eq) + 1e-8, p)\n    r_mean_p = np.sign(r_mean) * np.power(np.abs(r_mean) + 1e-8, p)\n\n    signal = 0.45 * r_rev_p + 0.40 * r_eq_p + 0.15 * r_mean_p\n\n    u = data.universe[-1]\n    signal = signal.copy()\n    signal[~u.astype(bool)] = np.nan\n\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "wpEJoEGp",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/PV"
+  ],
+  "code": "rank(annual_net_cash_from_operations/annual_ebit + annual_ebitda/annual_revenue + annual_net_cash_from_operations/annual_net_income)"
+ },
+ {
+  "id": "j2r5gWlk",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/MODEL",
+   "KOR/D1/OTHER"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n\ndef pasteurize(a, u):\n    a = a.copy()\n    a[~u.astype(bool)] = np.nan\n    return a\n\n\ndef neutralize(a):\n    a0 = np.nan_to_num(a, nan=0, posinf=0, neginf=0)\n    return a - np.nanmean(a0)\n\n\ndef scale(a):\n    a0 = np.nan_to_num(a, nan=0, posinf=0, neginf=0)\n    norm = np.linalg.norm(a0, ord=1)\n    return a / norm if norm > 0 else a\n\n\n@alpha(\n    data=[\n        \"probability_label0_3quantile_60day_ohlcv\",\n        \"probability_label2_3quantile_60day_ohlcv\",\n        \"accrual_factor_score_current\",\n    ],\n    store=[],\n)\ndef cross_dataset_v53(data, store) -> npt.NDArray[np.float32]:\n    \"\"\"\n    V53: p2/p0比率 + accrual调整\n    使用概率比率而非差分，可能产生不同的信号模式\n    \"\"\"\n    p0 = data.probability_label0_3quantile_60day_ohlcv[-1].copy()\n    p2 = data.probability_label2_3quantile_60day_ohlcv[-1].copy()\n    accrual = data.accrual_factor_score_current[-1].copy()\n    \n    p0_prob = np.exp(p0)\n    p2_prob = np.exp(p2)\n    \n    # 比率信号 (加1避免除零)\n    ratio = p2_prob / (p0_prob + 1e-8)\n    \n    accrual_factor = np.where(accrual < 40, 0.7, np.where(accrual > 60, 1.3, 1.0))\n    signal = ratio * accrual_factor\n    \n    signal = pasteurize(signal, data.universe[-1])\n    signal = neutralize(signal)\n    signal = scale(signal)\n    \n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "58kZWVek",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "CHN/D1/MODEL",
+   "CHN/D1/MACRO"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"accrual_factor_score_current\",\n            \"earnings_quality_region_rank_current\",\n            \"oth551_resret_hsi\"], store=[])\ndef chn_v248(data, store) -> npt.NDArray[np.float32]:\n    f1 = data.accrual_factor_score_current[-1].astype(np.float64)\n    f2 = data.earnings_quality_region_rank_current[-1].astype(np.float64)\n    resret_hsi = data.oth551_resret_hsi[-5:].astype(np.float64)\n\n    def cs_rank(arr):\n        finite = np.where(np.isfinite(arr), arr, np.nan)\n        valid = ~np.isnan(finite)\n        if not np.any(valid):\n            return arr\n        result = np.full_like(finite, np.nan)\n        sorted_idx = np.argsort(np.argsort(finite[valid]))\n        result[valid] = sorted_idx / max(np.sum(valid) - 1, 1)\n        return result\n\n    def zscore(arr, clip=4.0):\n        valid = ~np.isnan(arr)\n        if valid.sum() < 10:\n            return arr\n        mean = np.nanmean(arr[valid])\n        std = np.nanstd(arr[valid])\n        if std < 1e-8:\n            return arr - mean\n        result = np.full_like(arr, np.nan)\n        result[valid] = (arr[valid] - mean) / std\n        result[valid] = np.clip(result[valid], -clip, clip)\n        return result\n\n    r1 = cs_rank(f1)\n    r2 = cs_rank(f2)\n    z1 = zscore(r1, 4.0)\n    z2 = zscore(r2, 4.0)\n    z1_p = np.sign(z1) * np.power(np.abs(z1), 0.58)\n    z2_p = np.sign(z2) * np.power(np.abs(z2), 0.18)\n\n    hsi_mean = np.nanmean(resret_hsi, axis=0)\n    hsi_revert = -hsi_mean\n    r3 = cs_rank(hsi_revert)\n    z3 = zscore(r3, 4.0)\n    z3_p = np.sign(z3) * np.power(np.abs(z3), 0.30)\n\n    quality_add = 0.28 * z1_p + 0.18 * z2_p\n    quality_mult = z1_p * z2_p * 0.28\n    signal = quality_add + quality_mult + 0.22 * z3_p\n\n    u = data.universe[-1]\n    signal = signal.copy()\n    signal[~u.astype(bool)] = np.nan\n\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "E5E21agm",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "CHN/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"accrual_factor_score_current\",\"earnings_quality_region_rank_current\",\"mdl175_revs5m20\"],store=[])\ndef chn_quality_momentum_v514(data, store) -> npt.NDArray[np.float32]:\n    accrual = data.accrual_factor_score_current[-1].astype(np.float64)\n    eq = data.earnings_quality_region_rank_current[-1].astype(np.float64)\n    revs = data.mdl175_revs5m20[-1].astype(np.float64)\n    \n    def cs_rank(arr):\n        finite = np.where(np.isfinite(arr), arr, np.nan)\n        valid = ~np.isnan(finite)\n        if not np.any(valid):\n            return arr\n        result = np.full_like(finite, np.nan)\n        sorted_idx = np.argsort(np.argsort(finite[valid]))\n        result[valid] = sorted_idx / max(np.sum(valid) - 1, 1)\n        return result\n    \n    def zscore(arr, clip=4.0):\n        valid = ~np.isnan(arr)\n        if valid.sum() < 10:\n            return arr\n        mean = np.nanmean(arr[valid])\n        std = np.nanstd(arr[valid])\n        if std < 1e-8:\n            return arr - mean\n        result = np.full_like(arr, np.nan)\n        result[valid] = (arr[valid] - mean) / std\n        result[valid] = np.clip(result[valid], -clip, clip)\n        return result\n    \n    r1 = cs_rank(accrual)\n    r2 = cs_rank(eq)\n    r3 = cs_rank(revs)\n    \n    z1 = zscore(r1, 4.0)\n    z2 = zscore(r2, 4.0)\n    z3 = zscore(r3, 4.0)\n    \n    # 降低动量权重以解相关\n    z1_p = np.sign(z1) * np.power(np.abs(z1), 0.92)\n    z2_p = np.sign(z2) * np.power(np.abs(z2), 0.92)\n    z3_p = np.sign(z3) * np.power(np.abs(z3), 0.75)\n    \n    signal = z1_p * 0.48 + z2_p * 0.48 + z1_p * z2_p * 0.52 + z3_p * 0.25\n    \n    u = data.universe[-1]\n    signal = signal.copy()\n    signal[~u.astype(bool)] = np.nan\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "A1PEaexE",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/MODEL",
+   "TWN/D1/OTHER"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\ndef pasteurize(a, u):\n    a = a.copy()\n    a[~u.astype(bool)] = np.nan\n    return a\n\n@alpha(\n    data=[\"positive_score_median_value_3\", \"abnormal_news_sentiment_1d\", \"abnormal_news_volume_1d\", \"actual_earnings_surprise_pct_lastq_medium\", \"star_rev_surprise_prediction_fy1_d1\"],\n    store=[],\n)\ndef ai_news_v198(data, store) -> npt.NDArray[np.float32]:\n    pos = data.positive_score_median_value_3\n    abnormal = data.abnormal_news_sentiment_1d\n    vol = data.abnormal_news_volume_1d\n    earn = data.actual_earnings_surprise_pct_lastq_medium\n    rev = data.star_rev_surprise_prediction_fy1_d1\n    universe = data.universe[-1]\n    \n    pos_ma = (np.nanmean([pos[-1], pos[-2]], axis=0) + np.nanmean(pos[-5:], axis=0)) / 2\n    abnormal_ma = (np.nanmean([abnormal[-1], abnormal[-2]], axis=0) + np.nanmean(abnormal[-5:], axis=0)) / 2\n    vol_ma = (np.nanmean([vol[-1], vol[-2]], axis=0) + np.nanmean(vol[-5:], axis=0)) / 2\n    earn_val = earn[-1]\n    rev_val = rev[-1]\n    \n    pos_ma = np.nan_to_num(pos_ma.astype(np.float32), nan=0.0)\n    abnormal_ma = np.nan_to_num(abnormal_ma.astype(np.float32), nan=0.0)\n    vol_ma = np.nan_to_num(vol_ma.astype(np.float32), nan=0.0)\n    earn_val = np.nan_to_num(earn_val.astype(np.float32), nan=0.0)\n    rev_val = np.nan_to_num(rev_val.astype(np.float32), nan=0.0)\n    \n    valid = np.isfinite(pos_ma) & np.isfinite(abnormal_ma) & np.isfinite(earn_val) & np.isfinite(rev_val)\n    \n    fp = np.where(valid, pos_ma, -np.inf)\n    fa = np.where(valid, abnormal_ma, -np.inf)\n    fv = np.where(valid, vol_ma, -np.inf)\n    fe = np.where(valid, earn_val, -np.inf)\n    fr = np.where(valid, rev_val, -np.inf)\n    \n    rp = np.argsort(np.argsort(fp)).astype(np.float32); rp[~valid] = np.nan\n    ra = np.argsort(np.argsort(fa)).astype(np.float32); ra[~valid] = np.nan\n    rv = np.argsort(np.argsort(fv)).astype(np.float32); rv[~valid] = np.nan\n    re = np.argsort(np.argsort(fe)).astype(np.float32); re[~valid] = np.nan\n    rr = np.argsort(np.argsort(fr)).astype(np.float32); rr[~valid] = np.nan\n    \n    n = np.sum(valid)\n    if n > 1:\n        np_ = rp / (n - 1)\n        na = ra / (n - 1)\n        nv = rv / (n - 1)\n        ne = re / (n - 1)\n        nr = rr / (n - 1)\n    else:\n        np_ = rp; na = ra; nv = rv; ne = re; nr = rr\n    \n    # 核心3信号权重 + rev辅助\n    vol_bonus = 0.08 * (1.0 - nv)\n    signal = 0.10 * np_ + 0.40 * na + 0.35 * ne + 0.12 * nr + vol_bonus\n    \n    finite_sig = np.where(np.isfinite(signal), signal, -np.inf)\n    final_signal = np.argsort(np.argsort(finite_sig)).astype(np.float32)\n    final_signal[~np.isfinite(signal)] = np.nan\n    \n    return pasteurize(final_signal, universe).astype(np.float32)"
+ },
+ {
+  "id": "xAkVwLPm",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/ANALYST"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"anl10_analyst_innovation_pre_innovation_score_fy1\",\"anl10_analyst_innovation_sal_innovation_score_fy1\",\"anl10_analyst_innovation_pre_innovation_score_fy2\"],store=[])\ndef analyst_v574(data,store) -> npt.NDArray[np.float32]:\n    pre1=data.anl10_analyst_innovation_pre_innovation_score_fy1\n    sal1=data.anl10_analyst_innovation_sal_innovation_score_fy1\n    pre2=data.anl10_analyst_innovation_pre_innovation_score_fy2\n    pre1_log=np.sign(pre1[-1])*np.log1p(np.abs(pre1[-1])+1)\n    sal1_log=np.sign(sal1[-1])*np.log1p(np.abs(sal1[-1])+1)\n    pre2_log=np.sign(pre2[-1])*np.log1p(np.abs(pre2[-1])+1)\n    def mad_normalize(arr):\n        valid=~np.isnan(arr)\n        if valid.sum()<5:return arr\n        vals=arr[valid]\n        median=np.nanmedian(vals)\n        mad=np.nanmedian(np.abs(vals-median))\n        if mad<1e-8:return arr\n        result=np.full_like(arr,np.nan)\n        result[valid]=(vals-median)/(1.4826*mad)\n        result=np.clip(result,-3,3)\n        return result\n    pre1_norm=mad_normalize(pre1_log)\n    sal1_norm=mad_normalize(sal1_log)\n    pre2_norm=mad_normalize(pre2_log)\n    signal=0.5*pre1_norm+0.4*sal1_norm+0.1*pre2_norm\n    signal=mad_normalize(signal)\n    valid=~np.isnan(signal)\n    if valid.sum()>=5:\n        vals=signal[valid]\n        order=np.argsort(np.argsort(vals))\n        ranked=order/(valid.sum()-1)\n        binned=np.digitize(ranked,np.linspace(0,1,4))/3.0-0.5\n        signal[valid]=binned\n    valid_mask=~np.isnan(signal)\n    signal[~valid_mask]=0\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "6X9jO7aO",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(\n    data=[\"analyst_revision_percentile_score_long_3\", \"actual_earnings_surprise_pct_lasty_medium\", \"actual_revenue_surprise_pct_lastq_long\"],\n    store=[],\n)\ndef analyst_revision_v8(data, store) -> npt.NDArray[np.float32]:\n    # 5-day smoothing on all signals\n    rev = data.analyst_revision_percentile_score_long_3[-5:]\n    rev_long = np.nanmean(rev, axis=0)\n    earn = data.actual_earnings_surprise_pct_lasty_medium[-5:]\n    earn_lasty = np.nanmean(earn, axis=0)\n    rev_q = data.actual_revenue_surprise_pct_lastq_long[-5:]\n    rev_q_smooth = np.nanmean(rev_q, axis=0)\n    \n    def rank_normalize(x):\n        nan_mask = np.isnan(x)\n        ranked = np.zeros_like(x)\n        valid = ~nan_mask\n        if np.any(valid):\n            r = np.argsort(np.argsort(x[valid]))\n            ranked[valid] = r / (np.sum(valid) - 1 + 1e-8)\n        return ranked\n    \n    sig1 = rank_normalize(np.nan_to_num(rev_long, nan=0))\n    sig2 = rank_normalize(np.nan_to_num(earn_lasty, nan=0))\n    sig3 = rank_normalize(np.nan_to_num(rev_q_smooth, nan=0))\n    \n    # Slightly adjusted weights\n    signal = 0.48 * sig1 + 0.32 * sig2 + 0.20 * sig3\n    signal[~data.universe[-1].astype(bool)] = np.nan\n    \n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "xAkYo0Kb",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(\n    data=[\"accrual_factor_score_current\", \"abnormal_news_sentiment_1d\", \"abnormal_news_volume_1d\", \"actual_earnings_surprise_pct_lastq_medium\"],\n    store=[],\n)\ndef accrual_news_earnings_alpha(data, store) -> npt.NDArray[np.float32]:\n    # 核心1: Accrual因子 (model31)\n    accrual = data.accrual_factor_score_current[-1].astype(np.float64)\n    finite1 = np.where(np.isfinite(accrual), accrual, np.nan)\n    rank1 = np.zeros_like(finite1)\n    valid1 = ~np.isnan(finite1)\n    if np.any(valid1):\n        sorted_idx = np.argsort(finite1[valid1])\n        n = len(sorted_idx)\n        rank1[valid1] = np.argsort(sorted_idx) / max(n - 1, 1)\n    signal1 = rank1 - 0.5\n    \n    # 辅助2: 新闻情绪 (model109)\n    sentiment = data.abnormal_news_sentiment_1d[-1].astype(np.float64)\n    finite2 = np.where(np.isfinite(sentiment), sentiment, np.nan)\n    rank2 = np.zeros_like(finite2)\n    valid2 = ~np.isnan(finite2)\n    if np.any(valid2):\n        sorted_idx2 = np.argsort(finite2[valid2])\n        n2 = len(sorted_idx2)\n        rank2[valid2] = np.argsort(sorted_idx2) / max(n2 - 1, 1)\n    signal2 = rank2 - 0.5\n    \n    # 辅助3: 盈利惊喜 (analyst_revision_horizons)\n    earnings = data.actual_earnings_surprise_pct_lastq_medium[-1].astype(np.float64)\n    finite3 = np.where(np.isfinite(earnings), earnings, np.nan)\n    rank3 = np.zeros_like(finite3)\n    valid3 = ~np.isnan(finite3)\n    if np.any(valid3):\n        sorted_idx3 = np.argsort(finite3[valid3])\n        n3 = len(sorted_idx3)\n        rank3[valid3] = np.argsort(sorted_idx3) / max(n3 - 1, 1)\n    signal3 = rank3 - 0.5\n    \n    # 新闻量过滤\n    volume = data.abnormal_news_volume_1d[-1].astype(np.float64)\n    vol_weight = np.ones_like(volume)\n    valid_v = ~np.isnan(volume)\n    if np.any(valid_v):\n        med = np.nanmedian(volume[valid_v])\n        vol_weight[valid_v] = np.where(volume[valid_v] <= med, 1.0, 0.8)\n    \n    # 综合: accrual主导(50%) + 新闻情绪(20%) + 盈利惊喜(30%)\n    signal = 0.5 * signal1 + 0.2 * signal2 + 0.3 * signal3\n    signal = signal * vol_weight\n    \n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "58OaRp8X",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/MODEL",
+   "TWN/D1/OTHER"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"oth183_global_d1_leap\",\"abnormal_news_sentiment_1d\"],store=[])\ndef alpha_v24(data, store) -> npt.NDArray[np.float32]:\n    s1_raw = data.oth183_global_d1_leap[-29:].astype(np.float64)\n    s2_raw = data.abnormal_news_sentiment_1d[-29:].astype(np.float64)\n    u = data.universe[-1]\n    mask = u > 0\n    \n    s1 = np.nanmean(s1_raw, axis=0)\n    s2 = np.nanmean(s2_raw, axis=0)\n    \n    s1_c = np.nan_to_num(s1, nan=0.0)\n    s2_c = np.nan_to_num(s2, nan=0.0)\n    \n    def mad_norm(arr, m):\n        mad = np.nanmedian(np.abs(arr[mask] - m))\n        return (arr - m) / (mad * 1.4826 + 1e-9)\n    \n    m1 = np.nanmean(s1_c[mask])\n    m2 = np.nanmean(s2_c[mask])\n    sig1 = mad_norm(s1_c, m1)\n    sig2 = mad_norm(s2_c, m2)\n    \n    # 微调权重\n    combined = 0.59 * sig1 + 0.41 * sig2\n    combined = combined / (1 + 0.06 * np.abs(combined))\n    combined[~mask] = np.nan\n    return combined.astype(np.float32)"
+ },
+ {
+  "id": "781Xvmb1",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "CHN/D1/MACRO"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"oth551_resret_hsi\", \"oth551_resret_sh000905\", \"oth551_r2_hsi\"], store=[])\ndef alpha_v3(data, store) -> npt.NDArray[np.float32]:\n    resret_hsi = data.oth551_resret_hsi\n    resret_sh = data.oth551_resret_sh000905\n    r2_hsi = data.oth551_r2_hsi\n    n_days, n_inst = resret_hsi.shape\n    ranked = np.zeros_like(resret_hsi)\n    for i in range(n_days):\n        row = resret_hsi[i]\n        valid = ~np.isnan(row)\n        if valid.sum() > 0:\n            ranks = np.zeros_like(row)\n            ranks[valid] = np.argsort(np.argsort(row[valid])) + 1\n            ranks[valid] = ranks[valid] / valid.sum()\n            ranked[i] = ranks\n    ranked_sh = np.zeros_like(resret_sh)\n    for i in range(n_days):\n        row = resret_sh[i]\n        valid = ~np.isnan(row)\n        if valid.sum() > 0:\n            ranks = np.zeros_like(row)\n            ranks[valid] = np.argsort(np.argsort(row[valid])) + 1\n            ranks[valid] = ranks[valid] / valid.sum()\n            ranked_sh[i] = ranks\n    rank_s4 = np.nanmean(ranked[-4:], axis=0)\n    rank_s4_sh = np.nanmean(ranked_sh[-4:], axis=0)\n    rank_l = (np.nanmean(ranked[-15:], axis=0) * 0.5 +\n              np.nanmean(ranked[-20:], axis=0) * 0.3 +\n              np.nanmean(ranked[-30:], axis=0) * 0.2)\n    rank_l_sh = (np.nanmean(ranked_sh[-15:], axis=0) * 0.5 +\n                 np.nanmean(ranked_sh[-20:], axis=0) * 0.3 +\n                 np.nanmean(ranked_sh[-30:], axis=0) * 0.2)\n    mr = rank_l - rank_s4\n    mr_sh = rank_l_sh - rank_s4_sh\n    r2 = r2_hsi[-1]\n    r2_filled = np.where(np.isnan(r2), 0.5, r2)\n    r2_filled = np.clip(r2_filled, 0.05, 1.0)\n    signal = (mr + mr_sh) * 0.5 * r2_filled\n    final = np.zeros(n_inst)\n    valid = ~np.isnan(signal) & ~np.isinf(signal)\n    if valid.sum() > 0:\n        mean = np.nanmean(signal[valid])\n        std = np.nanstd(signal[valid])\n        if std > 0:\n            final[valid] = (signal[valid] - mean) / std\n    result = np.where(np.isnan(final), 0, final)\n    return result.astype(np.float32)"
+ },
+ {
+  "id": "omlOJJn5",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "CHN/D1/MACRO"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"mcr61_totalreturninvestibleweight\", \"mcr61_onedaynetreturn\", \"mcr61_onedayadjustedpricereturn\"], store=[])\ndef wf_div_v29(data, store) -> npt.NDArray[np.float32]:\n    trw = data.mcr61_totalreturninvestibleweight[-252:]\n    r_net = data.mcr61_onedaynetreturn[-252:]\n    r_adj = data.mcr61_onedayadjustedpricereturn[-252:]\n    u = data.universe[-1]\n    valid = u.astype(bool)\n\n    def sz(x):\n        m = valid & np.isfinite(x)\n        xx = x.copy(); xx[~m] = np.nan\n        mu = np.nanmean(xx); sd = np.nanstd(xx)\n        sd = np.where((sd is None) | ~np.isfinite(sd) | (sd < 1e-10), 1.0, sd)\n        z = (x - mu) / sd\n        z = np.clip(z, -4.0, 4.0).astype(np.float32)\n        z[~m] = np.nan\n        return z\n\n    def lc(a, b):\n        m = (a > 0) & (b > 0) & valid & np.isfinite(a) & np.isfinite(b)\n        o = np.full_like(a, np.nan, dtype=np.float32)\n        o = np.where(m, np.log(a / b), np.nan)\n        return o\n\n    # wf: ultra-long momentum (60d+120d)\n    w0 = trw[-1]; w60 = trw[-60]; w120 = trw[-120]\n    r60 = np.nansum(r_adj[-60:], axis=0)\n    r120 = np.nansum(r_adj[-120:], axis=0)\n    wf = 0.5 * sz(lc(w0, w60) - r60) + 0.5 * sz(lc(w0, w120) - r120)\n\n    # div: dv=0.50, 252d=50%\n    rn60 = np.nansum(r_net[-60:], axis=0)\n    ra60 = np.nansum(r_adj[-60:], axis=0)\n    rn120 = np.nansum(r_net[-120:], axis=0)\n    ra120 = np.nansum(r_adj[-120:], axis=0)\n    rn252 = np.nansum(r_net[-252:], axis=0)\n    ra252 = np.nansum(r_adj[-252:], axis=0)\n    div = 0.3*(rn60-ra60) + 0.4*(rn120-ra120) + 0.3*(rn252-ra252)\n    dv = sz(div)\n\n    # rev: 20d mean reversion\n    r20_sum = np.nansum(r_adj[-20:], axis=0)\n    rev = -0.15 * sz(r20_sum)\n\n    sig = 0.50*wf + 0.50*dv + rev\n    sig = np.where(u, sig, np.nan)\n    return sig.astype(np.float32)"
+ },
+ {
+  "id": "78196dqx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/OTHER"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n\ndef pasteurize(a, u):\n    a = a.copy()\n    a[~u.astype(bool)] = np.nan\n    return a\n\n\ndef neutralize(a):\n    a0 = np.nan_to_num(a, nan=0, posinf=0, neginf=0)\n    return a - np.nanmean(a0)\n\n\ndef scale(a):\n    a0 = np.nan_to_num(a, nan=0, posinf=0, neginf=0)\n    norm = np.linalg.norm(a0, ord=1)\n    return a / norm if norm > 1e-10 else a\n\n\n@alpha(\n    data=[\"mean_global_feature_13\", \"mean_global_feature_18\", \"mean_global_feature_1\", \"change_3m_revision_fy2_eps\"],\n    store=[],\n)\ndef ml_hybrid_v40(data, store) -> npt.NDArray[np.float32]:\n    # ML model latent features\n    feat13 = np.nanmean(data.mean_global_feature_13[-18:], axis=0)\n    feat18 = np.nanmean(data.mean_global_feature_18[-16:], axis=0)\n    feat1 = np.nanmean(data.mean_global_feature_1[-20:], axis=0)\n    # Analyst revision\n    rev = np.nanmean(data.change_3m_revision_fy2_eps[-14:], axis=0)\n    \n    # Cross-sectional rank normalization\n    def cs_rank(x):\n        finite = np.where(np.isnan(x), -np.inf, x)\n        rank = np.argsort(np.argsort(finite)).astype(np.float64)\n        n_valid = np.sum(~np.isnan(x))\n        if n_valid > 1:\n            rank = rank / (n_valid - 1)\n        rank[np.isnan(x)] = np.nan\n        return rank\n    \n    # Equal-weighted combination\n    signal = cs_rank(feat13) + cs_rank(feat18) + cs_rank(feat1) + cs_rank(rev)\n    \n    # Pasteurize and neutralize\n    signal = pasteurize(signal, data.universe[-1])\n    signal = scale(neutralize(signal))\n    \n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "rKl16MGd",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"mdl28_sm_structural__credit_structural_leverage\", \"mdl28_sm_structural_credit_structural_distance_to_default\"], store=[])\ndef my_alpha(data, store) -> npt.NDArray[np.float32]:\n    leverage = data.mdl28_sm_structural__credit_structural_leverage.copy()\n    dist_to_default = data.mdl28_sm_structural_credit_structural_distance_to_default.copy()\n\n    for x in [leverage, dist_to_default]:\n        col_mean = np.nanmean(x, axis=0, keepdims=True)\n        col_std = np.nanstd(x, axis=0, keepdims=True)\n        upper = col_mean + 4 * col_std\n        lower = col_mean - 4 * col_std\n        np.clip(x, lower, upper, out=x)\n\n    window = 22\n    n_times = leverage.shape[0]\n\n    if n_times >= window:\n        cum = np.nancumsum(leverage, axis=0)\n        cum_shift = np.roll(cum, window, axis=0)\n        cum_shift[:window] = 0\n        count = np.cumsum(~np.isnan(leverage), axis=0).astype(float)\n        count_shift = np.roll(count, window, axis=0)\n        count_shift[:window] = 0\n        rolling_mean = (cum - cum_shift) / np.maximum(count - count_shift, 1)\n        cum_sq = np.nancumsum(leverage**2, axis=0)\n        cum_sq_shift = np.roll(cum_sq, window, axis=0)\n        cum_sq_shift[:window] = 0\n        rolling_var = (cum_sq - cum_sq_shift) / np.maximum(count - count_shift, 1) - rolling_mean**2\n        rolling_var = np.maximum(rolling_var, 0)\n        rolling_std = np.sqrt(rolling_var)\n        lev_z = (leverage[-1, :] - rolling_mean[-1, :]) / np.maximum(rolling_std[-1, :], 1e-10)\n    else:\n        col_mean = np.nanmean(leverage, axis=0)\n        col_std = np.nanstd(leverage, axis=0)\n        lev_z = (leverage[-1, :] - col_mean) / np.maximum(col_std, 1e-10)\n\n    if n_times >= window:\n        cum = np.nancumsum(dist_to_default, axis=0)\n        cum_shift = np.roll(cum, window, axis=0)\n        cum_shift[:window] = 0\n        count = np.cumsum(~np.isnan(dist_to_default), axis=0).astype(float)\n        count_shift = np.roll(count, window, axis=0)\n        count_shift[:window] = 0\n        rolling_mean = (cum - cum_shift) / np.maximum(count - count_shift, 1)\n        cum_sq = np.nancumsum(dist_to_default**2, axis=0)\n        cum_sq_shift = np.roll(cum_sq, window, axis=0)\n        cum_sq_shift[:window] = 0\n        rolling_var = (cum_sq - cum_sq_shift) / np.maximum(count - count_shift, 1) - rolling_mean**2\n        rolling_var = np.maximum(rolling_var, 0)\n        rolling_std = np.sqrt(rolling_var)\n        d2d_z = (dist_to_default[-1, :] - rolling_mean[-1, :]) / np.maximum(rolling_std[-1, :], 1e-10)\n    else:\n        col_mean = np.nanmean(dist_to_default, axis=0)\n        col_std = np.nanstd(dist_to_default, axis=0)\n        d2d_z = (dist_to_default[-1, :] - col_mean) / np.maximum(col_std, 1e-10)\n\n    result = -( -lev_z + d2d_z )\n    result = np.where(np.isnan(result) | np.isinf(result), 0, result)\n    result = np.clip(result, -3, 3)\n    return result.astype(np.float32)"
+ },
+ {
+  "id": "wpR0WOVx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "CHN/D1/ANALYST",
+   "CHN/D1/MACRO"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(\n    data=[\"anl10_analyst_innovation_bps_innovate_decrease_fy1\", \"oth551_509000hs_2r\"],\n    store=[],\n)\ndef analyst_decrease_v64(data, store) -> npt.NDArray[np.float32]:\n    \"\"\"\n    V64: ANALYST NEGATIVE REVISION COUNT - completely different signal\n    \n    Field 1: anl10_analyst_innovation_bps_innovate_decrease_fy1 (analyst10) - Number of analysts with negative FY1 BPS revisions\n    Field 2: R2 (other551)\n    \n    Hypothesis: More analysts making NEGATIVE revisions = bearish signal.\n    This is a COUNT (not a flag), so it's continuous and informative.\n    \"\"\"\n    innov = data.anl10_analyst_innovation_bps_innovate_decrease_fy1\n    r2 = data.oth551_509000hs_2r[-1]\n    \n    signal = innov[-1]  # Higher count = more negative revisions = bearish\n    \n    # R2 filter\n    r2_weight = np.clip(1.0 - r2, 0.3, 1.0)\n    signal = -signal * r2_weight  # Flip so more negative revisions = positive signal (short)\n    \n    finite = np.where(np.isfinite(signal), signal, -np.inf)\n    order = np.argsort(np.argsort(finite))\n    count = np.sum(np.isfinite(signal))\n    if count > 0:\n        signal = order / (count - 1) * 2 - 1\n    \n    signal = np.where(data.universe[-1] == 1, signal, np.nan)\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "kq3zZaMk",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/PV",
+   "TWN/D1/OTHER"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(\n    data=[\"probability_label2_3quantile_5day_ohlcv\", \"returns\"],\n    store=[],\n)\ndef twn_riskfree_v7(data, store) -> npt.NDArray[np.float32]:\n    u = data.universe[-1]\n    \n    # Field 1: probability label - winsorize then log transform\n    prob = data.probability_label2_3quantile_5day_ohlcv[-120:]\n    prob_mean = np.nanmean(prob, axis=0)\n    prob_std = np.nanstd(prob, axis=0)\n    prob_clipped = np.clip(prob, prob_mean - 4*prob_std, prob_mean + 4*prob_std)\n    prob_signal = np.log(prob_clipped[-1] + 1e-8)\n    \n    # Field 2: returns momentum - 20-day cumulative\n    ret = np.nansum(data.returns[-20:], axis=0)\n    \n    # Cross-sectional zscore\n    def cs_zscore(x):\n        finite = np.where(np.isfinite(x), x, np.nan)\n        mu = np.nanmean(finite)\n        s = np.nanstd(finite)\n        return (x - mu) / (s + 1e-8) if s > 1e-10 else np.zeros_like(x)\n    \n    z_prob = cs_zscore(prob_signal)\n    z_ret = cs_zscore(ret)\n    \n    # Combined signal: prob dominates (70%), returns adds stability (30%)\n    signal = 0.7 * z_prob + 0.3 * z_ret\n    signal = np.where(u, signal, np.nan)\n    \n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "j2ZMkn7e",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "CHN/D1/OTHER"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(\n    data=[\"oth561_basic_stat_buy_rebalancing_num\",\n          \"oth561_basic_stat_sell_rebalancing_num\"],\n    store=[],\n)\ndef rebalancing_v56(data, store) -> npt.NDArray[np.float32]:\n    nb_raw = data.oth561_basic_stat_buy_rebalancing_num\n    ns_raw = data.oth561_basic_stat_sell_rebalancing_num\n    \n    diff = nb_raw - ns_raw\n    diff_mean_20 = np.nanmean(diff[-20:], axis=0)\n    diff_mean_120 = np.nanmean(diff[-120:], axis=0)\n    \n    signal = -(diff_mean_20 - diff_mean_120)\n    \n    u = data.universe[-1].astype(bool)\n    signal[~u] = np.nan\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "kq39Rarg",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "CHN/D1/MODEL",
+   "CHN/D1/OTHER"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"mdl175_pehist120\", \"oth715_citics_1l\"], store=[])\ndef pe_hist_v3(data, store) -> npt.NDArray[np.float32]:\n    \"\"\"\n    PE历史分位Alpha v3 - 更长decay\n    \"\"\"\n    pe = data.mdl175_pehist120[-1]\n    sig = -pe\n    \n    finite = sig[np.isfinite(sig)]\n    if len(finite) > 100:\n        m, s = np.mean(finite), np.std(finite)\n        if s > 0:\n            sig = np.clip(sig, m - 3*s, m + 3*s)\n            sig = (sig - m) / s\n    \n    u = data.universe[-1]\n    sig[~u.astype(bool)] = np.nan\n    return sig.astype(np.float32)"
+ },
+ {
+  "id": "6XwJAArO",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/PV",
+   "IND/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=['next_event_type_code', 'last_event_type_code', 'returns'], store=[])\ndef alpha_opt(data, store) -> npt.NDArray[np.float32]:\n    u = data.universe[-1]\n    \n    # 下次事件类型信号: 15天均值\n    next_event = data.next_event_type_code\n    next_event_mean = np.nanmean(next_event[-15:], axis=0).astype(np.float32)\n    \n    # 上次事件类型信号: 30天均值\n    last_event = data.last_event_type_code\n    last_event_mean = np.nanmean(last_event[-30:], axis=0).astype(np.float32)\n    \n    # 收益率信号: 5天累计\n    ret_sum = np.nansum(data.returns[-5:], axis=0).astype(np.float32)\n    \n    # 组合信号: 两个事件类型信号 × 收益率\n    signal = -next_event_mean * last_event_mean * ret_sum\n    \n    signal[~u.astype(bool)] = np.nan\n    return signal.astype(np.float32)"
+ },
+ {
+  "id": "RRpKAqjo",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n@alpha(data=[\"rel_val_region_rank_score_4\",\"analyst_revisions_score_2\",\"arm_score_change_30d_3\"], store=[])\ndef val_arm_v10(data, store) -> npt.NDArray[np.float32]:\n    def z(a):\n        a=np.asarray(a,dtype=np.float64); v=np.isfinite(a); m=np.nanmean(a); s=np.nanstd(a)\n        if not np.isfinite(s) or s<1e-9: return np.zeros_like(a)\n        return np.where(v,(a-m)/s,0.0)\n    # No rolling buffer - decay=2 controls temporal smoothing\n    # 3-field fusion: val(undervalued)+arm(bullish)+chg(momentum)\n    c=z(data.rel_val_region_rank_score_4[-1])+z(data.analyst_revisions_score_2[-1])+z(data.arm_score_change_30d_3[-1])\n    u=data.universe[-1]; c=np.where(u.astype(bool),c,np.nan); c[~np.isfinite(c)]=0.0\n    return c.astype(np.float32)"
+ },
+ {
+  "id": "xAxGq8Vw",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/PV",
+   "IND/D1/FUNDAMENTAL",
+   "IND/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"voting_beneficial_equity_shares\",\"book_value_per_share_last_year\",\"returns\"], store=[\"y_sig\"])\ndef a(data, store) -> npt.NDArray[np.float32]:\n    v = np.asarray(data.voting_beneficial_equity_shares, dtype=np.float32)\n    b = np.asarray(data.book_value_per_share_last_year, dtype=np.float32)\n    r = np.asarray(data.returns, dtype=np.float32)\n    u = np.asarray(data.universe, dtype=bool)\n    N = v.shape[1]; T = v.shape[0]; tu = u[-1]\n\n    # Rolling mean smoothing for v and b before ts_rank\n    # 20-day rolling mean reduces daily noise\n    def rolling_mean_2d(arr, window):\n        out = np.full_like(arr, np.nan, dtype=np.float32)\n        for t in range(T):\n            start = max(0, t - window + 1)\n            vals = arr[start:t+1]\n            out[t] = np.nanmean(vals, axis=0)\n        return out\n\n    v_smooth = rolling_mean_2d(v, 20)\n    b_smooth = rolling_mean_2d(b, 20)\n\n    # ts_backfill(120) + winsorize(std=4) for v\n    bf = np.full(N, np.nan, dtype=np.float32)\n    win = min(120, T)\n    blk = v[:win]\n    for t in range(win - 1, -1, -1):\n        row = blk[t]\n        m = np.isnan(bf) & ~np.isnan(row)\n        bf[m] = row[m]\n    valid = ~np.isnan(bf)\n    if valid.any():\n        mu = float(np.nanmean(bf)); sd = float(np.nanstd(bf))\n        if sd > 0:\n            lo = mu - 4*sd; hi = mu + 4*sd\n            bf = np.where(bf < lo, lo, bf)\n            bf = np.where(bf > hi, hi, bf)\n    bf = bf.astype(np.float32)\n\n    # ts_rank\n    def tr(hist, target):\n        out = np.full(N, np.nan, dtype=np.float32)\n        for j in range(N):\n            col = hist[:, j]\n            t = target[j]\n            if np.isnan(t): continue\n            vc = col[~np.isnan(col)]\n            if vc.size == 0: continue\n            out[j] = float((vc < t).sum()) / max(vc.size - 1, 1)\n        return out\n\n    win252 = min(252, T)\n    # Use smoothed data for ts_rank calculation\n    rs = tr(v_smooth[-win252:], v_smooth[-1])\n    rv = tr(b_smooth[-win252:], b_smooth[-1])\n    m5 = np.nanmean(r[-5:], axis=0)\n    rm = np.full((T, N), np.nan, dtype=np.float32)\n    for t in range(T):\n        rm[t] = np.nanmean(r[max(0, t-4):t+1], axis=0)\n    rk = tr(rm, m5)\n\n    sig_today = (rs + rv - rk).astype(np.float32)\n    sig_today[~tu] = np.nan\n\n    # Keep original smoothing 80/20\n    if store.y_sig is None:\n        store.y_sig = sig_today\n        sig = sig_today\n    else:\n        sig_y = store.y_sig\n        sig = np.where(np.isnan(sig_today), sig_y,\n                       0.8 * sig_today + 0.2 * np.where(np.isnan(sig_y), sig_today, sig_y))\n        sig = sig.astype(np.float32)\n        store.y_sig = sig_today\n\n    sig[~tu] = np.nan\n    fin = ~np.isnan(sig)\n    if fin.any():\n        sig = sig - float(np.nanmean(sig))\n        l1 = float(np.nansum(np.abs(sig)))\n        if l1 > 0: sig = sig / l1\n        sig[~np.isfinite(sig)] = 0.0\n    return sig.astype(np.float32)"
+ },
+ {
+  "id": "leV5xLwx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/MODEL"
+  ],
+  "code": "from brain.alphas import alpha\nimport numpy as np\nimport numpy.typing as npt\n\n@alpha(data=[\"analyst_revision_percentile_score_medium_4\", \"stddev_smartestimate_analysts_quarterly_eps_short\"], store=[])\ndef alpha_v1(data, store) -> npt.NDArray[np.float32]:\n    def cs_rank(arr):\n        v = ~np.isnan(arr)\n        n = v.sum()\n        out = np.full_like(arr, 0.5)\n        if n > 0:\n            ranks = np.empty(n, dtype=np.float64)\n            sorted_idx = np.argsort(arr[v], kind=\"stable\")\n            ranks[sorted_idx] = np.arange(1, n + 1) / n\n            out[v] = ranks\n        return out\n    f1 = data.analyst_revision_percentile_score_medium_4.astype(np.float64)\n    f2 = data.stddev_smartestimate_analysts_quarterly_eps_short.astype(np.float64)\n    f1_smooth = f1[-21:].mean(axis=0)\n    r1 = cs_rank(f1_smooth)\n    r2 = cs_rank(f2[-1])\n    sig = r1 * (1.0 - r2)\n    sig_clean = np.where(np.isnan(sig), 0.0, sig)\n    m, s = sig_clean.mean(), sig_clean.std()\n    out = (sig_clean - m) / (s if s > 1e-12 else 1.0)\n    return out.astype(np.float32)"
+ },
+ {
+  "id": "MPp08l88",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/FUNDAMENTAL",
+   "IND/D1/MODEL"
+  ],
+  "code": "ts_rank(ts_backfill(annual_net_income_value / total_assets_annual_atot, 90), 252) + ts_rank(fnd94_q_cheq_q, 126) + ts_rank(book_value_per_share_last_year, 95)"
+ },
+ {
+  "id": "O0p8naAq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/PV",
+   "IND/D1/FUNDAMENTAL",
+   "IND/D1/MODEL"
+  ],
+  "code": "ts_rank(ts_backfill(winsorize(voting_beneficial_equity_shares, std=4), 120), 252) * sign(accrual_factor_score_current) + ts_rank(book_value_per_share_last_year, 252) - ts_rank(ts_mean(returns, 5), 252)"
+ },
+ {
+  "id": "E5wk0lwr",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/ANALYST"
+  ],
+  "code": "ts_mean(group_zscore(winsorize(ts_rank(anl4_fs_detail_estimates_basic_af_v4_nd_eps_high, 30) * ts_rank(anl4_fs_detail_estimates_basic_af_v4_nd_sales_high, 30), std=3), industry), 40)"
+ },
+ {
+  "id": "gJ1xAq8v",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/PV",
+   "IND/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_zscore(ts_mean(winsorize(ts_backfill(fnd17_lcxspebmtt, 120), std=4), 20), 126) + ts_zscore(vwap/close, 120)"
+ },
+ {
+  "id": "d5x7LNAj",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/ANALYST"
+  ],
+  "code": "rank(hump(add(ts_backfill(rank(vec_sum(consensus_surprise_percentage)), 30), ts_backfill(rank(vec_avg(consensus_surprise_percentage)), 30))))"
+ },
+ {
+  "id": "Vkpo0R88",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/PV",
+   "KOR/D1/MODEL"
+  ],
+  "code": "ts_decay_linear(rank(adjfactor)+accrual_factor_score_change_1d-ts_mean(adv20,35),35)*ts_rank(adjfactor/ts_decay_linear(adjfactor,35),60)"
+ },
+ {
+  "id": "1Y7qmYqQ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/OTHER"
+  ],
+  "code": "reverse(winsorize(vec_sum(global_credit_quality_percentile_rank) + vec_sum(global_text_factor_percentile_rank) - vec_sum(region_fundamental_factor_percentile_rank), std=0.055))"
+ },
+ {
+  "id": "bl91vY76",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/MODEL"
+  ],
+  "code": "group_zscore(rank(net_income_margin_ratio) * rank(ts_zscore(ebit_to_enterprise_value_ratio, 24)), subindustry)"
+ },
+ {
+  "id": "Vk80rJLA",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/OTHER"
+  ],
+  "code": "scale(winsorize(truncate(ts_backfill(ts_decay_linear(vec_count(oth78_transcribeflag) * 22 + vec_range(oth78_sourcetypename) * 4.0 - vec_count(oth78_meetingdaily_cancelledflag) * 25, 1), 120), maxPercent=0.10), std=2.0))"
+ },
+ {
+  "id": "pw75k0eb",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/FUNDAMENTAL",
+   "KOR/D1/OTHER"
+  ],
+  "code": "rank(multiply(ts_zscore(ts_decay_linear(subtract(probability_label1_2quantile_5day_ohlcv, probability_label0_2quantile_5day_ohlcv), 15), 50), bookvalue_ps))"
+ },
+ {
+  "id": "pw7KYdZq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/MODEL"
+  ],
+  "code": "ts_zscore(ts_decay_linear(ts_backfill(operating_profit_margin_trailing_4q, 260), 8), 66)+ts_zscore(ts_decay_linear(ts_backfill(mdl31_oe_chg_1_day, 360), 8), 99)"
+ },
+ {
+  "id": "E5KXvm59",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/OTHER"
+  ],
+  "code": "-(winsorize(ts_rank(oth496_returns10,12)) * ts_mean(oth496_kor_mapped_limit_status,300))"
+ },
+ {
+  "id": "pw7AjbpX",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/OTHER"
+  ],
+  "code": "ts_target_tvr_decay(-(ts_rank(ts_decay_linear(oth496_returns4, 2), 5) * ts_rank(ts_decay_linear(oth496_kor_mapped_limit_status, 2), 5)), lambda_min=0.08, lambda_max=0.25, target_tvr=0.18)"
+ },
+ {
+  "id": "npWMOvVq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/FUNDAMENTAL"
+  ],
+  "code": "log(abs(ts_mean(winsorize(ts_backfill(fnd17_pxedrq, 90), std=4), 20)) + 0.000001) * rank(ts_delta(ts_backfill(fnd17_aroipct, 90), 20))"
+ },
+ {
+  "id": "xAR7NOmq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(-ts_mean(fundamental_revenue_quarterly,5)+vec_range(additional_paid_in_capital))*0.5+rank(-ts_delta(fundamental_revenue_quarterly,1))*0.3+rank(-ts_delta(fundamental_revenue_quarterly,4))*0.2"
+ },
+ {
+  "id": "N1AlV0KX",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(1 / (vec_avg(fundamental_gross_profit_quarterly) / (vec_avg(fundamental_interest_expense_semiannual_total) + 1) + 0.1) * sign(1 / (vec_avg(fundamental_operating_income_after_depreciation) / (vec_avg(fundamental_interest_expense_semiannual_total) + 1) + 0.1)))"
+ },
+ {
+  "id": "58M2LzgJ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/ANALYST"
+  ],
+  "code": "group_zscore(rank(ts_backfill(vec_sum(anl16_afterest_percentage), 126)) + rank(ts_backfill(vec_sum(anl16_actsurprise), 126)), SUBINDUSTRY) + group_zscore(rank(ts_backfill(vec_sum(anl16_aftercons_percentage), 126)), SUBINDUSTRY) * 0.2"
+ },
+ {
+  "id": "O0orLJ3v",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/ANALYST",
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "winsorize(group_zscore(rank(ts_mean(vec_avg(fundamental_annual_income_before_extraordinary_items),33))/rank(vec_avg(fundamental_annual_revenue)), subindustry),std=1) + ts_mean(winsorize(group_zscore(rank(vec_avg(est_q_eps_mean))/rank(vec_avg(fundamental_annual_revenue)), subindustry),std=1),5)"
+ },
+ {
+  "id": "d5dQmPWv",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/ANALYST"
+  ],
+  "code": "ts_rank(anl4_fs_detail_estimates_basic_af_v4_nd_sales_high, 20)+ts_rank(anl4_fs_detail_estimates_basic_af_v4_nd_cfps_high, 30)"
+ },
+ {
+  "id": "np3VY3Ox",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "rank((rank(fundamental_income_before_extraordinary_items_q) * rank(fundamental_operating_net_cash_flow)) / (fundamental_total_assets_quarterly + ts_mean(fundamental_operating_net_cash_flow, 10)))"
+ },
+ {
+  "id": "gJxYRQYe",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/PV",
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_mean(group_zscore(rank(operating_cash_flow/fundamental_total_assets_quarterly)-rank(fundamental_operating_net_cash_flow), sector),20)"
+ },
+ {
+  "id": "1YoXA7pW",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "group_zscore(ts_decay_linear(ts_mean(rank(vec_avg(fundamental_ebitda)) / rank(vec_avg(fundamental_total_revenue)), 20), 20), industry)"
+ },
+ {
+  "id": "mLqmj3Kp",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/PV",
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "group_zscore(rank(vec_avg(fundamental_current_assets_quarterly) / vec_avg(fundamental_ebitda)) - ts_mean(rank(close), 5), sector)"
+ },
+ {
+  "id": "A1nkJ06e",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "group_zscore(ts_mean(reverse(ts_rank(ts_zscore(winsorize(ts_backfill(vec_sum(fundamental_interest_expense_semiannual_total), 120), std=4), 252), 252)), 3), sector)"
+ },
+ {
+  "id": "9q9JZZdK",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/PV"
+  ],
+  "code": "group_zscore(rank(annual_net_income) / rank(annual_revenue) - rank(ts_delta(annual_revenue, 11)), INDUSTRY)"
+ },
+ {
+  "id": "kqnRAJ5L",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/FUNDAMENTAL"
+  ],
+  "code": "reverse(ts_rank(ts_zscore(winsorize(ts_backfill(vec_sum(fundamental_interest_and_related_expense_total_quarterly), 120), std=4), 252), 252))"
+ },
+ {
+  "id": "mLqw1xME",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/PV"
+  ],
+  "code": "ts_mean(rank(ts_delay(market_cap,4)/market_cap),35)*if_else(diluted_eps_continuing_operations>0,1,0.5)"
+ },
+ {
+  "id": "A1gzqOQQ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/MODEL"
+  ],
+  "code": "rank(group_zscore(rank(-ts_zscore(ts_backfill(vec_sum(firm_market_value), 120), 20)), sector))"
+ },
+ {
+  "id": "WjabQG0d",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "MEA/D1/MODEL"
+  ],
+  "code": "ts_zscore(winsorize(ts_backfill(star_eq_ope_rank, 120), std=4), 85)"
+ },
+ {
+  "id": "zqJKR5O8",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/PV",
+   "KOR/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(add(multiply(0.58,ts_zscore(divide(ts_mean(fnd94_is_consol_net_inc_q,31),close),71)),multiply(0.42,ts_zscore(divide(ts_mean(fnd94_is_ebitda_oper_q,31),close),71))))"
+ },
+ {
+  "id": "mLz8bPY1",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_decay_linear(ts_rank((fnd17_nprice - fnd17_yragoprc1) * fnd17_aastturn, 252), 10)"
+ },
+ {
+  "id": "6XqPx297",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_zscore(fnd17_priceavg50day / (fnd17_ev_cur + 0.01), 189)"
+ },
+ {
+  "id": "aklNozzv",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/OTHER"
+  ],
+  "code": "quantile(winsorize(ts_backfill(mean_positive_profitability_summary, 378), std=2) / winsorize(ts_backfill(mean_negative_profitability_summary, 378), std=2))"
+ },
+ {
+  "id": "LL66vbG2",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/MODEL"
+  ],
+  "code": "ts_decay_linear(signed_power(group_neutralize(winsorize(ts_backfill(fnd65_allcap_sedol_pfcfmtt, 120), std=4), subindustry), 0.5), 126)"
+ },
+ {
+  "id": "MPXm2raL",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/FUNDAMENTAL"
+  ],
+  "code": "winsorize(fnd72_s_pit_or_cf_a_cf_cash_from_oper / fnd72_s_pit_or_bs_a_bs_tot_asset - fnd72_s_pit_or_bs_a_bs_cash_near_cash_item / fnd72_s_pit_or_bs_a_bs_tot_asset, std=3)"
+ },
+ {
+  "id": "omv5d57v",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/FUNDAMENTAL"
+  ],
+  "code": "add(ts_zscore(winsorize(ts_backfill(fnd72_s_pit_or_bs_a2_bs_pure_retained_earnings, 252), std=1), 126), rank(divide(fnd72_s_pit_or_is_a_is_oper_inc, fnd72_s_pit_or_is_a_is_int_expense)))"
+ },
+ {
+  "id": "1YLqAvqW",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/MACRO"
+  ],
+  "code": "scale(add(multiply(ts_arg_max(winsorize(ts_backfill(power(abs(subtract(vec_sum(oth106_ospi_ca_eq_price_cls), vec_sum(oth106_ospi_ca_eq_price_nxt))), 0.57), 60), std=0.9), 12), 1.3), multiply(ts_arg_max(winsorize(ts_backfill(power(abs(divide(subtract(vec_sum(oth106_ospi_ca_eq_price_cls), vec_sum(oth106_ospi_ca_eq_price_nxt)), add(abs(subtract(vec_sum(oth106_ospi_ca_eq_index_share_cls), vec_sum(oth106_ospi_ca_eq_index_share_nxt))), 0.01))), 0.63), 60), std=0.9), 48), 1.3)))"
+ },
+ {
+  "id": "akMzmWx5",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/MODEL"
+  ],
+  "code": "ts_decay_linear(signed_power(rank(fnd65_allcap_sedol_pctchgfcf), 0.5), 63)"
+ },
+ {
+  "id": "vRxgrAPb",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/NEWS"
+  ],
+  "code": "ts_arg_max(winsorize(ts_backfill(previous_ex_dividend_event_date, 120), std=4), 126)"
+ },
+ {
+  "id": "LLqaVNde",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/OTHER"
+  ],
+  "code": "winsorize(ts_backfill(vec_sum(oth78_sourcetypename), 120), std=4)"
+ },
+ {
+  "id": "A1J81rnW",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/OTHER"
+  ],
+  "code": "ts_arg_min(winsorize(ts_backfill(vec_sum(oth128_dmexusceononcashcompensation), 120), std=4), 126)"
+ },
+ {
+  "id": "3qY2lnrg",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/ANALYST"
+  ],
+  "code": "ts_rank(0.5 * (0.4 * ts_decay_linear(ts_delta(ts_backfill(anl14_mean_revenue_fp1, 20), 20) / (ts_backfill(anl14_stddev_revenue_fp1, 20) + 0.01), 5) + 0.6 * ts_decay_linear(ts_delta(ts_backfill(anl14_mean_eps_fy1, 20), 20) / (abs(ts_backfill(anl14_mean_eps_fy1, 20)) + 0.01), 5)) + 0.5 * (0.4 * ts_decay_linear(ts_delta(ts_backfill(anl14_mean_revenue_fp1, 20), 60) / (ts_backfill(anl14_stddev_revenue_fp1, 20) + 0.01), 5) + 0.6 * ts_decay_linear(ts_delta(ts_backfill(anl14_mean_eps_fy1, 20), 60) / (abs(ts_backfill(anl14_mean_eps_fy1, 20)) + 0.01), 5)), 252)"
+ },
+ {
+  "id": "vRnYKGNz",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GLB/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_zscore(multiply(fnd17_ebitda2ev_ttm, inverse(fnd17_spfcfrpmtt)), 126)"
+ },
+ {
+  "id": "Xgw7W1K8",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GLB/D1/MODEL"
+  ],
+  "code": "ts_decay_linear(ts_zscore(vec_avg(mdl109_ve_fcf), 252) + ts_zscore(vec_avg(mdl109_spe_rtnie_rg), 252), 8)"
+ },
+ {
+  "id": "e78qmR7d",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/FUNDAMENTAL"
+  ],
+  "code": "0.3 * (rank(ts_decay_linear(fnd17_qroipct, 10)) - rank(if_else(ts_delta(fnd17_qtotd2eq, 120) > 0, fnd17_qtotd2eq, 0))) + 0.1 * rank(ts_decay_linear(fnd17_ebitda2ev, 20)) + 0.3 * rank(ts_decay_linear(fnd17_revgrpct, 20)) + 0.3 * rank(ts_decay_linear(ts_delta(fnd17_revgrpct, 1), 20))"
+ },
+ {
+  "id": "omwAwkg5",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(ts_decay_linear(if_else(or(is_nan(fnd17_cainq), or(is_nan(fnd17_ev_cur), fnd17_ev_cur == 0)), 0, fnd17_cainq / fnd17_ev_cur), 1)) - 1.2 * rank(if_else(ts_decay_linear(if_else(or(is_nan(fnd17_cainq), or(is_nan(fnd17_atq), fnd17_atq == 0)), 0, (fnd17_cainq - ts_delay(fnd17_cainq, 60)) / fnd17_atq), 40) < 0, abs(ts_decay_linear(if_else(or(is_nan(fnd17_cainq), or(is_nan(fnd17_atq), fnd17_atq == 0)), 0, (fnd17_cainq - ts_delay(fnd17_cainq, 60)) / fnd17_atq), 40)), 0)) + 0.3 * rank(ts_decay_linear(ts_delta(if_else(is_nan(fnd17_revgrpct), 0, fnd17_revgrpct), 1), 20))"
+ },
+ {
+  "id": "3qYdKa56",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/MODEL"
+  ],
+  "code": "rank(winsorize(operating_profit_margin_last_quarter)) + 1.5 * rank(ts_zscore(operating_profit_margin_last_quarter, 126)) + rank(winsorize(asset_utilization_ratio_last_quarter)) + 1.5 * rank(ts_zscore(asset_utilization_ratio_last_quarter, 126)) + rank(winsorize(accrual_factor_score_current))"
+ },
+ {
+  "id": "A1JKZx0d",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/MODEL"
+  ],
+  "code": "3.0 * rank(ts_mean(rank(mdl31_ass_tvr_last_qtr) + rank(mdl31_ass_tvr_last_qtr - mdl31_ass_tvr_last_y) + rank(mdl31_gm_pct_last_qtr) + rank(mdl31_roe_pct_last_qtr), 5)) + rank( -ts_mean(mdl31_pricesales_current / ts_mean(mdl31_pricesales_current, 60), 3) )"
+ },
+ {
+  "id": "j2lbk0zO",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/MODEL"
+  ],
+  "code": "rank(ts_mean(0.5 * ts_rank(winsorize(ts_backfill(operating_profit_margin_trailing_4q, 120), std=4), 45) + 0.3 * ts_rank(winsorize(ts_backfill(asset_utilization_ratio_trailing_4q, 120), std=4), 45) + 0.2 * ts_rank(winsorize(ts_backfill(operational_efficiency_score_current, 120), std=4), 45), 9))"
+ },
+ {
+  "id": "npkxkO1x",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/NEWS"
+  ],
+  "code": "ts_decay_linear(ts_quantile(ts_backfill(rp_ess_revenue, 120), 600, driver='gaussian'), 90)"
+ },
+ {
+  "id": "1YVkQvzk",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/OTHER"
+  ],
+  "code": "rank(if_else(ts_sum(not(is_nan(vec_sum(oth475_export_value))), 5000) > 20, ts_decay_linear(ts_rank(ts_delta(winsorize(ts_backfill(vec_sum(oth475_export_value), 300), std=4), 20), 252), 5), sqrt(-1)))"
+ },
+ {
+  "id": "omQbZeZn",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "KOR/D1/OTHER"
+  ],
+  "code": "rank((ts_delta(winsorize(ts_backfill(vec_sum(oth475_export_value), 120), std=4), 252) - ts_delay(ts_delta(winsorize(ts_backfill(vec_sum(oth475_export_value), 120), std=4), 252), 20)) / (ts_std_dev(winsorize(ts_backfill(vec_sum(oth475_export_value), 120), std=4), 252) + 0.001))"
+ },
+ {
+  "id": "KPxQ0rkj",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/FUNDAMENTAL"
+  ],
+  "code": "signed_power(rank(ts_decay_linear(winsorize(ts_backfill(fnd86_price_momentum_score, 260), std=4), 60)) * rank(ts_decay_linear(winsorize(ts_backfill(fnd86_relative_valuation_score, 260), std=4), 350)), 1.5)"
+ },
+ {
+  "id": "rKQGqA53",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(winsorize(ts_backfill(srp_price_momentum_score, 58), std=4) * winsorize(ts_backfill(srp_risk_score, 58), std=4) / (ts_std_dev(srp_price_momentum_score, 58) + 0.001))"
+ },
+ {
+  "id": "P0jOG3AL",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(ts_decay_linear(winsorize(ts_backfill(oth401_game_deferred_sal_chg, 120), std=4), 20)) * (1 - rank(ts_mean(winsorize(ts_backfill(oth401_game_capex_sale, 120), std=4), 60)))"
+ },
+ {
+  "id": "1Y6zdMNR",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/INSTITUTIONS"
+  ],
+  "code": "add(signed_power(ts_zscore(ts_delta(count_institutional_holders_security, 60), 252), 2.4), multiply(signed_power(ts_zscore(ts_delta(divide(aggregate_equity_value_institutions, aggregate_share_count_institutions), 30), 252), 2.4), 1.5))"
+ },
+ {
+  "id": "gJ71wgWm",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/FUNDAMENTAL"
+  ],
+  "code": "rank(rank(ts_delta(divide(cogs, inventory), 120)) + rank(ts_delta(divide(subtract(sales, cogs), sales), 120)))"
+ },
+ {
+  "id": "j2NnpwxZ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/OTHER"
+  ],
+  "code": "zscore(ts_mean(winsorize(ts_backfill(dividend_growth_factor_score, 120), std=4), 28) - ts_mean(winsorize(ts_backfill(dividend_growth_factor_score, 120), std=4), 252))"
+ },
+ {
+  "id": "RR0NvNqd",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/INSTITUTIONS"
+  ],
+  "code": "group_zscore(signed_power(winsorize(multiply(multiply(group_zscore(ts_decay_linear(multiply(ts_zscore(ts_decay_linear(ts_delta(divide(ts_backfill(aggregate_equity_value_institutions, 60), ts_backfill(aggregate_share_count_institutions, 60)), 20), 2), 252), rank(ts_backfill(count_institutional_holders_security, 60))), 15), subindustry), rank(ts_backfill(aggregate_share_count_institutions, 60))), subtract(1, rank(ts_std_dev(ts_delta(divide(ts_backfill(aggregate_equity_value_institutions, 60), ts_backfill(aggregate_share_count_institutions, 60)), 1), 60))))), 1.7), market)"
+ },
+ {
+  "id": "9qggxkQK",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/PV",
+   "TWN/D1/INSTITUTIONS"
+  ],
+  "code": "ts_decay_linear((rank(ts_mean(ts_delta(winsorize(ts_backfill(aggregate_equity_value_institutions, 60), std=4), 5), 20)) * (1 - rank(ts_mean(ts_delta(winsorize(ts_backfill(count_institutional_holders_security, 60), std=4), 5), 20)))) * (1 + 0.5 * ts_zscore(ts_mean(returns, 252), 252)), 5)"
+ },
+ {
+  "id": "RR03xegb",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/ANALYST"
+  ],
+  "code": "add(ts_zscore(ts_backfill(anl94_spe_rtni_rg, 252), 252), ts_zscore(ts_decay_linear(ts_delta(ts_backfill(anl94_roe, 252), 140), 10), 252))"
+ },
+ {
+  "id": "VkKV06eG",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "TWN/D1/ANALYST"
+  ],
+  "code": "rank(ts_zscore(winsorize(ts_backfill(anl94_spe_rtni_rg, 120), std=4), 252)) + 0.8 * rank(-1 * ts_std_dev(ts_backfill(anl94_m3r_mtn_spe_se, 120), 20))"
+ },
+ {
+  "id": "1YvRl7GK",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/ANALYST"
+  ],
+  "code": "0.7 * ts_rank(ts_decay_linear(ts_backfill(anl4_netprofit_median, 60) / ts_backfill(sales_estimate_median_quarterly, 60), 20), 252) + 0.3 * ts_rank(ts_backfill(anl4_afv4_eps_mean, 60) - ts_delay(ts_backfill(anl4_afv4_eps_mean, 60), 10), 60)"
+ },
+ {
+  "id": "zqaAO5g1",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/MODEL"
+  ],
+  "code": "rank(group_neutralize(ts_zscore(ts_backfill(ts_delta(intrinsic_value_in_currency, 63), 60), 252) - ts_zscore(ts_backfill(market_implied_5yr_eps_growth, 60), 252), subindustry) + 2.0 * group_neutralize(ts_zscore(ts_backfill(industry_relative_valuation_score, 60), 252), subindustry))"
+ },
+ {
+  "id": "lexveVe2",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/MODEL"
+  ],
+  "code": "ts_zscore(winsorize(ts_backfill(projected_earnings_fy3_2, 120), std=4), 66)"
+ },
+ {
+  "id": "WjkPEW9N",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/MODEL"
+  ],
+  "code": "rank(ts_delta(ts_zscore(ts_backfill(mdl26_revisions,60),120),63) - ts_zscore(ts_backfill(price_to_intrinsic_value_ratio,60),252))"
+ },
+ {
+  "id": "2rE8l0OZ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/ANALYST"
+  ],
+  "code": "-ts_rank(group_neutralize(winsorize(ts_backfill(vec_sum(price_to_earnings_ratio_estimate), 120), std=4), subindustry), 120)"
+ },
+ {
+  "id": "kq595aWP",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/ANALYST"
+  ],
+  "code": "ts_zscore(winsorize(ts_backfill(vec_sum(anl9_consensusanalysis_dataitemvalue), 126), std=4), 22)"
+ },
+ {
+  "id": "0mWlQPGK",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_rank(winsorize(ts_backfill(fnd17_ebitda2ev_a, 252), std=4), 252) + ts_rank(winsorize(ts_backfill(fnd17_priceavg50day, 252), std=4), 252)\r\n\r\n# ts_rank(winsorize(ts_backfill(fnd17_ngmtpmtt, 120), std=4), 252) + ts_rank(winsorize(ts_backfill(fnd17_priceavg150day, 120), std=4), 252) + ts_rank(winsorize(ts_backfill(fnd17_ebitda2ev_a, 120), std=4), 252)"
+ },
+ {
+  "id": "88qmVPVm",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/FUNDAMENTAL"
+  ],
+  "code": "ts_quantile(winsorize(ts_backfill(fnd17_priceavg150day, 150), std=4), 15) + ts_quantile(winsorize(ts_backfill(fnd17_ngmtpmtt, 252), std=4), 126)"
+ },
+ {
+  "id": "akvxoEW6",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/ANALYST"
+  ],
+  "code": "ts_scale(winsorize(ts_backfill(vec_sum(pretaxprofit_consensus_estimate), 120), std=4), 252)"
+ },
+ {
+  "id": "LLJGRYv6",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "IND/D1/ANALYST"
+  ],
+  "code": "ts_quantile(winsorize(ts_backfill(vec_sum(anl9_consensusanalysis_dataitemvalue), 126), std=4), 66)"
+ },
+ {
+  "id": "P0aqN9RM",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "GLB/D1/MODEL"
+  ],
+  "code": "rank(ts_delta(mdl110_growth,126))+rank(ts_delta(mdl250_malta_eq_score,252))"
+ },
+ {
+  "id": "E57ZoEkJ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/MODEL"
+  ],
+  "code": "reverse(ts_av_diff(s_log_1p(mdl177_global_fc_fcfroey1p),20))"
+ },
+ {
+  "id": "zqZdb6MX",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [
+   "EUR/D1/MODEL"
+  ],
+  "code": "reverse(ts_av_diff(log(mdl177_global_curindfcfp_),20))"
+ },
+ {
+  "id": "qM9QLM6v",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "alpha_raw = winsorize(ts_backfill(liabilities/assets, 60)) * (ts_arg_min(debt/equity, 250));\r\nalpha_neut = group_neutralize(alpha_raw, industry); \r\nfinal_signal = trade_when(1, alpha_neut, 0);  "
+ },
+ {
+  "id": "1YklQJEz",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(anl4_rd_exp_number ) - rank(assets/liabilities_curr)"
+ },
+ {
+  "id": "3qQkr8pZ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(anl4_rd_exp_flag ) - rank(assets/liabilities_curr)"
+ },
+ {
+  "id": "A1jw7GnX",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "2*ts_Rank(-rank(ebit/capex)/operating_income,504) +8*rank((ts_rank(est_eps/close,252)+ts_rank(est_netprofit/close,252))/2)*liabilities/assets"
+ },
+ {
+  "id": "ZYPlNLbZ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(anl4_ptpr_number ) - rank(assets/liabilities_curr)"
+ },
+ {
+  "id": "O0QmNxvp",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(anl4_cff_number ) - rank(assets/liabilities_curr)"
+ },
+ {
+  "id": "0mOQwG3p",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(anl4_adjusted_netincome_ft ) - rank(assets/liabilities_curr)"
+ },
+ {
+  "id": "P0Qdp8kE",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "alpha_raw = (rank(eps/last_diff_value(eps,120)))>0.2 || ts_step(30)*volume/ts_sum(volume,90)/85 >2.8 ?rank(-ts_delta(close,3)):-(ts_step(30)*volume/ts_sum(volume,90)/90);\r\nalpha_neut = group_neutralize(alpha_raw, subindustry);\r\ntrade_when(1, alpha_neut, 0);"
+ },
+ {
+  "id": "j2zbn1Pe",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(anl4_capex_flag) - rank(assets/liabilities_curr) + (0.59 * trade_when(put_breakeven_10 > put_breakeven_1080, -rank(fn_eff_income_tax_rate_continuing_operations_a),-1))"
+ },
+ {
+  "id": "nppLlNjx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "sales_ps > last_diff_value(sales_ps, 5) ? 1 : rank(-ts_delta(close, 5))"
+ },
+ {
+  "id": "qMMNEwKv",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "ts_backfill(fnd6_drc, 252)/assets"
+ },
+ {
+  "id": "akkOrg8R",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "group_neutralize(rank(anl4_netdebt_flag), market)"
+ },
+ {
+  "id": "pwqGQgzo",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "a = -ts_backfill(zscore(goodwill/sales),65)\r\n* rank(fn_accrued_liab_a)\r\n* rank(capex)\r\n* rank(dividend/sharesout)\r\n* rank(debt_st)\r\n* rank(sales_growth)\r\n* rank(bookvalue_ps/close)\r\n* rank(eps/close);"
+ },
+ {
+  "id": "d528e5vx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(anl4_capex_flag) - rank(assets/liabilities_curr)"
+ },
+ {
+  "id": "88m17vkV",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(ts_delta(debt,250)/assets && ts_delta(close,250) && ts_rank(-debt/equity,250))"
+ },
+ {
+  "id": "5PmQbE5",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "est_epsr > last_diff_value(est_epsr,20) ? ts_rank(est_eps/close,60) : rank(-ts_delta(close,5))"
+ },
+ {
+  "id": "PkGxwWL",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "ret_oc = close/open-1;\r\nret_co = (1+returns)/(1+ret_oc)-1;\r\nNR = ts_sum(ret_co>0&&ret_oc<0?1:0,10)/10;\r\nPR = ts_sum(ret_co<0&&ret_oc>0?1:0,10)/10;\r\nAB_NR = NR/(ts_sum(ret_co>0&&ret_oc<0?1:0,252)/252);\r\nAB_PR = PR/(ts_sum(ret_co<0&&ret_oc>0?1:0,252)/252);\r\ngroup = bucket(rank(cap),range='0,1,0.1');\r\ngroup_neutralize (rank (NR) +rank(-PR) +rank (AB_NR) +rank(-AB_PR), group)"
+ },
+ {
+  "id": "dNdzxmJ",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "RET_0Cplus1 = (close)/(open);\r\nRET_OC = RET_0Cplus1 - 1;\r\nRETplus1 = (close)/(ts_delay(close,1));\r\nRET_CO = (RETplus1/RET_0Cplus1) - 1;\r\nNUM = if_else(and(RET_CO > 0, RET_OC < 0), 1, 0);\r\nNR = ts_sum(NUM, 20)/20;\r\nAB_NR = NR/ts_mean(NR, 240);\r\n0.5*rank(-returns)+0.5*rank(AB_NR)"
+ },
+ {
+  "id": "odd9L62",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "a = Ts_backfill(fnd6_acqgdwl, 63)/ts_backfill(sales,63);\r\naa = -ts_regression(a, ts_product(returns + 1, 63) - 1,512,lag = 1,rettype = 3);\r\ntrade_when(vec_avg(nws12_mainz_newssess),group_zscore(winsorize(Ts_backfill(aa,63),std=4),industry),-1)"
+ },
+ {
+  "id": "1MOR6XK",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "group_neutralize(ts_zscore(rank(fnd6_prccq)/rank(enterprise_value), 10), industry)"
+ },
+ {
+  "id": "8wVqL1a",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "group_neutralize(ts_zscore(rank(fnd6_newqv1300_prcraq)/rank(enterprise_value), 10), industry)"
+ },
+ {
+  "id": "O38XKVR",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "group_neutralize(ts_zscore(rank(fnd6_newqv1300_aqpl1q)/rank(enterprise_value), 10), industry)"
+ },
+ {
+  "id": "pLR5jWx",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "group_neutralize(ts_zscore(rank(fnd6_cld2)/rank(enterprise_value), 10), industry)"
+ },
+ {
+  "id": "NZ6GGMg",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "group_neutralize(ts_rank(rank(fnd6_newqv1300_optfvgrq)/rank(enterprise_value), 10), industry)"
+ },
+ {
+  "id": "xZM8YAm",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "group_neutralize(ts_rank(rank(cashflow)/rank(enterprise_value), 10), industry)"
+ },
+ {
+  "id": "NdK9R97",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "night = open/ts_delay(close, 1) - 1;\r\ndrop_hc = high/close - 1;\r\nrise_lc = low/close - 1;\r\nrise_ho = high/open - 1;\r\ndrop_lo = low/open - 1;\r\n\r\nover_drop = abs(drop_hc) + abs(drop_lo);\r\nover_rise = abs(rise_lc) + abs(rise_ho);\r\n\r\nif_else(sign(night) > 0, over_drop, -over_rise)"
+ },
+ {
+  "id": "80K9jrq",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "ts_rank(operating_income/cap,252)^2"
+ },
+ {
+  "id": "WZmNwgk",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "-ts_backfill(zscore(goodwill/sales),65)*(rank(fn_accrued_liab_a)*rank(capex)*rank(dividend/sharesout)+rank(debt_st))\r\n"
+ },
+ {
+  "id": "NdwwNYL",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "ts_rank(operating_income/cap,250)"
+ },
+ {
+  "id": "Z8RPgv1",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "group_rank(ts_rank(ts_decay_linear(-rank(enterprise_value)/rank(ebitda),1),10), industry)"
+ },
+ {
+  "id": "raxNobj",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "# turnover = volume/(sharesout*10000000);\r\n# turnover_y = ts_delay(turnover,1);\r\n# change = open-ts_delay(close,1);\r\n# COV = ts_corr(change,turnover_y,60);\r\n# COV_NEW = group_neutralize(COV, bucket(rank(cap),range='0,1,0.1'));\r\n# change_2 = close-open;\r\n# CCOIV = -ts_corr(change_2,turnover,60);\r\n# CCOIV_NEW = group_neutralize(CCOIV, bucket(rank(cap),range='0,1,0.1'));\r\n# RPV = zscore(CCOIV_NEW)+zscore(COV_NEW);\r\n# RPV\r\ngroup = bucket(rank(cap), range='0,1,0.1');\r\n\r\nalpha = ts_std_dev(low/ts_delay(close, 1), 63) - ts_std_dev(high/ts_delay(close, 1), 63);\r\n\r\ngroup_neutralize(alpha, group)"
+ },
+ {
+  "id": "gNNlApM",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "rank(liabilities/assets) + rank(vwap/close)"
+ },
+ {
+  "id": "NEzZVR8",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "ppent1=winsorize(ppent,std=4);\r\nassets1=winsorize(assets,std=4);\r\nppent2=ts_backfill(ppent1,252);\r\nassets2=ts_backfill(assets1,252);\r\nrank(ppent2/assets2)"
+ },
+ {
+  "id": "JaX0bWA",
+  "sharpe": null,
+  "prod": null,
+  "pyramid": [],
+  "code": "liabilities/assets\n\n"
+ }
+]

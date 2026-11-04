@@ -1,0 +1,233 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "fundamental69",
+  "category": "fundamental",
+  "neutralization": "NONE",
+  "decay": 0,
+  "truncation": 0.025,
+  "submission_forbidden": true,
+  "known_fields": {
+    "fnd69_capxy2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Capital Expenditures (Quarterly) 资本开支",
+      "coverage": 0.4197,
+      "alpha_count": 2
+    },
+    "fnd69_dltry2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Long-Term Debt - Reduction (Quarterly) 长期债务偿还",
+      "coverage": 0.393,
+      "alpha_count": 1
+    },
+    "fnd69_q2ycktsrp": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Purchase of Common & Preferred Stock (Quarterly) 股票回购",
+      "coverage": 0.3897,
+      "alpha_count": 3
+    },
+    "fnd69_q2yfcnao": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Operating Activities - Net Cash Flow (Quarterly) 经营性净现金流",
+      "coverage": 0.4333,
+      "alpha_count": 4
+    },
+    "fnd69_q2yktss": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Sale of Common & Preferred Stock (Quarterly) 股票增发",
+      "coverage": 0.3883,
+      "alpha_count": 4
+    },
+    "fnd69_q2ysitld": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Long-Term Debt - Issuance (Quarterly) 长期债务发行",
+      "coverage": 0.3933,
+      "alpha_count": 1
+    },
+    "fnd69_q2yvd": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Cash Dividends (Cash Flow) (Quarterly) 现金分红",
+      "coverage": 0.401,
+      "alpha_count": 1
+    },
+    "fnd69_qta": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Assets - Total (Quarterly) 总资产(密度1.0)",
+      "coverage": 1.0,
+      "alpha_count": 7
+    },
+    "fnd69_ta": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Assets - Total (Quarterly) 总资产(密度0.511)",
+      "coverage": 0.511,
+      "alpha_count": 2
+    }
+  },
+  "items": [
+    {
+      "expression": "subtract(group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry), 0.5)",
+      "counterparty": "在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方",
+      "optimize_reason": "股票净发行（增发减回购）除以总资产 = 净股权融资强度。Loughran-Ritter / Pontiff-Woodgate 净股权发行异象：高净发行公司随后收益走低，做空净发行最高一档。abs 施加在两腿内部，净额符号完整保留且对符号约定免疫。 【本槽映射】group_rank 后减去 0.5 强制去中枢，把 [0,1] 序数平移为 [-0.5,+0.5] 对称双向暴露，使组合产生真实的空头腿。"
+    },
+    {
+      "expression": "group_zscore(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry)",
+      "counterparty": "在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方",
+      "optimize_reason": "股票净发行（增发减回购）除以总资产 = 净股权融资强度。Loughran-Ritter / Pontiff-Woodgate 净股权发行异象：高净发行公司随后收益走低，做空净发行最高一档。abs 施加在两腿内部，净额符号完整保留且对符号约定免疫。 【本槽映射】group_zscore 在行业内做标准化，天然零均值并保留尾部幅度信息，是另一种去中枢双向映射。"
+    },
+    {
+      "expression": "subtract(group_rank(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry), 0.5)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "optimize_reason": "自由现金流（经营性净现金流减资本开支）除以总资产 = 单位资产的现金创造效率。高生产率对应真实盈利能力，配置盘低估其持续性。 【本槽映射】group_rank 后减去 0.5 强制去中枢，把 [0,1] 序数平移为 [-0.5,+0.5] 对称双向暴露，使组合产生真实的空头腿。"
+    },
+    {
+      "expression": "group_zscore(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "optimize_reason": "自由现金流（经营性净现金流减资本开支）除以总资产 = 单位资产的现金创造效率。高生产率对应真实盈利能力，配置盘低估其持续性。 【本槽映射】group_zscore 在行业内做标准化，天然零均值并保留尾部幅度信息，是另一种去中枢双向映射。"
+    },
+    {
+      "expression": "subtract(group_rank(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry), 0.5)",
+      "counterparty": "为资本开支扩张故事提供增发与信贷供给的投行与银行，以及产能主题资金",
+      "optimize_reason": "资本开支除以总资产 = 投资强度。Titman-Wei-Xie 投资异象：高强度资本开支后未来收益显著走低，做空投资强度最高一档。 【本槽映射】group_rank 后减去 0.5 强制去中枢，把 [0,1] 序数平移为 [-0.5,+0.5] 对称双向暴露，使组合产生真实的空头腿。"
+    },
+    {
+      "expression": "group_zscore(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry)",
+      "counterparty": "为资本开支扩张故事提供增发与信贷供给的投行与银行，以及产能主题资金",
+      "optimize_reason": "资本开支除以总资产 = 投资强度。Titman-Wei-Xie 投资异象：高强度资本开支后未来收益显著走低，做空投资强度最高一档。 【本槽映射】group_zscore 在行业内做标准化，天然零均值并保留尾部幅度信息，是另一种去中枢双向映射。"
+    },
+    {
+      "expression": "subtract(group_rank(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry), 0.5)",
+      "counterparty": "在并购扩表期有承销与佣金动机的卖方与投行",
+      "optimize_reason": "总资产同比增量除以同期均值资产 = 资产扩张率。Cooper-Gulen-Schill 资产增长异象：激进扩表公司随后被证伪并杀估值，做空扩表最快一档。 【本槽映射】group_rank 后减去 0.5 强制去中枢，把 [0,1] 序数平移为 [-0.5,+0.5] 对称双向暴露，使组合产生真实的空头腿。"
+    },
+    {
+      "expression": "group_zscore(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry)",
+      "counterparty": "在并购扩表期有承销与佣金动机的卖方与投行",
+      "optimize_reason": "总资产同比增量除以同期均值资产 = 资产扩张率。Cooper-Gulen-Schill 资产增长异象：激进扩表公司随后被证伪并杀估值，做空扩表最快一档。 【本槽映射】group_zscore 在行业内做标准化，天然零均值并保留尾部幅度信息，是另一种去中枢双向映射。"
+    }
+  ],
+  "slot_meta": [
+    {
+      "slot": 1,
+      "role": "S7_NET_EQUITY_ISSUANCE__MAP_RANK_CENTERED",
+      "expression": "subtract(group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry), 0.5)",
+      "counterparty": "在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方",
+      "mechanism": "股票净发行（增发减回购）除以总资产 = 净股权融资强度。Loughran-Ritter / Pontiff-Woodgate 净股权发行异象：高净发行公司随后收益走低，做空净发行最高一档。abs 施加在两腿内部，净额符号完整保留且对符号约定免疫。 【本槽映射】group_rank 后减去 0.5 强制去中枢，把 [0,1] 序数平移为 [-0.5,+0.5] 对称双向暴露，使组合产生真实的空头腿。",
+      "variation_source": "主核 S7_NET_EQUITY_ISSUANCE x 映射 MAP_RANK_CENTERED",
+      "hypothesis_lines": [
+        "对手盘：在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方。",
+        "摩擦（诚实披露）：两腿原始密度 38.8% / 39.0%，已 ts_backfill(252) 阶梯化，代价是最长约 250 日陈旧值；高回购与高增发并存的公司在净额口径下被抵消。",
+        "变动源：主核 S7_NET_EQUITY_ISSUANCE 的截面离散度；本槽仅用于裁定去中枢映射是否为 R1 短腿缺失的根因。"
+      ]
+    },
+    {
+      "slot": 2,
+      "role": "S7_NET_EQUITY_ISSUANCE__MAP_ZSCORE",
+      "expression": "group_zscore(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry)",
+      "counterparty": "在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方",
+      "mechanism": "股票净发行（增发减回购）除以总资产 = 净股权融资强度。Loughran-Ritter / Pontiff-Woodgate 净股权发行异象：高净发行公司随后收益走低，做空净发行最高一档。abs 施加在两腿内部，净额符号完整保留且对符号约定免疫。 【本槽映射】group_zscore 在行业内做标准化，天然零均值并保留尾部幅度信息，是另一种去中枢双向映射。",
+      "variation_source": "主核 S7_NET_EQUITY_ISSUANCE x 映射 MAP_ZSCORE",
+      "hypothesis_lines": [
+        "对手盘：在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方。",
+        "摩擦（诚实披露）：两腿原始密度 38.8% / 39.0%，已 ts_backfill(252) 阶梯化，代价是最长约 250 日陈旧值；高回购与高增发并存的公司在净额口径下被抵消。",
+        "变动源：主核 S7_NET_EQUITY_ISSUANCE 的截面离散度；本槽仅用于裁定去中枢映射是否为 R1 短腿缺失的根因。"
+      ]
+    },
+    {
+      "slot": 3,
+      "role": "S2_FCF_PRODUCTIVITY__MAP_RANK_CENTERED",
+      "expression": "subtract(group_rank(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry), 0.5)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "mechanism": "自由现金流（经营性净现金流减资本开支）除以总资产 = 单位资产的现金创造效率。高生产率对应真实盈利能力，配置盘低估其持续性。 【本槽映射】group_rank 后减去 0.5 强制去中枢，把 [0,1] 序数平移为 [-0.5,+0.5] 对称双向暴露，使组合产生真实的空头腿。",
+      "variation_source": "主核 S2_FCF_PRODUCTIVITY x 映射 MAP_RANK_CENTERED",
+      "hypothesis_lines": [
+        "对手盘：按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘。",
+        "摩擦（诚实披露）：两腿原始密度 43.3% / 42.0%，已阶梯化；abs 使本式对 capex 符号约定免疫。",
+        "变动源：主核 S2_FCF_PRODUCTIVITY 的截面离散度；本槽仅用于裁定去中枢映射是否为 R1 短腿缺失的根因。"
+      ]
+    },
+    {
+      "slot": 4,
+      "role": "S2_FCF_PRODUCTIVITY__MAP_ZSCORE",
+      "expression": "group_zscore(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "mechanism": "自由现金流（经营性净现金流减资本开支）除以总资产 = 单位资产的现金创造效率。高生产率对应真实盈利能力，配置盘低估其持续性。 【本槽映射】group_zscore 在行业内做标准化，天然零均值并保留尾部幅度信息，是另一种去中枢双向映射。",
+      "variation_source": "主核 S2_FCF_PRODUCTIVITY x 映射 MAP_ZSCORE",
+      "hypothesis_lines": [
+        "对手盘：按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘。",
+        "摩擦（诚实披露）：两腿原始密度 43.3% / 42.0%，已阶梯化；abs 使本式对 capex 符号约定免疫。",
+        "变动源：主核 S2_FCF_PRODUCTIVITY 的截面离散度；本槽仅用于裁定去中枢映射是否为 R1 短腿缺失的根因。"
+      ]
+    },
+    {
+      "slot": 5,
+      "role": "S5_CAPEX_INTENSITY__MAP_RANK_CENTERED",
+      "expression": "subtract(group_rank(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry), 0.5)",
+      "counterparty": "为资本开支扩张故事提供增发与信贷供给的投行与银行，以及产能主题资金",
+      "mechanism": "资本开支除以总资产 = 投资强度。Titman-Wei-Xie 投资异象：高强度资本开支后未来收益显著走低，做空投资强度最高一档。 【本槽映射】group_rank 后减去 0.5 强制去中枢，把 [0,1] 序数平移为 [-0.5,+0.5] 对称双向暴露，使组合产生真实的空头腿。",
+      "variation_source": "主核 S5_CAPEX_INTENSITY x 映射 MAP_RANK_CENTERED",
+      "hypothesis_lines": [
+        "对手盘：为资本开支扩张故事提供增发与信贷供给的投行与银行，以及产能主题资金。",
+        "摩擦（诚实披露）：资本开支原始密度 42%，已阶梯化；长边为最低投资档，混入无能力投资的现金紧张公司。",
+        "变动源：主核 S5_CAPEX_INTENSITY 的截面离散度；本槽仅用于裁定去中枢映射是否为 R1 短腿缺失的根因。"
+      ]
+    },
+    {
+      "slot": 6,
+      "role": "S5_CAPEX_INTENSITY__MAP_ZSCORE",
+      "expression": "group_zscore(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry)",
+      "counterparty": "为资本开支扩张故事提供增发与信贷供给的投行与银行，以及产能主题资金",
+      "mechanism": "资本开支除以总资产 = 投资强度。Titman-Wei-Xie 投资异象：高强度资本开支后未来收益显著走低，做空投资强度最高一档。 【本槽映射】group_zscore 在行业内做标准化，天然零均值并保留尾部幅度信息，是另一种去中枢双向映射。",
+      "variation_source": "主核 S5_CAPEX_INTENSITY x 映射 MAP_ZSCORE",
+      "hypothesis_lines": [
+        "对手盘：为资本开支扩张故事提供增发与信贷供给的投行与银行，以及产能主题资金。",
+        "摩擦（诚实披露）：资本开支原始密度 42%，已阶梯化；长边为最低投资档，混入无能力投资的现金紧张公司。",
+        "变动源：主核 S5_CAPEX_INTENSITY 的截面离散度；本槽仅用于裁定去中枢映射是否为 R1 短腿缺失的根因。"
+      ]
+    },
+    {
+      "slot": 7,
+      "role": "S1_ASSET_GROWTH__MAP_RANK_CENTERED",
+      "expression": "subtract(group_rank(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry), 0.5)",
+      "counterparty": "在并购扩表期有承销与佣金动机的卖方与投行",
+      "mechanism": "总资产同比增量除以同期均值资产 = 资产扩张率。Cooper-Gulen-Schill 资产增长异象：激进扩表公司随后被证伪并杀估值，做空扩表最快一档。 【本槽映射】group_rank 后减去 0.5 强制去中枢，把 [0,1] 序数平移为 [-0.5,+0.5] 对称双向暴露，使组合产生真实的空头腿。",
+      "variation_source": "主核 S1_ASSET_GROWTH x 映射 MAP_RANK_CENTERED",
+      "hypothesis_lines": [
+        "对手盘：在并购扩表期有承销与佣金动机的卖方与投行。",
+        "摩擦（诚实披露）：唯一 100% 密度字段，无需阶梯化；delay-1 下最长滞后约 15 个月。",
+        "变动源：主核 S1_ASSET_GROWTH 的截面离散度；本槽仅用于裁定去中枢映射是否为 R1 短腿缺失的根因。"
+      ]
+    },
+    {
+      "slot": 8,
+      "role": "S1_ASSET_GROWTH__MAP_ZSCORE",
+      "expression": "group_zscore(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry)",
+      "counterparty": "在并购扩表期有承销与佣金动机的卖方与投行",
+      "mechanism": "总资产同比增量除以同期均值资产 = 资产扩张率。Cooper-Gulen-Schill 资产增长异象：激进扩表公司随后被证伪并杀估值，做空扩表最快一档。 【本槽映射】group_zscore 在行业内做标准化，天然零均值并保留尾部幅度信息，是另一种去中枢双向映射。",
+      "variation_source": "主核 S1_ASSET_GROWTH x 映射 MAP_ZSCORE",
+      "hypothesis_lines": [
+        "对手盘：在并购扩表期有承销与佣金动机的卖方与投行。",
+        "摩擦（诚实披露）：唯一 100% 密度字段，无需阶梯化；delay-1 下最长滞后约 15 个月。",
+        "变动源：主核 S1_ASSET_GROWTH 的截面离散度；本槽仅用于裁定去中枢映射是否为 R1 短腿缺失的根因。"
+      ]
+    }
+  ]
+}

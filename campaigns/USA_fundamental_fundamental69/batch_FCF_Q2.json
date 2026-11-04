@@ -1,0 +1,361 @@
+{
+  "batch_id": "FCF_Q2_RETAINED_CASH_BALANCED_CROSS_SECTION",
+  "parent_best_alpha_id": "vR13n23z",
+  "parent_best_expression": "group_rank(ts_delta(divide(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_ta), 252), industry)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "research_hypothesis": "The strongest observed candidate measured a year-scale change in operating cash retained after dividends, scaled by assets. Its Fitness was 1.63 but its Sharpe was only 0.91, it held 114 longs and zero shorts, and it failed concentration and two-year Sharpe. This round tests the same internally retained-cash-change mechanism using centered signed peer scores, with one orthogonal definition that also nets capital expenditures. A long/short transformation may remove one-sided rank exposure but does not guarantee predictive power; all results remain empirical.",
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "PARENT_CHANGE_CENTERED_WITHIN_INDUSTRY",
+      "expression": "group_zscore(ts_delta(divide(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_ta), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_ta"
+      ],
+      "counterparty": "Investors who react to improvements in retained cash only as a positive rank and never take the other side of firms with deteriorating internal funding.",
+      "economic_mechanism": "The observed annual change in operating cash after dividends per asset is centered within industry rather than mapped to a nonnegative rank. The signed peer deviation tests whether relative improvement and deterioration in retained internal funds are both priced, while controlling broad sector business-model differences.",
+      "optimize_reason": "Preserve the empirically most promising mechanism and its annual horizon, but replace group_rank with group_zscore to address the directly observed 114:0 long-only book. This is a structural remedy for a measured exposure defect, not an assumption that centering improves returns.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_ta"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "PARENT_CHANGE_CENTERED_WITHIN_SUBINDUSTRY",
+      "expression": "group_zscore(ts_delta(divide(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_ta), 252), subindustry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_ta"
+      ],
+      "counterparty": "Investors applying broad industry comparisons that overlook the different payout and operating-cash norms of closely related businesses.",
+      "economic_mechanism": "The same annual change in retained operating cash per asset is centered among subindustry peers. A more homogeneous peer group may better distinguish a firm-specific funding shift from structural differences in payout policy and business economics.",
+      "optimize_reason": "Change only the economically relevant comparison group from broad industry to subindustry, while retaining signed centering. This tests whether tighter peer matching resolves composition noise without changing the observed retained-cash mechanism.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_ta"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "RETAINED_CASH_INNOVATION_VS_OWN_ANNUAL_BASELINE",
+      "expression": "group_zscore(ts_av_diff(divide(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_ta), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_ta"
+      ],
+      "counterparty": "Investors extrapolating an annual change level without checking whether retained-cash growth is unusual for that issuer's own history.",
+      "economic_mechanism": "The current retained-cash-per-asset change is measured against its own 252-day average before industry centering. This distinguishes an unusual internal-funding shift from a persistent issuer-specific trend and tests whether the annual innovation is more informative than the absolute change.",
+      "optimize_reason": "Test an innovation interpretation of the parent, not a new window grid: remove the issuer's one-year average and then create a signed industry-relative score. The daily repetition of quarterly inputs can make this baseline stale or tied; that is a key empirical risk.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_ta"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "SMOOTHED_RETAINED_CASH_CHANGE",
+      "expression": "group_zscore(ts_decay_linear(ts_delta(divide(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_ta), 252), 20), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_ta"
+      ],
+      "counterparty": "Short-horizon traders overreacting to a single reported annual change in cash retained after dividends.",
+      "economic_mechanism": "A 20-day outer decay smooths the completed annual retained-cash change before industry centering, testing whether gradual information absorption improves robustness while keeping a signed cross-section.",
+      "optimize_reason": "Apply smoothing only after the annual retained-cash innovation is complete, then standardize to support two-sided positions. This addresses noise and long-only mapping separately; quarterly data may make smoothing delay rather than improve the signal.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_ta"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "RETAINED_FREE_CASH_CHANGE_AFTER_CAPEX",
+      "expression": "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors who assess operating cash flow, shareholder payouts, and capital investment separately rather than measuring funds left after both commitments.",
+      "economic_mechanism": "The annual change in operating cash flow less dividends and capital expenditures tests changes in internally funded cash remaining after both payout and reinvestment. These are three cash-flow items in common underlying units; industry centering creates a signed comparison. The field accounting signs and joint coverage are not empirically verified.",
+      "optimize_reason": "Extend the strongest retained-cash change mechanism by netting capital expenditure as well as dividends, an economically coherent free-cash residual after uses of funds. The expression remains within the three-field limit and avoids a total-assets fourth field; group standardization handles cross-sectional scale only imperfectly, so residual size effects remain a limitation.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "QUARTER_SCALE_RETAINED_CASH_CHANGE",
+      "expression": "group_zscore(ts_delta(divide(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_ta), 60), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_ta"
+      ],
+      "counterparty": "Investors anchored to annual funding summaries who fail to update when a more recent quarter-scale change in retained funds occurs.",
+      "economic_mechanism": "The 60-day change in retained operating cash per asset tests a shorter fiscal-reporting transition than the parent annual change. Industry centering supports long and short positions and asks whether nearer-term financing flexibility changes are more timely, without presuming they are stronger.",
+      "optimize_reason": "Use one quarter-adjacent time scale as a predeclared economic contrast to the annual parent, not as a grid. This tests reporting-lag sensitivity. A 60-day interval may not span independent disclosures and the signal may be stale or zero between filings.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_ta"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "RELATIVE_PERSISTENCE_OF_RETAINED_CASH_CHANGE",
+      "expression": "group_zscore(ts_rank(ts_delta(divide(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_ta), 252), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_ta"
+      ],
+      "counterparty": "Investors focusing on the magnitude of a single year-over-year change rather than whether it is unusually strong or weak for the same company.",
+      "economic_mechanism": "A time-series rank locates the annual retained-cash change within the issuer's own annual history, then industry z-scoring centers peers. This tests persistent relative funding improvement versus issuer-specific norms; repeated quarterly data can cause ties and reduce effective independent observations.",
+      "optimize_reason": "Use temporal rank as a robust transformation of the parent's change magnitude and then remove the nonnegative rank's one-sided bias with group z-scoring. This retains the fundamental interpretation while explicitly addressing the observed long-only pathology.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_ta"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "UNCERTAINTY_IN_RETAINED_CASH_CHANGE",
+      "expression": "group_zscore(ts_std_dev(ts_delta(divide(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_ta), 252), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_ta"
+      ],
+      "counterparty": "Investors considering only the average retained-cash improvement and overlooking its reliability and variability.",
+      "economic_mechanism": "The annual variability of the annual retained-cash change measures uncertainty in the persistence of internally available funding. Peer centering tests whether uncertainty, rather than the direction of a single change, is the relevant priced dimension; no positive or negative return direction is assumed.",
+      "optimize_reason": "Test a risk-visibility mechanism orthogonal to the parent signal's annual change level. Center within industry to avoid long-only rank behavior. Sparse quarterly observations can make this volatility estimate a report-timing artifact, so any apparent result needs breadth and robustness scrutiny.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_ta"
+        ]
+      }
+    }
+  ],
+  "technical_audit": {
+    "passed_count": 8,
+    "total": 8,
+    "exact_fingerprint_duplicates": [],
+    "skeleton_frequency": {
+      "group_zscore(ts_delta(divide(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_ta),NUM),industry)": 2,
+      "group_zscore(ts_rank(ts_delta(divide(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_ta),NUM),NUM),industry)": 1,
+      "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry)": 1,
+      "group_zscore(ts_std_dev(ts_delta(divide(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_ta),NUM),NUM),industry)": 1,
+      "group_zscore(ts_decay_linear(ts_delta(divide(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_ta),NUM),NUM),industry)": 1,
+      "group_zscore(ts_av_diff(divide(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_ta),NUM),industry)": 1,
+      "group_zscore(ts_delta(divide(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_ta),NUM),subindustry)": 1
+    }
+  },
+  "known_fields": {
+    "fnd69_capxy2q": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Capital Expenditures (Quarterly)",
+      "coverage": 0.4197,
+      "alpha_count": 2,
+      "user_count": 2,
+      "value_domain_inferred": "unbounded_numeric",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; quarterly reporting may create stale/missing intervals",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (2 platform alphas)"
+    },
+    "fnd69_dltry2q": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Long-Term Debt - Reduction (Quarterly)",
+      "coverage": 0.393,
+      "alpha_count": 1,
+      "user_count": 1,
+      "value_domain_inferred": "unbounded_numeric; economic sign convention not verified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; quarterly reporting may create stale/missing intervals",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (1 platform alpha)"
+    },
+    "fnd69_fiscalquarter": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Fiscal quarter",
+      "coverage": 1.0,
+      "alpha_count": 5,
+      "user_count": 4,
+      "value_domain_inferred": "categorical_integer_code",
+      "observed_value_range": null,
+      "zero_inflation": "not applicable/unknown",
+      "update_frequency": "fiscal calendar (not empirically probed)",
+      "crowding": "moderate (5 platform alphas)"
+    },
+    "fnd69_fiscalyear": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Fiscal year",
+      "coverage": 1.0,
+      "alpha_count": 2,
+      "user_count": 2,
+      "value_domain_inferred": "categorical_integer_code",
+      "observed_value_range": null,
+      "zero_inflation": "not applicable/unknown",
+      "update_frequency": "fiscal calendar (not empirically probed)",
+      "crowding": "low (2 platform alphas)"
+    },
+    "fnd69_q2ycktsrp": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Purchase of Common and Preferred Stock (Quarterly)",
+      "coverage": 0.3897,
+      "alpha_count": 3,
+      "user_count": 3,
+      "value_domain_inferred": "unbounded_numeric; transaction sign convention not verified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; may be episodic",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (3 platform alphas)"
+    },
+    "fnd69_q2yfcnao": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Operating Activities - Net Cash Flow (Quarterly)",
+      "coverage": 0.4333,
+      "alpha_count": 4,
+      "user_count": 4,
+      "value_domain_inferred": "unbounded_numeric; can be positive or negative by economic meaning",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; quarterly reporting may create stale/missing intervals",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (4 platform alphas)"
+    },
+    "fnd69_q2yktss": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Sale of Common and Preferred Stock (Quarterly)",
+      "coverage": 0.3883,
+      "alpha_count": 4,
+      "user_count": 4,
+      "value_domain_inferred": "unbounded_numeric; transaction sign convention not verified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; may be episodic",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (4 platform alphas)"
+    },
+    "fnd69_q2ysitld": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Long-Term Debt - Issuance (Quarterly)",
+      "coverage": 0.3933,
+      "alpha_count": 1,
+      "user_count": 1,
+      "value_domain_inferred": "unbounded_numeric; issuance sign convention not verified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; may be episodic",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (1 platform alpha)"
+    },
+    "fnd69_q2yvd": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Cash Dividends (Cash Flow) (Quarterly)",
+      "coverage": 0.401,
+      "alpha_count": 1,
+      "user_count": 1,
+      "value_domain_inferred": "unbounded_numeric; distribution and sign convention unverified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; likely episodic but not empirically measured",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (1 platform alpha)"
+    },
+    "fnd69_qta": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Assets - Total (Quarterly)",
+      "coverage": 1.0,
+      "alpha_count": 7,
+      "user_count": 6,
+      "value_domain_inferred": "nonnegative_unbounded_scale (inferred from concept; not observed)",
+      "observed_value_range": null,
+      "zero_inflation": "unknown",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "high relative to this dataset (7 platform alphas)"
+    },
+    "fnd69_rtqf": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Fiscal quarter",
+      "coverage": 1.0,
+      "alpha_count": 12,
+      "user_count": 8,
+      "value_domain_inferred": "categorical_integer_code",
+      "observed_value_range": null,
+      "zero_inflation": "not applicable/unknown",
+      "update_frequency": "fiscal calendar (not empirically probed)",
+      "crowding": "high (12 platform alphas); excluded from signal construction"
+    },
+    "fnd69_ta": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Assets - Total (Quarterly)",
+      "coverage": 0.511,
+      "alpha_count": 2,
+      "user_count": 2,
+      "value_domain_inferred": "nonnegative_unbounded_scale (inferred from concept; not observed)",
+      "observed_value_range": null,
+      "zero_inflation": "unknown",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (2 platform alphas)"
+    }
+  }
+}

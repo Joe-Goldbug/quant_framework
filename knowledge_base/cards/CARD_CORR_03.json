@@ -1,0 +1,12 @@
+{
+  "card_id": "CARD_CORR_03",
+  "admission_type": "FALSIFICATION_PHYSICAL_WALL",
+  "verification_rounds": 17,
+  "issue": "回测指标全达标，但与 PROD 现有因子库相关性 > 0.70 无法提交",
+  "falsified_attempts": [
+    "在同一变动模式下更换同数据集的其他同质字段 (Pcorr仍高达 0.89~0.91)",
+    "通过单纯加大 decay 或截断参数 (非单调且破坏样本外梯子)"
+  ],
+  "proven_solution": "1. 改变价格变动基准: 用 subtract(close, open) 替代 ts_mean(returns, ·); 2. 引入行业中枢对冲: subtract(F, group_mean(F, industry)); 3. 引入波动率正交项: vector_neut(·, scale(ts_std_dev(VOL, 20)))；4. 铁律 A 换冷门主锚: 把分子换成 alpha_count 位于数据集后 40% 且 coverage>=0.25 的细分字段，分母换成 coverage>=0.80 的内生总量锚 (总资产/总报道数/一致预期均值)，从信号源头脱离拥挤赛道; 5. 铁律 B 保留幅度: 外层把 group_rank 换成 group_zscore(...,subindustry) 或 group_neutralize(...,subindustry)，rank 会把截面拍平成 [0,1] 均匀分布，使不同特征排名后相关性急剧升高。",
+  "theoretical_cause": "相关性由底层信号的变动来源决定，同质化基准会导致整个市场的因子陷入趋同。"
+}

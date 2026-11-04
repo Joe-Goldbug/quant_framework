@@ -1,0 +1,161 @@
+"""
+prescription_w2.py — Wave 2：母本单因子消融网格（One-Factor-at-a-Time Ablation）
+依据 Wave 1 负结果: 8/8 语调类重构全部崩盘 (最高 |Sharpe| 0.46)，证明母本 alpha 的来源是
+『关注度归一化的正向词量 LEVEL + z-score 尾部加权』，而非语调比率。
+本波逐条只动一个物理环节，锁定真正的 Sharpe 杠杆。
+"""
+
+SEED_ID = "58jYLNXn"
+
+# 母本核心（合法复刻，剥离被黑名单封杀的 hump / signed_power）
+CORE = (
+    "divide(multiply(s_log_1p(headline_positive_term_count_v2), "
+    "headline_positive_score_value_v2), add(ts_mean(headline_news_mention_count_v2, 30), 0.1))"
+)
+
+BATCH = {
+    "seed_id": SEED_ID,
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "decay": 20,
+    "neutralization": "SECTOR",
+    "truncation": 0.05,
+    "category": "news",
+    "known_fields": [
+        "headline_positive_term_count_v2",
+        "headline_negative_term_count_v2",
+        "headline_positive_score_value_v2",
+        "headline_negative_score_value_v2",
+        "headline_news_mention_count_v2",
+        "headline_sentiment_value_v2",
+    ],
+    "items": [
+        {
+            "id": 1,
+            "type": "ABL_BASE_SECTOR_ZSCORE",
+            "expression": f"group_zscore(ts_mean({CORE}, 5), sector)",
+            "optimize_reason": (
+                "消融基准：完整保留母本核心（对数正向词量 × 正向词占比 / 30 日自身新闻基准 + 5 日均值 + "
+                "sector 内 z-score），仅剥离被本地门禁封杀的 hump 与 signed_power 两层。"
+                "本条的作用是给出『去掉死区阈值与凸性放大后母本还剩多少』的干净读数："
+                "若本条 Sharpe 仍接近 1.0，说明 alpha 来自 level 信号本身与 z-score 尾部加权，"
+                "凸性只是放大器；若大幅下滑，则说明母本的收益恰恰寄生在 signed_power(1.6) 的极端值押注上，"
+                "那后续所有处方都必须围绕『如何在不用黑名单算子的前提下保留尾部 conviction』展开。"
+                "它同时是本波其余 7 条的唯一对照基准，保证每一处改动都可被单因子归因。"
+            ),
+        },
+        {
+            "id": 2,
+            "type": "ABL_WINSORIZE_NOT_POWER",
+            "expression": f"group_zscore(winsorize(ts_mean({CORE}, 5), std=3), sector)",
+            "optimize_reason": (
+                "单因子替换：把母本的 signed_power(x,1.6) 凸性放大换成 winsorize(std=3) 截尾。"
+                "两者都处理尾部，但方向相反——signed_power 把最极端标的的权重进一步放大（这正是 Margin 被拖到 "
+                "6.9bps、CONCENTRATED_WEIGHT 风险高的物理原因），winsorize 则把 3 个标准差之外的极端值拉回，"
+                "保留排序信息但封顶权重。本条用来回答『究竟是凸性在贡献 Sharpe，还是在贡献垃圾风险』："
+                "若 Sharpe 守住而 Margin 上升，则凸性是纯粹的负债，可直接淘汰；若 Sharpe 崩塌，"
+                "则证明母本的收益高度依赖少数极端情绪股，需要改用分位映射（quantile/group_rank）而非截尾来保留尾部。"
+                "截尾下移到 z-score 之前，确保后续的行业标准化不被单点污染。"
+            ),
+        },
+        {
+            "id": 3,
+            "type": "HALFLIFE_EXP_DECAY10",
+            "expression": f"group_zscore(ts_decay_exp_window({CORE}, 10, factor=0.5), sector)",
+            "optimize_reason": (
+                "单因子替换（降换手主线）：把母本 ts_mean(...,5) 的等权硬窗口换成 ts_decay_exp_window(10, factor=0.5) "
+                "的指数半衰期核。硬窗口在第 5 天会把最老的一天信息整体丢弃，造成『信息悬崖』——"
+                "同一只股票在新旧信息交替时权重突跳，这是母本 21.5% 换手中最没有信息含量的一部分；"
+                "指数核让权重以 5 天半衰期连续衰减，信息平滑退场，理论上可在几乎不损失信号新鲜度的前提下"
+                "把换手压到 15% 左右，从而抬高 Margin 与 Fitness 的分子分母比。"
+                "配合 settings 层 decay=20，整条链路形成双重平滑，用来验证『换手压缩是否真的能转化为 Margin 抬升』。"
+            ),
+        },
+        {
+            "id": 4,
+            "type": "FRESHNESS_EXP_DECAY5",
+            "expression": f"group_zscore(ts_decay_exp_window({CORE}, 5, factor=0.8), sector)",
+            "optimize_reason": (
+                "单因子替换（新鲜度主线，与第 3 条构成换手-新鲜度张力对照）：同样使用指数核，但把半衰期压到 ~3 天、"
+                "保留权重因子 0.8，让信号高度贴近当日新闻流。母本实测 two_year_sharpe 高达 1.89、"
+                "而全样本仅 1.03，说明近年新闻驱动更强、老区间拖累明显——这意味着信息时效性可能是关键；"
+                "过长的 5 日等权窗口 + decay=20 的 settings 叠加，很可能把有效信号在 2014~2016 段过度钝化了。"
+                "本条用更陡的衰减测试『快信号是否能在全样本上补回 Sharpe』，代价是换手上升；"
+                "它的结果将决定 Wave 3 是走『压换手换 Margin』还是『抢新鲜度换 Sharpe』的分岔路线。"
+            ),
+        },
+        {
+            "id": 5,
+            "type": "SINK_SUBINDUSTRY",
+            "expression": f"group_zscore(ts_mean({CORE}, 5), subindustry)",
+            "optimize_reason": (
+                "单因子替换（中性化下沉主线）：母本只在 sector 层做 z-score，并从 settings 层继承 SECTOR 中性化，"
+                "两层都是粗颗粒度。行业内部的正向新闻强度基准差异极大——例如同属一个 sector 的半导体与公用事业，"
+                "新闻密度与正向词率天然不在一个量级，sector 层标准化会把这种结构性差异误当 alpha 押注，"
+                "稀释真实选股信息并使持仓向高新闻密度子行业倾斜（多头仅 111 只的另一个成因）。"
+                "本条把 z-score 下沉到 subindustry，在做市商级更细的同类同侪内比较情绪强度，"
+                "理论上能显著降低残差风险、提高风险中性化后的 Sharpe，并改善 Investability（母本仅 0.55）。"
+                "它是用户点名的『中性化下沉抬 Margin』杠杆的第一次严格单因子检验。"
+            ),
+        },
+        {
+            "id": 6,
+            "type": "SINK_INDUSTRY",
+            "expression": f"group_zscore(ts_mean({CORE}, 5), industry)",
+            "optimize_reason": (
+                "单因子替换（中性化颗粒度插值）：在第 1 条（sector）与第 5 条（subindustry）之间插入 industry 层，"
+                "构建 sector → industry → subindustry 的三点中性化曲线。这条的价值不在于其单独成绩，"
+                "而在于把『中性化颗粒度』这一连续旋钮量化：subindustry 组内样本可能过少（单组常见 5~15 只），"
+                "z-score 在小样本下方差爆炸，反而引入噪音；industry 层通常组内 20~60 只，"
+                "是统计稳健性与行业纯度之间的常见折衷点。三条并列即可判断母本的症状到底来自"
+                "『中性化太粗』还是『中性化过细导致小样本噪声』，避免把一次偶然的分数波动误判为结构性结论。"
+            ),
+        },
+        {
+            "id": 7,
+            "type": "NET_BUZZ_PER_ATTENTION",
+            "expression": (
+                "group_zscore(ts_mean(divide(subtract(multiply(s_log_1p(headline_positive_term_count_v2), "
+                "headline_positive_score_value_v2), multiply(s_log_1p(headline_negative_term_count_v2), "
+                "headline_negative_score_value_v2)), add(ts_mean(headline_news_mention_count_v2, 30), 0.1)), 5), sector)"
+            ),
+            "optimize_reason": (
+                "结构补强：母本分子只有正向证据，负向新闻完全不进入模型，等于把『被大量负面报道』的公司"
+                "与『完全没有新闻』的公司放进同一个空头篮子（这正是空头 716 只的原因）。"
+                "本条在同一量纲下引入对称的反向证据：s_log_1p(NTC)×NSV 作为负向词量强度，从正向强度中扣除，"
+                "仍整体除以 30 日新闻基线，保持 words²/articles 的量纲一致与关注度归一化不变。"
+                "这样『正面轰炸』与『负面轰炸』形成真正的多空两端，空头篮子里不再是清一色的无新闻股，"
+                "信号的信息含量与可解释性同时提升；由于结构、量纲、z-score 加权方式全部继承母本，"
+                "本条也是检验『对称化是否会牺牲母本收益』的最小改动实验。"
+            ),
+        },
+        {
+            "id": 8,
+            "type": "EVENT_HOLD_MOTHER",
+            "expression": (
+                "trade_when(greater(headline_news_mention_count_v2, 0), "
+                f"group_zscore(ts_mean({CORE}, 5), sector), -1)"
+            ),
+            "optimize_reason": (
+                "换手控制补强：母本用 hump(0.003) 在表达式末端做全局死区，对所有标的无差别钝化，"
+                "既压掉了无新闻日的数值抖动，也误杀了有真实新信息的日子。本条把降换手前移到事件层："
+                "仅有真实新闻报道（NMC>0）的标的当日才更新仓位，无新闻日维持前值且不平仓（exit=-1）。"
+                "这使调仓完全由信息到达驱动，与母本『关注度归一化情绪强度』的因果叙事完全自洽，"
+                "理论上可把换手从 21.5% 进一步压到 12%~15%，同时把每笔交易的信息含量（Margin）抬上去。"
+                "由于内核与第 1 条完全相同，二者之差即为『事件门控』这一杠杆的净效应，"
+                "是本波唯一一条直接针对 Margin 死线（6.9bps → 10bps）的处方。"
+            ),
+        },
+    ],
+}
+
+if __name__ == "__main__":
+    import json
+    import os
+
+    out = os.path.join(os.path.dirname(__file__), "batch_w2.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(BATCH, f, ensure_ascii=False, indent=2)
+    print(f"batch written -> {out} ({len(BATCH['items'])} slots)")
+    assert len(BATCH["items"]) == 8, "卡槽未装满 8 条"

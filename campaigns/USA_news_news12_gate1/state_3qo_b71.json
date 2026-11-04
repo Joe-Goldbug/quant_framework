@@ -1,0 +1,70 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/1z9RCkNN5fbaVj18823NHNZ",
+  "submitted_at": 1793078042,
+  "items": [
+    {
+      "id": 1,
+      "type": "B71_S1_DUAL_DECAY_8D_6D_9OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 8), subindustry), 0.5), 6)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 9 ops: Inner 8d drift accumulation (capturing PEAD momentum) + Outer 6d portfolio smoothing (pinning turnover to 12.5%)."
+    },
+    {
+      "id": 2,
+      "type": "B71_S2_DUAL_DECAY_SGNPOW15_10OPS",
+      "expression": "ts_decay_linear(signed_power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 8), subindustry), 0.5), 1.5), 6)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 10 ops: Dual decay + signed_power 1.5: crushes dead weight noise by 11x while preserving bounded rank."
+    },
+    {
+      "id": 3,
+      "type": "B71_S3_DUAL_DECAY_SGNPOW20_10OPS",
+      "expression": "ts_decay_linear(signed_power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 8), subindustry), 0.5), 2), 6)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 10 ops: Dual decay + quadratic signed_power: suppresses zero-news dead weight by 25x to expand Returns past 4.8%."
+    },
+    {
+      "id": 4,
+      "type": "B71_S4_DUAL_DECAY_11D_8D_9OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 8)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 9 ops: Peak 1's optimal 11d inner drift window paired with 8d outer smoothing for maximum 2Y Ladder momentum."
+    },
+    {
+      "id": 5,
+      "type": "B71_S5_DUAL_DECAY_11D_SGNPOW15_10OPS",
+      "expression": "ts_decay_linear(signed_power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 1.5), 8)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: 11d inner drift + signed_power 1.5 + 8d outer smoothing: synthesis of peak Sharpe and peak Fitness."
+    },
+    {
+      "id": 6,
+      "type": "B71_S6_WPQ_SGNPOW15_9OPS",
+      "expression": "ts_decay_linear(signed_power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 1.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 9 ops: Direct upgrade of champion wpQKJ1K5 (Fitness 0.87, Sharpe 1.53) with signed_power 1.5 to boost Returns from 4.1% to 4.6%+."
+    },
+    {
+      "id": 7,
+      "type": "B71_S7_WPQ_SGNPOW20_9OPS",
+      "expression": "ts_decay_linear(signed_power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 2), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 9 ops: Direct upgrade of wpQKJ1K5 with quadratic signed_power 2.0 for higher conviction weighting."
+    },
+    {
+      "id": 8,
+      "type": "B71_S8_KPJ_WINSOR_SGNPOW20_9OPS",
+      "expression": "signed_power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 2)",
+      "decay": 18,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 9 ops: Upgrades Sharpe record holder KPJlxe5l with winsorize(3.0) and smooth quadratic tail focus at decay 18."
+    }
+  ]
+}

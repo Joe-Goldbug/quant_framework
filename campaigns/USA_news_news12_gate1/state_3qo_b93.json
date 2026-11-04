@@ -1,0 +1,79 @@
+{
+  "locations": [
+    "https://api.worldquantbrain.com/simulations/3DYkS3cPL568bqWCaaJlIFf",
+    "https://api.worldquantbrain.com/simulations/42TA5P6OF4G0ccNHgyytwjA",
+    "https://api.worldquantbrain.com/simulations/2KnraTgqx4lSa62ZPgzRYZ",
+    "https://api.worldquantbrain.com/simulations/FIYwO5GU5ajcaYOmqvV3Hh",
+    "https://api.worldquantbrain.com/simulations/3yZWvBgzF4AkbVEhzejCtsn",
+    "https://api.worldquantbrain.com/simulations/flT6c1oQ5irbPEdDSUj7V4",
+    "https://api.worldquantbrain.com/simulations/4500h044XCaWRA2DeL2Dt",
+    "https://api.worldquantbrain.com/simulations/2asJ4facN4JqbRxKTdQ30j1"
+  ],
+  "submitted_at": 1793146660,
+  "items": [
+    {
+      "id": 1,
+      "type": "B93_S1_P0OA_TRUNC045",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.045,
+      "optimize_reason": "Slot 1: 10 ops: P0oa0NKq (Fit 0.97 record) with truncation expanded to 0.045. Releases top-conviction catalyst stock weights to capture the remaining +0.2% return needed to cross Fitness 1.00."
+    },
+    {
+      "id": 2,
+      "type": "B93_S2_P0OA_TRUNC050",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.05,
+      "optimize_reason": "Slot 2: 10 ops: P0oa0NKq with 5.0% single-stock truncation cap. Gives maximum alpha elasticity during high-conviction earnings/news drift, targeting Returns >= 4.55%."
+    },
+    {
+      "id": 3,
+      "type": "B93_S3_P0OA_OUT9_TRUNC040",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 5), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.04,
+      "optimize_reason": "Slot 3: 10 ops: Outer 9d decay on P0oa0NKq. Shortens outer smoothing lag by 1 day to boost Returns toward 4.45%~4.50% while Decay 13 maintains Turnover <= 12.8%."
+    },
+    {
+      "id": 4,
+      "type": "B93_S4_P0OA_OUT9_TRUNC045",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 5), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.045,
+      "optimize_reason": "Slot 4: 10 ops: Outer 9d decay + Truncation 0.045 synergy. Faster reaction to fresh catalysts combined with 4.5% allocation cap."
+    },
+    {
+      "id": 5,
+      "type": "B93_S5_P0OA_D12_TRUNC040",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 12,
+      "truncation": 0.04,
+      "optimize_reason": "Slot 5: 10 ops: Decay 12 on P0oa0NKq. Tests if raw Sharpe expands from 1.65 to >= 1.68 under standard decay 12."
+    },
+    {
+      "id": 6,
+      "type": "B93_S6_INDUSTRY_PWR5_TRUNC040",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 5), industry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "optimize_reason": "Slot 6: 10 ops: Industry neutralization + Convexity 5 + Trunc 0.040. Fuses the 10/10 years positive industry architecture with Convexity 5 to eliminate 2017 short-squeeze while expanding returns."
+    },
+    {
+      "id": 7,
+      "type": "B93_S7_INDUSTRY_PWR5_TRUNC045",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 11), subindustry), 0.5), 5), industry), 10)",
+      "decay": 13,
+      "truncation": 0.045,
+      "optimize_reason": "Slot 7: 10 ops: Industry neutralization + Trunc 0.045. Broad de-meaning removes micro-bucket distortion, pairing with 4.5% truncation for maximal returns."
+    },
+    {
+      "id": 8,
+      "type": "B93_S8_P0OA_IN10_TRUNC040",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "optimize_reason": "Slot 8: 10 ops: Inner 10-day decay. Exactly aligns with the 10-day forward horizon of prob_rank_bin1_10d_img_news, eliminating 1 day of inner accumulation lag."
+    }
+  ]
+}

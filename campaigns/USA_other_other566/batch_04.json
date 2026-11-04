@@ -1,0 +1,79 @@
+{
+  "batch": 4,
+  "family": "cross_model_disagreement_relative_value",
+  "hypothesis": "模型间分歧的相对价值: 当两个信息集结论相反时必有一方信息滞后。先验: 订单簿深度 (L5>L3>L2) 权威性高于技术指标模型。以深减浅交易「浅模型相对过度乐观」的修正, 对市场整体方向免疫并把权重集中在分歧最大的个股。组内跨五种分歧对以检验「信息深度单调性」是否成立 (若成立则机制可信, 若反转则说明收益来自久期差异)。",
+  "items": [
+    {
+      "id": "b4_d1",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_ret, 60), ts_zscore(oth566_r20marsi_ret, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_r20marsi_ret"
+      ]
+    },
+    {
+      "id": "b4_d1w",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_ret, 60), ts_zscore(oth566_r20marsi_ret, 60)), 52), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_r20marsi_ret"
+      ]
+    },
+    {
+      "id": "b4_d2",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l5r20_label, 60), ts_zscore(oth566_l3r20_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l5r20_label",
+        "oth566_l3r20_label"
+      ]
+    },
+    {
+      "id": "b4_d3",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l3r20_label, 60), ts_zscore(oth566_l2r20_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r20_label",
+        "oth566_l2r20_label"
+      ]
+    },
+    {
+      "id": "b4_d4",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_multil3_label, 60), ts_zscore(oth566_multil2_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_multil3_label",
+        "oth566_multil2_label"
+      ]
+    },
+    {
+      "id": "b4_d5",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_5, 60), ts_zscore(oth566_l5r20gasfculr_label_5, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_label_5",
+        "oth566_l5r20gasfculr_label_5"
+      ]
+    },
+    {
+      "id": "b4_d6",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l3r20gasfmulti_label, 60), ts_zscore(oth566_l3r20gasf_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r20gasfmulti_label",
+        "oth566_l3r20gasf_label"
+      ]
+    },
+    {
+      "id": "b4_d7",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l2r5res_label, 60), ts_zscore(oth566_l2r5_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l2r5res_label",
+        "oth566_l2r5_label"
+      ]
+    }
+  ]
+}

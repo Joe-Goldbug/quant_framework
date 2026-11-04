@@ -1,0 +1,10 @@
+{
+  "card_id": "CARD_COLLIN_02",
+  "tag": "cluster_collinearity",
+  "domain": "decorrelation",
+  "title": "同簇共线性与 Cluster 降维处方",
+  "one_line": "同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta",
+  "symptom": "is.checks.cluster_sharpe < 1.58 或与已有生产库严重撞车 (ProdCorr >= 0.70)",
+  "authorized_operators": ["SUBSTITUTE_LOW_ALPHA_COUNT_FIELD", "ts_delta", "quantile_spread_subtract"],
+  "prescription_recipe": "1. 严禁只修改滑动窗口大小！2. 从 fields_kb.json 中查询 alpha_count <= 3 的冷门同类字段做 1:1 结构替换；3. 使用 ts_delta(F, 5) 捕捉二阶加速度变动源。"
+}

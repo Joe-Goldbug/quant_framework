@@ -1,0 +1,350 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL10M",
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "signals": [
+    {
+      "id": "GLB23A01",
+      "cluster_ref": "应计—现金实现背离（盈余质量）",
+      "field_semantics_mapping": "inas 是间接法下净利润到经营现金的全部调整项合计，等同于应计项目的科目化总额；eltq 是账面总权益，作为内生规模锚把绝对金额转成相对强度。二者组合即『每单位资本的应计强度』，无需引入任何外部市值或量价字段。",
+      "economic_mechanism": "应计强度越高，意味着当期利润中靠会计估计（应收、存货、摊销政策）而非现金实现的部分越多。投资者存在系统性『功能固着』偏误，倾向把报表净利润当作可分配现金流定价；当应计最终反转（应收核销、存货减值）时盈利预期被下修，股价回吐。故应计强度与未来收益负相关（应计异象）。",
+      "expression": "divide(fnd23_intfvalld1_inas, fnd23_intfvmfm2_eltq)",
+      "fields_used": [
+        "fnd23_intfvalld1_inas",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A02",
+      "cluster_ref": "应计—现金实现背离（盈余质量）",
+      "field_semantics_mapping": "inas 为应计调整合计（分子端流量），xbin 为税后归母净利，rltr 为营业收入。以 rltr 作共同分母做『相对基准偏离差』，把应计与净利都转成每单位收入的含量，剥离企业规模与收入体量，只留下应计相对于真实盈利的占比。",
+      "economic_mechanism": "若每单位收入的应计调整显著高于每单位收入的净利润，说明利润几乎全部由非现金项目构成，现金创造能力与账面盈利严重脱节。这类公司在信用收缩或审计趋严时最先暴露，随后出现盈利下修与估值双杀。相对基准偏离差结构直接度量这种脱节幅度，预期收益方向为负。",
+      "expression": "subtract(divide(fnd23_intfvalld1_inas, fnd23_intfvm_rltr), divide(fnd23_intfvmalld1_xbin, fnd23_intfvm_rltr))",
+      "fields_used": [
+        "fnd23_intfvalld1_inas",
+        "fnd23_intfvmalld1_xbin",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A03",
+      "cluster_ref": "应计—现金实现背离（盈余质量）",
+      "field_semantics_mapping": "inas/eltq 是应计强度，xbin/eltq 是净资产收益率。二者相乘不是数学拼凑，而是『高盈利 + 高应计』这一最危险组合的交互项：只有在盈利能力本身很高时，应计才具备足够的『伪装价值』去误导定价。",
+      "economic_mechanism": "高 ROE 公司天然获得估值溢价与分析师信任，管理层因此更有动机通过应计把未来利润前置到当期。当高盈利与高应计同时出现，市场对利润质量的折价最不充分，反转时的下修幅度也最大。该交互项把『盈利水平』作为应计异象的放大系数，预期收益方向为负。",
+      "expression": "multiply(divide(fnd23_intfvalld1_inas, fnd23_intfvmfm2_eltq), divide(fnd23_intfvmalld1_xbin, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_intfvalld1_inas",
+        "fnd23_intfvmfm2_eltq",
+        "fnd23_intfvmalld1_xbin"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A04",
+      "cluster_ref": "合并报表层级摩擦（正常化税前 vs 归母税后）",
+      "field_semantics_mapping": "itpv 是正常化税前利润（剔除一次性项目后的税前口径），xbin 是最终归属普通股的税后净利。二者之差就是『从正常化税前到归母税后』这条合并链条上的全部损耗；以 itpv 自身为分母，得到损耗率而非损耗金额。",
+      "economic_mechanism": "损耗率异常高的公司，其账面盈利能力在到达股东手里之前已被税负、少数股东与优先股层层切走。市场习惯用税前或 EBIT 类指标做横向估值比较，系统性高估这类公司的股东可得现金流。当少数股东权益占比上升或税率优惠到期，损耗率进一步恶化，估值向下修正。预期收益方向为负。",
+      "expression": "divide(subtract(fnd23_intfvalld1_itpv, fnd23_intfvmalld1_xbin), fnd23_intfvalld1_itpv)",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvmalld1_xbin"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A05",
+      "cluster_ref": "合并报表层级摩擦（正常化税前 vs 归母税后）",
+      "field_semantics_mapping": "earnings_from_subsidiaries 是来自子公司/联营的收益贡献，xbin 是归母税后净利。以两者之和为分母，构造『子公司收益占合并利润池的比重』，避免直接相除时因分母过小产生极端值。",
+      "economic_mechanism": "利润主要来自子公司而非母体经营的公司，其现金流上翻受少数股东分红政策、外汇管制与当地税制约束，母公司实际可支配性差；同时子公司层面的经营恶化在合并报表上存在披露时滞。占比越高，集团折价与信息不对称折价越重。预期收益方向为负。",
+      "expression": "divide(earnings_from_subsidiaries, add(fnd23_intfvmalld1_xbin, earnings_from_subsidiaries))",
+      "fields_used": [
+        "earnings_from_subsidiaries",
+        "fnd23_intfvmalld1_xbin"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A06",
+      "cluster_ref": "非经营损益与一次性项目侵蚀",
+      "field_semantics_mapping": "tnon 为非经营收支净额，tnos 为其他净收益，rltr 为营业收入。两者同以营收为分母做相对基准偏离，比较『非经营类收益』与『其他类收益』在收入尺度上的相对厚度，属于同一利润表层级内的横向剪刀差。",
+      "economic_mechanism": "非经营收益（资产处置、汇兑、投资收益）与其他净收益都不具备持续性，却同等计入当期净利润并推高表观 ROE。当这类收益相对收入的厚度明显超过其他收益项时，说明利润结构正漂向不可持续端，而卖方模型往往直接外推当期净利。随基数效应显现，盈利增速回落，预期收益方向为负。",
+      "expression": "subtract(divide(fnd23_intfvmalld1_tnon, fnd23_intfvm_rltr), divide(fnd23_intfvm_tnos, fnd23_intfvm_rltr))",
+      "fields_used": [
+        "fnd23_intfvmalld1_tnon",
+        "fnd23_intfvm_rltr",
+        "fnd23_intfvm_tnos"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A07",
+      "cluster_ref": "无形化资产结构与资本密度",
+      "field_semantics_mapping": "blsm_tnia 为无形资产净额（扣除摊销与减值后的账面值），eltq 为账面总权益。以权益为内生规模锚，得到『无形化强度』，即每单位股东资本对应的不可抵押资产。",
+      "economic_mechanism": "无形资产在清算与信用紧缩情境下几乎不产生回收价值，且账面值高度依赖管理层减值判断。无形化强度高的公司在融资条件收紧时缺乏抵押缓冲，被迫以股权或高息债融资，摊薄原有股东；减值测试一旦触发即为一次性巨额冲击。预期收益方向为负（短期动量上可能反向，需实证检验极性）。",
+      "expression": "divide(fnd23_blsm_tnia, fnd23_intfvmfm2_eltq)",
+      "fields_used": [
+        "fnd23_blsm_tnia",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A08",
+      "cluster_ref": "无形化资产结构与资本密度",
+      "field_semantics_mapping": "ctpa 为固定资产毛额（实体资本密度），blsm_tnia 为无形净额，eltq 为权益锚。二者同以权益归一后作差，直接比较『实体资本』与『无形资本』在同一股东资本尺度上的相对厚度，是资产结构的纯度度量。",
+      "economic_mechanism": "重资产 vs 轻资产的相对结构决定企业对宏观需求冲击的传导路径：重资产高固定成本企业在需求下行时经营杠杆放大亏损，但产能重置成本提供估值底；轻资产企业下行时毛利压缩更快但无折旧包袱。当实体资本相对无形的厚度显著偏离行业常态时，市场对其经营杠杆属性的定价出现错配，预期收益方向取决于偏离符号，需实证确认极性。",
+      "expression": "subtract(divide(fnd23_intfvalld1_ctpa, fnd23_intfvmfm2_eltq), divide(fnd23_blsm_tnia, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_intfvalld1_ctpa",
+        "fnd23_intfvmfm2_eltq",
+        "fnd23_blsm_tnia"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A09",
+      "cluster_ref": "无形化资产结构与资本密度",
+      "field_semantics_mapping": "blsm_tnia/ctpa 为无形相对固定资产的替代率（资产结构），xbin/eltq 为净资产收益率（资本回报）。相乘得到『资产无形化 × 资本回报』的交互：同样的 ROE，由无形驱动与由产能驱动，其可持续性与风险含义完全不同。",
+      "economic_mechanism": "由无形资产驱动的高 ROE 具有规模报酬递增特征，理论上应享有更高估值；但市场对无形资产的折旧速度与竞争壁垒衰减估计不足，一旦技术路线切换，高 ROE 会以断崖方式回归。该交互项刻画『高回报 + 高无形依赖』这一脆弱组合，是成长股估值崩塌的前置信号，预期收益方向为负。",
+      "expression": "multiply(divide(fnd23_blsm_tnia, fnd23_intfvalld1_ctpa), divide(fnd23_intfvmalld1_xbin, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_blsm_tnia",
+        "fnd23_intfvalld1_ctpa",
+        "fnd23_intfvmalld1_xbin",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A10",
+      "cluster_ref": "债务期限结构与再融资悬崖",
+      "field_semantics_mapping": "dtsl 为应付票据与短期债务，ltll 为长期其他负债。以二者之和为分母构造『短期债务占全部债务性负债的比重』，避免分母趋零的数值爆炸，同时保留期限结构的纯粹含义。",
+      "economic_mechanism": "短债占比高意味着企业必须在十二个月内反复进入信贷市场滚动融资。当基准利率上行或银行风险偏好收缩时，这类企业被迫接受更高成本或直接面临偿付压力，形成再融资悬崖。市场对期限结构的定价存在滞后，因为它在平静期完全不体现为成本。预期收益方向为负。",
+      "expression": "divide(fnd23_blsm_dtsl, add(fnd23_blsm_ltll, fnd23_blsm_dtsl))",
+      "fields_used": [
+        "fnd23_blsm_dtsl",
+        "fnd23_blsm_ltll"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A11",
+      "cluster_ref": "债务期限结构与再融资悬崖",
+      "field_semantics_mapping": "3dls 为标准化后第 3 年到期金额，2dls 为第 9 年到期金额（标准化到期阶梯的两端），ltll 为长期其他负债。用到期阶梯的『前倾度』（近端减远端）除以长期负债总额，得到期限结构的形状而非绝对规模。",
+      "economic_mechanism": "到期阶梯前倾（近端到期远多于远端）说明债务墙集中在未来三年，企业缺乏长久期低成本资金。这种结构在信用利差走阔时触发被动去杠杆与资产贱卖，而报表当期并不反映任何成本。阶梯后倾则意味着久期风险已被锁定。预期收益方向为负（前倾为负向信号）。",
+      "expression": "divide(subtract(fnd23_blsm_3dls, fnd23_intfvalld1_2dls), fnd23_blsm_ltll)",
+      "fields_used": [
+        "fnd23_blsm_3dls",
+        "fnd23_intfvalld1_2dls",
+        "fnd23_blsm_ltll"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A12",
+      "cluster_ref": "债务期限结构与再融资悬崖",
+      "field_semantics_mapping": "dtsl 为短期票据债务，short_term_loans_drawn 为已提取短期借款，short_term_bank_borrowings 为银行短期借款。三者合计后扣除银行渠道部分，得到『非银行短期融资』规模，再以营业收入归一，衡量对非银渠道的依赖强度。",
+      "economic_mechanism": "依赖商业票据、供应链金融等非银行短期渠道融资的企业，其资金可得性与货币市场流动性高度绑定，在流动性冲击中首先被切断；相比之下银行授信具有关系型缓冲。非银短融占收入比重越高，流动性 Beta 越大，在紧缩阶段被系统性抛售。预期收益方向为负。",
+      "expression": "divide(subtract(add(fnd23_blsm_dtsl, short_term_loans_drawn), short_term_bank_borrowings), fnd23_intfvm_rltr)",
+      "fields_used": [
+        "fnd23_blsm_dtsl",
+        "short_term_loans_drawn",
+        "short_term_bank_borrowings",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A13",
+      "cluster_ref": "股东回报与资本投入错配",
+      "field_semantics_mapping": "retained_earnings_5 为历史留存收益（内生积累），cipq 为股东实缴资本（外生投入），eltq 为账面权益锚。二者作差再以权益归一，得到『内生资本相对外生资本的净厚度』，是资本自给率的直接度量。",
+      "economic_mechanism": "内生积累显著超过外生投入的公司，说明其历史盈利足以支撑扩张，具备自我造血能力，对股权融资依赖低、摊薄风险小；反之则长期依赖向股东要钱，存在持续的股权供给压力。市场对『反复增发』的稀释效应定价不足，尤其在成长叙事掩盖下。预期收益方向为正（内生占比高为正向）。",
+      "expression": "divide(subtract(retained_earnings_5, fnd23_intfvm_cipq), fnd23_intfvmfm2_eltq)",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvm_cipq",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A14",
+      "cluster_ref": "股东回报与资本投入错配",
+      "field_semantics_mapping": "cpdf 为已付普通股现金股利，retained_earnings_5 为留存收益。以两者之和为分母构造『股利占可分配利润池的比重』，即派息强度，避免留存收益接近零时的分母爆炸。",
+      "economic_mechanism": "派息强度是管理层对盈利可持续性私有信息的可信信号：只有对未来现金流有信心才会把现金交出去。高派息率公司在盈利下滑时面临削减股利的声誉成本，因此更倾向维持，形成下行缓冲；低派息高留存的公司若缺乏高回报项目，留存现金易被低效使用或用于护城河外的并购。预期收益方向为正（高派息为正向）。",
+      "expression": "divide(fnd23_intfvalld1_cpdf, add(retained_earnings_5, fnd23_intfvalld1_cpdf))",
+      "fields_used": [
+        "fnd23_intfvalld1_cpdf",
+        "retained_earnings_5"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A15",
+      "cluster_ref": "股东回报与资本投入错配",
+      "field_semantics_mapping": "1nstq 为库存股（回购累积），cpdf 为现金股利，eltq 为账面权益。分子为『回购减分红』的净股东回报结构，分母用剔除库存股后的权益，使比率在回购规模很大时不失真。",
+      "economic_mechanism": "回购与分红的选择反映管理层对内在价值的判断：股价低于内在价值时回购优于分红（税负与信号双重优势），反之分红更优。净回购强度显著为正说明管理层认为自家股票被低估，且回购减少流通盘、提升每股指标；净分红强度为正则更多是成熟期缺乏再投资机会的信号。预期收益方向为正（净回购为正向）。",
+      "expression": "divide(subtract(fnd23_intfvm_1nstq, fnd23_intfvalld1_cpdf), subtract(fnd23_intfvmfm2_eltq, fnd23_intfvm_1nstq))",
+      "fields_used": [
+        "fnd23_intfvm_1nstq",
+        "fnd23_intfvalld1_cpdf",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A16",
+      "cluster_ref": "税负口径与递延税摩擦",
+      "field_semantics_mapping": "future_tax_liabilities_fund 与 future_tax_liabilities_fair_value 是同一递延税负债的基金口径与公允价值口径，二者之差是计量假设差异；ctcv 为当期税，eltq 为权益。用复合规模（当期税 + 权益）作分母，把计量差异转成相对强度。",
+      "economic_mechanism": "两套口径之间的差额扩大，意味着递延税资产的折现率、可回收性假设正在被调整，这通常是税务争议、跨境利润重分配或未来盈利预期下修的前兆。由于递延税项只在报表附注披露、不进入任何主流估值模型，市场反应存在明显滞后。预期收益方向为负（差额扩大为负向）。",
+      "expression": "divide(subtract(future_tax_liabilities_fund, future_tax_liabilities_fair_value), add(fnd23_intfvm_ctcv, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "future_tax_liabilities_fund",
+        "future_tax_liabilities_fair_value",
+        "fnd23_intfvm_ctcv",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A17",
+      "cluster_ref": "税负口径与递延税摩擦",
+      "field_semantics_mapping": "ctcv 为当期所得税，otov 为其他税项，itpv 为正常化税前利润。前两者相加除以税前利润，即为『全口径有效税率』，比单看所得税费用更能反映真实税负，因为其他税项常被分析师忽略。",
+      "economic_mechanism": "有效税率显著低于法定税率的公司，其超额利润部分来自税务筹划（转移定价、税收优惠、递延确认），这部分优势具有政策期限且易被监管追溯；有效税率异常高的公司则存在盈利质量隐患或一次性税务争议。全口径税率把被忽略的『其他税项』纳入，减少对税负的低估。预期收益方向需实证确定（两个方向均对应风险）。",
+      "expression": "divide(add(fnd23_intfvm_ctcv, fnd23_intfvalld1_otov), fnd23_intfvalld1_itpv)",
+      "fields_used": [
+        "fnd23_intfvm_ctcv",
+        "fnd23_intfvalld1_otov",
+        "fnd23_intfvalld1_itpv"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A18",
+      "cluster_ref": "利润率层级剪刀差",
+      "field_semantics_mapping": "ppgs 为毛利率，acmm 为销售费用率，mtps 为税前利润率。三个字段同为百分比量纲，可无损做层级扣减：毛利率扣除销售费用率后与税前利润率之间的残余，就是管理费用、研发与财务费用的净负担。",
+      "economic_mechanism": "毛利率高但税前利润率被费用吞噬的公司，往往处在『以销售投入换增长』的扩张期，其增长可持续性取决于单位获客成本的边际变化；一旦融资环境收紧或增长失速，费用刚性会迅速转为亏损。该残余项直接度量费用杠杆的厚度，是经营杠杆风险的先行指标。预期收益方向为负（残余负担越厚越负向）。",
+      "expression": "subtract(subtract(fnd23_intfvalld1_ppgs, fnd23_intfvalld1_acmm), fnd23_intfvm_mtps)",
+      "fields_used": [
+        "fnd23_intfvalld1_ppgs",
+        "fnd23_intfvalld1_acmm",
+        "fnd23_intfvm_mtps"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A19",
+      "cluster_ref": "利润率层级剪刀差",
+      "field_semantics_mapping": "itpv 为正常化税前利润，pbnv 为报告净经营利润，rltr 为营业收入。以『收入 + 报告净经营利润』为复合分母，衡量正常化税前利润超出报告经营利润的部分在经营基数上的厚度，即非经营项对利润的补贴强度。",
+      "economic_mechanism": "当正常化税前利润明显高于报告净经营利润时，说明主业经营并不支持当前利润，缺口由非经营项目（投资收益、资产处置、汇兑）填补。市场在看『税前利润增速』时不会拆解来源，因此这类公司的盈利预期最容易被高估，且在下一次非经营收益缺席时出现断崖式下修。预期收益方向为负。",
+      "expression": "divide(subtract(fnd23_intfvalld1_itpv, fnd23_intfvalld1_pbnv), add(fnd23_intfvm_rltr, fnd23_intfvalld1_pbnv))",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvalld1_pbnv",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "GLB23A20",
+      "cluster_ref": "非经营损益与一次性项目侵蚀",
+      "field_semantics_mapping": "rltr 为营业收入总额，rrrv 为经常性收入，ixts 为非常项目合计。从总收入中剔除经常性收入与非常项目后，残余即为一次性/非经常性收入的规模，再以总收入归一，得到『收入可持续性缺口』。",
+      "economic_mechanism": "收入中一次性成分占比高的公司，其营收增长在次年几乎必然面临基数回落；卖方模型通常按总收入线性外推，导致一致预期系统性偏高。当一次性收入来自关联交易或政策补贴时，可持续性更差且披露透明度低。该缺口越大，未来盈利预期下修概率越高，预期收益方向为负。",
+      "expression": "divide(subtract(fnd23_intfvm_rltr, add(fnd23_intfvalld1_rrrv, fnd23_intfvmalld1_ixts)), fnd23_intfvm_rltr)",
+      "fields_used": [
+        "fnd23_intfvm_rltr",
+        "fnd23_intfvalld1_rrrv",
+        "fnd23_intfvmalld1_ixts"
+      ],
+      "times": 0
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "fundamental23 是 GLB 区域的季度财务报表科目级快照（1748 字段，覆盖率中位数 72.7%，以 MATRIX 为主、季度更新）。它不是整理好的干净比率库，而是同一经济实体在多个报表口径（interim / annual / quarterly / 标准化 intfvmalld1_* 与 intfvm_* 两代科目体系）下的多份切片。因此该数据集最独特的信息摩擦不在『某科目高低』，而在于三类结构性错配：(1) 权责发生制与现金实现的错配（间接法调整项 inas 直接量化了净利润与经营现金之间的全部非现金桥接）；(2) 合并报表层级错配（正常化税前利润 itpv、归母税后净利 xbin、子公司收益 earnings_from_subsidiaries 三者之间的缺口，同时承载税负、少数股东与联营损益）；(3) 资本结构与期限结构错配（短期票据、银行借款、到期阶梯 2dls/3dls、长期其他负债构成再融资悬崖的形态）。这些错配在季报低频披露下被市场系统性定价不足，且与量价因子近乎正交，是 GLB 低换手基本面 Alpha 的天然矿脉。",
+    "economic_clusters": [
+      {
+        "cluster_name": "应计—现金实现背离（盈余质量）",
+        "fields": [
+          "fnd23_intfvalld1_inas",
+          "fnd23_intfvmalld1_xbin",
+          "fnd23_intfvm_rltr"
+        ],
+        "cluster_logic": "inas 是间接法下对净利润的全部调整项合计（折旧摊销、营运资本变动、非现金损益），本质上是『应计』这一抽象概念的直接科目化度量；xbin 是税后归母净利；rltr 是营业收入。三者组合可把应计从绝对金额转为相对盈利与相对收入的强度，剥离企业规模差异。"
+      },
+      {
+        "cluster_name": "合并报表层级摩擦（正常化税前 vs 归母税后）",
+        "fields": [
+          "fnd23_intfvalld1_itpv",
+          "fnd23_intfvmalld1_xbin",
+          "earnings_from_subsidiaries"
+        ],
+        "cluster_logic": "itpv 是正常化税前利润（剔除一次性），xbin 是最终落到普通股股东的税后净利。二者之差同时包含税负、少数股东损益与优先股股息；earnings_from_subsidiaries 单独刻画联营/子公司贡献。缺口越大，说明利润在合并链条上被层层稀释，归母含金量越低。"
+      },
+      {
+        "cluster_name": "非经营损益与一次性项目侵蚀",
+        "fields": [
+          "fnd23_intfvmalld1_tnon",
+          "fnd23_intfvm_tnos",
+          "fnd23_intfvmalld1_ixts",
+          "fnd23_intfvalld1_rrrv"
+        ],
+        "cluster_logic": "tnon 为非经营收支、tnos 为其他净收益、ixts 为非常项目合计、rrrv 为经常性收入。前三个是利润表中『非主业、非持续』的部分，rrrv 是可持续收入的直接度量。收入端剔除经常性收入后的残余，即一次性收入占比，是盈余可持续性的反向指标。"
+      },
+      {
+        "cluster_name": "无形化资产结构与资本密度",
+        "fields": [
+          "fnd23_blsm_tnia",
+          "fnd23_intfvalld1_ctpa",
+          "fnd23_intfvmfm2_eltq"
+        ],
+        "cluster_logic": "blsm_tnia 为无形净额、ctpa 为固定资产毛额、eltq 为账面总权益。无形资产不产生可抵押的清算价值，且在减值周期中弹性极大；固定资产毛额代表实体资本密度。二者相对权益的比重差，刻画企业是『轻资产知识型』还是『重资产周期型』，直接影响估值对盈利冲击的敏感度。"
+      },
+      {
+        "cluster_name": "债务期限结构与再融资悬崖",
+        "fields": [
+          "fnd23_blsm_dtsl",
+          "fnd23_blsm_ltll",
+          "fnd23_blsm_3dls",
+          "fnd23_intfvalld1_2dls",
+          "short_term_bank_borrowings",
+          "short_term_loans_drawn"
+        ],
+        "cluster_logic": "dtsl 为应付票据/短期债务、ltll 为长期其他负债、3dls/2dls 为标准化后第 3 年与第 9 年到期金额、银行借款与已提取短期借款刻画融资来源。短期占比越高、到期阶梯越前倾，企业在利率与信用周期反转时的再融资悬崖越陡，这是纯资产负债表内可观测的脆弱性。"
+      },
+      {
+        "cluster_name": "股东回报与资本投入错配",
+        "fields": [
+          "retained_earnings_5",
+          "fnd23_intfvm_cipq",
+          "fnd23_intfvm_1nstq",
+          "fnd23_intfvalld1_cpdf"
+        ],
+        "cluster_logic": "retained_earnings_5 是历史留存积累（内生资本），cipq 是股东实缴投入（外生资本），1nstq 是库存股，cpdf 是已付普通股现金股利。内生积累相对外生投入的强弱，说明企业靠自身盈利滚动扩张还是靠不断向股东要钱；回购与分红的相对规模则反映管理层对内在价值的判断。"
+      },
+      {
+        "cluster_name": "税负口径与递延税摩擦",
+        "fields": [
+          "fnd23_intfvm_ctcv",
+          "fnd23_intfvalld1_otov",
+          "future_tax_liabilities_fund",
+          "future_tax_liabilities_fair_value"
+        ],
+        "cluster_logic": "ctcv 为当期税、otov 为其他税项、future_tax_liabilities_fund 与 future_tax_liabilities_fair_value 为同一递延税负债的基金口径与公允价值口径。同一负债两套计量之间的差额，是会计估计与折现假设的暴露面；有效税率相对法定税率的偏离，则是税务筹划与跨境利润转移的痕迹。"
+      },
+      {
+        "cluster_name": "利润率层级剪刀差",
+        "fields": [
+          "fnd23_intfvalld1_ppgs",
+          "fnd23_intfvalld1_acmm",
+          "fnd23_intfvm_mtps",
+          "fnd23_intfvalld1_pbnv"
+        ],
+        "cluster_logic": "ppgs 毛利率、acmm 销售费用率、mtps 税前利润率、pbnv 报告净经营利润，四者构成从毛利到净利的逐层扣减链条。每一层的『漏损』速度不同：毛利率高但税前利润率低说明费用或财务负担吞噬；净经营利润高于正常化税前利润说明非经营项在补贴主业。"
+      }
+    ]
+  }
+}

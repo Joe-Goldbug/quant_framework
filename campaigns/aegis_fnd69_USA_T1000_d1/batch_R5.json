@@ -1,0 +1,324 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "datasets": [
+    "fundamental69",
+    "fundamental89",
+    "other466"
+  ],
+  "category": "fundamental",
+  "neutralization": "NONE",
+  "decay": 0,
+  "truncation": 0.025,
+  "max_datasets_per_expression": 2,
+  "submission_forbidden": true,
+  "known_fields": {
+    "fnd69_capxy2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Capital Expenditures (Quarterly) 资本开支",
+      "coverage": 0.4197,
+      "alpha_count": 2
+    },
+    "fnd69_dltry2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Long-Term Debt - Reduction (Quarterly) 长期债务偿还",
+      "coverage": 0.393,
+      "alpha_count": 1
+    },
+    "fnd69_q2ycktsrp": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Purchase of Common & Preferred Stock (Quarterly) 股票回购",
+      "coverage": 0.3897,
+      "alpha_count": 3
+    },
+    "fnd69_q2yfcnao": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Operating Activities - Net Cash Flow (Quarterly) 经营性净现金流",
+      "coverage": 0.4333,
+      "alpha_count": 4
+    },
+    "fnd69_q2yktss": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Sale of Common & Preferred Stock (Quarterly) 股票增发",
+      "coverage": 0.3883,
+      "alpha_count": 4
+    },
+    "fnd69_q2ysitld": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Long-Term Debt - Issuance (Quarterly) 长期债务发行",
+      "coverage": 0.3933,
+      "alpha_count": 1
+    },
+    "fnd69_q2yvd": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Cash Dividends (Cash Flow) (Quarterly) 现金分红",
+      "coverage": 0.401,
+      "alpha_count": 1
+    },
+    "fnd69_qta": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Assets - Total (Quarterly) 总资产(密度1.0)",
+      "coverage": 1.0,
+      "alpha_count": 7
+    },
+    "fnd69_ta": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Assets - Total (Quarterly) 总资产(密度0.511)",
+      "coverage": 0.511,
+      "alpha_count": 2
+    },
+    "fnd89_major_11_11": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "(净利 - 经营现金流)/总资产，Sloan 应计比率",
+      "coverage": 0.8657,
+      "alpha_count": 0
+    },
+    "fnd89_asset_51_11": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "非流动应计/总资产",
+      "coverage": 0.7583,
+      "alpha_count": 0
+    },
+    "oth466_is_revenue_q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "季度总营收",
+      "coverage": 0.9578,
+      "alpha_count": 1
+    },
+    "oth466_de_cshoq_q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "季度末普通股股本",
+      "coverage": 0.9963,
+      "alpha_count": 0
+    },
+    "oth466_bs_cash_equiv_q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "现金及等价物",
+      "coverage": 1.0,
+      "alpha_count": 0
+    },
+    "oth466_bs_assets_tot_q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "总资产",
+      "coverage": 1.0,
+      "alpha_count": 3
+    }
+  },
+  "items": [
+    {
+      "expression": "group_zscore(reverse(fnd89_major_11_11), industry)",
+      "counterparty": "按报告净利排序、不区分应计与现金成分的行情与配置盘",
+      "optimize_reason": "Sloan 应计异象的标准测度：(净利 − 经营现金流)/总资产。应计高的公司盈利含金量低、后续被市场逐步证伪，做空应计最高一档。纯 fundamental89 基准，用于衡量搭档自身信号强度。"
+    },
+    {
+      "expression": "group_zscore(reverse(fnd89_asset_51_11), industry)",
+      "counterparty": "把资本化支出与长期应计当作真实增长的成长配置盘",
+      "optimize_reason": "非流动应计/总资产：捕捉长期资产端的应计堆积（资本化、递延），相比流动应计更持久、更难反转，做空最高一档。"
+    },
+    {
+      "expression": "group_zscore(reverse(add(zscore(fnd89_major_11_11), zscore(divide(abs(ts_backfill(fnd69_q2ysitld, 252)), fnd69_qta)))), industry)",
+      "counterparty": "同时为账面利润与债务扩张定价过高的信用与股票配置盘",
+      "optimize_reason": "应计水平与长期债务发行强度叠加：既靠应计撑利润、又靠举债撑现金流的公司最脆弱，做空双高组合。两腿各自先 zscore 再相加，消除红队指出的\"零膨胀尖峰腿淹没求和\"问题。abs 使发行读数在任何符号约定下都代表发行规模。原计划的\"发行减偿还\"净额口径需要 4 个字段，超出 3 字段预算，故改为单腿发行强度。"
+    },
+    {
+      "expression": "group_zscore(reverse(subtract(zscore(fnd89_major_11_11), zscore(divide(abs(ts_backfill(fnd69_q2ycktsrp, 252)), fnd69_qta)))), industry)",
+      "counterparty": "只看报告利润、不看公司是否愿意用真金白银回购自身股票的配置盘",
+      "optimize_reason": "利润含金量缺口：应计水平减去股票回购强度。低应计且真金白银大额回购 = 盈余质量被管理层用现金背书，做多；高应计且不回购 = 账面富裕现金紧张，做空。取 abs 使回购读数在任何符号约定下都代表回购规模。"
+    },
+    {
+      "expression": "group_zscore(reverse(add(fnd89_major_11_11, divide(ts_delta(oth466_is_revenue_q, 252), ts_delay(oth466_is_revenue_q, 252)))), industry)",
+      "counterparty": "按营收增速排序、把高增长等同于高质量的成长配置盘",
+      "optimize_reason": "应计水平与营收同比增速叠加：高增长配合高应计，是增长型盈余管理最典型的特征（提前确认收入、放宽信用），做空双高一档。本槽是 fnd89 x other466 组合，交集覆盖约 0.83，远高于 fnd69 交叉的 0.40。"
+    },
+    {
+      "expression": "group_zscore(reverse(add(fnd89_major_11_11, divide(ts_delta(oth466_de_cshoq_q, 252), ts_delay(oth466_de_cshoq_q, 252)))), industry)",
+      "counterparty": "承接增发的一级市场与在高估值窗口配合增发的卖方",
+      "optimize_reason": "应计水平与股本同比扩张叠加：这是用股本而非现金流口径度量的净股权发行异象（Loughran-Ritter），比 fnd69 的现金流量表代理更直接。高应计配合股本稀释是最脆弱的一档，做空。"
+    },
+    {
+      "expression": "group_zscore(reverse(subtract(fnd89_major_11_11, divide(oth466_bs_cash_equiv_q, oth466_bs_assets_tot_q))), industry)",
+      "counterparty": "只看利润表不看资产负债表流动性的配置盘",
+      "optimize_reason": "应计水平减去现金充裕度：高应计且现金缓冲薄弱的公司，是利润虚高叠加流动性紧绷的组合，一旦融资窗口收紧即被证伪，做空。多头端是低应计且现金充裕的公司。"
+    },
+    {
+      "expression": "group_zscore(winsorize(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), oth466_is_revenue_q), std=3), industry)",
+      "counterparty": "按营收增速排序、忽视现金转化率的朴素成长配置盘",
+      "optimize_reason": "自由现金流除以季度营收：把此前\"单季流量 / 时点总资产\"的周期错配改成\"流量 / 流量\"，得到真正的现金利润率，做多最高一档。winsorize(std=3) 用于防住红队指出的\"营收接近 0 导致比值爆炸\"。"
+    }
+  ],
+  "slot_meta": [
+    {
+      "slot": 1,
+      "role": "CTRL_FND89_ACCRUAL_LEVEL",
+      "expression": "group_zscore(reverse(fnd89_major_11_11), industry)",
+      "counterparty": "按报告净利排序、不区分应计与现金成分的行情与配置盘",
+      "mechanism": "Sloan 应计异象的标准测度：(净利 − 经营现金流)/总资产。应计高的公司盈利含金量低、后续被市场逐步证伪，做空应计最高一档。纯 fundamental89 基准，用于衡量搭档自身信号强度。",
+      "extra": "覆盖率 0.8657，平台使用数 0；比率已按总资产归一，无需额外分母。fnd89 的更新频率未经验证。",
+      "datasets": [
+        "fundamental89"
+      ],
+      "variation_source": "fundamental89 | CTRL_FND89_ACCRUAL_LEVEL",
+      "hypothesis_lines": [
+        "对手盘：按报告净利排序、不区分应计与现金成分的行情与配置盘。",
+        "摩擦（诚实披露）：覆盖率 0.8657，平台使用数 0；比率已按总资产归一，无需额外分母。fnd89 的更新频率未经验证。",
+        "变动源：fundamental89 双数据集交叉，字段预算 3 个、数据集预算 2 个。"
+      ]
+    },
+    {
+      "slot": 2,
+      "role": "CTRL_FND89_NONCURRENT_ACCRUAL",
+      "expression": "group_zscore(reverse(fnd89_asset_51_11), industry)",
+      "counterparty": "把资本化支出与长期应计当作真实增长的成长配置盘",
+      "mechanism": "非流动应计/总资产：捕捉长期资产端的应计堆积（资本化、递延），相比流动应计更持久、更难反转，做空最高一档。",
+      "extra": "覆盖率 0.7583，平台使用数 0；非流动应计在正常经营中本就为正，长边可能被重资产行业的稳态公司占据。",
+      "datasets": [
+        "fundamental89"
+      ],
+      "variation_source": "fundamental89 | CTRL_FND89_NONCURRENT_ACCRUAL",
+      "hypothesis_lines": [
+        "对手盘：把资本化支出与长期应计当作真实增长的成长配置盘。",
+        "摩擦（诚实披露）：覆盖率 0.7583，平台使用数 0；非流动应计在正常经营中本就为正，长边可能被重资产行业的稳态公司占据。",
+        "变动源：fundamental89 双数据集交叉，字段预算 3 个、数据集预算 2 个。"
+      ]
+    },
+    {
+      "slot": 3,
+      "role": "X_ACCRUAL_x_DEBT_ISSUE",
+      "expression": "group_zscore(reverse(add(zscore(fnd89_major_11_11), zscore(divide(abs(ts_backfill(fnd69_q2ysitld, 252)), fnd69_qta)))), industry)",
+      "counterparty": "同时为账面利润与债务扩张定价过高的信用与股票配置盘",
+      "mechanism": "应计水平与长期债务发行强度叠加：既靠应计撑利润、又靠举债撑现金流的公司最脆弱，做空双高组合。两腿各自先 zscore 再相加，消除红队指出的\"零膨胀尖峰腿淹没求和\"问题。abs 使发行读数在任何符号约定下都代表发行规模。原计划的\"发行减偿还\"净额口径需要 4 个字段，超出 3 字段预算，故改为单腿发行强度。",
+      "extra": "fnd69 腿密度 0.3933，已 ts_backfill(252) 阶梯化；交集覆盖会被 fnd69 腿拉到约 0.40，这是本槽最大的结构性弱点；单腿口径无法区分\"借新还旧\"与\"净加杠杆\"。",
+      "datasets": [
+        "fundamental69",
+        "fundamental89"
+      ],
+      "variation_source": "fundamental69+fundamental89 | X_ACCRUAL_x_DEBT_ISSUE",
+      "hypothesis_lines": [
+        "对手盘：同时为账面利润与债务扩张定价过高的信用与股票配置盘。",
+        "摩擦（诚实披露）：fnd69 腿密度 0.3933，已 ts_backfill(252) 阶梯化；交集覆盖会被 fnd69 腿拉到约 0.40，这是本槽最大的结构性弱点；单腿口径无法区分\"借新还旧\"与\"净加杠杆\"。",
+        "变动源：fundamental69 x fundamental89 双数据集交叉，字段预算 3 个、数据集预算 2 个。"
+      ]
+    },
+    {
+      "slot": 4,
+      "role": "X_ACCRUAL_minus_BUYBACK",
+      "expression": "group_zscore(reverse(subtract(zscore(fnd89_major_11_11), zscore(divide(abs(ts_backfill(fnd69_q2ycktsrp, 252)), fnd69_qta)))), industry)",
+      "counterparty": "只看报告利润、不看公司是否愿意用真金白银回购自身股票的配置盘",
+      "mechanism": "利润含金量缺口：应计水平减去股票回购强度。低应计且真金白银大额回购 = 盈余质量被管理层用现金背书，做多；高应计且不回购 = 账面富裕现金紧张，做空。取 abs 使回购读数在任何符号约定下都代表回购规模。",
+      "extra": "回购腿密度 0.3897，已阶梯化；交集覆盖约 0.40；abs 无法区分回购与增发混记的情形。",
+      "datasets": [
+        "fundamental69",
+        "fundamental89"
+      ],
+      "variation_source": "fundamental69+fundamental89 | X_ACCRUAL_minus_BUYBACK",
+      "hypothesis_lines": [
+        "对手盘：只看报告利润、不看公司是否愿意用真金白银回购自身股票的配置盘。",
+        "摩擦（诚实披露）：回购腿密度 0.3897，已阶梯化；交集覆盖约 0.40；abs 无法区分回购与增发混记的情形。",
+        "变动源：fundamental69 x fundamental89 双数据集交叉，字段预算 3 个、数据集预算 2 个。"
+      ]
+    },
+    {
+      "slot": 5,
+      "role": "X_ACCRUAL_x_REVENUE_GROWTH",
+      "expression": "group_zscore(reverse(add(fnd89_major_11_11, divide(ts_delta(oth466_is_revenue_q, 252), ts_delay(oth466_is_revenue_q, 252)))), industry)",
+      "counterparty": "按营收增速排序、把高增长等同于高质量的成长配置盘",
+      "mechanism": "应计水平与营收同比增速叠加：高增长配合高应计，是增长型盈余管理最典型的特征（提前确认收入、放宽信用），做空双高一档。本槽是 fnd89 x other466 组合，交集覆盖约 0.83，远高于 fnd69 交叉的 0.40。",
+      "extra": "营收腿覆盖 0.9578、平台使用数 1；营收同比在并购或会计口径变更时会机械跳变；两腿尺度未做标准化（红队对 S3 的同类意见在此按覆盖优先暂不采纳）。",
+      "datasets": [
+        "fundamental89",
+        "other466"
+      ],
+      "variation_source": "fundamental89+other466 | X_ACCRUAL_x_REVENUE_GROWTH",
+      "hypothesis_lines": [
+        "对手盘：按营收增速排序、把高增长等同于高质量的成长配置盘。",
+        "摩擦（诚实披露）：营收腿覆盖 0.9578、平台使用数 1；营收同比在并购或会计口径变更时会机械跳变；两腿尺度未做标准化（红队对 S3 的同类意见在此按覆盖优先暂不采纳）。",
+        "变动源：fundamental89 x other466 双数据集交叉，字段预算 3 个、数据集预算 2 个。"
+      ]
+    },
+    {
+      "slot": 6,
+      "role": "X_ACCRUAL_x_SHARE_DILUTION",
+      "expression": "group_zscore(reverse(add(fnd89_major_11_11, divide(ts_delta(oth466_de_cshoq_q, 252), ts_delay(oth466_de_cshoq_q, 252)))), industry)",
+      "counterparty": "承接增发的一级市场与在高估值窗口配合增发的卖方",
+      "mechanism": "应计水平与股本同比扩张叠加：这是用股本而非现金流口径度量的净股权发行异象（Loughran-Ritter），比 fnd69 的现金流量表代理更直接。高应计配合股本稀释是最脆弱的一档，做空。",
+      "extra": "股本腿覆盖 0.9963、平台使用数 0；股本变动也可能来自拆股、股权激励与可转债转股，未必都是稀释性增发。",
+      "datasets": [
+        "fundamental89",
+        "other466"
+      ],
+      "variation_source": "fundamental89+other466 | X_ACCRUAL_x_SHARE_DILUTION",
+      "hypothesis_lines": [
+        "对手盘：承接增发的一级市场与在高估值窗口配合增发的卖方。",
+        "摩擦（诚实披露）：股本腿覆盖 0.9963、平台使用数 0；股本变动也可能来自拆股、股权激励与可转债转股，未必都是稀释性增发。",
+        "变动源：fundamental89 x other466 双数据集交叉，字段预算 3 个、数据集预算 2 个。"
+      ]
+    },
+    {
+      "slot": 7,
+      "role": "X_ACCRUAL_minus_CASH_BUFFER",
+      "expression": "group_zscore(reverse(subtract(fnd89_major_11_11, divide(oth466_bs_cash_equiv_q, oth466_bs_assets_tot_q))), industry)",
+      "counterparty": "只看利润表不看资产负债表流动性的配置盘",
+      "mechanism": "应计水平减去现金充裕度：高应计且现金缓冲薄弱的公司，是利润虚高叠加流动性紧绷的组合，一旦融资窗口收紧即被证伪，做空。多头端是低应计且现金充裕的公司。",
+      "extra": "两条 other466 腿覆盖均为 1.0，平台使用数 0 与 3；现金比率在金融行业语义不同（现金即存货），group_zscore(industry) 仅部分中和。",
+      "datasets": [
+        "fundamental89",
+        "other466"
+      ],
+      "variation_source": "fundamental89+other466 | X_ACCRUAL_minus_CASH_BUFFER",
+      "hypothesis_lines": [
+        "对手盘：只看利润表不看资产负债表流动性的配置盘。",
+        "摩擦（诚实披露）：两条 other466 腿覆盖均为 1.0，平台使用数 0 与 3；现金比率在金融行业语义不同（现金即存货），group_zscore(industry) 仅部分中和。",
+        "变动源：fundamental89 x other466 双数据集交叉，字段预算 3 个、数据集预算 2 个。"
+      ]
+    },
+    {
+      "slot": 8,
+      "role": "X_FCF_OVER_REVENUE",
+      "expression": "group_zscore(winsorize(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), oth466_is_revenue_q), std=3), industry)",
+      "counterparty": "按营收增速排序、忽视现金转化率的朴素成长配置盘",
+      "mechanism": "自由现金流除以季度营收：把此前\"单季流量 / 时点总资产\"的周期错配改成\"流量 / 流量\"，得到真正的现金利润率，做多最高一档。winsorize(std=3) 用于防住红队指出的\"营收接近 0 导致比值爆炸\"。",
+      "extra": "两条 fnd69 腿密度 0.4333/0.4197 且需同时有值，交集覆盖约 0.18~0.40，是全批最低；营收腿覆盖 0.9578，已去掉多余的 ts_backfill；营收为负（冲回/重述）时符号解释会翻转。",
+      "datasets": [
+        "fundamental69",
+        "other466"
+      ],
+      "variation_source": "fundamental69+other466 | X_FCF_OVER_REVENUE",
+      "hypothesis_lines": [
+        "对手盘：按营收增速排序、忽视现金转化率的朴素成长配置盘。",
+        "摩擦（诚实披露）：两条 fnd69 腿密度 0.4333/0.4197 且需同时有值，交集覆盖约 0.18~0.40，是全批最低；营收腿覆盖 0.9578，已去掉多余的 ts_backfill；营收为负（冲回/重述）时符号解释会翻转。",
+        "变动源：fundamental69 x other466 双数据集交叉，字段预算 3 个、数据集预算 2 个。"
+      ]
+    }
+  ]
+}

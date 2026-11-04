@@ -1,0 +1,79 @@
+{
+  "batch": 5,
+  "family": "term_structure_of_model_expectations",
+  "hypothesis": "模型预期的期限结构: 债券定价的预期假说是有百年实证基础的强机制, 本数据集天然提供 2/3/5/20 日前向预测, 可直接迁移到股票横截面。短端乐观而中端悲观 = 反趋势反弹的典型特征。5 组期限斜率对 + 1 组分桶粒度对 (5桶 vs 3桶) 检验「被压缩掉的分布形状信息」。所有标签先各自 ts_zscore 定心定标, 直接相减必是伪信号。",
+  "items": [
+    {
+      "id": "b5_t1",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_5, 60), ts_zscore(oth566_l5r20gasfculr_label_5, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_label_5",
+        "oth566_l5r20gasfculr_label_5"
+      ]
+    },
+    {
+      "id": "b5_t2",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_3, 60), ts_zscore(oth566_r20marsi_label_5, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_label_3",
+        "oth566_r20marsi_label_5"
+      ]
+    },
+    {
+      "id": "b5_t3",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_3, 60), ts_zscore(oth566_l5r20gasfculr_label_3, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_label_3",
+        "oth566_l5r20gasfculr_label_3"
+      ]
+    },
+    {
+      "id": "b5_t4",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_label_5, 60), ts_zscore(oth566_l5r20gasfculr_label_3, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l5r20gasfculr_label_5",
+        "oth566_l5r20gasfculr_label_3"
+      ]
+    },
+    {
+      "id": "b5_t5",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_label_2, 60), ts_zscore(oth566_r20marsi_label_3, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_label_2",
+        "oth566_r20marsi_label_3"
+      ]
+    },
+    {
+      "id": "b5_t6",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_3, 60), ts_zscore(oth566_l5r20_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_label_3",
+        "oth566_l5r20_label"
+      ]
+    },
+    {
+      "id": "b5_t7",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(twenty_bucket_return_rank_label_l5, 60), ts_zscore(twenty_bucket_return_rank_label_l3, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "twenty_bucket_return_rank_label_l5",
+        "twenty_bucket_return_rank_label_l3"
+      ]
+    },
+    {
+      "id": "b5_t8",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_multil3_label, 60), ts_zscore(oth566_l3r20_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_multil3_label",
+        "oth566_l3r20_label"
+      ]
+    }
+  ]
+}

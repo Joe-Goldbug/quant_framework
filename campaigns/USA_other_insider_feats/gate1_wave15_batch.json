@@ -1,0 +1,67 @@
+{
+  "wave": 15,
+  "seed_id": "GATE1_WAVE15",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "Value family at INDUSTRY is the new best base (Sh 0.86, Fit 0.66). Test: 1) champion window 60d-250d × volume @ INDUSTRY/SUBINDUSTRY, 2) value_all vs top5 at INDUSTRY, 3) SUBINDUSTRY neutralization (closer to SLOW where champion won), 4) 3rd field as signal enhancer not just gate.",
+  "items": [
+    {
+      "id": 1,
+      "type": "w15_value_champ",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W15-1: value_champion(60d-250d) × volume_10d @ INDUSTRY — original champion window with resonance"
+    },
+    {
+      "id": 2,
+      "type": "w15_value_champ",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_all_60d_filled),vec_avg(buy_sell_ratio_all_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W15-2: value_all_champion(60d-250d) × volume_10d @ INDUSTRY — broader base"
+    },
+    {
+      "id": 3,
+      "type": "w15_value_champ",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "W15-3: value_champion × volume @ SUBINDUSTRY with arg_max(8) — avoids fingerprint collision, finer neutral closer to SLOW"
+    },
+    {
+      "id": 4,
+      "type": "w15_value_champ",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "W15-4: baseline value_champion 60d-250d @ SUBINDUSTRY — compare to original SLOW 0.88"
+    },
+    {
+      "id": 5,
+      "type": "w15_value_20d60d",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W15-5: value 20d-60d × volume @ SUBINDUSTRY — best window at finer neutral"
+    },
+    {
+      "id": 6,
+      "type": "w15_value_20d60d",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_all_20d_filled),vec_avg(buy_sell_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W15-6: value_all 20d-60d × volume @ SUBINDUSTRY"
+    },
+    {
+      "id": 7,
+      "type": "w15_value_3rd_field",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),add(vec_avg(buy_sell_tx_count_ratio_all_60d_filled),1)),5), subindustry)",
+      "optimize_reason": "W15-7: value 20d-60d × (count_breadth+1) @ INDUSTRY — single 3rd field enhancer, 3 fields total"
+    },
+    {
+      "id": 8,
+      "type": "w15_baseline",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "W15-8: reproduce best (slot 3 W14: Sh 0.86, Fit 0.66) with arg_max(8) for fingerprint"
+    }
+  ]
+}

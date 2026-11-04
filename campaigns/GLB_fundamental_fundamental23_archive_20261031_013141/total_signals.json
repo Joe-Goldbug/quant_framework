@@ -1,0 +1,327 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL10M",
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "真实经营盈余与账面权益锚定",
+      "field_semantics_mapping": "fnd23_intfvalld1_itpv 为归一化税前利润，fnd23_intfvalld1_xbin 为净利润，两者做差剥离税项与会计扰动，fnd23_intfvmfm2_eltq 作为权益规模锚标准化消除规模异方差。",
+      "economic_mechanism": "当归一化经常性营业利润显著高于账面净利润时，表明当期存在暂时性折旧或税项拨备压制了账面盈利，市场过度悲观定价，未来将迎来均值修复做多。",
+      "expression": "divide(subtract(fnd23_intfvalld1_itpv, fnd23_intfvalld1_xbin), add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvalld1_xbin",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "真实经营盈余与账面权益锚定",
+      "field_semantics_mapping": "分别计算归一化税前 ROE 与净利润 ROE，做差衡量扣除非经营性冲击后的纯内生超额 ROE 剪刀差。",
+      "economic_mechanism": "纯经营性 ROE 相对净利润 ROE 的溢价幅度反映了主营业务盈利坚韧度，由于分析师常常低估经常性收益的持续性，形成正向定价漂移。",
+      "expression": "subtract(divide(fnd23_intfvalld1_itpv, fnd23_intfvmfm2_eltq), divide(fnd23_intfvalld1_xbin, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvalld1_xbin",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "真实经营盈余与账面权益锚定",
+      "field_semantics_mapping": "retained_earnings_5 为历年累计留存收益存量，fnd23_intfvalld1_xbin 为当期净利润增量，两者相加反映累计内生资本创造总额，除以净资产进行标准化。",
+      "economic_mechanism": "高留存收益且当期盈利稳健的公司具备深厚的资本安全边际，在 MINVOL10M 低波稳健股票池中享有极强的价值防御与溢价回报。",
+      "expression": "divide(add(retained_earnings_5, fnd23_intfvalld1_xbin), add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvalld1_xbin",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "真实经营盈余与账面权益锚定",
+      "field_semantics_mapping": "分子为归一化税前利润，分母将净资产与累计留存收益求和形成双重内生价值锚，消除不同会计折旧政策带来的单一净资产失真。",
+      "economic_mechanism": "双重权益锚定下的盈利产出能力能更稳健地识别被市场忽视的高盈利低估值价值标的。",
+      "expression": "divide(fnd23_intfvalld1_itpv, add(fnd23_intfvmfm2_eltq, retained_earnings_5))",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvmfm2_eltq",
+        "retained_earnings_5"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "现金流自主性与外部筹资依赖摩擦",
+      "field_semantics_mapping": "fnd23_intfvmalld1_cpdf 为支付的普通股现金股利，fnd23_intfvalld1_fltf 为筹资活动现金净流量，两者做差剥离借新还旧产生的伪分红能力，以权益资本标准化。",
+      "economic_mechanism": "依靠内生经营造血支付真金白银现金股利、而非通过外部增发借债输血分红的企业，具有更真实的自由现金流回报能力。",
+      "expression": "divide(subtract(fnd23_intfvmalld1_cpdf, fnd23_intfvalld1_fltf), add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "fnd23_intfvmalld1_cpdf",
+        "fnd23_intfvalld1_fltf",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "现金流自主性与外部筹资依赖摩擦",
+      "field_semantics_mapping": "以总营业收入作为销售规模基准，分别计算每单位营收对应的股利支付比例与外部筹资借贷比例，形成两者的相对剪刀差。",
+      "economic_mechanism": "单位营业收入中股利支付率高且外部筹资比率低的企业，其商业模式具备极强的现金转换效率，在价值因子体系中表现出色。",
+      "expression": "subtract(divide(fnd23_intfvmalld1_cpdf, fnd23_intfvm_rltr), divide(fnd23_intfvalld1_fltf, fnd23_intfvm_rltr))",
+      "fields_used": [
+        "fnd23_intfvmalld1_cpdf",
+        "fnd23_intfvalld1_fltf",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "现金流自主性与外部筹资依赖摩擦",
+      "field_semantics_mapping": "分子为股利派发现金流，分母结合筹资现金流入与股东权益，评估在现有融资杠杆与资产体量下的股利支付丰厚度。",
+      "economic_mechanism": "高股利回报率在外部融资约束收紧时更具确定性溢价，为投资者提供强有力的下行保护与红利收益。",
+      "expression": "divide(fnd23_intfvmalld1_cpdf, add(fnd23_intfvalld1_fltf, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_intfvmalld1_cpdf",
+        "fnd23_intfvalld1_fltf",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "现金流自主性与外部筹资依赖摩擦",
+      "field_semantics_mapping": "以营业收入标准化筹资活动现金流量，并通过 reverse 翻转极性，将过度依赖外部债务与股本增发融资的公司赋予空头惩罚。",
+      "economic_mechanism": "外部筹资现金流占营收比重过高的公司往往面临再融资风险与资本稀释，低外部融资依赖的企业价值更真实。",
+      "expression": "reverse(divide(fnd23_intfvalld1_fltf, add(fnd23_intfvm_rltr, 1)))",
+      "fields_used": [
+        "fnd23_intfvalld1_fltf",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "营运资金流动性与短期债务压力",
+      "field_semantics_mapping": "fnd23_intfvmalld1_acoa 为其他流动资产，fnd23_blsm_lcos 为其他流动负债，两者差额为营运净资产头寸，以短期借款/应付票据 fnd23_blsm_dtsl 加权标准化。",
+      "economic_mechanism": "营运资金净头寸充足且覆盖短期债务倍数高的企业，抵御宏观流动性紧缩的能力强，财务困境概率极低，理应获得估值重估。",
+      "expression": "divide(subtract(fnd23_intfvmalld1_acoa, fnd23_blsm_lcos), add(fnd23_blsm_dtsl, 1))",
+      "fields_used": [
+        "fnd23_intfvmalld1_acoa",
+        "fnd23_blsm_lcos",
+        "fnd23_blsm_dtsl"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "营运资金流动性与短期债务压力",
+      "field_semantics_mapping": "以营业总收入作为内生规模锚，分别计算流动资产与流动负债占营收的相对比例，做差构建净营运资本密度。",
+      "economic_mechanism": "相对销售规模而言拥有更健康流动资产缓冲的企业，营运效率与回款能力更优，具有更高的基本面价值回报。",
+      "expression": "subtract(divide(fnd23_intfvmalld1_acoa, fnd23_intfvm_rltr), divide(fnd23_blsm_lcos, fnd23_intfvm_rltr))",
+      "fields_used": [
+        "fnd23_intfvmalld1_acoa",
+        "fnd23_blsm_lcos",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "营运资金流动性与短期债务压力",
+      "field_semantics_mapping": "分子用流动资产扣除短期刚性借款债务，计算纯粹用于经营性周转的安全边际，分母以整体流动负债作为相对尺度。",
+      "economic_mechanism": "短期刚性负债扣除后剩余营运资产比例高的公司具有出色的清偿与再投资能力，提供稳固的价值支撑。",
+      "expression": "divide(subtract(fnd23_intfvmalld1_acoa, fnd23_blsm_dtsl), fnd23_blsm_lcos)",
+      "fields_used": [
+        "fnd23_intfvmalld1_acoa",
+        "fnd23_blsm_dtsl",
+        "fnd23_blsm_lcos"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "营运资金流动性与短期债务压力",
+      "field_semantics_mapping": "分子为短期债务，分母将流动资产与营业收入结合作为综合流动性来源，度量短期债务对总流动资源的索偿比例。",
+      "economic_mechanism": "短期债务占流动性资源比重低的企业财务弹性巨大，在经济周期波动中抗风险能力显著强于高负债同行。",
+      "expression": "divide(fnd23_blsm_dtsl, add(fnd23_intfvmalld1_acoa, fnd23_intfvm_rltr))",
+      "fields_used": [
+        "fnd23_blsm_dtsl",
+        "fnd23_intfvmalld1_acoa",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "资产折旧更新与留存再投资沉淀",
+      "field_semantics_mapping": "fnd23_icsm_m_rpds 为当期折旧摊销费用，fnd23_intfvalld1_ctpa 为固定资产原值，两者相除得到重资产平均折旧率。",
+      "economic_mechanism": "折旧摊销率较高的企业表明资产账面值正在快速出清，未来资本支出负担减轻，利润表即将迎来折旧下行红利。",
+      "expression": "divide(fnd23_icsm_m_rpds, add(fnd23_intfvalld1_ctpa, 1))",
+      "fields_used": [
+        "fnd23_icsm_m_rpds",
+        "fnd23_intfvalld1_ctpa"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "资产折旧更新与留存再投资沉淀",
+      "field_semantics_mapping": "分子用累计留存收益减去当期折旧摊销，评估内生留存资本覆盖资产折耗后的净盈余；分母以净资产与固定资产原值之和作为实体资产规模基准。",
+      "economic_mechanism": "历年留存利润深厚且能充分覆盖资产更新折旧需求的企业，具备自主维系资产扩张的造血能力，估值吸引力极高。",
+      "expression": "divide(subtract(retained_earnings_5, fnd23_icsm_m_rpds), add(fnd23_intfvmfm2_eltq, fnd23_intfvalld1_ctpa))",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_icsm_m_rpds",
+        "fnd23_intfvmfm2_eltq",
+        "fnd23_intfvalld1_ctpa"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "资产折旧更新与留存再投资沉淀",
+      "field_semantics_mapping": "将折旧率（折旧/固定资产）与留存收益率（留存收益/净资产）通过乘积进行复合交互，形成资产周转与内生资本沉淀的双重乘数。",
+      "economic_mechanism": "兼具高资产折旧速度与高留存收益储备的公司，资产质量轻盈且内部积累雄厚，是典型的优质深度价值股。",
+      "expression": "multiply(divide(fnd23_icsm_m_rpds, add(fnd23_intfvalld1_ctpa, 1)), divide(retained_earnings_5, add(fnd23_intfvmfm2_eltq, 1)))",
+      "fields_used": [
+        "fnd23_icsm_m_rpds",
+        "fnd23_intfvalld1_ctpa",
+        "retained_earnings_5",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "资产折旧更新与留存再投资沉淀",
+      "field_semantics_mapping": "累计留存收益与固定资产原值的比率，度量企业通过自身经营创造的收益在实体生产设施上的安全覆盖倍数。",
+      "economic_mechanism": "留存收益对重资产投入覆盖倍数高，说明企业资产大部分由内部利润积累购置而非杠杆负债堆砌，基本面极为扎实。",
+      "expression": "divide(retained_earnings_5, add(fnd23_intfvalld1_ctpa, 1))",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvalld1_ctpa"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "留存收益积累与外部股权稀释摩擦",
+      "field_semantics_mapping": "retained_earnings_5 为内生利润留存，fnd23_intfvm_cipq 为股本溢价公积（外部股东出资超出面值部分），两者做差除以总净资产 fnd23_intfvmfm2_eltq。",
+      "economic_mechanism": "内生利润累积显著超出外部增发溢价的企业具有强大的内生造血能力，相反若依赖外部溢价增发圈钱则会稀释老股东价值，因此内生超额比例具有明确正向预测力。",
+      "expression": "divide(subtract(retained_earnings_5, fnd23_intfvm_cipq), fnd23_intfvmfm2_eltq)",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvm_cipq",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "留存收益积累与外部股权稀释摩擦",
+      "field_semantics_mapping": "分子为留存收益与库存股（回购）之和，代表回馈股东与内生积累的总和；分母为普通股股本与资本溢价公积之和，代表外部发行股本总量。",
+      "economic_mechanism": "积极回购且利润沉淀丰厚、而外部股本发行克制理性的企业具有最优质的股东回报治理结构，长期 Value Factor 显著占优。",
+      "expression": "divide(add(retained_earnings_5, fnd23_intfvm_1nstq), add(fnd23_intfvm_cipq, fnd23_intfvalld1_smcs))",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvm_1nstq",
+        "fnd23_intfvm_cipq",
+        "fnd23_intfvalld1_smcs"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "留存收益积累与外部股权稀释摩擦",
+      "field_semantics_mapping": "左项为留存收益占总资产比例，右项为税前利润对股本公积的相对回报率，两者复合交互衡量内生资本积累与盈利造血的共振。",
+      "economic_mechanism": "高留存积累且高税前回报率的共振标的，在基本面量化筛选中能精准锁定被错误低估的行业隐形冠军。",
+      "expression": "multiply(divide(retained_earnings_5, fnd23_intfvmfm2_eltq), divide(fnd23_intfvalld1_itpv, add(fnd23_intfvm_cipq, 1)))",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvmfm2_eltq",
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvm_cipq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "留存收益积累与外部股权稀释摩擦",
+      "field_semantics_mapping": "分子用库存回购股减去股本溢价公积（代表净回购 vs 净增发力度），分母以总股本与总净资产之和作为整体资本金基准。",
+      "economic_mechanism": "净股票回购行为向市场传递管理层对公司内在价值被低估的强烈信号，在基本面价值策略中具备显著的超额 alpha 收益。",
+      "expression": "divide(subtract(fnd23_intfvm_1nstq, fnd23_intfvm_cipq), add(fnd23_intfvalld1_smcs, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_intfvm_1nstq",
+        "fnd23_intfvm_cipq",
+        "fnd23_intfvalld1_smcs",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "GLB fundamental23 涵盖全球跨市场标准化财务与资产负债表特征，主要更新频率为季度 (quarterly)。在基本面定价与价值因子 (Value Factor) 维度中，核心定价摩擦来源于三方面：其一，名义净利润容易受税收筹划、递延税款及非经常性损益扰动，而归一化税前利润更能反应资本生产力；其二，筹资现金流扩张往往掩盖了内生造血能力的不足，具备稳定股利支付且低外部筹资依赖的企业具有坚实的内在价值护城河；其三，资产负债表端的营运资产与刚性短期债务期限错配，以及留存收益与股本公积稀释的剪刀差，构成了衡量企业长期内生价值累积的关键微观经济学基础。",
+    "economic_clusters": [
+      {
+        "cluster_name": "真实经营盈余与账面权益锚定",
+        "fields": [
+          "fnd23_intfvalld1_itpv",
+          "fnd23_intfvalld1_xbin",
+          "fnd23_intfvmfm2_eltq",
+          "retained_earnings_5"
+        ],
+        "cluster_logic": "通过比较归一化税前利润与报告期净利润，剥离税率差异与非经常性干扰，并以股东总权益或留存收益作为内生规模锚，度量单位权益资本所产生的纯净内生回报。"
+      },
+      {
+        "cluster_name": "现金流自主性与外部筹资依赖摩擦",
+        "fields": [
+          "fnd23_intfvmalld1_cpdf",
+          "fnd23_intfvalld1_fltf",
+          "fnd23_intfvmfm2_eltq",
+          "fnd23_intfvm_rltr"
+        ],
+        "cluster_logic": "企业发放现金股利代表对股东的直接现金回馈，而筹资现金流入代表外部流动性借贷与稀释。两者剪刀差反映了企业内生自由现金流的充裕程度与价值安全边际。"
+      },
+      {
+        "cluster_name": "营运资金流动性与短期债务压力",
+        "fields": [
+          "fnd23_intfvmalld1_acoa",
+          "fnd23_blsm_lcos",
+          "fnd23_blsm_dtsl",
+          "fnd23_intfvm_rltr"
+        ],
+        "cluster_logic": "流动性资产与短期负债构成了营运资金缓冲垫，对比短期刚性带息借款，评估企业的短期偿债压力与流动性折价修复潜力。"
+      },
+      {
+        "cluster_name": "资产折旧更新与留存再投资沉淀",
+        "fields": [
+          "fnd23_icsm_m_rpds",
+          "fnd23_intfvalld1_ctpa",
+          "retained_earnings_5",
+          "fnd23_intfvmfm2_eltq"
+        ],
+        "cluster_logic": "折旧摊销与固定资产原值之比揭示企业设备折旧摊提进度；配合留存收益积累，识别资本支出高峰已过、折旧摊销进入收获期的低估值实体价值标的。"
+      },
+      {
+        "cluster_name": "留存收益积累与外部股权稀释摩擦",
+        "fields": [
+          "retained_earnings_5",
+          "fnd23_intfvm_cipq",
+          "fnd23_intfvalld1_smcs",
+          "fnd23_intfvm_1nstq",
+          "fnd23_intfvmfm2_eltq"
+        ],
+        "cluster_logic": "留存收益是企业内生创造并留存的复利价值，而股本与资本公积代表外部融资注入。留存收益与外部股本溢价的剪刀差能有效识别真实创造价值而非依赖增发圈钱的企业。"
+      }
+    ]
+  }
+}

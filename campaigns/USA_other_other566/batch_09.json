@@ -1,0 +1,79 @@
+{
+  "batch": 9,
+  "family": "confidence_weighted_grid_horizon",
+  "hypothesis": "置信加权网格探针: 把 B1 胜出的「标准化方向 x 行业内正信念权重」结构铺到 8 个不同字段对上, 每对都用 26/52 窗口配对, 以确认该机制是普适结构而非 R20MaRsi 个例。含 log-prob 字段 (L2R20P/L5C_P3) 的处理 — 因其水平为负, 必须经 ts_zscore 定心或 group_rank 化为正权重, 绝不可裸乘。",
+  "items": [
+    {
+      "id": "b9_g1",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_r20marsi_label_5, 60), group_rank(oth566_r20marsi_prob_5, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_label_5",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b9_g2",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_r20marsi_label_5, 60), group_rank(oth566_r20marsi_prob_5, industry)), 52), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_label_5",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b9_g3",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ]
+    },
+    {
+      "id": "b9_g4",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), 52), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ]
+    },
+    {
+      "id": "b9_g5",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l2r20_label, 60), group_rank(oth566_l2r20_prob, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l2r20_label",
+        "oth566_l2r20_prob"
+      ]
+    },
+    {
+      "id": "b9_g6",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l5r20gasfculr_label_3, 60), group_rank(oth566_l5r20gasfculr_prob_3, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l5r20gasfculr_label_3",
+        "oth566_l5r20gasfculr_prob_3"
+      ]
+    },
+    {
+      "id": "b9_g7",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(twenty_bucket_return_rank_label_l3, 60), group_rank(twenty_bucket_return_rank_confidence_l3, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "twenty_bucket_return_rank_label_l3",
+        "twenty_bucket_return_rank_confidence_l3"
+      ]
+    },
+    {
+      "id": "b9_g8",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(five_bucket_return_rank_label_l3, 60), group_rank(five_bucket_return_rank_confidence_l3, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "five_bucket_return_rank_label_l3",
+        "five_bucket_return_rank_confidence_l3"
+      ]
+    }
+  ]
+}

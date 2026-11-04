@@ -1,0 +1,67 @@
+{
+  "wave": 4,
+  "seed_id": "GATE1_WAVE4",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "真冠军(SLOW+非归一subtract)基座;广度共振(3字段)/口径/窗变体;SLOW vs CROWDING",
+  "items": [
+    {
+      "id": 1,
+      "type": "champion_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "W4-1 冠军精确复现(SLOW+group_rank+ts_arg_max5+非归一subtract) 确认0.88基线"
+    },
+    {
+      "id": 2,
+      "type": "champ_x_brd_top5",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)), vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),5), subindustry)",
+      "optimize_reason": "W4-2 冠军value动量 × top5笔数60d广度水平 置信加权共振(3字段) 广度放大价值信号"
+    },
+    {
+      "id": 3,
+      "type": "champ_x_brd_top20",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)), vec_avg(buy_sell_tx_count_ratio_top20_60d_filled)),5), subindustry)",
+      "optimize_reason": "W4-3 冠军value动量 × top20笔数60d广度水平 中间层级共振(3字段) 层级敏感性"
+    },
+    {
+      "id": 4,
+      "type": "value_all_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_all_60d_filled),vec_avg(buy_sell_ratio_all_250d_filled)),5), subindustry)",
+      "optimize_reason": "W4-4 all口径value动量 对照top5口径 检验集中度层级"
+    },
+    {
+      "id": 5,
+      "type": "champ_x_brd_all",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W4-5 冠军value动量 × all笔数60d广度水平 全口径共振(3字段) CROWDING中性化"
+    },
+    {
+      "id": 6,
+      "type": "cnt_top5_momentum",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_tx_count_ratio_top5_60d_filled),vec_avg(buy_sell_tx_count_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "W4-6 top5笔数动量单独(2字段) 广度通道独立信号 CROWDING"
+    },
+    {
+      "id": 7,
+      "type": "cnt_all_momentum",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_tx_count_ratio_all_60d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),5), subindustry)",
+      "optimize_reason": "W4-7 all笔数动量单独(2字段) 广度通道全口径 CROWDING"
+    },
+    {
+      "id": 8,
+      "type": "champ_20_250",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "W4-8 冠军窗收紧(20d-250d) 更近期基线 CROWDING"
+    }
+  ]
+}

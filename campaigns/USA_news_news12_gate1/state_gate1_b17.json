@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/7P1Qwd0Y4ip9wWy0IjnToq",
+  "submitted_at": 1792984701,
+  "items": [
+    {
+      "id": 1,
+      "type": "SEED_EXT_DEC4",
+      "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0), 4)",
+      "optimize_reason": "Seed mLYNEWjW with 4-day external linear decay. Directly smooths portfolio weights without rank erasure. Targets Turnover <= 35%, preserving high Sharpe (1.59)."
+    },
+    {
+      "id": 2,
+      "type": "SEED_EXT_DEC6",
+      "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0), 6)",
+      "optimize_reason": "Seed mLYNEWjW with 6-day external linear decay. Tapers exit smoothly over 6 days. Targets Turnover <= 20%, Margin >= 7 bps, Sharpe >= 1.50."
+    },
+    {
+      "id": 3,
+      "type": "SEED_EXT_DEC8",
+      "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0), 8)",
+      "optimize_reason": "Seed mLYNEWjW with 8-day external linear decay. Targets Turnover <= 15%, Margin >= 10 bps, Fitness >= 1.00."
+    },
+    {
+      "id": 4,
+      "type": "SEED_EXT_DEC10",
+      "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0), 10)",
+      "optimize_reason": "Seed mLYNEWjW with 10-day external linear decay. Compresses Turnover to ~11% (Fitness floor protection zone), targeting Margin >= 14 bps, Fitness >= 1.15."
+    },
+    {
+      "id": 5,
+      "type": "SEED_EXT_EXP6",
+      "expression": "ts_decay_exp_window(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0), 6, factor=0.5)",
+      "optimize_reason": "Seed mLYNEWjW with 6-day exponential decay. Retains front-loaded day 1 shock while providing continuous exponential exit. Targets Turnover <= 18%, Margin >= 9 bps."
+    },
+    {
+      "id": 6,
+      "type": "SEED_EXT_EXP8",
+      "expression": "ts_decay_exp_window(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0), 8, factor=0.5)",
+      "optimize_reason": "Seed mLYNEWjW with 8-day exponential decay. Targets Turnover <= 13%, Margin >= 12 bps, Fitness >= 1.05."
+    },
+    {
+      "id": 7,
+      "type": "DUAL_EXT_DEC6",
+      "expression": "ts_decay_linear(trade_when(less(days_from_last_change(news_ton_last), 2), reverse(rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open))), 0), 6)",
+      "optimize_reason": "Dual-Anchor confluence (open + ton) with news_ton_last event trigger and 6-day external smoothing. Targets Sharpe >= 1.60, Turnover <= 18%, Margin >= 11 bps."
+    },
+    {
+      "id": 8,
+      "type": "DUAL_EXT_DEC8",
+      "expression": "ts_decay_linear(trade_when(less(days_from_last_change(news_ton_last), 2), reverse(rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open))), 0), 8)",
+      "optimize_reason": "Dual-Anchor confluence with 8-day external linear decay. Targets Turnover <= 12%, Margin >= 15.0 bps, Fitness >= 1.10, Sharpe >= 1.58."
+    }
+  ]
+}

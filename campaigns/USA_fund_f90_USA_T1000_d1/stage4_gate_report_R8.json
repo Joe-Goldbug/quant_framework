@@ -1,0 +1,119 @@
+{
+  "slots": [
+    {
+      "id": "R8_S1_RANK_WINDOW_10",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_tnix, 252)), 10))",
+      "math_ops": 5,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R8_S2_RANK_PAID_INTEREST_W10",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_cf_cash_int_pay, 252)), 10))",
+      "math_ops": 5,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R8_S3_RANK_WINSORIZE_PAID",
+      "expression": "rank(winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_cf_cash_int_pay, 252)), 20), std=3))",
+      "math_ops": 6,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R8_S4_RANK_TRIPLE_PAID",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_cf_cash_int_pay, 252)), 20)",
+      "math_ops": 6,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R8_S5_GROUP_RANK_SUBINDUSTRY",
+      "expression": "group_rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_tnix, 252)), 20), subindustry)",
+      "math_ops": 5,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R8_S6_RANK_TRIPLE_ACCRUAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_a_tnix, 252)), 20)",
+      "math_ops": 6,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R8_S7_RANK_WINSORIZE_ACCRUAL",
+      "expression": "rank(winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_tnix, 252)), 20), std=3))",
+      "math_ops": 6,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R8_S8_RANK_LTD_SHORTBASE",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 120), ts_zscore(oth466_a_ttld, 120)), 20))",
+      "math_ops": 5,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    }
+  ],
+  "all_green": true,
+  "skeleton_freq": {
+    "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_a_tnix,NUM)),NUM))": 1,
+    "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_cf_cash_int_pay,NUM)),NUM))": 1,
+    "rank(winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_cf_cash_int_pay,NUM)),NUM),std=NUM))": 1,
+    "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_short_term_debt),NUM)),ts_zscore(oth466_cf_cash_int_pay,NUM)),NUM)": 1,
+    "group_rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_a_tnix,NUM)),NUM),subindustry)": 1,
+    "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_short_term_debt),NUM)),ts_zscore(oth466_a_tnix,NUM)),NUM)": 1,
+    "rank(winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_a_tnix,NUM)),NUM),std=NUM))": 1,
+    "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_a_ttld,NUM)),NUM))": 1
+  }
+}

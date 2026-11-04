@@ -1,0 +1,357 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL1M",
+  "category": "other",
+  "dataset_id": "other296",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "Information Ambiguity & Uncertainty",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_prob_ntr (main anchor, COLD, alpha_pct=0.3) is the per-topic probability of neutral sentiment — the primary measure of management vagueness. vec_avg reduces it to average neutral probability across all topics. oth296_wqreceivetime (normalizer, coverage=0.826) via vec_count gives the total number of topic sections, controlling for event richness so we measure per-topic ambiguity rather than total information volume.",
+      "economic_mechanism": "When management consistently speaks in neutral, noncommittal terms across earnings call topics, it creates an information vacuum. Institutional investors cannot extract directional guidance, leading to wider bid-ask spreads and reduced analyst coverage initiation. This information asymmetry is not immediately priced because most quant models focus on directional sentiment (POS/NEG). Over the following days, the lack of clear guidance leads to increased uncertainty discount and underperformance. Expected polarity: -1 (higher per-topic neutrality -> lower future returns).",
+      "expected_polarity": -1,
+      "expression": "divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1))",
+      "fields_used": [
+        "oth296_prob_ntr",
+        "oth296_wqreceivetime"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_prob_ntr",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.3,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.35,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "Information Ambiguity & Uncertainty",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_prob_ntr (main anchor, COLD) measures neutral ambiguity; oth296_prob_pos (HOT, used as reference baseline) measures positive clarity. The subtract captures the NET ambiguity — how much vagueness exceeds genuine positive signal. oth296_wqreceivetime (normalizer) via vec_count controls for event richness.",
+      "economic_mechanism": "When neutral sentiment exceeds positive sentiment (net ambiguity > 0), management is more vague than bullish. This is a subtle negative signal: they are not saying anything bad, but they are also not saying anything clearly good. Markets anchor on the absence of bad news and underprice the absence of good news. The result is a slow negative drift as analysts gradually downgrade expectations. Expected polarity: -1 (net ambiguity -> negative returns).",
+      "expected_polarity": -1,
+      "expression": "divide(subtract(vec_avg(oth296_prob_ntr), vec_avg(oth296_prob_pos)), add(vec_count(oth296_wqreceivetime), 1))",
+      "fields_used": [
+        "oth296_prob_ntr",
+        "oth296_wqreceivetime",
+        "oth296_prob_pos"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_prob_ntr",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.3,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.35,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "Information Ambiguity & Uncertainty",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_prob_ntr (main anchor, COLD) measures neutral ambiguity. oth296_confidence (WARM, state moderator) measures the NLP model's certainty in its classification. The multiply interaction captures CONFIRMED ambiguity — cases where the model is certain the sentiment is vague. oth296_wqreceivetime (normalizer) via vec_count controls for event richness.",
+      "economic_mechanism": "High neutral probability with high model confidence is the strongest ambiguity signal — the NLP model is certain management is being vague. This is qualitatively different from low-confidence neutrality (which could be classification noise). Confirmed ambiguity implies deliberate opacity, triggering institutional investor wariness. The market underprices this confirmed information void because most sentiment analysis focuses on directional signals, not certainty-weighted ambiguity. Expected polarity: -1.",
+      "expected_polarity": -1,
+      "expression": "divide(multiply(vec_avg(oth296_prob_ntr), vec_avg(oth296_confidence)), add(vec_count(oth296_wqreceivetime), 1))",
+      "fields_used": [
+        "oth296_prob_ntr",
+        "oth296_confidence",
+        "oth296_wqreceivetime"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_prob_ntr",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.3,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.35,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "Topic Richness & Disclosure Depth",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_topic_count (main anchor, COLD, alpha_pct=0.2) measures how many times each topic is mentioned within a section. vec_sum aggregates total topic mentions across all sections — the total thematic intensity. oth296_wqreceivetime (normalizer) via vec_count gives the number of sections, converting total to per-section intensity.",
+      "economic_mechanism": "Companies with rich, multi-topic earnings calls demonstrate operational breadth and management transparency. When management discusses many topics repeatedly, it signals confidence in their business narrative and willingness to address diverse investor concerns. This comprehensive disclosure reduces information asymmetry and attracts institutional coverage, leading to positive returns. Conversely, sparse topic coverage suggests narrow focus or evasion. Expected polarity: +1 (higher per-section topic intensity -> positive returns).",
+      "expected_polarity": 1,
+      "expression": "divide(vec_sum(oth296_topic_count), add(vec_count(oth296_wqreceivetime), 1))",
+      "fields_used": [
+        "oth296_topic_count",
+        "oth296_wqreceivetime"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_topic_count",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.2,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.4,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "Topic Richness & Disclosure Depth",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_topic_count (main anchor, COLD) via vec_max captures the DOMINANT topic — the single most-discussed theme. oth296_wqreceivetime (normalizer) via vec_count gives total sections. The reverse flips the signal: high single-topic dominance -> negative alpha.",
+      "economic_mechanism": "When one topic dominates the earnings call (max topic count >> others), it signals management is fixated on a particular issue — often a crisis, restructuring, or major concern. This fixation crowds out discussion of other business aspects and signals internal preoccupation. Markets recognize this pattern as a red flag but underprice it because the fixation is topic-specific and doesn't show up in aggregate sentiment scores. The reverse structure captures the negative alpha from topic concentration. Expected polarity: -1 (implicit via reverse).",
+      "expected_polarity": -1,
+      "expression": "reverse(divide(vec_max(oth296_topic_count), vec_count(oth296_wqreceivetime)))",
+      "fields_used": [
+        "oth296_topic_count",
+        "oth296_wqreceivetime"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_topic_count",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.2,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.4,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "Text Volume & Information Density",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_word_count (main anchor, COLD, alpha_pct=0.4) measures the word count per transcript section. vec_sum aggregates total words across all sections — the total disclosure volume. oth296_wqreceivetime (normalizer) via vec_count converts to per-section average, separating depth from breadth.",
+      "economic_mechanism": "Companies that provide longer, more detailed earnings call sections demonstrate transparency and thoroughness. Extensive disclosure reduces information asymmetry between management and investors, attracting analyst upgrades and institutional buying. The market underprices per-section depth because most models focus on sentiment direction, not volume. Companies with substantive, detailed disclosure tend to outperform as their transparency premium is gradually recognized. Expected polarity: +1.",
+      "expected_polarity": 1,
+      "expression": "divide(vec_sum(oth296_word_count), add(vec_count(oth296_wqreceivetime), 1))",
+      "fields_used": [
+        "oth296_word_count",
+        "oth296_wqreceivetime"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_word_count",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.4,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.3,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "Composite Information Quality",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_topic_count (main anchor, COLD, alpha_pct=0.2) is the topic mention frequency via vec_sum. oth296_confidence (WARM, quality moderator) is the average classification certainty. The multiply interaction captures CONFIDENCE-WEIGHTED topic richness. oth296_wqreceivetime (normalizer) via vec_count controls for section count.",
+      "economic_mechanism": "High-confidence, topic-rich earnings calls represent the gold standard of corporate disclosure — the NLP model is certain about sentiment classification AND management covers many topics. This combination signals authoritative, reliable information that the market can confidently price. Companies with such high-quality disclosure attract institutional trust and coverage, leading to positive returns. The interaction between confidence and richness is underpriced because most models treat classification quality and content breadth as separate dimensions. Expected polarity: +1.",
+      "expected_polarity": 1,
+      "expression": "divide(multiply(vec_avg(oth296_confidence), vec_sum(oth296_topic_count)), add(vec_count(oth296_wqreceivetime), 1))",
+      "fields_used": [
+        "oth296_topic_count",
+        "oth296_wqreceivetime",
+        "oth296_confidence"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_topic_count",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.2,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.4,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "Composite Information Quality",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_word_count (main anchor, COLD, alpha_pct=0.4) via vec_sum is total word volume. oth296_topic_count (COLD, secondary anchor) via vec_sum is total topic mentions. The subtract captures EXCESS VERBOSITY — words beyond what topics warrant. oth296_wqreceivetime (normalizer) via vec_count controls for section count.",
+      "economic_mechanism": "When word count significantly exceeds topic count (after normalization), management is padding their disclosure with excessive verbiage — using many words to say relatively little. This verbosity-to-substance gap is a negative signal: it suggests management is filling time without conveying meaningful information, possibly to obscure weak fundamentals. The market underprices verbosity because raw word count appears positive (more disclosure), but the words-per-topic ratio reveals the hollowness. Expected polarity: -1.",
+      "expected_polarity": -1,
+      "expression": "divide(subtract(vec_sum(oth296_word_count), vec_sum(oth296_topic_count)), add(vec_count(oth296_wqreceivetime), 1))",
+      "fields_used": [
+        "oth296_word_count",
+        "oth296_wqreceivetime",
+        "oth296_topic_count"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_word_count",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.4,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.3,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "Information Ambiguity & Uncertainty",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_prob_ntr (main anchor, COLD, alpha_pct=0.3) is the neutral probability — the baseline ambiguity. oth296_prob_neg (HOT, comparison reference) is the negative probability. The structure computes negative-per-event minus neutral, capturing the EXCESS of negative signal over baseline ambiguity. oth296_wqreceivetime (normalizer) via vec_count controls for section count.",
+      "economic_mechanism": "When negative sentiment per event exceeds the neutral baseline, it means the earnings call contains clearly identifiable negative content beyond mere vagueness. This is a stronger sell signal than raw negative probability alone because it separates genuine negativity from ambiguous filler. The market is slow to differentiate between 'management said nothing clearly' (neutral) and 'management clearly discussed problems' (negative excess), creating an exploitable gap. Expected polarity: -1.",
+      "expected_polarity": -1,
+      "expression": "subtract(divide(vec_avg(oth296_prob_neg), vec_count(oth296_wqreceivetime)), vec_avg(oth296_prob_ntr))",
+      "fields_used": [
+        "oth296_prob_ntr",
+        "oth296_wqreceivetime",
+        "oth296_prob_neg"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_prob_ntr",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.3,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.35,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "Composite Information Quality",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "oth296_word_count (main anchor, COLD, alpha_pct=0.4) via vec_avg is the average section word count. oth296_confidence (WARM, quality weight) via vec_avg is the average classification certainty. oth296_wqreceivetime (normalizer) via vec_count gives section count. The multiply(confidence, words/count) captures confidence-weighted per-section verbosity.",
+      "economic_mechanism": "Companies that speak at length WITH high classification confidence are providing substantive, clearly classified disclosure — the NLP model can unambiguously determine sentiment from detailed text. This combination of volume and clarity indicates authoritative corporate communication that reduces information asymmetry. The market rewards such transparency with a confidence premium, but underprices it because volume and clarity are typically modeled independently. Expected polarity: +1.",
+      "expected_polarity": 1,
+      "expression": "multiply(vec_avg(oth296_confidence), divide(vec_avg(oth296_word_count), vec_count(oth296_wqreceivetime)))",
+      "fields_used": [
+        "oth296_word_count",
+        "oth296_wqreceivetime",
+        "oth296_confidence"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "oth296_word_count",
+        "normalizer": "oth296_wqreceivetime",
+        "main_anchor_alpha_pct": 0.4,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.826,
+        "pairing_score": 1.3,
+        "issues": []
+      }
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "other296 (Corporate Earnings Call Sentiment Data, Alexandria) captures NLP-derived sentiment from corporate earnings call transcripts. Each earnings call is segmented into topic sections; for each section, the model produces trinary sentiment probabilities (POS/NTR/NEG), a classification confidence score, word count, and topic mention frequency. All 10 fields are VECTOR type with one element per topic section, requiring vec_* reduction. Coverage ~0.745 (0.826 for wqreceivetime), meaning ~75% of MINVOL1M instruments have at least one earnings call record. Data is event-driven (quarterly earnings cycle). The core unexploited friction: the market has overwhelmingly focused on the raw POS/NEG probabilities (alpha_count 82/70, HOT tier), while the neutral probability (alpha_count=22), topic richness (13), word volume (27), and processing metadata (10-11) remain largely unmined. These COLD dimensions capture information ambiguity, disclosure depth, and transmission efficiency — orthogonal to the crowded directional sentiment trade.",
+    "economic_clusters": [
+      {
+        "cluster_name": "Information Ambiguity & Uncertainty",
+        "fields": [
+          "oth296_prob_ntr",
+          "oth296_prob_pos",
+          "oth296_prob_neg",
+          "oth296_confidence",
+          "oth296_wqreceivetime"
+        ],
+        "cluster_logic": "When management speaks in vague, noncommittal terms (high neutral probability), it signals information asymmetry — insiders know more than they reveal. The NLP model's confidence in this ambiguity further distinguishes genuine uncertainty from classification noise. Normalizing by event count (vec_count of wqreceivetime) controls for the total information environment, isolating per-topic ambiguity rather than sheer volume."
+      },
+      {
+        "cluster_name": "Topic Richness & Disclosure Depth",
+        "fields": [
+          "oth296_topic_count",
+          "oth296_sentiment",
+          "oth296_wqreceivetime"
+        ],
+        "cluster_logic": "The number of distinct topics discussed and their mention frequency reflect management's willingness to address multiple business dimensions. Rich multi-topic disclosure signals transparency and operational breadth, while single-topic dominance suggests management is fixated on a concern. Sentiment-weighted topic intensity captures whether the richness is directionally positive or negative."
+      },
+      {
+        "cluster_name": "Text Volume & Information Density",
+        "fields": [
+          "oth296_word_count",
+          "oth296_prob_pos",
+          "oth296_prob_neg",
+          "oth296_wqreceivetime"
+        ],
+        "cluster_logic": "Word count per section measures the substantive depth of disclosure. Longer sections with positive sentiment = confident detailed guidance; longer sections with negative sentiment = extensive risk discussion. Variability in section lengths indicates inconsistent disclosure quality across topics. Normalizing by event count separates depth from breadth."
+      },
+      {
+        "cluster_name": "Information Transmission Lag & Processing Efficiency",
+        "fields": [
+          "oth296_received_time",
+          "oth296_wqreceivetime",
+          "oth296_sentiment"
+        ],
+        "cluster_logic": "The gap between when Alexandria received the transcript and when WQ processed it represents information transmission latency. Longer lags mean the market has had less time to price the earnings call content, creating a window for exploitation. Interacting lag with sentiment direction captures whether delayed good or bad news creates stronger mispricing."
+      },
+      {
+        "cluster_name": "Composite Information Quality",
+        "fields": [
+          "oth296_word_count",
+          "oth296_topic_count",
+          "oth296_confidence",
+          "oth296_wqreceivetime"
+        ],
+        "cluster_logic": "Cross-cutting measures combining volume, depth, and classification certainty to assess overall earnings call informativeness. High confidence × rich topics = authoritative disclosure; high verbosity relative to topics = padding. These composites capture dimensions invisible to single-field analysis."
+      }
+    ]
+  },
+  "crowding_profile": {
+    "field_total": 10,
+    "alpha_count_known": 10,
+    "tier_counts": {
+      "COLD": 5,
+      "WARM": 2,
+      "HOT": 3,
+      "UNKNOWN": 0
+    }
+  },
+  "pairing_candidates": [
+    {
+      "main_anchor": "oth296_received_time",
+      "main_anchor_alpha_count": 11.0,
+      "main_anchor_alpha_pct": 0.1,
+      "main_anchor_coverage": 0.745,
+      "normalizer": "oth296_wqreceivetime",
+      "normalizer_coverage": 0.826,
+      "normalizer_alpha_pct": 0.0
+    },
+    {
+      "main_anchor": "oth296_topic_count",
+      "main_anchor_alpha_count": 13.0,
+      "main_anchor_alpha_pct": 0.2,
+      "main_anchor_coverage": 0.745,
+      "normalizer": "oth296_wqreceivetime",
+      "normalizer_coverage": 0.826,
+      "normalizer_alpha_pct": 0.0
+    },
+    {
+      "main_anchor": "oth296_prob_ntr",
+      "main_anchor_alpha_count": 22.0,
+      "main_anchor_alpha_pct": 0.3,
+      "main_anchor_coverage": 0.745,
+      "normalizer": "oth296_wqreceivetime",
+      "normalizer_coverage": 0.826,
+      "normalizer_alpha_pct": 0.0
+    },
+    {
+      "main_anchor": "oth296_word_count",
+      "main_anchor_alpha_count": 27.0,
+      "main_anchor_alpha_pct": 0.4,
+      "main_anchor_coverage": 0.745,
+      "normalizer": "oth296_wqreceivetime",
+      "normalizer_coverage": 0.826,
+      "normalizer_alpha_pct": 0.0
+    }
+  ]
+}

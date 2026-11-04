@@ -1,0 +1,127 @@
+{
+  "slots": [
+    {
+      "id": "R3_S1_PENSION_OFFBALANCE",
+      "expression": "-rank(add(vec_avg(fnd90_us_game_pension_ev), vec_avg(fnd90_us_game_pension_pbo)))",
+      "math_ops": 2,
+      "vec_casts": 2,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R3_S2_DISTRESS_TRIPLE",
+      "expression": "-rank(add(add(vec_avg(fnd90_us_qes_gamef_chs_default), vec_avg(fnd90_us_qes_gamef_ohlson)), vec_avg(fnd90_us_qes_gamef_cscore)))",
+      "math_ops": 3,
+      "vec_casts": 3,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R3_S3_CASH_CONVERSION",
+      "expression": "-rank(subtract(add(vec_avg(fnd90_us_game_receivable_days), vec_avg(fnd90_us_game_inventory_days)), vec_avg(fnd90_us_game_payble_days)))",
+      "math_ops": 3,
+      "vec_casts": 3,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R3_S4_ACCRUAL_FORECAST_QUALITY",
+      "expression": "-rank(add(vec_avg(fnd90_game_accruals_vol), vec_avg(fnd90_game_eps_sur_vol)))",
+      "math_ops": 2,
+      "vec_casts": 2,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R3_S5_WORKING_CAPITAL_EXPANSION",
+      "expression": "-rank(add(vec_avg(fnd90_us_game_inventory_chg), vec_avg(fnd90_us_game_receivable_chg)))",
+      "math_ops": 2,
+      "vec_casts": 2,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R3_S6_WORKING_CAPITAL_SMOOTHED",
+      "expression": "-rank(add(ts_mean(vec_avg(fnd90_us_game_inventory_chg), 20), ts_mean(vec_avg(fnd90_us_game_receivable_chg), 20)))",
+      "math_ops": 4,
+      "vec_casts": 2,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R3_S7_GROSSPROFIT_VS_ICFROE",
+      "expression": "subtract(rank(vec_avg(fnd90_us_qes_gamef_grossprofit_asset)), rank(vec_avg(fnd90_us_qes_gamef_icfroe_1y)))",
+      "math_ops": 3,
+      "vec_casts": 2,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R3_S8_SGA_SHORTDEBT_SQUEEZE",
+      "expression": "-rank(add(vec_avg(fnd90_game_sg_a_inefficiency), vec_avg(fnd90_game_short_term_debt)))",
+      "math_ops": 2,
+      "vec_casts": 2,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    }
+  ],
+  "all_green": true,
+  "skeleton_freq": {
+    "-rank(add(vec_avg(fnd90_us_game_pension_ev),vec_avg(fnd90_us_game_pension_pbo)))": 1,
+    "-rank(add(add(vec_avg(fnd90_us_qes_gamef_chs_default),vec_avg(fnd90_us_qes_gamef_ohlson)),vec_avg(fnd90_us_qes_gamef_cscore)))": 1,
+    "-rank(subtract(add(vec_avg(fnd90_us_game_receivable_days),vec_avg(fnd90_us_game_inventory_days)),vec_avg(fnd90_us_game_payble_days)))": 1,
+    "-rank(add(vec_avg(fnd90_game_accruals_vol),vec_avg(fnd90_game_eps_sur_vol)))": 1,
+    "-rank(add(vec_avg(fnd90_us_game_inventory_chg),vec_avg(fnd90_us_game_receivable_chg)))": 1,
+    "-rank(add(ts_mean(vec_avg(fnd90_us_game_inventory_chg),NUM),ts_mean(vec_avg(fnd90_us_game_receivable_chg),NUM)))": 1,
+    "subtract(rank(vec_avg(fnd90_us_qes_gamef_grossprofit_asset)),rank(vec_avg(fnd90_us_qes_gamef_icfroe_1y)))": 1,
+    "-rank(add(vec_avg(fnd90_game_sg_a_inefficiency),vec_avg(fnd90_game_short_term_debt)))": 1
+  }
+}

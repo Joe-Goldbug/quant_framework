@@ -1,0 +1,59 @@
+{
+ "wave": "1b",
+ "seed_id": "GATE1_WAVE1",
+ "region": "USA",
+ "universe": "TOP1000",
+ "delay": 1,
+ "category": "other",
+ "hypothesis": "内部人净买入：近期(5d/20d)相对250d基线之值+笔数双口径共振、最知情层(Top5/Top20)集中度、极端尾部放大、买入持续度——四路正交经济假说，非秩外壳保幅度抬Margin，近期响应强化Sharpe，低换手护Fitness",
+ "items": [
+  {
+   "id": 1,
+   "direction": "A",
+   "type": "freshness_value_count",
+   "expression": "group_neutralize(multiply(divide(subtract(vec_avg(buy_sell_ratio_all_5d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), vec_avg(buy_sell_tx_count_ratio_top20_10d_filled)), subindustry)",
+   "neutralization": "SUBINDUSTRY",
+   "optimize_reason": "A1: 全口径5d值新鲜度(相对250d基线) × top20笔数10d参与广度双口径共振；非秩group_neutralize替代rank壳抬Margin(6.9→10bps)；5d短窗强化近期响应治2Y衰减；双口径过滤单笔大额噪声。主攻Sharpe+Margin。"
+  },
+  {
+   "id": 2,
+   "direction": "A",
+   "type": "freshness_value_count",
+   "expression": "group_neutralize(multiply(divide(subtract(vec_avg(buy_sell_ratio_top5_20d_filled), vec_avg(buy_sell_ratio_top5_250d_filled)), add(vec_avg(buy_sell_ratio_top5_250d_filled), 1)), vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)), subindustry)",
+   "neutralization": "CROWDING",
+   "optimize_reason": "A7修正: top5最知情层20d值新鲜度(最短可用top5值窗)×top5笔数60d广度；CROWDING验证拥挤中性下近期信号。"
+  },
+  {
+   "id": 3,
+   "direction": "B",
+   "type": "concentration_top5_over_top20",
+   "expression": "group_neutralize(divide(vec_avg(buy_sell_ratio_top5_20d_filled), add(vec_avg(buy_sell_ratio_top20_20d_filled_2), 1)), subindustry)",
+   "neutralization": "SUBINDUSTRY",
+   "optimize_reason": "B1修正: Top5/Top20买入集中度20d；高值=最知情层净买入主导=高置信信息；非秩壳抬Margin。"
+  },
+  {
+   "id": 4,
+   "direction": "B",
+   "type": "concentration_delta_top5_over_all",
+   "expression": "group_neutralize(ts_delta(divide(vec_avg(buy_sell_ratio_top5_20d_filled), add(vec_avg(buy_sell_ratio_all_20d_filled), 1)), 10), subindustry)",
+   "neutralization": "SUBINDUSTRY",
+   "optimize_reason": "B6: Top5占全体买入比重10日动量(ts_delta)；最知情层正在加码买入；ts_delta提升换手离5%下限、贡献Fitness。主攻Sharpe(近期)+Fitness/TO。"
+  },
+  {
+   "id": 5,
+   "direction": "C",
+   "type": "extreme_conviction_amplitude",
+   "expression": "group_neutralize(ts_av_diff(subtract(vec_avg(buy_sell_ratio_top20_5d_filled), vec_avg(buy_sell_ratio_top20_250d_filled)), 20), subindustry)",
+   "neutralization": "CROWDING",
+   "optimize_reason": "C7: top20 5d-250d长距缺口的原始幅值偏差(ts_av_diff无std压缩)→Margin贡献最大化(6.9→10bps主攻)；250d长基线=稳定私有信息锚；CROWDING(冠军中性化)。主攻Margin+Sharpe。"
+  },
+  {
+   "id": 8,
+   "direction": "D",
+   "type": "persistence_memory_dual",
+   "expression": "group_neutralize(add(ts_av_diff(vec_avg(buy_sell_ratio_all_5d_filled), 5), ts_av_diff(vec_avg(buy_sell_ratio_top5_20d_filled), 10)), subindustry)",
+   "neutralization": "CROWDING",
+   "optimize_reason": "D7: 全市场5d增量+top5最集中20d增量双层确认(广度+浓度)；双增量锐利捕捉近期建仓治Sharpe衰减；非秩壳抬Margin；CROWDING。主攻Sharpe(近期)+Margin。"
+  }
+ ]
+}

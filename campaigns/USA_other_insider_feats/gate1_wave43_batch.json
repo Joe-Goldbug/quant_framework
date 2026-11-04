@@ -1,0 +1,63 @@
+{
+  "wave": 43,
+  "theme": "跨数据集轮2: rsk59_short_momentum腿收口(平滑/时序分位/zscore/秩调制/门控/双引擎/反号)",
+  "trigger": "Wave42: x_shortmo Sh0.89/Ret6.85%/Mgn19.9 唯一幸存但DD16.96%; 朴素乘积被外部尺度淹没",
+  "base_settings": {
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "neutralization": "INDUSTRY",
+    "decay": 8,
+    "truncation": 0.025
+  },
+  "expressions": [
+    {
+      "tag": "smo_smooth20",
+      "fields": 3,
+      "note": "外部腿ts_mean(20)平滑降DD",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), ts_mean(vec_avg(rsk59_short_momentum), 20)), 20), subindustry), 0.5), 2)"
+    },
+    {
+      "tag": "smo_tsrank60",
+      "fields": 3,
+      "note": "外部腿时序分位(自身历史归一)",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), ts_rank(vec_avg(rsk59_short_momentum), 60)), 20), subindustry), 0.5), 2)"
+    },
+    {
+      "tag": "smo_zscore",
+      "fields": 3,
+      "note": "外部腿截面zscore(保号归一)",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), zscore(vec_avg(rsk59_short_momentum))), 20), subindustry), 0.5), 2)"
+    },
+    {
+      "tag": "smo_rankmod",
+      "fields": 3,
+      "note": "外部腿rank[0,1]温和调制",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), rank(vec_avg(rsk59_short_momentum))), 20), subindustry), 0.5), 2)"
+    },
+    {
+      "tag": "smo_neg",
+      "fields": 3,
+      "note": "反号检验: 内部人买×空头回补(经典轧空) [negate->reverse 修复]",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(vec_avg(rsk59_short_momentum))), 20), subindustry), 0.5), 2)"
+    },
+    {
+      "tag": "smo_gate",
+      "fields": 3,
+      "note": "trade_when门: 仅空头回补 regime 更新信号",
+      "expr": "trade_when(ts_mean(vec_avg(rsk59_short_momentum), 5) < 0, group_rank(ts_mean(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), 20), subindustry), -1)"
+    },
+    {
+      "tag": "smo_blend",
+      "fields": 3,
+      "note": "双引擎混合: insider动量引擎 - 空头动量引擎(等权)",
+      "expr": "subtract(group_rank(ts_mean(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), 20), subindustry), group_rank(ts_mean(vec_avg(rsk59_short_momentum), 20), subindustry))"
+    },
+    {
+      "tag": "smo_w10",
+      "fields": 3,
+      "note": "乘积ts_mean窗10(提鲜)",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(rsk59_short_momentum)), 10), subindustry), 0.5), 2)"
+    }
+  ]
+}

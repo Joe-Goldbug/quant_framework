@@ -1,0 +1,325 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL10M",
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "核心盈利纯度与经常性收益剪刀差",
+      "field_semantics_mapping": "fnd23_intfvalld1_itpv 为扣除非经常损益后的标准化税前利润（经常性盈利流），fnd23_intfvmalld1_xbin 为报告净利润（名义盈利流），fnd23_intfvmfm2_eltq 为股东权益总额（内生规模标尺）。先分别除以权益归一化为经常性 ROE 与名义 ROE，再求剪刀差。",
+      "economic_mechanism": "当标准化经常性税前利润 ROE 显著高于名义净利润 ROE 时，说明公司主营造血能力强劲，但当期受偶发性非经营损失或会计减值拖累。市场对名义净利润短期波动存在过度反应认知偏差，导致核心主营被系统性低估，随后续经常性盈余兑现，预期收益大概率均值回归向上修复。",
+      "expression": "subtract(divide(fnd23_intfvalld1_itpv, fnd23_intfvmfm2_eltq), divide(fnd23_intfvmalld1_xbin, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvmalld1_xbin",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 1
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "留存资本厚度与股东真金白银回报",
+      "field_semantics_mapping": "retained_earnings_5 为历年累计留存收益（存量资本积累），fnd23_intfvmalld1_cpdf 为当期普通股现金分红（流量现金回馈），fnd23_intfvmfm2_eltq 为权益规模锚。两者分别归一化后做相对剪刀差。",
+      "economic_mechanism": "留存收益占比较高且在充分保障再投资底盘后持续保持现金股利分配的企业，反映其具有长盛不衰的商业护城河与健康的再投资周期。市场往往追逐短期高分红概念股而忽视留存盈余丰厚度，留存积累对分红消耗的顺差越大，企业在低波动组合中的韧性与长周期价值越显著。",
+      "expression": "subtract(divide(retained_earnings_5, fnd23_intfvmfm2_eltq), divide(fnd23_intfvmalld1_cpdf, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvmalld1_cpdf",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 2
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "营运资本摩擦与产业链商业信用占优",
+      "field_semantics_mapping": "fnd23_intfvmalld1_bpao 为应付账款变动额（经营性无息信用扩张流量），fnd23_intfvmalld1_yppo 为预付费用变动额（经营性资本被占有流量），fnd23_intfvmfm2_eltq 为内生权益规模标尺。",
+      "economic_mechanism": "应付账款净增加反映企业在上下游产业链中具备极强的议价权，能够持续占用供应商低成本资金；而预付款增加则意味着对上游依赖重或议价劣势。两者的相对差额除以权益标尺后，正向差值代表营运资本无息融资净流入，具备稳固的供应链现金价值优势。",
+      "expression": "subtract(divide(fnd23_intfvmalld1_bpao, fnd23_intfvmfm2_eltq), divide(fnd23_intfvmalld1_yppo, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_intfvmalld1_bpao",
+        "fnd23_intfvmalld1_yppo",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 2
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "筹资与现金流对账面净利润背离",
+      "field_semantics_mapping": "fnd23_intfvalld1_fltf 为筹资活动净现金流，fnd23_intfvmalld1_fcfs 为常规存取款及回购等筹资项，两项作差提取实质性净资本融资流量，以加 1 平滑后的权益为内生规模标尺。",
+      "economic_mechanism": "通过剥离金融机构与非核心筹资项后的实质性净筹资流量反映公司在资本市场的直接融资与债务结构偿付余力。合理的正向资本吸纳能力结合净资产安全垫，为全球低波投资组合提供流动性充裕的资本溢价。",
+      "expression": "divide(subtract(fnd23_intfvalld1_fltf, fnd23_intfvmalld1_fcfs), add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "fnd23_intfvalld1_fltf",
+        "fnd23_intfvmalld1_fcfs",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "核心盈利纯度与经常性收益剪刀差",
+      "field_semantics_mapping": "fnd23_intfvm_mtps 为税前利润率，fnd23_intfvmalld1_ppgs 为毛利率，fnd23_intfvm_rltr 为营业总收入标尺。以两率剪刀差衡量期间费用管控与营业外纯度，并以营收标尺缩放。",
+      "economic_mechanism": "毛利率反映生产成本控制与定价权，而税前利润率进一步包含销售、管理、研发费用管控和主营经营效率。两者的剪刀差衡量了企业从毛利向税前利润转化的期间费用节约能力，除以总收入规模后，能够精准捕捉费用管控卓越、内部精细化运营带来的被低估价值。",
+      "expression": "divide(subtract(fnd23_intfvm_mtps, fnd23_intfvmalld1_ppgs), add(fnd23_intfvm_rltr, 1))",
+      "fields_used": [
+        "fnd23_intfvm_mtps",
+        "fnd23_intfvmalld1_ppgs",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "营运资本摩擦与产业链商业信用占优",
+      "field_semantics_mapping": "fnd23_blsm_ltls 为其他经营性负债总额（无息/低成本经营杠杆），short_term_bank_borrowings 为短期银行借款（刚性高息还本付息负债），fnd23_intfvmfm2_eltq 为股东权益标尺。",
+      "economic_mechanism": "商业经营性负债与刚性银行短期借款的结构差反映了企业的负债质量。依靠商业信用支撑运营而非依赖昂贵银行短期贷款的企业，破产挤兑风险极低，在低利率或高息周期的抗波动性更强，具备典型的高品质价值属性。",
+      "expression": "divide(subtract(fnd23_blsm_ltls, short_term_bank_borrowings), add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "fnd23_blsm_ltls",
+        "short_term_bank_borrowings",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "留存资本厚度与股东真金白银回报",
+      "field_semantics_mapping": "retained_earnings_5（留存盈余）与 fnd23_intfvmalld1_cpdf（现金股利）相加代表企业为股东实际创造并沉淀/分配的总回报；fnd23_intfvmfm2_eltq（净资产）与 fnd23_intfvalld1_cipq（股本溢价）相加代表股东历史投入的总实缴资本基准。",
+      "economic_mechanism": "该结构是经济学上纯粹的‘历史股东总价值产出 / 历史实缴股东资本投入’复合倍数。分子越大、分母资本基数越精简的企业，具备极高的长周期复利回报率，是全球核心蓝筹池中最典型的价值王者。",
+      "expression": "divide(add(retained_earnings_5, fnd23_intfvmalld1_cpdf), add(fnd23_intfvmfm2_eltq, fnd23_intfvalld1_cipq))",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvmalld1_cpdf",
+        "fnd23_intfvmfm2_eltq",
+        "fnd23_intfvalld1_cipq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "核心盈利纯度与经常性收益剪刀差",
+      "field_semantics_mapping": "fnd23_intfvalld1_pbnv 为报告净业务利润，fnd23_rnd_expense 为研发支出流量（加回视为无形资本投入），分母为总营业收入与股东权益的综合规模锚。",
+      "economic_mechanism": "会计准则将研发费用直接作为当期费用扣除，低估了持续高研发价值企业的真实盈利能力。通过将主营业务利润加回研发支出，除以营收与资产双重规模锚，能够挖掘出具备长期技术研发积累且主业稳健盈利的被低估科技价值型企业。",
+      "expression": "divide(add(fnd23_intfvalld1_pbnv, fnd23_rnd_expense), add(fnd23_intfvm_rltr, fnd23_intfvmfm2_eltq))",
+      "fields_used": [
+        "fnd23_intfvalld1_pbnv",
+        "fnd23_rnd_expense",
+        "fnd23_intfvm_rltr",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "营运资本摩擦与产业链商业信用占优",
+      "field_semantics_mapping": "fnd23_intfvmalld1_acoa 为其他流动资产，other_current_receivables 为其他应收款，两者分子相加构成非现金速动资产垫；fnd23_blsm_lcos 为其他流动负债，fnd23_blsm_dtsl 为应付票据/短期债务，两者分母相加构成刚性流动负债对冲锚。",
+      "economic_mechanism": "衡量流动资产侧的备选速动蓄水池对流动负债的兜底覆盖倍数。流动负债端被充分覆盖的企业在宏观紧缩和市场流动性收紧时具备高确定性偿付防御能力，估值下行风险被牢牢封死。",
+      "expression": "divide(add(fnd23_intfvmalld1_acoa, other_current_receivables), add(fnd23_blsm_lcos, fnd23_blsm_dtsl))",
+      "fields_used": [
+        "fnd23_intfvmalld1_acoa",
+        "other_current_receivables",
+        "fnd23_blsm_lcos",
+        "fnd23_blsm_dtsl"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "核心盈利纯度与经常性收益剪刀差",
+      "field_semantics_mapping": "fnd23_intfvalld1_itpv 为经常性税前利润率分支，retained_earnings_5 为留存利润存量分支，两者均除以加 1 平滑后的权益规模标尺后求乘积交互项。",
+      "economic_mechanism": "通过将短期高纯度经常性税前利润率与长周期资本留存积累度进行乘积耦合，双重正向共振。仅当企业当期造血扎实且历史上具备深厚盈利留存积累时，指标才达到峰值，精准定位低估值、高造血、高防御性的双优企业。",
+      "expression": "multiply(divide(fnd23_intfvalld1_itpv, add(fnd23_intfvmfm2_eltq, 1)), divide(retained_earnings_5, add(fnd23_intfvmfm2_eltq, 1)))",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "retained_earnings_5",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "核心盈利纯度与经常性收益剪刀差",
+      "field_semantics_mapping": "fnd23_intfvmalld1_ppgs（毛利率）与 fnd23_intfvm_mtps（税前利润率）分别以内生净资产为标尺归一化后求交互乘积。",
+      "economic_mechanism": "毛利率代表产品层面的定价壁垒，税前利润率代表经营管理与财务费用管控后的最终盈利成果。两者的资产归一化复合交乘能够有效识别既有上游定价优势、又有出色费用管控能力的质优低估龙头。",
+      "expression": "multiply(divide(fnd23_intfvmalld1_ppgs, add(fnd23_intfvmfm2_eltq, 1)), divide(fnd23_intfvm_mtps, add(fnd23_intfvmfm2_eltq, 1)))",
+      "fields_used": [
+        "fnd23_intfvmalld1_ppgs",
+        "fnd23_intfvm_mtps",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "筹资与现金流对账面净利润背离",
+      "field_semantics_mapping": "fnd23_intfvalld1_xbin 为净利润，减去应付款变动 (fnd23_intfvmalld1_bpao) 与预付款变动 (fnd23_intfvmalld1_yppo) 之和构成的营运资本净变动，除以权益标尺。",
+      "economic_mechanism": "会计净利润容易受到应计资本操纵和营运资金占用的虚假繁荣粉饰。通过净利润剥离营运资金变动占用的现金摩擦，还原为真实经营现金化收益，识别名义利润高但现金流被营运资本大量占用的应计陷阱。",
+      "expression": "divide(subtract(fnd23_intfvalld1_xbin, add(fnd23_intfvmalld1_bpao, fnd23_intfvmalld1_yppo)), add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "fnd23_intfvalld1_xbin",
+        "fnd23_intfvmalld1_bpao",
+        "fnd23_intfvmalld1_yppo",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "营运资本摩擦与产业链商业信用占优",
+      "field_semantics_mapping": "fnd23_blsm_ltls（其他负债）减去短期银行贷款 (short_term_bank_borrowings) 与应付短期票据 (fnd23_blsm_dtsl) 之和，除以加 1 后的股东权益。",
+      "economic_mechanism": "剥离刚性付息债务（短期银行贷款与应付票据）后，剩下的负债主要为无息经营性欠款。该比率衡量了企业利用商业信用无息周转资金的净规模，商业信用净顺差越大，破产风险越小，权益价值越稳固。",
+      "expression": "divide(subtract(fnd23_blsm_ltls, add(short_term_bank_borrowings, fnd23_blsm_dtsl)), add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "fnd23_blsm_ltls",
+        "short_term_bank_borrowings",
+        "fnd23_blsm_dtsl",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "留存资本厚度与股东真金白银回报",
+      "field_semantics_mapping": "retained_earnings_5（累计留存收益存量）减去当期现金分红流量 (fnd23_intfvmalld1_cpdf)，除以总权益 (fnd23_intfvmfm2_eltq)。",
+      "economic_mechanism": "衡量在足额发放现金股利之后，留在企业内部的净留存资本对总净资产的覆盖厚度。留存充足且持续派息的企业兼具资本再投资安全性与价值回馈，是高估值折扣修复的主力。",
+      "expression": "divide(subtract(retained_earnings_5, fnd23_intfvmalld1_cpdf), fnd23_intfvmfm2_eltq)",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvmalld1_cpdf",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "核心盈利纯度与经常性收益剪刀差",
+      "field_semantics_mapping": "fnd23_intfvalld1_itpv（扣除非经常损益后的经常性税前利润）减去报告净利润 (fnd23_intfvalld1_xbin)，除以营业总收入 (fnd23_intfvm_rltr)。",
+      "economic_mechanism": "经常性税前收益与会计报告净利润之差占总营收的比例。该比例剔除了非经常性资产重组、减值准备计提对营收净利率的扰动，识别被会计谨慎性原则压制的名义低净利率但真实主业高收益的潜力标的。",
+      "expression": "divide(subtract(fnd23_intfvalld1_itpv, fnd23_intfvalld1_xbin), fnd23_intfvm_rltr)",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvalld1_xbin",
+        "fnd23_intfvm_rltr"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "筹资与现金流对账面净利润背离",
+      "field_semantics_mapping": "fnd23_intfvalld1_fltf（筹资活动现金流净额）与 fnd23_intfvmalld1_xbin（净利润）作差，除以股东权益总额。",
+      "economic_mechanism": "外部筹资现金与内部会计利润的相对背离程度。做空严重依赖外部借款筹资粉饰而内部无真实利润的企业，做多内部利润扎实无需过度筹资稀释股东权益的真正高性价比价值标的。",
+      "expression": "divide(subtract(fnd23_intfvalld1_fltf, fnd23_intfvmalld1_xbin), fnd23_intfvmfm2_eltq)",
+      "fields_used": [
+        "fnd23_intfvalld1_fltf",
+        "fnd23_intfvmalld1_xbin",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "留存资本厚度与股东真金白银回报",
+      "field_semantics_mapping": "retained_earnings_5（累计留存收益）除以加 1 平滑后的总权益 (fnd23_intfvmfm2_eltq)。",
+      "economic_mechanism": "留存收益在净资产中的占比是评估企业生命周期阶段与历年内生积累的绝对基石。在 GLB MINVOL10M 低波池中，高留存收益占比代表极低财务杠杆和坚实安全垫，具备极强的估值支撑力。",
+      "expression": "divide(retained_earnings_5, add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "retained_earnings_5",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "核心盈利纯度与经常性收益剪刀差",
+      "field_semantics_mapping": "fnd23_intfvalld1_pbnv（报告净业务利润）除以加 1 平滑后的股东权益 (fnd23_intfvmfm2_eltq)。",
+      "economic_mechanism": "净业务利润直接对应主营业务的资本产出效率，剔除了跨期税项与金融资产波动的扭曲，是干净纯粹的核心主营 ROE 价值标尺。",
+      "expression": "divide(fnd23_intfvalld1_pbnv, add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "fnd23_intfvalld1_pbnv",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "营运资本摩擦与产业链商业信用占优",
+      "field_semantics_mapping": "fnd23_blsm_ltls（其他负债）除以加 1 平滑后的股东权益 (fnd23_intfvmfm2_eltq)。",
+      "economic_mechanism": "其他负债占总权益比例反映了企业在经营活动中形成的无息或低息经营负债水平，体现企业在商业网络中的资源整合与结算信贷能力。",
+      "expression": "divide(fnd23_blsm_ltls, add(fnd23_intfvmfm2_eltq, 1))",
+      "fields_used": [
+        "fnd23_blsm_ltls",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "营运资本摩擦与产业链商业信用占优",
+      "field_semantics_mapping": "short_term_bank_borrowings（短期银行借款）除以加 1 平滑后的股东权益，外层施加 reverse 极性反转。",
+      "economic_mechanism": "短期银行借款是偿债压力最大、流动性挤兑风险最高的债务形式。通过对短期银行借款负债率进行极性反转（做多短贷比例极低的企业），在低波大市值股票池中筛选出远离债务偿还挤兑风险的优质防御型价值股。",
+      "expression": "reverse(divide(short_term_bank_borrowings, add(fnd23_intfvmfm2_eltq, 1)))",
+      "fields_used": [
+        "short_term_bank_borrowings",
+        "fnd23_intfvmfm2_eltq"
+      ],
+      "times": 0
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "fundamental23 数据集涵盖全球市场 (GLB) 覆盖范围广泛的季度基本面财务指标。在 GLB MINVOL10M 低波动率蓝筹与流动性股票池中，跨国界财报准则（IFRS、US GAAP 及各国本地准则）存在记账口径差异，且低波股票对杠杆风险、盈余持续性与真实现金分红能力高度敏感。因此，挖掘高 Value Factor (VF) 的核心在于识别：扣除非经常损益后的核心主营盈利纯度、累计留存收益与股东分红的真金白银资本积累、商业信用对刚性借款的防御性替代，以及剔除应计资本摩擦后的纯现金化造血能力。所有指标必须以内生股东权益 (fnd23_intfvmfm2_eltq) 或营业收入 (fnd23_intfvm_rltr) 为内生规模标尺，消除不同币种与市值规模的量纲偏倚。",
+    "economic_clusters": [
+      {
+        "cluster_name": "核心盈利纯度与经常性收益剪刀差",
+        "fields": [
+          "fnd23_intfvalld1_itpv",
+          "fnd23_intfvmalld1_xbin",
+          "fnd23_intfvm_mtps",
+          "fnd23_intfvmalld1_ppgs",
+          "fnd23_intfvalld1_pbnv",
+          "fnd23_rnd_expense",
+          "fnd23_intfvm_rltr",
+          "fnd23_intfvmfm2_eltq"
+        ],
+        "cluster_logic": "剥离非经常性收益、一次性资产处置与准备金计提等会计噪声，对比经常性税前利润、报告净利润与毛利率/税前利润率结构，寻找被账面短期非经常项目掩盖的高价值主营龙头。"
+      },
+      {
+        "cluster_name": "留存资本厚度与股东真金白银回报",
+        "fields": [
+          "retained_earnings_5",
+          "fnd23_intfvmalld1_cpdf",
+          "fnd23_intfvalld1_cipq",
+          "fnd23_intfvmfm2_eltq"
+        ],
+        "cluster_logic": "累计留存收益反映企业长周期复利留存能力，结合当期实际支付的普通股现金股息与股本溢价，度量企业为股东创造内生自由现金与现金分红回报的厚度，锁定高安全边际的纯正价值底仓。"
+      },
+      {
+        "cluster_name": "营运资本摩擦与产业链商业信用占优",
+        "fields": [
+          "fnd23_intfvmalld1_bpao",
+          "fnd23_intfvmalld1_yppo",
+          "fnd23_blsm_ltls",
+          "short_term_bank_borrowings",
+          "fnd23_blsm_dtsl",
+          "fnd23_blsm_lcos",
+          "fnd23_intfvmalld1_acoa",
+          "other_current_receivables",
+          "fnd23_intfvmfm2_eltq"
+        ],
+        "cluster_logic": "应付账款增加代表无息占用上下游资金的强议价力，预付款增加代表营运资本受限；经营性其他负债替代短期银行刚性负债，体现低偿债压力的自主资产负债表健康度。"
+      },
+      {
+        "cluster_name": "筹资与现金流对账面净利润背离",
+        "fields": [
+          "fnd23_intfvalld1_fltf",
+          "fnd23_intfvmalld1_fcfs",
+          "fnd23_intfvmalld1_xbin",
+          "fnd23_intfvalld1_xbin",
+          "fnd23_intfvmfm2_eltq"
+        ],
+        "cluster_logic": "对比外部融资活动流入与账面会计净利润，识别过度依赖外部借债输血的伪白马与内生经营现金流充沛、筹资负债低依赖的高质量价值股。"
+      }
+    ]
+  }
+}

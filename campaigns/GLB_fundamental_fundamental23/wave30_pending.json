@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "region": "GLB",
+    "universe": "MINVOL10M",
+    "delay": 1,
+    "decay": 0,
+    "neutralization": "COUNTRY",
+    "truncation": 0.025
+  },
+  "items": [
+    {
+      "tag": "W30_1_opinc_cash",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 63)), industry)"
+    },
+    {
+      "tag": "W30_2_tota_anchor",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_tota), 252), ts_delta(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_tota), 63)), industry)"
+    },
+    {
+      "tag": "W30_3_short_horizon",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), 189), ts_delta(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), 42)), industry)"
+    },
+    {
+      "tag": "W30_4_norm_short",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_taiv, fnd23_ofc), fnd23_intfvalld1_letq), 189), ts_delta(divide(add(fnd23_intfvalld1_taiv, fnd23_ofc), fnd23_intfvalld1_letq), 42)), sector)"
+    }
+  ]
+}

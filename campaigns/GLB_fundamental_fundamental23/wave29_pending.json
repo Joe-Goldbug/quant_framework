@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "region": "GLB",
+    "universe": "MINVOL10M",
+    "delay": 1,
+    "decay": 0,
+    "neutralization": "COUNTRY",
+    "truncation": 0.025
+  },
+  "items": [
+    {
+      "tag": "W29_1_assetturn",
+      "expression": "group_rank(add(ts_delta(divide(fnd23_intfvalld1_rltr, fnd23_intfvalld1_letq), 252), ts_delta(divide(fnd23_intfvalld1_rltr, fnd23_intfvalld1_letq), 63)), industry)"
+    },
+    {
+      "tag": "W29_2_cashconv",
+      "expression": "group_rank(add(ts_delta(divide(fnd23_ofc, fnd23_intfvalld1_ipos), 252), ts_delta(divide(fnd23_ofc, fnd23_intfvalld1_ipos), 63)), industry)"
+    },
+    {
+      "tag": "W29_3_coreEBIT",
+      "expression": "group_rank(add(ts_delta(divide(subtract(fnd23_intfvalld1_rltr, fnd23_intfvalld1_eote), fnd23_intfvalld1_letq), 252), ts_delta(divide(subtract(fnd23_intfvalld1_rltr, fnd23_intfvalld1_eote), fnd23_intfvalld1_letq), 63)), industry)"
+    },
+    {
+      "tag": "W29_4_grossprofit",
+      "expression": "group_rank(add(ts_delta(divide(subtract(fnd23_intfvalld1_rltr, fnd23_intfvalld1_roce), fnd23_intfvalld1_letq), 252), ts_delta(divide(subtract(fnd23_intfvalld1_rltr, fnd23_intfvalld1_roce), fnd23_intfvalld1_letq), 63)), industry)"
+    }
+  ]
+}

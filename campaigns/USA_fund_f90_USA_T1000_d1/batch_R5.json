@@ -1,0 +1,222 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "fundamental90",
+  "category": "fundamental",
+  "neutralization": "SUBINDUSTRY",
+  "decay": 4,
+  "truncation": 0.08,
+  "submission_forbidden": true,
+  "known_fields": {
+    "fnd90_us_game_cash_flow_coverage": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of operating cash flow to total debt, measuring how well cash flow covers debt obligations; higher is safer",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_short_term_debt": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of short-term debt to total capitalization, assets, or related base; measures reliance on short-term financing and assesses leverage/liquidity risk",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_equity_dilution": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Catalyst_Event",
+      "description": "Degree to which shareholders’ interests are diluted, typically via new equity issuance or convertible securities; higher value shows greater capital raising at…",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_qes_gamef_grossprofit_asset": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Gross profit to total assets ratio, a profitability metric where higher values signify more efficient use of assets to generate gross profit",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_accruals_vol": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Uncertainty_Scale",
+      "description": "Volatility of accruals; higher values suggest higher risk of earnings manipulation or lower earnings quality",
+      "coverage": 0.8276,
+      "alpha_count": 1,
+      "user_count": 1,
+      "crowding": "极低 (平台 1 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_eff_interest_rate": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "The effective average interest rate that the company pays on its outstanding debt; a higher rate signals increased financial leverage or perceived credit risk",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_capex_dep": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of capital expenditures to depreciation; higher values suggest greater reinvestment in assets relative to depreciation",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_total_debt_chg": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Change in total debt outstanding (period-over-period), capturing increases or decreases in overall indebtedness and indicating changes in leverage or refinancin…",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_inc_cash_tax": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of income statement (accrual) tax to cash taxes paid; larger discrepancies may suggest earnings management, aggressive accounting, or timing differences b…",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "contingent_liabilities_equity_ratio": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "[0, 1]",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of contingent liabilities (possible future obligations) to equity, indicating potential off-balance-sheet risks",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    }
+  },
+  "items": [
+    {
+      "slot": 1,
+      "seed_id": "R5_S1_PARENT_WINDOW_10",
+      "type": "DEEP_REFINEMENT",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), 10)",
+      "counterparty": "只看负债总额、不看偿债覆盖能力与期限结构的信用筛选模型",
+      "optimize_reason": "母本在 20 日平滑下取得 10.24bps Margin，但 3.7% 换手低于 5.0% 合规下限，相当于仓位几乎不动、收益未被充分周转。此处把外层均值窗缩短至 10 日，在不引入任何新因果变量的前提下把换手抬入合规区间，检验收益是否来自可周转的持续信息。"
+    },
+    {
+      "slot": 2,
+      "seed_id": "R5_S2_PARENT_THIRD_LEG_DILUTION",
+      "type": "DEEP_REFINEMENT",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(vec_avg(fnd90_us_game_equity_dilution), 252)), 20)",
+      "counterparty": "以债务滚动能力为唯一安全边际、忽视股东摊薄的信用与高收益配置盘",
+      "optimize_reason": "在母本两条腿之外追加股权稀释：即便现金流覆盖充足且短债压力可控，若公司持续靠增发摊薄来维持覆盖度，则所谓安全边际是融资堆出来的而非经营创造的。以减法剔除这类伪安全，使剩余样本的安全边际更纯粹，从而抬升单位风险的收益。"
+    },
+    {
+      "slot": 3,
+      "seed_id": "R5_S3_PARENT_CROSS_SECTIONAL",
+      "type": "DEEP_REFINEMENT",
+      "expression": "ts_mean(subtract(group_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), subindustry), group_zscore(vec_avg(fnd90_us_game_short_term_debt), subindustry)), 20)",
+      "counterparty": "跨行业统一比较杠杆与覆盖度、因而错杀资本密集行业的量化模型",
+      "optimize_reason": "把母本的时序自比标准化替换为子行业内截面标准化：公用事业与银行业的覆盖度中枢天然不同，时序自比会把行业固有的资本结构差异误判为安全边际差异。改为同业口径后，剩余横截面差异才是真正的相对安全边际。"
+    },
+    {
+      "slot": 4,
+      "seed_id": "R5_S4_PARENT_RANK_MAP",
+      "type": "DEEP_REFINEMENT",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), 20))",
+      "counterparty": "按因子原始量级加权、使少数极端标的决定组合损益的量化盘",
+      "optimize_reason": "母本保持时序自比结构，仅在最外层施加均匀截面排序映射。覆盖度与短债的 z-score 之差存在厚尾，少数极端标的会主导组合，排序映射把每只标的的持仓份额拉平，令收益由全截面广度而非个股脉冲贡献。"
+    },
+    {
+      "slot": 5,
+      "seed_id": "R5_S5_GROSSPROFIT_VS_ACCRUAL_NOISE",
+      "type": "DEEP_REFINEMENT",
+      "expression": "subtract(group_rank(ts_mean(vec_avg(fnd90_us_qes_gamef_grossprofit_asset), 20), subindustry), group_rank(ts_mean(vec_avg(fnd90_us_game_accruals_vol), 20), subindustry))",
+      "counterparty": "按毛利率/资产比排序的质量因子与不看应计噪声的 ESG/质量指数编制方",
+      "optimize_reason": "毛利率/资产比度量结构性盈利能力，应计波动率度量账面利润的可兑现程度。此处把平滑施加在每条腿内部而非合成之后，构成平滑位置消融：若逐腿平滑优于合成后平滑，说明两条腿的更新节奏不同，需分别处理各自的稀疏跳变。"
+    },
+    {
+      "slot": 6,
+      "seed_id": "R5_S6_COVERAGE_VS_INTEREST_COST",
+      "type": "DEEP_REFINEMENT",
+      "expression": "winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_eff_interest_rate), 252)), 20), std=3)",
+      "counterparty": "只看债务规模、不看实际付息成本的杠杆筛选模型",
+      "optimize_reason": "有效利率是债权人对公司信用给出的市场化定价，比账面短债占比更前瞻：覆盖度高但付息成本高，说明债权人已察觉财报未体现的风险。以外层 3 倍标准差截尾抑制极端脉冲对 Fitness 的拖累。"
+    },
+    {
+      "slot": 7,
+      "seed_id": "R5_S7_REINVEST_VS_DEBT_EXPANSION",
+      "type": "DEEP_REFINEMENT",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_capex_dep), 252), ts_zscore(vec_avg(fnd90_us_game_total_debt_chg), 252)), 20)",
+      "counterparty": "把资本开支解读为成长投入、同时忽视其融资来源的成长股配置盘",
+      "optimize_reason": "资本开支相对折旧的比率衡量再投资强度，总债务扩张衡量其融资来源。再投资由经营现金支撑时是真实扩张，由举债支撑时则是杠杆堆积；二者相减即为剔除融资修辞后的真实再投资强度。"
+    },
+    {
+      "slot": 8,
+      "seed_id": "R5_S8_TAX_CONTINGENT_OFFBALANCE",
+      "type": "DEEP_REFINEMENT",
+      "expression": "-ts_mean(add(ts_zscore(vec_avg(fnd90_us_game_inc_cash_tax), 252), ts_zscore(vec_avg(contingent_liabilities_equity_ratio), 252)), 20)",
+      "counterparty": "以表观有效税率与账面负债率建模、忽略表外或有索取权的估值模型",
+      "optimize_reason": "利润表税负相对现金税负的偏离揭示递延与激进入账，或有负债相对权益的比率则是表外索取权。两者同高意味着账面利润与账面权益同时被高估，属于尚未被定价的双重虚增，反向持有可捕获其回归真实价值的过程。"
+    }
+  ],
+  "slot_meta": {
+    "purpose": "Stage 4 母本纵深: 换手区间修复 / 三腿纯化 / 截面口径 / 尾部截尾"
+  }
+}

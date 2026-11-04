@@ -1,0 +1,73 @@
+"""
+precheck.py — 本地 AST 校验与量纲审计（只读，不写指纹库，避免与 sim_runner 冲突）
+用法: python precheck.py batch_n1.json
+"""
+import json
+import os
+import re
+import sqlite3
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+
+from quant_framework.core.dimension_rules import DimensionAuditor
+from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+
+HERE = os.path.dirname(__file__)
+BATCH_FILE = sys.argv[1] if len(sys.argv) > 1 else "batch_n1.json"
+batch = json.load(open(os.path.join(HERE, BATCH_FILE), encoding="utf-8"))
+
+corrector = ASTSandboxCorrector()
+db = os.path.join(os.path.dirname(HERE), "..", "alphas_record.db")
+conn = sqlite3.connect(db)
+cur = conn.cursor()
+
+BANNED = {"signed_power", "hump", "group_neutralize"}
+ok_all = True
+rows = []
+for it in batch["items"]:
+    raw = it["expression"]
+    fixed = corrector.correct_expression(raw)
+    fp = corrector.compute_fingerprint(fixed, batch["region"], batch["universe"],
+                                       batch["delay"], batch["neutralization"])
+    cur.execute("SELECT 1 FROM alpha_fingerprints WHERE md5_hash = ?", (fp,))
+    dup = cur.fetchone() is not None
+    audit = DimensionAuditor.audit_expression(fixed, batch["known_fields"], category=batch["category"])
+    banned_hit = [b for b in BANNED if b + "(" in fixed]
+    toks = set(re.findall(r"[a-zA-Z_][a-zA-Z0-9_]*", fixed))
+    used = toks & set(batch["known_fields"])
+    field_count = len(used)
+    must_use = 2 <= field_count <= 3
+    # 语法硬门禁 (FALS_NEWS21_008: 单条语法错误会导致整批 8 槽全部 CANCELLED)
+    # 2026-10-26 用户特批：bucket/quantile 的 range="a,b,c" 关键字实参必须带引号，
+    # 因此仅放行 `range="数字,数字,..."` 这一种模式，其余位置出现引号仍然硬拒。
+    _scrub = re.sub(r'range\s*=\s*"[0-9.,\-]+"', 'RANGE', fixed)
+    _scrub = re.sub(r"range\s*=\s*'[0-9.,\-]+'", 'RANGE', _scrub)
+    syntax_ok = (fixed.count("(") == fixed.count(")")) and ('"' not in _scrub) and ("'" not in _scrub)
+    if not syntax_ok:
+        print(f"[SYNTAX HARD FAIL] slot {it['id']}: 括号不配对或含引号 -> {fixed[:160]}")
+    ok = audit["is_valid"] and not banned_hit and must_use and syntax_ok
+    ok_all &= ok
+    rows.append({
+        "id": it["id"], "type": it["type"], "ops": audit["operator_count"],
+        "len": len(fixed), "dup": dup, "banned": banned_hit,
+        "must_use_field": must_use, "nfields": field_count,
+        "fields": sorted(used), "valid": audit["is_valid"],
+        "issues": audit["issues"],
+    })
+
+conn.close()
+
+print(f"{'#':<3}{'TYPE':<40}{'OPS':<5}{'LEN':<6}{'DUP':<6}{'BANNED':<10}{'2<=F<=3':<9}{'VALID'}")
+for r in rows:
+    print(f"{r['id']:<3}{r['type']:<40}{r['ops']:<5}{r['len']:<6}"
+          f"{str(r['dup']):<6}{str(r['banned'] or '-'):<10}{(str(r['nfields']) + ('OK' if r['must_use_field'] else 'X')):<9}{r['valid']}")
+    if r["issues"]:
+        print("    issues:", r["issues"])
+    print("    fields:", r["fields"])
+
+dup_count = sum(1 for r in rows if r["dup"])
+print(f"\nMD5 重复数: {dup_count} (引擎容忍上限 2, 超过则熔断)")
+ok_all = ok_all and dup_count <= 2
+print("ALL_PASS =", ok_all)
+sys.exit(0 if ok_all else 1)

@@ -1,0 +1,69 @@
+{
+  "seed": "pw5GzEeX",
+  "batch_id": "PW5FITMAX",
+  "region": "AMR",
+  "universe": "TOP600",
+  "delay": 1,
+  "decay": 4,
+  "neutralization": "SUBINDUSTRY",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "pv",
+  "test_period": "P0Y0M",
+  "known_fields": [
+    "pv96_acquisition_status",
+    "pv96_acquisition_cp_stat",
+    "pv96_ds12mnet",
+    "close"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "PW5_S1_RANKSPREAD_CW",
+      "expression": "-group_rank(ts_decay_linear(ts_rank(ts_delta(pv96_acquisition_status,120),20),5), subindustry)",
+      "optimize_reason": "【Slot 1: 原场散点化 · 保留母本时序骨架】保留 -ts_decay_linear(ts_rank(ts_delta(status,120),20),5) 全链路不变，仅外挂 subindustry 组内横截面排序离散化。单票孤注 0.5 权重的栅栏化病灶直接由组内排布平摊；散点化不改变事件名义方向，负号保序，CONCENTRATED_WEIGHT 修复在保持原信息骨架的前提下进行。"
+    },
+    {
+      "id": 2,
+      "type": "PW5_S2_BACKFILL_SURVIVE",
+      "expression": "-group_rank(ts_backfill(ts_rank(ts_delta(pv96_acquisition_status,120),20),120), subindustry)",
+      "optimize_reason": "【Slot 2: 事件存活窗 120 日】ts_backfill(120) 允许 rank 跳变信号在走势后存活整整 120 日——一次状态码跳变将持有约 4~6 个月仓位而不是一日仓位，把'恰好只有一次事件日的 2Y 空窗'填成'连续 deal progress 段'，同时 rank 离散化摊薄权重。2Y Sharpe 与 CW 是双接靶点。"
+    },
+    {
+      "id": 3,
+      "type": "PW5_S3_CARRIER_FUSION",
+      "expression": "add(subtract(group_rank(ts_rank(ts_delta(pv96_acquisition_status,120),60), subindustry), 0.5), ts_zscore(divide(pv96_ds12mnet, add(close,0.01)), 250))",
+      "optimize_reason": "【Slot 3: 事件与载体双腿融合(主期望)】事件腿(状态跳变组内排序居中成 ±0.5 离散)叠加 ds12mnet/close 的 250 日 z 载体——载体腿以股息率动量供给全宇宙连续持仓基线以修复 CONCENTRATED_WEIGHT 与 LOW_2Y_SHARPE 双病灶(载体腿覆盖完整宇宙近似均匀持仓)；事件腿正交供给超额 Returns 偏度，最大化 fitness 曲线下面积。0.5 中心化仅作用于 group_rank 结果而非稀疏原始字段，尊重零值偏移律。"
+    },
+    {
+      "id": 4,
+      "type": "PW5_S4_FRESH_60D",
+      "expression": "-ts_decay_linear(ts_rank(ts_delta(pv96_acquisition_status,60),20),10)",
+      "optimize_reason": "【Slot 4: 短窗新鲜度 · 2Y 枯竭年份窗口敏感度】母本 120 日差分长到让 2022~2023 年间的III级状态越是够不到;60 日差分让'一年内的近期状态机跳变'更容易触发,decay10 加深平滑供给近两年以更多持仓过渡段。直接测试'枯竭年份压缩状态差分尺度'是否救活 2Y 段。"
+    },
+    {
+      "id": 5,
+      "type": "PW5_S5_YIELD_Z_BARE",
+      "expression": "ts_zscore(divide(pv96_ds12mnet, add(close,0.01)), 250)",
+      "optimize_reason": "【Slot 5: 裸载体方向探针】单腿 ds12mnet/close 的 250 日 z 化——决定事件×载体融合的符号基底：若单腿本就 Sh >= 1.0 说明 AMR 股息率动量自身有效，槽 3 的融合符号正确；若单腿弱，融合主权重将来源性质被证伪，需换载体字段（如 m21_hs_dvd 毛息版）。"
+    },
+    {
+      "id": 6,
+      "type": "PW5_S6_CPSTAT_BACKUP_LEG",
+      "expression": "-group_rank(ts_backfill(ts_rank(ts_delta(pv96_acquisition_cp_stat,120),20),120), subindustry)",
+      "optimize_reason": "【Slot 6: 备用事件腿】cp_stat(Merger Status, alphaCount=1 零拥挤)与主字段 status 同构但信息源分流：若 status 主腿在全宇宙大部分时间恒为零，cp_stat 可能以不同状态码基线供给离散度变化；backfill(120)+rank 离散化同槽 2 结构，作为双对接弯的分支验证。"
+    },
+    {
+      "id": 7,
+      "type": "PW5_S7_ZSCORE_WRAP",
+      "expression": "-group_zscore(ts_decay_linear(ts_rank(ts_delta(pv96_acquisition_status,120),20),5), subindustry)",
+      "optimize_reason": "【Slot 7: z-score sharper 散点】与槽 1 同骨架但用 group_zscore 替代 group_rank：事件股在 subindustry 内的偏离以 sigma 散布保留分级Financial级别的偏度收益，rank 制度化有顺序无强度；本槽直接对检测'去强度化'是否折损母本 13.92 的事件级 Sharpe 贡献。"
+    },
+    {
+      "id": 8,
+      "type": "PW5_S8_LONGMEM_RANK",
+      "expression": "-ts_decay_linear(ts_rank(ts_delta(pv96_acquisition_status,120),120),10)",
+      "optimize_reason": "【Slot 8: 长记忆 rank 窗】ts_rank 窗口从 20 深拓到 120 日：状态机跳变在新 rank 窗内记忆更长(月级非点状)，信号连续供给胜过槽 2 的 backfill 方案(母本原生结构下改进)；与槽 4(60日差分)组成短扩散 vs 长记忆的窗口双向对称矩阵，定位本族 2Y 段最优事件记忆长度。"
+    }
+  ]
+}

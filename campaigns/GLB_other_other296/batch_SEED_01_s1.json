@@ -1,0 +1,311 @@
+{
+  "seed_id": "SEED_01",
+  "step": 1,
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "known_fields": {
+    "oth296_prob_pos": {
+      "type": "VECTOR",
+      "description": "Raw probability that the topic sentiment is positive; POS/NTR/NEG probabilities sum to 1",
+      "coverage": 0.7446,
+      "user_count": 68,
+      "alpha_count": 82,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Signal_Flow",
+      "domain": "[0, 1]",
+      "is_sparse": true,
+      "skewness": "medium"
+    },
+    "oth296_prob_neg": {
+      "type": "VECTOR",
+      "description": "Raw probability that the topic sentiment is negative; POS/NTR/NEG probabilities sum to 1",
+      "coverage": 0.7446,
+      "user_count": 40,
+      "alpha_count": 70,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Signal_Flow",
+      "domain": "[0, 1]",
+      "is_sparse": true,
+      "skewness": "medium"
+    },
+    "oth296_prob_ntr": {
+      "type": "VECTOR",
+      "description": "Raw probability that the topic sentiment is neutral; POS/NTR/NEG probabilities sum to 1",
+      "coverage": 0.7446,
+      "user_count": 19,
+      "alpha_count": 22,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Signal_Flow",
+      "domain": "[0, 1]",
+      "is_sparse": true,
+      "skewness": "medium"
+    },
+    "oth296_sentiment": {
+      "type": "VECTOR",
+      "description": "Trinary sentiment label for the section/topic based on highest probability: 1=positive, 0=neutral, -1=negative",
+      "coverage": 0.7446,
+      "user_count": 41,
+      "alpha_count": 62,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Signal_Flow",
+      "domain": "{-1, 0, 1}",
+      "is_sparse": true,
+      "skewness": "low"
+    },
+    "oth296_confidence": {
+      "type": "VECTOR",
+      "description": "Normalized confidence of the sentiment classification derived from the Prob_ fields; ranges from 0 to 1",
+      "coverage": 0.7446,
+      "user_count": 27,
+      "alpha_count": 40,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Uncertainty_Scale",
+      "domain": "[0, 1]",
+      "is_sparse": true,
+      "skewness": "medium"
+    },
+    "oth296_topic_count": {
+      "type": "VECTOR",
+      "description": "Number of times the identified topic is discussed within the section",
+      "coverage": 0.7446,
+      "user_count": 10,
+      "alpha_count": 13,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Dimension_Anchor",
+      "domain": "positive integer",
+      "is_sparse": true,
+      "skewness": "high"
+    },
+    "oth296_word_count": {
+      "type": "VECTOR",
+      "description": "Number of words in the transcript section",
+      "coverage": 0.7446,
+      "user_count": 12,
+      "alpha_count": 27,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Dimension_Anchor",
+      "domain": "positive integer",
+      "is_sparse": true,
+      "skewness": "high"
+    },
+    "oth296_call_time": {
+      "type": "VECTOR",
+      "description": "UTC date and time of the earnings call",
+      "coverage": 0.7446,
+      "user_count": 24,
+      "alpha_count": 28,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Catalyst_Event",
+      "domain": "UTC timestamp",
+      "is_sparse": true,
+      "skewness": "low"
+    },
+    "oth296_received_time": {
+      "type": "VECTOR",
+      "description": "UTC timestamp when Alexandria received the transcript text",
+      "coverage": 0.7446,
+      "user_count": 8,
+      "alpha_count": 11,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Catalyst_Event",
+      "domain": "UTC timestamp",
+      "is_sparse": true,
+      "skewness": "low"
+    },
+    "oth296_wqreceivetime": {
+      "type": "VECTOR",
+      "description": "Epoch time added by WQ",
+      "coverage": 0.8259,
+      "user_count": 9,
+      "alpha_count": 10,
+      "category": "other",
+      "update_frequency": "event-driven",
+      "semantic_role": "Catalyst_Event",
+      "domain": "epoch timestamp",
+      "is_sparse": true,
+      "skewness": "low"
+    }
+  },
+  "expected_polarity": -1,
+  "stage0_op_count": 4,
+  "core_fields": [
+    "oth296_prob_ntr",
+    "oth296_wqreceivetime"
+  ],
+  "max_ast_operators": 8,
+  "max_champion_operators": 6,
+  "is_golden_shot": false,
+  "items": [
+    {
+      "slot": 1,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】核心假说：中性情绪的增量变化预示信息真空扩大。使用 ts_delta(5) 捕捉 5 日内 prob_ntr 平均值的变动，外层 group_neutralize(SUBINDUSTRY) 消除行业偏差并保留连续尾部幅度（铁律 B：非 rank 截面）。",
+      "expression": "group_neutralize(ts_delta(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 2,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 1 形成参数高原测试对，验证 15 日双倍窗口下的时序稳健性，排查尖峰过拟合。",
+      "expression": "group_neutralize(ts_delta(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 3,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】使用 ts_zscore(5) 将核心信号标准化为时序 Z-score，捕捉中性情绪相对自身历史的极端偏离。外层 group_neutralize(SUBINDUSTRY) 保留幅度信息（铁律 B：非 rank 截面）。",
+      "expression": "group_neutralize(ts_zscore(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 4,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 3 成对，验证 15 日窗口下的标准化稳健性。",
+      "expression": "group_neutralize(ts_zscore(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 5,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】线性衰减 ts_decay_linear(5) 平滑核心信号，降低高频噪音同时保留趋势方向。外层 group_neutralize(SUBINDUSTRY) 消除行业暴露（铁律 B：非 rank 截面）。",
+      "expression": "group_neutralize(ts_decay_linear(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 6,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 5 成对，验证 15 日线性衰减的参数高原稳健性。",
+      "expression": "group_neutralize(ts_decay_linear(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 7,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】时序一阶差分捕捉动量，随后全市场 zscore 标准化（非截面分组），保留原始幅度分布。外层 zscore 非 rank 操作，满足铁律 B 非 rank 配额。",
+      "expression": "zscore(ts_delta(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5))",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 8,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 7 成对，15 日差分后全市场 zscore。",
+      "expression": "zscore(ts_delta(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15))",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 9,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】ts_rank(5) 计算 5 日内核心信号的相对位置，外层 group_neutralize(SUBINDUSTRY) 去除行业均值并保留连续残差幅度。ts_rank 是截面内排序但作为时序算子使用，外层非 rank（铁律 B 满足）。",
+      "expression": "group_neutralize(ts_rank(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 10,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 9 成对，15 日 ts_rank 后 group_neutralize。",
+      "expression": "group_neutralize(ts_rank(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 11,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】状态记忆机制：仅当核心信号 5 日差分非零（即中性情绪发生实质变化）时更新持仓，否则冻结。trade_when 非 rank 算子，满足铁律 B 非 rank 配额。利用事件驱动特性压降换手率。",
+      "expression": "trade_when(ts_delta(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5) != 0, divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), -1)",
+      "neutralization": "INDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 12,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 11 成对，15 日差分作为触发条件，验证更长触发周期的状态冻结效果。",
+      "expression": "trade_when(ts_delta(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15) != 0, divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), -1)",
+      "neutralization": "INDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 13,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】ts_mean(5) 短期均值平滑核心信号，外层 group_neutralize(SUBINDUSTRY) 去除行业基准。平滑后的均值代表局部中枢，偏离中枢即为交易信号（铁律 B：非 rank 截面）。",
+      "expression": "group_neutralize(ts_mean(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 14,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 13 成对，15 日均值平滑后 group_neutralize。",
+      "expression": "group_neutralize(ts_mean(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 15,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】双重标准化：先 ts_zscore(5) 时序标准化，再 group_zscore(SUBINDUSTRY) 截面组内标准化。两层均为连续分布保留算子，满足铁律 B 非 rank 40%+ 配额。",
+      "expression": "group_zscore(ts_zscore(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 16,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 15 成对，15 日双重 zscore 验证参数高原。",
+      "expression": "group_zscore(ts_zscore(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 17,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】去市场均值 normalize 后 group_neutralize(SUBINDUSTRY)：第一层剥离全市场共同因子，第二层剥离行业因子，双重中性化保留纯残差幅度（铁律 B：非 rank 截面）。",
+      "expression": "group_neutralize(normalize(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1))), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 18,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 17 成对，外层 group_neutralize 配合 normalize，验证双重中性化的 15 日稳健性（normalize 无窗口参数，核心信号隐含时序特性由 downstream 验证）。",
+      "expression": "group_neutralize(normalize(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1))), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 19,
+      "optimize_reason": "【假说实证探针-成对双窗口N=5】ts_delta(5) 捕捉动量后，group_zscore(SUBINDUSTRY) 组内标准化。差分信号的截面分布标准化，保留极端尾部幅度（铁律 B：非 rank）。",
+      "expression": "group_zscore(ts_delta(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 5), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    },
+    {
+      "slot": 20,
+      "optimize_reason": "【假说实证探针-成对双窗口2N=15】与 slot 19 成对，15 日差分后 group_zscore，完成 10 组正交骨架的双窗口验证体系。",
+      "expression": "group_zscore(ts_delta(divide(vec_avg(oth296_prob_ntr), add(vec_count(oth296_wqreceivetime), 1)), 15), subindustry)",
+      "neutralization": "SUBINDUSTRY",
+      "type": "empirical_probe",
+      "original_alpha": "SEED_01"
+    }
+  ]
+}

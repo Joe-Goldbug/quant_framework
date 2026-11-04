@@ -1,0 +1,105 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "task_tag": "BATCH03_CORE_SWEEP",
+  "note": "BATCH02 结论: 等权融合把整体 Sharpe 稀释到 0.9-1.15, EMEA 仍 0.2-0.4。本批改为对母本核心做结构扫描 (窗口/分组/时序归一/交互/正交化), 寻找能同时抬 Sharpe 与 EMEA 的核心形态。",
+  "known_fields": [
+    "negative_score_maximum_value",
+    "oth424_divyld",
+    "dividend_growth_factor_score"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 120), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "窗口下探 120 日: 检验余弦窗口对舆情半衰期的拟合度, 预期换手升至 4-5% 仍在 Fitness 免费区间 (<12.5%)"
+    },
+    {
+      "slot": 2,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 60), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "窗口下探 60 日: 主动把换手推到 8-10%, 用 Fitness 分母 max(TO,0.125) 的免费额度换取更高年化收益"
+    },
+    {
+      "slot": 3,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 500), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "窗口上探 500 日: 检验信号是否属超慢变量, 更长的均值可进一步压低噪声并提升 Sharpe"
+    },
+    {
+      "slot": 4,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "分组从 subindustry 放宽到 industry: 更大的可比组可提升跨欧洲的截面样本量, 针对性抢救 EMEA 截面"
+    },
+    {
+      "slot": 5,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), country)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "分组改为 country: 与 COUNTRY 中性化同构, 剥离国别整体情绪水平差异, 直接检验 EMEA 国别内部排序是否有效"
+    },
+    {
+      "slot": 6,
+      "expression": "group_rank(ts_zscore(ts_mean(negative_score_maximum_value, 250), 500), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "时序 z 标准化: 把各股票自身情绪历史水平归一, 消除个股绝对情绪基数差异, 让跨区域比较更公平并降低 ProdCorr"
+    },
+    {
+      "slot": 7,
+      "expression": "group_rank(subtract(ts_mean(negative_score_maximum_value, 250), ts_mean(oth424_divyld, 250)), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "正交化: 从情绪信号中剔除股息率暴露 (高股息防御股往往情绪更稳), 目标是提纯 alpha 并击穿 0.65 ProdCorr 红线"
+    },
+    {
+      "slot": 8,
+      "expression": "group_rank(multiply(ts_mean(negative_score_maximum_value, 250), ts_mean(oth424_divyld, 250)), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "交互调节: 只在股息率高 (机构持仓稳、定价更慢) 的股票上放大负面舆情反转强度, 属于条件式暴露而非等权稀释"
+    },
+    {
+      "slot": 9,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(oth424_divyld, 250), 3), filter=true), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "放大股息通道权重 3 倍: 上一批 1 倍权重时量纲过小几乎不产生作用, 3 倍可让欧洲截面真正参与定价"
+    },
+    {
+      "slot": 10,
+      "expression": "group_rank(ts_rank(ts_mean(negative_score_maximum_value, 250), 500), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "时序分位归一: 用过去 500 日的自身分位替代绝对水平, 对分布漂移与区域基数差异更稳健, 常用于提升跨区稳健性"
+    }
+  ]
+}

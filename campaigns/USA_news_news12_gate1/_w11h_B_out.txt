@@ -1,0 +1,137 @@
+# Task B 表达式挖掘 (n_expr=440)
+
+## B0 总览
+使用算子 26 种: {'reverse': 420, 'divide': 393, 'subtract': 299, 'add': 287, 'rank': 232, 'vec_count': 203, 'ts_backfill': 154, 'trade_when': 126, 'less': 93, 'ts_rank': 93, 'days_from_last_change': 88, 'vec_avg': 67, 'ts_mean': 42, 'greater': 39, 'group_rank': 38, 'ts_sum': 36, 'multiply': 23, 'ts_decay_linear': 20, 'vec_max': 11, 'winsorize': 11, 'ts_zscore': 6, 'ts_delta': 3, 'vec_stddev': 3, 'group_zscore': 2, 'ts_std_dev': 1, 'vec_sum': 1}
+使用字段 103 种 (catalog 共 867)
+未知(不在 catalog)字段: {'industry': 43, 'std': 11, 'abs': 7, 'factor': 7, 'ts_decay_exp_window': 7, 'group_mean': 4, 'quantile': 2, 'sign': 2, 'subindustry': 1}
+
+catalog 中从未使用的字段: 773 个
+  actual_earnings_per_share_2 (cov=0.7121, type=VECTOR)
+  actual_earnings_per_share_3 (cov=0.4467, type=VECTOR)
+  actual_earnings_per_share_4 (cov=0.8294, type=VECTOR)
+  actual_earnings_per_share_value_2_1555 (cov=0.8865, type=VECTOR)
+  actual_earnings_per_share_value_afterhours (cov=0.4467, type=VECTOR)
+  actual_eps_value (cov=0.8294, type=VECTOR)
+  actual_eps_value_2 (cov=0.7121, type=VECTOR)
+  advantageous_position_flag (cov=1.0, type=VECTOR)
+  advantageous_position_flag_pre_filter (cov=0.9427, type=VECTOR)
+  after_hours_vwap_2 (cov=1.0, type=VECTOR)
+  after_hours_vwap_value (cov=0.3426, type=VECTOR)
+  after_session_vwap (cov=0.9664, type=VECTOR)
+  afterhours_volume_weighted_avg_price (cov=1.0, type=VECTOR)
+  aggregate_session_vwap_2 (cov=0.3533, type=VECTOR)
+  aggregate_sessions_vwap (cov=1.0, type=VECTOR)
+  all_sessions_volume_weighted_avg_price (cov=0.3552, type=VECTOR)
+  all_sessions_vwap (cov=1.0, type=VECTOR)
+  annual_dividend_percent (cov=0.4837, type=VECTOR)
+  annual_dividend_percent_2_1555 (cov=0.4808, type=VECTOR)
+  annual_dividend_percent_of_share_price (cov=0.487, type=VECTOR)
+  annual_dividend_yield (cov=0.487, type=VECTOR)
+  annual_dividend_yield_pct (cov=0.4327, type=VECTOR)
+  annual_dividend_yield_pct_2 (cov=0.4327, type=VECTOR)
+  annual_dividend_yield_percent (cov=0.4315, type=VECTOR)
+  annual_dividend_yield_percent_2 (cov=0.4315, type=VECTOR)
+  annual_dividend_yield_percent_3 (cov=0.4847, type=VECTOR)
+  average_true_range_14_1555 (cov=1.0, type=VECTOR)
+  average_true_range_14day (cov=0.958, type=VECTOR)
+  average_true_range_14day_3 (cov=0.958, type=VECTOR)
+  average_true_range_14day_filter (cov=0.9638, type=VECTOR)
+  average_true_range_fourteen_periods (cov=1.0, type=VECTOR)
+  best_position_indicator (cov=1.0, type=VECTOR)
+  closing_session_volume_count (cov=0.3532, type=VECTOR)
+  closing_volume (cov=0.9488, type=VECTOR)
+  current_day_traded_volume (cov=0.9677, type=VECTOR)
+  current_day_trading_volume (cov=0.9677, type=VECTOR)
+  current_day_trading_volume_2 (cov=1.0, type=VECTOR)
+  current_day_volume_2_1555 (cov=1.0, type=VECTOR)
+  current_to_average_volume_ratio (cov=0.966, type=VECTOR)
+  current_to_moving_avg_vol_ratio (cov=0.966, type=VECTOR)
+
+## B1 字段使用频次 Top30
+  241  news_eod_close
+  220  high_price_excursion_stddev
+  154  news_ton_last
+  102  news_max_up_amt
+   99  news_max_dn_amt
+   67  news_eod_vwap
+   43  industry
+   21  low_price_excursion_stddev
+   18  news_open
+   13  news_post_vwap
+   12  main_session_volume_ratio
+   11  news_eod_low
+   11  std
+   10  news_max_up_ret
+    9  news_high_exc_stddev
+    8  news_max_dn_ret
+    8  news_eod_high
+    8  news_low_exc_stddev
+    7  news_atr_ratio
+    7  abs
+    7  news_pe_ratio
+    7  news_short_interest
+    7  main_pct_change_one_twenty_minute_post_news
+    7  factor
+    7  ts_decay_exp_window
+    6  average_true_range_14d
+    6  main_pct_change_ten_minute_post_news
+    6  lowest_price_pre_news
+    5  news_atr14
+    5  news_pre_vwap
+
+## B2 字段族使用: {'eod': 327, 'high': 231, 'max': 221, 'ton': 158, 'main': 44, 'industry': 43, 'low': 31, 'open': 21, 'mainz': 21, 'mins': 14, 'post': 13, 'pct': 11, 'std': 11, 'atr': 7, 'abs': 7}
+
+## B3 字段×算子共现矩阵 (行=字段Top25, 列=算子Top15, .=0)
+field\op       reverse   divide subtract      add     rank vec_coun ts_backf trade_wh     less  ts_rank days_fro  vec_avg  ts_mean  greater group_ra
+news_eod_close     229     227     241     143     170     159      96      94      74      52      70      16      31      24      17
+high_price_exc     210     216     179     157     138     194      99     102      79      43      79      22      34      29      24
+news_ton_last      148     152     154     109     110     120      78      78      64      26      64       5      25      18      11
+news_max_up_am     102      96      20      85      21      14      29      20       7      36       6       .       5      13      12
+news_max_dn_am      97      96      18      84      20      13      26      20       7      34       6       .       5      13      11
+news_eod_vwap       63      62      67      38      46      22      15      14       8      22       4       .       2       6       3
+industry            43      41      23      33       1      24      28       8       8       6       8       4       3       .      37
+low_price_excu      21      20       3      18       6       8       9       .       .       1       .      12       1       .       4
+news_open           18      18      18      14      15      11       7       4       3       2       3       3       2       1       1
+news_post_vwap      12       5      13       2      10       2       3       .       .       3       .       2       .       .       .
+main_session_v      12      12       6       .      12       .       .       .       .       .       .      12       .       .       .
+news_eod_low        11      11      11       6       1       5       2       1       1       2       1       .       .       .       1
+std                 11      11      10      11       9       7       6       6       6       1       6       .       1       .       1
+news_max_up_re      10       6       4       6       2       .       .       .       .       2       .       .       .       .       .
+news_high_exc_       9       6       8       6       .       2       4       .       .       1       .       .       .       .       3
+news_max_dn_re       8       6       2       6       .       .       .       .       .       2       .       .       .       .       .
+news_eod_high        8       8       8       5       1       5       2       1       1       2       1       .       .       .       1
+news_low_exc_s       8       5       8       5       .       1       4       .       .       .       .       .       .       .       2
+news_atr_ratio       7       7       3       4       .       .       1       1       .       .       .       .       .       1       .
+abs                  7       6       7       5       6       4       3       5       2       1       2       .       .       3       .
+news_pe_ratio        6       6       2       4       7       1       .       6       3       2       1       .       .       4       .
+news_short_int       4       4       4       2       7       1       .       4       3       2       1       .       1       2       .
+main_pct_chang       7       3       5       .       7       .       .       .       .       .       .       7       .       .       .
+factor               7       7       6       7       6       6       1       5       5       1       5       .       1       .       .
+ts_decay_exp_w       7       7       6       7       6       6       1       5       5       1       5       .       1       .       .
+
+## B4 一维已测、交叉未测的格 (字段已用>=5次, 算子已用>=20次, 但组合 0 次)
+  news_max_up_amt (x102) × vec_avg (x67)   -> 从未组合
+  news_max_dn_amt (x99) × vec_avg (x67)   -> 从未组合
+  news_eod_vwap (x67) × vec_avg (x67)   -> 从未组合
+  main_session_volume_ratio (x12) × add (x287)   -> 从未组合
+  low_price_excursion_stddev (x21) × trade_when (x126)   -> 从未组合
+  main_session_volume_ratio (x12) × vec_count (x203)   -> 从未组合
+  news_high_exc_stddev (x9) × rank (x232)   -> 从未组合
+  news_max_up_ret (x10) × vec_count (x203)   -> 从未组合
+  main_pct_change_one_twenty_minute_post_news (x7) × add (x287)   -> 从未组合
+  low_price_excursion_stddev (x21) × less (x93)   -> 从未组合
+  news_max_dn_ret (x8) × rank (x232)   -> 从未组合
+  news_low_exc_stddev (x8) × rank (x232)   -> 从未组合
+  main_session_volume_ratio (x12) × ts_backfill (x154)   -> 从未组合
+  low_price_excursion_stddev (x21) × days_from_last_change (x88)   -> 从未组合
+  main_pct_change_ten_minute_post_news (x6) × add (x287)   -> 从未组合
+  lowest_price_pre_news (x6) × add (x287)   -> 从未组合
+  industry (x43) × greater (x39)   -> 从未组合
+  news_post_vwap (x13) × trade_when (x126)   -> 从未组合
+  news_max_dn_ret (x8) × vec_count (x203)   -> 从未组合
+  news_atr_ratio (x7) × rank (x232)   -> 从未组合
+  news_max_up_ret (x10) × ts_backfill (x154)   -> 从未组合
+  main_session_volume_ratio (x12) × trade_when (x126)   -> 从未组合
+  news_atr_ratio (x7) × vec_count (x203)   -> 从未组合
+  main_pct_change_one_twenty_minute_post_news (x7) × vec_count (x203)   -> 从未组合
+  news_max_up_ret (x10) × trade_when (x126)   -> 从未组合

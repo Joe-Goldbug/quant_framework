@@ -1,0 +1,67 @@
+{
+  "wave": 16,
+  "seed_id": "GATE1_WAVE16",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "Push Sharpe higher: 1) value_champ × volume @ CROWDING, 2) ts_mean timing on resonance, 3) value_champ × single combined conviction field, 4) value 20d-60d at CROWDING.",
+  "items": [
+    {
+      "id": 1,
+      "type": "w16_crowding",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W16-1: value_champ(60d-250d) × volume_10d @ CROWDING — champ resonance worked here before (10.55bps), test with volume"
+    },
+    {
+      "id": 2,
+      "type": "w16_crowding",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W16-2: value_champ × all_count_breadth @ CROWDING — reproduce champ×breadth that got 10.55bps"
+    },
+    {
+      "id": 3,
+      "type": "w16_tsmean",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W16-3: ts_mean(5) on resonance — smoother timing than arg_max, may preserve IC"
+    },
+    {
+      "id": 4,
+      "type": "w16_dual_res",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),add(vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled),1)),5), subindustry)",
+      "optimize_reason": "W16-4: value_champ × (volume + 1) @ INDUSTRY — single 3rd field (volume level as conviction), 3 fields total"
+    },
+    {
+      "id": 5,
+      "type": "w16_20d60d_crowd",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W16-5: value 20d-60d × volume @ CROWDING — best window at CROWDING"
+    },
+    {
+      "id": 6,
+      "type": "w16_20d60d_crowd",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_all_20d_filled),vec_avg(buy_sell_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W16-6: value_all 20d-60d × volume @ CROWDING — broader base"
+    },
+    {
+      "id": 7,
+      "type": "w16_baseline_ind",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "W16-7: reproduce Sh 1.00 baseline with arg_max(8) @ INDUSTRY"
+    },
+    {
+      "id": 8,
+      "type": "w16_baseline_sub",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "W16-8: reproduce SUBINDUSTRY best with arg_max(8) for fingerprint"
+    }
+  ]
+}

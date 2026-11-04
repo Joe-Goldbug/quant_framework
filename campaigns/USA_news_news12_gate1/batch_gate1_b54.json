@@ -1,0 +1,70 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 22,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2",
+    "volume",
+    "adv20",
+    "returns",
+    "close",
+    "vwap"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B54_S1_NEWS_VOLUME_SHOCK_DUAL",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), divide(volume, adv20)), 12), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 1: \u65b0\u95fb\u60c5\u7eea \u00d7 \u4ea4\u6613\u91cf\u5f02\u5e38\u653e\u5927\uff08\u673a\u6784\u8d44\u91d1\u5165\u573a\u9a8c\u8bc1\uff0c\u4e25\u683c 7 \u7b97\u5b50\uff09\u3011\u4ee5 news84 \u60c5\u7eea\u4e3a\u4e3b\u4fe1\u53f7\uff0c\u4ee5 volume / adv20 \u4f5c\u4e3a\u673a\u6784\u8d44\u91d1\u786e\u8ba4\u95e8\u63a7\u3002\u4ec5\u5f53\u91cd\u78c5\u6b63\u9762\u516c\u5173\u4f34\u968f\u5de8\u91cf\u673a\u6784\u6362\u624b\u65f6\u624d\u89e6\u53d1\u5efa\u4ed3\uff0c\u8fc7\u6ee4\u96f6\u552e\u865a\u5047\u516c\u5173\uff0c\u5927\u5e45\u538b\u964d\u566a\u97f3\u4ea4\u6613\uff0c\u63a8\u5347 Margin >= 10 bps\u3002"
+    },
+    {
+      "id": 2,
+      "type": "B54_S2_NEWS_RETURNS_CONFIRM_DUAL",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), ts_decay_linear(returns, 5)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 2: \u65b0\u95fb\u60c5\u7eea \u00d7 5 \u65e5\u4ef7\u683c\u52a8\u91cf\u786e\u8ba4\uff08PEAD \u76c8\u4f59\u6f02\u79fb\uff0c\u4e25\u683c 7 \u7b97\u5b50\uff09\u3011\u6b63\u9762\u65b0\u95fb\u53d1\u5e03\u540e\uff0c\u82e5 5 \u65e5\u4ef7\u683c\u52a8\u91cf\u540c\u6b65\u5411\u4e0a\uff0c\u5f62\u6210\u7ecf\u5e02\u573a\u9a8c\u8bc1\u7684\u786e\u5b9a\u6027\u6f02\u79fb\u8d8b\u52bf\u3002\u7eaf\u53cc\u5b57\u6bb5\u6781\u7b80\u62d3\u6251\uff0c7 \u7b97\u5b50\uff0c\u4e3b\u653b\u9ad8\u590f\u666e\u4e0e\u8d85\u4f4e Cluster \u8b66\u544a\u3002"
+    },
+    {
+      "id": 3,
+      "type": "B54_S3_NEWS_INTRADAY_VWAP_SPREAD",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), subtract(divide(close, vwap), 1)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 3: \u65b0\u95fb\u60c5\u7eea \u00d7 \u65e5\u5185\u6536\u76d8\u76f8\u5bf9 VWAP \u6ea2\u4ef7\uff08\u673a\u6784\u62a2\u7b79\u610f\u613f\uff0c\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u5f53\u65b0\u95fb\u60c5\u7eea\u9ad8\u6da8\u4e14\u6536\u76d8\u4ef7\u9ad8\u4e8e VWAP \u65f6\uff0c\u8868\u660e\u65e5\u5185\u5927\u5355\u79ef\u6781\u4e0a\u63a8\u3002\u5229\u7528\u65e5\u5185\u4ef7\u91cf\u7ed3\u6784\u63d0\u7eaf\u65b0\u95fb\u4fe1\u53f7\uff0c\u63d0\u4f9b\u5f3a\u6709\u529b\u7684\u65b9\u5411\u7ea6\u675f\u3002"
+    },
+    {
+      "id": 4,
+      "type": "B54_S4_NEWS_VOLATILITY_ADJUSTED_RETURN",
+      "expression": "group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), divide(ts_mean(returns, 5), ts_std_dev(returns, 20))), 10), subindustry)",
+      "optimize_reason": "\u3010Slot 4: \u65b0\u95fb\u60c5\u7eea \u00d7 \u6ce2\u52a8\u7387\u8c03\u6574\u52a8\u91cf\uff08\u4fe1\u606f\u590f\u666e\u6bd4\uff0c\u4e25\u683c 7 \u7b97\u5b50\uff09\u3011\u5c06 5 \u65e5\u5747\u7ebf\u6536\u76ca\u9664\u4ee5 20 \u65e5\u5386\u53f2\u6ce2\u52a8\u7387\u6d88\u9664\u4e2a\u80a1\u7279\u5f02\u6027\u566a\u97f3\uff0c\u4e0e 4 \u6b21\u65b9\u65b0\u95fb\u60c5\u7eea\u4ea4\u4e92\uff0c\u5916\u5c42\u7eaf group_rank \u7ec8\u7ed3\uff0c\u786e\u4fdd\u7ec4\u5408\u6781\u81f4\u5e73\u6ed1\u4e0e 0 FAIL\u3002"
+    },
+    {
+      "id": 5,
+      "type": "B54_S5_NEWS_RELEVANCE_VOLUME_ZSCORE",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(mean_sentiment_score_transfer, 4), news_relevance_score_2), ts_zscore(volume, 20)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 5: \u65b0\u95fb\u60c5\u7eea \u00d7 \u76f8\u5173\u5ea6 \u00d7 \u6210\u4ea4\u91cf Z-Score\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u65b0\u95fb\u60c5\u7eea\u4e0e\u76f8\u5173\u5ea6\u6784\u6210\u5185\u5bb9\u786e\u5b9a\u6027\uff0c\u6210\u4ea4\u91cf 20 \u65e5\u6807\u51c6\u5316 Z-Score \u6784\u6210\u6d41\u52a8\u6027\u5f02\u5e38\u51b2\u51fb\u3002\u4e09\u8005\u76f8\u4e58\u5f62\u6210\u5168\u7ef4\u5ea6\u7269\u7406\u8fc7\u6ee4\u5668\uff0c\u76f4\u51fb Turnover <= 15% \u4e0e Margin >= 10 bps\u3002"
+    },
+    {
+      "id": 6,
+      "type": "B54_S6_NEWS_EVENT_MODEL_RETURNS_CONFIRM",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(mean_sentiment_score_transfer, 4), prob_rank_bin1_10d_img_news), ts_decay_linear(returns, 5)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 6: \u7ecf\u5178\u6bcd\u672c\u67b6\u6784\u6ce8\u5165 5 \u65e5\u4ef7\u683c\u52a8\u91cf\u786e\u8ba4\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u5728\u6bcd\u672c\uff08\u60c5\u7eea \u00d7 \u56fe\u50cf\u9884\u6d4b\uff09\u57fa\u7840\u4e0a\uff0c\u53bb\u9664\u5197\u4f59 winsorize \u4e0e sqrt\uff0c\u6ce8\u5165 5 \u65e5\u6536\u76ca\u52a8\u91cf\u4f5c\u4e3a\u7b2c\u4e09\u7ef4\u5ea6\u9a8c\u8bc1\u3002\u8ba9\u56fe\u50cf\u9884\u6d4b\u6982\u7387\u83b7\u5f97\u5b9e\u9645\u4ef7\u683c\u884c\u4e3a\u80cc\u4e66\uff0c\u51b2\u51fb Sharpe >= 1.65\u3002"
+    },
+    {
+      "id": 7,
+      "type": "B54_S7_NEWS_EVENT_MODEL_VOLUME_ZSCORE",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(mean_sentiment_score_transfer, 4), prob_rank_bin1_10d_img_news), ts_zscore(volume, 20)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 7: \u7ecf\u5178\u6bcd\u672c\u67b6\u6784\u6ce8\u5165\u6210\u4ea4\u91cf\u5f02\u5e38\u51b2\u51fb\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u4ee5\u6210\u4ea4\u91cf Z-Score \u66ff\u4ee3\u9759\u6001\u76f8\u5173\u5ea6\u95e8\u63a7\uff0c\u91cf\u4ef7\u5f02\u52a8\u4e3a\u56fe\u50cf\u9884\u6d4b\u4fe1\u53f7\u8d4b\u6743\uff0c\u6709\u6548\u8bc6\u522b\u88ab\u673a\u6784\u5927\u5355\u91cd\u5ea6\u5e03\u5c40\u7684\u65b0\u95fb\u50ac\u5316\u6807\u7684\u3002"
+    },
+    {
+      "id": 8,
+      "type": "B54_S8_NEWS_RREJ18q1_TOPOLOGY_RETURNS",
+      "expression": "group_rank(ts_decay_linear(multiply(ts_decay_linear(power(mean_sentiment_score_transfer, 4), 5), multiply(prob_rank_bin1_10d_img_news, ts_decay_linear(returns, 5))), 10), subindustry)",
+      "optimize_reason": "\u3010Slot 8: RREJ18q1 \u7ecf\u5178 0 FAIL \u62d3\u6251\u6ce8\u5165\u52a8\u91cf\u786e\u8ba4\uff08\u4e25\u683c 7 \u7b97\u5b50\uff09\u3011\u5728\u66fe\u5b9e\u73b0 10 \u5e74\u5168\u90e8\u6b63\u6536\u76ca\u7684 RREJ18q1 \u7eaf\u51c0\u67b6\u6784\u4e2d\uff0c\u5c06\u76f8\u5173\u5ea6\u95e8\u63a7\u5347\u7ea7\u4e3a 5 \u65e5\u6536\u76ca\u52a8\u91cf\u786e\u8ba4\uff0c7 \u7b97\u5b50\u6781\u7b80\uff0c\u517c\u5907 0 FAIL \u51c6\u5165\u4e0e\u9ad8\u5355\u8c03\u6027\u3002"
+    }
+  ]
+}

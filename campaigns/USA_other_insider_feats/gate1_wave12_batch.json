@@ -1,0 +1,67 @@
+{
+  "wave": 12,
+  "seed_id": "GATE1_WAVE12",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "Multiply@CROWDING with txn family, ts_rank timing test, sign-gate on value level. 3 fields max.",
+  "items": [
+    {
+      "id": 1,
+      "type": "w12_multiply_crowd",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W12-1: txn_momentum × all_count_breadth @ CROWDING — multiply resonance at CROWDING with txn family; 3 fields"
+    },
+    {
+      "id": 2,
+      "type": "w12_multiply_crowd",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(buy_sell_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W12-2: txn_momentum × all_value_60d @ CROWDING — cross-family multiply, 3 fields"
+    },
+    {
+      "id": 3,
+      "type": "w12_sign_gate",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),sign(vec_avg(buy_sell_ratio_all_60d_filled))),5), subindustry)",
+      "optimize_reason": "W12-3: txn_momentum × sign(value_all_60d) — binary gate on value level (not momentum), 3 fields"
+    },
+    {
+      "id": 4,
+      "type": "w12_tsrank",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_rank(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),10), subindustry)",
+      "optimize_reason": "W12-4: txn momentum via ts_rank(10) — smooth percentile timing instead of arg_max; 2 fields"
+    },
+    {
+      "id": 5,
+      "type": "w12_tsrank",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_rank(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),10), subindustry)",
+      "optimize_reason": "W12-5: value momentum via ts_rank(10) — 2 fields"
+    },
+    {
+      "id": 6,
+      "type": "w12_multiply_crowd",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W12-6: txn_momentum × top20_volume_ratio_10d @ CROWDING — volume as conviction proxy (coverage 0.88); 3 fields"
+    },
+    {
+      "id": 7,
+      "type": "w12_baseline_txn",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),5), subindustry)",
+      "optimize_reason": "W12-7: baseline txn 20d-60d @SLOW (sanity 0.92)"
+    },
+    {
+      "id": 8,
+      "type": "w12_baseline_val",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),5), subindustry)",
+      "optimize_reason": "W12-8: baseline value 20d-60d @SLOW (sanity 0.90)"
+    }
+  ]
+}

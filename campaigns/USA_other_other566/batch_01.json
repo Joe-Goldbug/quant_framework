@@ -1,0 +1,79 @@
+{
+  "batch": 1,
+  "family": "confidence_weighted_point_forecast",
+  "hypothesis": "信念加权的点预测: 把「模型预测了多少」转为「模型有多确定」。R20MaRsi 的连续预测水平是全数据集最拥挤用法(71u/90a), 乘以冷门置信腿(1u/1a)既保留预测力又大幅去拥挤, 并自动收缩低信念个股上的死重仓位。5 个模型家族各测一次以检验跨信息集的可迁移性; 26/52 双窗口 + group_neutralize/group_zscore 非秩外层构成参数高原与幅度保留探针。",
+  "items": [
+    {
+      "id": "b1_m1",
+      "expr": "group_rank(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), subindustry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b1_m2",
+      "expr": "group_rank(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 52), subindustry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b1_m3",
+      "expr": "group_neutralize(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), subindustry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b1_m4",
+      "expr": "group_zscore(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b1_m5",
+      "expr": "group_rank(ts_mean(multiply(oth566_l5r20gasfculr_ret, group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_l5r20gasfculr_prob_pattern"
+      ]
+    },
+    {
+      "id": "b1_m6",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_multil3_label, 60), group_rank(oth566_multil3_prob, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_multil3_label",
+        "oth566_multil3_prob"
+      ]
+    },
+    {
+      "id": "b1_m7",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ]
+    },
+    {
+      "id": "b1_m8",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(twenty_bucket_return_rank_label_l5, 60), group_rank(twenty_bucket_return_rank_confidence_l5, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "twenty_bucket_return_rank_label_l5",
+        "twenty_bucket_return_rank_confidence_l5"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,264 @@
+{
+  "dataset_id": "fundamental69",
+  "field_distribution_probe": "not run; no raw-panel data available via metadata API",
+  "seeds": [
+    {
+      "id": "SEED_Q1_INVARIANCE",
+      "question_type": "Q1_Invariance",
+      "fields_used": [
+        "fnd69_capxy2q",
+        "fnd69_qta"
+      ],
+      "expression": "divide(fnd69_capxy2q, fnd69_qta)",
+      "economic_mechanism": "Capital investment intensity scales quarterly capital expenditures by total assets, separating investment commitment from company size. The counterparty is investors extrapolating raw capex dollars while underweighting disciplined investment relative to the asset base; the hypothesis is that relative capital allocation is priced slowly. Return direction is left for empirical testing.",
+      "tech_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 1,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "61ea7099a7e62f620293413b4887756b77a86332d90e69ca8582cc7d232b889b",
+        "reviewed_expr": "divide(fnd69_capxy2q, fnd69_qta)"
+      },
+      "times": 0,
+      "status": "APPROVED"
+    },
+    {
+      "id": "SEED_Q2_DYNAMICS",
+      "question_type": "Q2_Dynamics",
+      "fields_used": [
+        "fnd69_q2ysitld",
+        "fnd69_dltry2q",
+        "fnd69_ta"
+      ],
+      "expression": "divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta)",
+      "economic_mechanism": "Net long-term financing flow, issuance minus reduction scaled by assets, tests a financing-regime shift rather than debt level. Counterparties may react to one financing leg alone; quarterly disclosure and the distinction between new funding and deleveraging may be incorporated with delay. The signed flows are differenced, never multiplied; sign convention remains to be verified.",
+      "tech_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 2,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_q2ysitld",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "687a82846f7ffaaa9b104fcae2b585dbdeaa1765191c3f8873d5a94bb31119c4",
+        "reviewed_expr": "divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta)"
+      },
+      "times": 0,
+      "status": "APPROVED"
+    },
+    {
+      "id": "SEED_Q3_ANOMALY",
+      "question_type": "Q3_Anomaly",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_ta"
+      ],
+      "expression": "divide(subtract(fnd69_q2yfcnao, ts_mean(fnd69_q2yfcnao, 60)), fnd69_ta)",
+      "economic_mechanism": "Operating cash-flow innovation is the latest observation less its 60-day time-series baseline, normalized by assets. This isolates an unusually strong or weak operating print from scale. The counterparty is a short-horizon investor pricing the headline level but not its deviation from the issuer’s recent history; repeated daily values between quarterly filings are a known risk.",
+      "tech_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "db69b288392b63475ea87b7e2093de5d805860d16d145c0e40e8833fda2c3746",
+        "reviewed_expr": "divide(subtract(fnd69_q2yfcnao, ts_mean(fnd69_q2yfcnao, 60)), fnd69_ta)"
+      },
+      "times": 0,
+      "status": "APPROVED"
+    },
+    {
+      "id": "SEED_Q4_CROSS_FIELD",
+      "question_type": "Q4_CrossField",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd"
+      ],
+      "expression": "add(group_zscore(fnd69_q2yfcnao, subindustry), group_zscore(fnd69_q2yvd, subindustry))",
+      "economic_mechanism": "Within-subindustry standardized operating cash generation and cash dividends combine operating capacity with capital-return commitment. Investors may assess cash generation and payout separately, while their joint quality is slower to recognize; the counterparty is a flow-driven investor focused on only one leg. Both signed inputs are standardized before addition, respecting distinct units.",
+      "tech_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "751c4e6c4abee970b1bc854cdec5503df28d724516c0059b5a6d1ab23fe7018a",
+        "reviewed_expr": "add(group_zscore(fnd69_q2yfcnao, subindustry), group_zscore(fnd69_q2yvd, subindustry))"
+      },
+      "times": 0,
+      "status": "APPROVED"
+    },
+    {
+      "id": "SEED_Q5_STRUCTURE",
+      "question_type": "Q5_Structure",
+      "fields_used": [
+        "fnd69_q2yktss",
+        "fnd69_ta"
+      ],
+      "expression": "divide(fnd69_q2yktss, fnd69_ta)",
+      "economic_mechanism": "Quarterly common/preferred stock sales relative to assets measure external equity financing proportionally, not as a raw amount. Investors may treat financing as generic growth capital and underweight dilution or issuer scale; this ratio tests that structural financing intensity. The field’s transaction sign convention requires validation before directional interpretation.",
+      "tech_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 1,
+        "used_fields": [
+          "fnd69_q2yktss",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "32d910909bc9ac585a9f8f776ceec64a9092b64f02f507d32731cafacbccba47",
+        "reviewed_expr": "divide(fnd69_q2yktss, fnd69_ta)"
+      },
+      "times": 0,
+      "status": "APPROVED"
+    },
+    {
+      "id": "SEED_Q6_ACCUMULATION",
+      "question_type": "Q6_Accumulation",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_ta"
+      ],
+      "expression": "divide(ts_delta(ts_sum(fnd69_q2yfcnao, 20), 60), fnd69_ta)",
+      "economic_mechanism": "The 60-day change in a 20-day accumulated operating-cash-flow measure, scaled by assets, tests whether reported cash generation is building rather than merely persistent at one level. Quarterly-report followers may react to each filing independently and miss a sequence. Repeated daily observations between filings may weaken the apparent accumulation and must be tested.",
+      "tech_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "472a6c82b0a3b8abc6e963df7b87e75efdf6dd9b54afa9dc46fdb6f1feca064d",
+        "reviewed_expr": "divide(ts_delta(ts_sum(fnd69_q2yfcnao, 20), 60), fnd69_ta)"
+      },
+      "times": 0,
+      "status": "APPROVED"
+    },
+    {
+      "id": "SEED_Q7_RELATIVE",
+      "question_type": "Q7_Relative",
+      "fields_used": [
+        "fnd69_dltry2q",
+        "fnd69_ta"
+      ],
+      "expression": "group_rank(divide(fnd69_dltry2q, fnd69_ta), subindustry)",
+      "economic_mechanism": "Debt reduction relative to assets is ranked among subindustry peers, separating deleveraging intensity from business-model and scale differences. Investors applying broad cross-sector debt heuristics may miss sector-specific capital structures; peer-relative comparisons may be incorporated slowly after filings. Debt-reduction sign convention and zero coverage remain unverified.",
+      "tech_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 2,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "6510236f57a67d5efd8ce0ecdd8e59f65dfe053afee36065d602ce5fbb49bd98",
+        "reviewed_expr": "group_rank(divide(fnd69_dltry2q, fnd69_ta), subindustry)"
+      },
+      "times": 0,
+      "status": "APPROVED"
+    },
+    {
+      "id": "SEED_Q8_ESSENCE",
+      "question_type": "Q8_Essence",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_ta"
+      ],
+      "expression": "divide(ts_delta(fnd69_q2yfcnao, 252), fnd69_ta)",
+      "economic_mechanism": "A 252-day change in operating cash flow, normalized by assets, captures a year-scale cash-generation surprise relative to an earlier reported baseline. Investors anchored to prior annual reports may underreact to persistent improvement or deterioration in internal funding capacity. This is an innovation hypothesis, not a claim that raw cash-flow levels predict returns.",
+      "tech_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 2,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "ed8d9e43d9c2d8da0b4da8bf7a1cc8647efcec10e6fe0927ce631f17bc9904f6",
+        "reviewed_expr": "divide(ts_delta(fnd69_q2yfcnao, 252), fnd69_ta)"
+      },
+      "times": 0,
+      "status": "APPROVED"
+    }
+  ]
+}

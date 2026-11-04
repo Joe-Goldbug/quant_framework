@@ -1,0 +1,224 @@
+{
+  "batch_id": "FCF_Q5_REPORTING_LAG_BACKFILL_COVERAGE",
+  "parent_best_alpha_id": "mLoMq1jx",
+  "parent_best_expression": "group_zscore(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), std=3), industry)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "research_hypothesis": "Q4 showed that tail compression alone does not fix the observed single-name concentration: the winsorized construction retained zero fails but still warned CONCENTRATED_WEIGHT 0.5 on specific dates, while concave, quantile, own-history and median transforms all degraded Sharpe. Because every fnd69 flow field covers only about 39% to 43% of the universe and updates quarterly, concentration likely rises on days when few issuers have fresh reports and stale positions dominate the book. The economic hypothesis is that the most recent disclosed cash-flow state remains the relevant financing condition between filings, so carrying each flow forward over a reporting window (ts_backfill) restores peer comparison breadth without inventing new observations. This round keeps the winning 60-day post-dividend, post-capex change and tests coverage repair, robust capping and a rank mapping of the completed signal; return direction is not assumed and quarterly staleness may instead add lag.",
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "BACKFILLED_WINSORIZED_FREE_CASH_CHANGE",
+      "expression": "group_zscore(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao, 60), ts_backfill(fnd69_q2yvd, 60)), ts_backfill(fnd69_capxy2q, 60)), 60), std=3), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors whose cross-sectional comparison thins out between quarterly filings because only recently reporting issuers carry a usable cash-flow signal.",
+      "economic_mechanism": "Each of the three cash-flow items is carried forward for sixty days so the post-dividend, post-capex residual stays defined across the reporting gap, then its 60-day change is winsorized and centered by industry. The mechanism assumes the last disclosed financing state persists until the next filing rather than decaying to missing data, thereby keeping a balanced peer set on low-coverage dates.",
+      "optimize_reason": "Directly targets the measured concentration warning: repeated CONCENTRATED_WEIGHT 0.5 values on scattered dates coincide with sparse quarterly coverage, so broadening the cross-section is the testable repair while the winning winsorized delta is held fixed. Stale carry-forward can also delay genuine deterioration, so breadth, turnover and every threshold remain mandatory evidence rather than assumptions.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "SIGNAL_LEVEL_COVERAGE_REPAIR",
+      "expression": "group_zscore(ts_backfill(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), std=3), 60), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Peer comparisons that discard the most recent completed cash-flow change for an issuer until its next filing arrives.",
+      "economic_mechanism": "The winsorized 60-day residual cash change is computed from reported inputs first and only then carried forward across the reporting gap, so a firm's latest measured financing shift remains active until the next disclosure. Peers are centered within industry, keeping the comparison signed rather than one-sided.",
+      "optimize_reason": "Q4 concentration spikes appeared on isolated dates, consistent with names dropping out of the book between filings. Repairing coverage at the completed-signal level, rather than inside each input, tests whether stale but economically latest information restores breadth without manufacturing intermediate flow observations. Excessive signal age could instead add lag, so every threshold and warning must clear.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "BACKFILLED_RANK_MAPPING_OF_WINNER",
+      "expression": "group_rank(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao, 60), ts_backfill(fnd69_q2yvd, 60)), ts_backfill(fnd69_capxy2q, 60)), 60), std=3), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Portfolio construction driven by linear standardized scores whose tails still allow a few issuers to absorb a large share of risk despite winsorization.",
+      "economic_mechanism": "After coverage repair and tail capping, the completed free-cash change is mapped to an ordinal industry position. Ordinal mapping limits how far any single issuer can stand out from peers, so the economic comparison remains relative post-payout, post-investment cash improvement while position magnitudes become less sensitive to residual outliers.",
+      "optimize_reason": "Addresses the surviving concentration warning through bounded cross-sectional mapping rather than further value shrinking, which measurably failed in Q4. The known risk is one-sided exposure from rank transforms: long and short counts must be balanced and concentration must actually fall, otherwise this variant is rejected regardless of Fitness.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "OPERATING_CASH_CARRY_FORWARD_ONLY",
+      "expression": "group_zscore(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao, 60), fnd69_q2yvd), fnd69_capxy2q), 60), std=3), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors who apply a full carry-forward equally to the operating cash base and to episodic dividend or capital-spending outflows.",
+      "economic_mechanism": "Only operating cash flow, the continuously generated financing source, is carried across the reporting gap; dividends and capital expenditures remain as reported. The change in residual cash then reflects genuinely updated payout or investment events rather than values artificially repeated between their true reporting dates.",
+      "optimize_reason": "Separates two coverage mechanisms: operating cash is reported every quarter while dividends and capex can be episodic, so extending only the recurring base avoids manufacturing a stale outflow. This is an economic distinction within the same three fields, not a field substitution; if episodic gaps still dominate concentration, this variant should underperform Slot 1.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "SUBINDUSTRY_BACKFILLED_CASH_CHANGE",
+      "expression": "group_zscore(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao, 60), ts_backfill(fnd69_q2yvd, 60)), ts_backfill(fnd69_capxy2q, 60)), 60), std=3), subindustry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Broad-industry comparisons that mix issuers with different payout and capital-intensity norms when deciding whether a cash change is unusual.",
+      "economic_mechanism": "Coverage-repaired, tail-capped free-cash changes are centered among subindustry peers, so a firm is compared with businesses sharing similar reinvestment and distribution economics. More homogeneous peers may reduce structural dispersion in cash-flow changes.",
+      "optimize_reason": "Q4 showed subindustry centering alone was much weaker than industry centering, so this variant tests whether that outcome was caused by thin subindustry samples rather than by the peer group itself: carrying values forward supplies data before changing granularity. It must beat the industry-centered parent on every gate to be retained.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "OWN_BASELINE_CASH_SURPRISE_WITH_COVERAGE",
+      "expression": "group_zscore(ts_av_diff(subtract(subtract(ts_backfill(fnd69_q2yfcnao, 60), ts_backfill(fnd69_q2yvd, 60)), ts_backfill(fnd69_capxy2q, 60)), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors treating the same absolute level of retained investment cash as equally informative for a habitual free-cash generator and for a firm whose financing position has genuinely shifted.",
+      "economic_mechanism": "The current coverage-repaired residual is compared with its own annual average, so the signal measures an innovation in cash remaining after both commitments rather than a persistent issuer level, before industry centering distinguishes relative improvement from deterioration.",
+      "optimize_reason": "Q3 tested this own-baseline idea without carry-forward and obtained only Sharpe 0.44; the defect could have been missing data rather than a wrong hypothesis, so the transformation is retained while coverage is repaired. Quarterly repetition can still make the annual baseline stale, and the variant must demonstrate zero warnings rather than rely on that rationale.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 7,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "SMOOTHED_COVERAGE_REPAIRED_CASH_CHANGE",
+      "expression": "group_zscore(ts_decay_linear(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao, 60), ts_backfill(fnd69_q2yvd, 60)), ts_backfill(fnd69_capxy2q, 60)), 60), std=3), 20), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Traders reacting to one filing-date jump in internally available cash without considering whether the financing shift persists.",
+      "economic_mechanism": "After coverage repair, winsorization and the annual change are complete, a short linear decay weights recent days more heavily, testing whether gradual absorption of a quarter-scale cash shift improves consistency while preserving the signed industry comparison.",
+      "optimize_reason": "Combines the only construction that cleared all fails with evidence-based smoothing after, rather than before, signal formation; Q4's pre-delta smoothing weakened the signal, so timing is the controlled difference. If smoothing merely delays a stale quarterly series, turnover and warnings will expose that failure.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 9,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "ANNUAL_HORIZON_BACKFILLED_CASH_CHANGE",
+      "expression": "group_zscore(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao, 60), ts_backfill(fnd69_q2yvd, 60)), ts_backfill(fnd69_capxy2q, 60)), 252), std=3), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors who extrapolate a quarter-scale cash improvement without asking whether the funding position changed over a full annual cycle.",
+      "economic_mechanism": "With reporting gaps repaired, the one-year change in cash remaining after dividends and capital expenditure measures a slower capital-allocation regime shift, winsorized and centered within industry to preserve a two-sided comparison.",
+      "optimize_reason": "Isolates horizon as the single changed variable against Slot 1 after both share coverage repair, testing whether the strong sixty-day result reflects genuine short-horizon reporting absorption or transient noise. The annual horizon previously underperformed, so this contrast is diagnostic and is retained only if it clears every threshold without warnings.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ]
+      }
+    }
+  ],
+  "known_fields": {
+    "fnd69_q2yfcnao": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Operating Activities - Net Cash Flow (Quarterly)"
+    },
+    "fnd69_q2yvd": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": true,
+      "description": "Cash Dividends (Cash Flow) (Quarterly)"
+    },
+    "fnd69_capxy2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": true,
+      "description": "Capital Expenditures (Quarterly)"
+    }
+  },
+  "technical_audit": {
+    "passed_count": 8,
+    "total": 8,
+    "exact_fingerprint_duplicates": [],
+    "skeleton_frequency": {
+      "group_zscore(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao,NUM),ts_backfill(fnd69_q2yvd,NUM)),ts_backfill(fnd69_capxy2q,NUM)),NUM),std=NUM),industry)": 2,
+      "group_zscore(ts_backfill(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),std=NUM),NUM),industry)": 1,
+      "group_rank(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao,NUM),ts_backfill(fnd69_q2yvd,NUM)),ts_backfill(fnd69_capxy2q,NUM)),NUM),std=NUM),industry)": 1,
+      "group_zscore(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao,NUM),fnd69_q2yvd),fnd69_capxy2q),NUM),std=NUM),industry)": 1,
+      "group_zscore(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao,NUM),ts_backfill(fnd69_q2yvd,NUM)),ts_backfill(fnd69_capxy2q,NUM)),NUM),std=NUM),subindustry)": 1,
+      "group_zscore(ts_av_diff(subtract(subtract(ts_backfill(fnd69_q2yfcnao,NUM),ts_backfill(fnd69_q2yvd,NUM)),ts_backfill(fnd69_capxy2q,NUM)),NUM),industry)": 1,
+      "group_zscore(ts_decay_linear(winsorize(ts_delta(subtract(subtract(ts_backfill(fnd69_q2yfcnao,NUM),ts_backfill(fnd69_q2yvd,NUM)),ts_backfill(fnd69_capxy2q,NUM)),NUM),std=NUM),NUM),industry)": 1
+    }
+  },
+  "submission_forbidden": true
+}

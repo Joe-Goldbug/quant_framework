@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "region": "GLB",
+    "universe": "MINVOL10M",
+    "delay": 1,
+    "decay": 0,
+    "neutralization": "COUNTRY",
+    "truncation": 0.025
+  },
+  "items": [
+    {
+      "tag": "W37_1_ipos_zscore",
+      "expression": "group_zscore(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 126)), industry)"
+    },
+    {
+      "tag": "W37_2_ipos_neut",
+      "expression": "group_neutralize(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 126)), industry)"
+    },
+    {
+      "tag": "W37_3_taiv_zscore",
+      "expression": "group_zscore(add(ts_delta(divide(add(fnd23_intfvalld1_taiv, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(add(fnd23_intfvalld1_taiv, fnd23_ofc), fnd23_intfvalld1_letq), 126)), industry)"
+    },
+    {
+      "tag": "W37_4_ipos_189",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 189), ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 126)), industry)"
+    }
+  ]
+}

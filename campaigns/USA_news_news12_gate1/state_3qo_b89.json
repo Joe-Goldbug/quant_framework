@@ -1,0 +1,79 @@
+{
+  "locations": [
+    "https://api.worldquantbrain.com/simulations/31aq9AfQG4PQaMq6n82M7ml",
+    "https://api.worldquantbrain.com/simulations/7bOyXa2O4jZ8F0nDGVBPMM",
+    "https://api.worldquantbrain.com/simulations/2XRWyrf8P4jycHj1dzX6LHWs",
+    "https://api.worldquantbrain.com/simulations/ma6Tt84T4tT9951fzRLXkMB",
+    "https://api.worldquantbrain.com/simulations/cbmxDgwj4IC8RbLmQIJKSq",
+    "https://api.worldquantbrain.com/simulations/40EnQXgF04S88M2WoQ83q3H",
+    "https://api.worldquantbrain.com/simulations/gJMza59x4Atcmv8KNodDD3",
+    "https://api.worldquantbrain.com/simulations/eqLVj7qA4WEczpkZizSsiB"
+  ],
+  "submitted_at": 1793113142,
+  "items": [
+    {
+      "id": 1,
+      "type": "B89_S1_XARQ_D14_TRUNC025",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 11 ops: xArqLNKp (Sharpe 1.65, Fitness 0.95) with sim decay 14. Compresses turnover from 13.02% down to ~12.2% (below 12.5% floor), pushing Fitness to >= 0.98."
+    },
+    {
+      "id": 2,
+      "type": "B89_S2_XARQ_D15_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 15,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 2: 11 ops: xArqLNKp with sim decay 15 and trunc 0.035. Expands Returns toward >= 4.60% while locking turnover below 12.5%, targeting Fitness >= 1.00."
+    },
+    {
+      "id": 3,
+      "type": "B89_S3_XARQ_OUT11_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 11)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 11 ops: xArqLNKp with 11-day outer decay. Adds 1 day of outer smoothing to push turnover into the 11.8% safe zone."
+    },
+    {
+      "id": 4,
+      "type": "B89_S4_XARQ_PWR4_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 11 ops: Power 4.0 sentiment variant on xArqLNKp. Power 4.0 was the exact exponent from Sharpe 1.60 record holder kqNEpmRg, testing if Sharpe expands to >= 1.68."
+    },
+    {
+      "id": 5,
+      "type": "B89_S5_XARQ_WINS28_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 11 ops: Winsorize std=2.8 on xArqLNKp. Tighter regression clipping reduces tail rebalancing."
+    },
+    {
+      "id": 6,
+      "type": "B89_S6_QPVM_D14_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), industry), 10)",
+      "decay": 14,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 6: 11 ops: QPvMRWzw (Fitness 0.92, CLUSTER_TEST 1.28) with decay 14 and trunc 0.035. Preserves industry-level cluster stability while dampening turnover."
+    },
+    {
+      "id": 7,
+      "type": "B89_S7_QPVM_PWR4_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), industry), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 11 ops: Power 4.0 sentiment variant on QPvMRWzw. Elevates base Sharpe on industry-neutralized architecture."
+    },
+    {
+      "id": 8,
+      "type": "B89_S8_XARQ_IN12_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 12), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 11 ops: Inner 12-day memory on xArqLNKp. Extends multi-day accumulation to capture full 2-week post-announcement drift."
+    }
+  ]
+}

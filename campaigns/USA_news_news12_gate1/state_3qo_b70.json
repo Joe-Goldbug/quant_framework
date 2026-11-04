@@ -1,0 +1,78 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/2Uofib2lG51QaNh12iom179o",
+  "submitted_at": 1793075288,
+  "items": [
+    {
+      "id": 1,
+      "type": "B70_S1_WPQ_NEUT_SUBINDUSTRY",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "neutralization": "SUBINDUSTRY",
+      "optimize_reason": "Slot 1: wpQKJ1K5 with SUBINDUSTRY neutralization: neutralizes subindustry beta while 100% preserving idiosyncratic news drift, targeting CLUSTER_TEST PASS."
+    },
+    {
+      "id": 2,
+      "type": "B70_S2_WPQ_NEUT_INDUSTRY",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "neutralization": "INDUSTRY",
+      "optimize_reason": "Slot 2: wpQKJ1K5 with INDUSTRY neutralization: broader industry neutral baseline, preventing over-neutralization of subsector news."
+    },
+    {
+      "id": 3,
+      "type": "B70_S3_WPQ_NEUT_FAST",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "neutralization": "FAST",
+      "optimize_reason": "Slot 3: wpQKJ1K5 with FAST neutralization (forum champion formula): removes fast liquidity/reversal risk while leaving news momentum unconstrained."
+    },
+    {
+      "id": 4,
+      "type": "B70_S4_WPQ_NEUT_SLOW",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "neutralization": "SLOW",
+      "optimize_reason": "Slot 4: wpQKJ1K5 with SLOW neutralization: strips out slow fundamental style factor exposure."
+    },
+    {
+      "id": 5,
+      "type": "B70_S5_KPJ_NEUT_SUBINDUSTRY",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 15,
+      "truncation": 0.02,
+      "neutralization": "SUBINDUSTRY",
+      "optimize_reason": "Slot 5: KPJlxe5l (Sharpe 1.58, 2Y 2.22) with SUBINDUSTRY neutralization: tests if pure subindustry neutralization eliminates CLUSTER_TEST warning."
+    },
+    {
+      "id": 6,
+      "type": "B70_S6_KPJ_NEUT_INDUSTRY",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 15,
+      "truncation": 0.02,
+      "neutralization": "INDUSTRY",
+      "optimize_reason": "Slot 6: KPJlxe5l with INDUSTRY neutralization: allows cross-subindustry capital reallocation to boost Returns and Sharpe."
+    },
+    {
+      "id": 7,
+      "type": "B70_S7_KPJ_NEUT_FAST",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 15,
+      "truncation": 0.02,
+      "neutralization": "FAST",
+      "optimize_reason": "Slot 7: KPJlxe5l with FAST factor neutralization: tests whether fast factor cleaning pushes Sharpe above 1.70."
+    },
+    {
+      "id": 8,
+      "type": "B70_S8_WPQ_NEUT_MARKET",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "neutralization": "MARKET",
+      "optimize_reason": "Slot 8: wpQKJ1K5 with MARKET neutralization: broad dollar-neutral portfolio maximizing sector allocation alpha."
+    }
+  ]
+}

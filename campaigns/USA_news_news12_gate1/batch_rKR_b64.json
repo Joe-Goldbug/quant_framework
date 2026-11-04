@@ -1,0 +1,72 @@
+{
+  "seed": "rKR1qVWo",
+  "batch_id": "rKR_B64",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 12,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "test_period": "P0Y0M",
+  "design_axis": "B64 处方算子攻坚批 (研究员授权算子上限 11): Tabu 锁保留 (mean:prob10d 物理不可碰), 4 个从未测过的字段对 (skew:prob10d / skew:prob20d / skew:rel / maxprim:rel) x 4 张 63 批以来零实测的处方算子牌 (ts_delta 去共线 / ts_zscore 治多空失衡 / quantile 高斯扩尾 / ts_av_diff 去水平漂移), 目标击穿 Sharpe 1.58 与 Fitness 1.00 双 fail; decay=12 对齐冠军 wpQKJ1K5 设置; STRICT NON-SUBMISSION, zero code changes",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "max_primary_sentiment_score_transfer",
+    "skew_primary_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B64_S1_SKEW_P10D_DELTA_CLUSTER_RX",
+      "expression": "ts_decay_exp_window(subtract(group_rank(ts_decay_linear(ts_delta(multiply(signed_power(skew_primary_sentiment_score_transfer, 3), winsorize(prob_rank_bin1_10d_img_news, std=3), news_relevance_score_2), 5), 10), subindustry), 0.5), 10)",
+      "optimize_reason": "处方攻坚主槽 #1 (全新对 skew:prob10d + 处方牌 ts_delta): 病灶 CLUSTER_TEST 1.2<1.58 (wpQKJ1K5 实测), Gate 4 cluster 处方亲点 ts_delta —— 63 批零实测。物理: 对因果乘积做 5 日一阶差分, 把信号源从'情绪水平截面'转为'情绪加速度截面', 与家族 63 批全部水平型信号正交, 直击共线性病灶。skew 首次作为主核 (signed_power 保号立方: 负偏 = 恐慌抛售日 → 负信号, 正偏 = 单边乐观 → 正信号, 保号防负负得正)。外层换处方卡 recipe 亲点的 ts_decay_exp_window (63 批外层全部 linear, exp 外层 × 新对从未测过)。算子数 8, 字段 3。判决: 若 Sh>1.40 且 CLUSTER 检查值上移, 加速型信号轴成立; 若簇共线依旧, 水平→差分不能拯救本对。"
+    },
+    {
+      "id": 2,
+      "type": "B64_S2_MAXPRIM_REL_DELTA_CLUSTER_RX",
+      "expression": "ts_decay_exp_window(subtract(group_rank(ts_decay_linear(ts_delta(multiply(power(max_primary_sentiment_score_transfer, 4.5), winsorize(news_relevance_score_2, std=3)), 5), 10), subindustry), 0.5), 10)",
+      "optimize_reason": "处方攻坚 #2 (全新对 maxprim:rel + ts_delta): 63 批从未把 rel 作为主催化剂槽 (S3 仅作第三乘子)。物理: 首信源 (maxprim) 凸性 power4.5 (冠军 wpQKJ1K5 同指数) × 相关度置信门 winsorize(rel), 5 日差分取其加速度。rel 域 [0,1] 稀疏, winsorize 后为乘法门控: 无相关新闻日 rel≈0 → 乘积≈0 → 差分≈0 → 信号静默, 天然事件驱动换手治理 (TO 有望入 10% 档抬 Fitness)。算子 8, 字段 2。判决: 若本槽 Fit>=0.85 追平 B61S2, rel 主催化轴正式立项; 若 <0.60 则 rel 只配做调制器。"
+    },
+    {
+      "id": 3,
+      "type": "B64_S3_SKEW_P20D_ZSCORE_IMBALANCE_RX",
+      "expression": "ts_zscore(ts_decay_exp_window(subtract(group_rank(ts_decay_linear(multiply(signed_power(skew_primary_sentiment_score_transfer, 3), winsorize(prob_rank_bin1_20d_img_news, std=3), news_relevance_score_2), 10), subindustry), 0.5), 10), 10)",
+      "optimize_reason": "处方攻坚 #3 (全新对 skew:prob20d + 处方牌 ts_zscore): 病灶 L/S 445:590 失衡 16% (dead_weight_imbalance), Gate 4 处方亲点 ts_zscore 自归一 —— 63 批零实测。物理: 外层用每只股票自身 10 日均值/波动标准化最终得分, 把'长期恒定偏置'从持仓权重中除掉, 事件静默期的僵尸仓位被压回自身基准 → 多空配平、死重清理; 与 A 槽的 exp 外层同卡同源 (处方合规 4 槽下限)。20d 臂在此对首测 (B63 已证 20d 在 mean 核上退化, 未证在 skew 核上)。算子 8, 字段 3。判决: 若 L/S 趋近 500/500 且 Sharpe 上移, 失衡病灶定罪成立。"
+    },
+    {
+      "id": 4,
+      "type": "B64_S4_SKEW_REL_ZSCORE_IMBALANCE_RX",
+      "expression": "ts_zscore(ts_decay_exp_window(subtract(group_rank(ts_decay_linear(multiply(signed_power(skew_primary_sentiment_score_transfer, 3), winsorize(news_relevance_score_2, std=3)), 10), subindustry), 0.5), 10), 10)",
+      "optimize_reason": "处方攻坚 #4 (全新对 skew:rel + ts_zscore): 双场纯粹形态 —— 偏度主核 × 相关度门控, 零概率臂。物理: skew 立方保号保留偏度方向, rel 置信门只让高可信新闻进入; ts_zscore 外层做自身基准化。本槽是'去 prob 臂依赖'的判决实验: B63 已证 rel 单独建仓力弱 (mean:rel 0.52), 但那是 mean 核 —— skew×rel 的交互从未测过, 偏度需要相关度背书才可信 (小样本新闻的偏度估计噪声大)。算子 7, 字段 2。判决: 若 Fit >= 0.70, skew×rel 是可用的低相关新核; 若 <0.40, 此对证伪归档。"
+    },
+    {
+      "id": 5,
+      "type": "B64_S5_SKEW_P10D_QUANTILE_TAIL_EXPAND",
+      "expression": "quantile(ts_decay_linear(subtract(group_rank(ts_decay_linear(multiply(signed_power(skew_primary_sentiment_score_transfer, 3), winsorize(prob_rank_bin1_10d_img_news, std=3), news_relevance_score_2), 10), subindustry), 0.5), 10))",
+      "optimize_reason": "处方攻坚 #5 (全新对 skew:prob10d + 处方牌 quantile): cluster 处方 quantile_spread_subtract 的平台可执行真身 (quantile_rank+高斯驱动), 63 批零实测。物理: 高斯分位变换把 [0,1] 阶梯谱系的中间 80% 压缩、两端 10% 拉开 —— 组内微弱差异被放大为持仓差距, 直接攻击 Fitness 公式的 ret 分子 (尾部分离度↑ → 单位换手捕获收益↑), 与截断 0.025 联动把极端值得以保留。默认参数 driver=gaussian sigma=1.0 (无 kwargs Name, 量纲编译器安全)。算子 8, 字段 3。判决: 若 ret 从 4% 档上穿 4.8%+, 分位扩尾是 Fitness 跃迁的正交杠杆。"
+    },
+    {
+      "id": 6,
+      "type": "B64_S6_MAXPRIM_REL_QUANTILE_TAIL_EXPAND",
+      "expression": "quantile(ts_decay_linear(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4.5), winsorize(news_relevance_score_2, std=3)), 10), subindustry), 0.5), 10))",
+      "optimize_reason": "处方攻坚 #6 (全新对 maxprim:rel + quantile): 与 #5 同拓扑不同核, 互为对照 —— 分位扩尾算子在'首信源×相关度'上的可迁移性测试 (tvr 武器在 B63 已证可跨核迁移, 但当时被 CW 拦下; quantile 无 lambda 光谱注峰问题, 理论上无 CW 风险)。物理: power4.5 凸性壳 (冠军同款指数) + rel 门 + 高斯扩尾。S3/S6 双对共用拓扑时骨架因字段名不同而哈希唯一, 合规。算子 7, 字段 2。判决: 若与 #2 (同对 delta 版) 对比 quantile 版 Sh 更高, 尾部变换优于差分; 若更低, 差分轴优先。"
+    },
+    {
+      "id": 7,
+      "type": "B64_S7_SKEW_P20D_AVDIFF_MOMENTUM_RX",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_decay_linear(multiply(ts_av_diff(skew_primary_sentiment_score_transfer, 10), winsorize(prob_rank_bin1_20d_img_news, std=3), news_relevance_score_2), 10), subindustry), 0.5), 10)",
+      "optimize_reason": "处方攻坚 #7 (全新对 skew:prob20d + 处方牌 ts_av_diff): rank_tail_power 处方的平台真身之二 —— ts_av_diff (x - ts_mean(x,10), 减去自身 10 日均值), 63 批零实测。物理: 与 #3 的 zscore (标准化) 不同, av_diff 只去均值不去波动 —— 保留偏度的绝对幅度信息, 同时清除慢漂移成分 (公关公司的情绪基调长期偏正 → 恒定买超 → 用差值清零基准)。对 20d 臂: 信号记忆更长, av_diff 的 10d 基准窗与之形成 10/20 双时间尺度张力。算子 7, 字段 3。判决: 若 TO 入 10% 档且 Sh>1.25, 基准清除轴可与 #3 组成失衡双处方。"
+    },
+    {
+      "id": 8,
+      "type": "B64_S8_SKEW_REL_AVDIFF_MOMENTUM_RX",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_decay_linear(multiply(ts_av_diff(skew_primary_sentiment_score_transfer, 10), winsorize(news_relevance_score_2, std=3)), 10), subindustry), 0.5), 10)",
+      "optimize_reason": "处方攻坚 #8 (全新对 skew:rel + ts_av_diff): 与 #4 同对不同处方 (zscore vs av_diff) 的 A/B 判决 —— 两种基准清除哲学直接对拼, 同核同对下唯一变量是处方算子, 因果归因干净。物理: av_diff 保留幅度 (绝对偏度事件强度), zscore 归一幅度 (只留相对位置); 若本槽 Sh> #4, 则'保幅去基'优于'标准化'; 反之亦然。同时为下一轮处方路由提供确定性证据 (Gate 4 病灶标签的算子选择不再靠猜)。算子 7, 字段 2。判决: 与 #4 成对读取, 胜者进入 B65 冠军壳移植名单。"
+    }
+  ]
+}

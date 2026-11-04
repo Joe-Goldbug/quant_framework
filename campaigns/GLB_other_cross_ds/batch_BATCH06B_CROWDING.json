@@ -1,0 +1,45 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "task_tag": "BATCH06B_CROWDING",
+  "note": "拥挤因子中性化下的 5 个候选拓扑对照 (与 BATCH06A STATISTICAL 并行)",
+  "known_fields": [
+    "negative_score_maximum_value",
+    "oth424_divyld",
+    "dividend_growth_factor_score"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0, "neutralization": "CROWDING", "truncation": 0.025,
+      "optimize_reason": "已验证最佳核心 + CROWDING 中性化: 直接剥离全平台拥挤暴露, 是对症 0.6945 ProdCorr 的最强处方"
+    },
+    {
+      "slot": 2,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), subindustry)",
+      "decay": 0, "neutralization": "CROWDING", "truncation": 0.025,
+      "optimize_reason": "母本原式 + CROWDING: 隔离中性化贡献, 检验 ProdCorr 降幅是否值得牺牲部分 Sharpe"
+    },
+    {
+      "slot": 3,
+      "expression": "group_rank(if_else(is_nan(ts_mean(negative_score_maximum_value, 250)), ts_mean(dividend_growth_factor_score, 250), ts_mean(negative_score_maximum_value, 250)), industry)",
+      "decay": 0, "neutralization": "CROWDING", "truncation": 0.025,
+      "optimize_reason": "只填坑不稀释 + CROWDING: 同时解决年化收益 30% 摊薄与生产库相关性问题"
+    },
+    {
+      "slot": 4,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(oth424_divyld, 250), 2), filter=true), industry)",
+      "decay": 0, "neutralization": "CROWDING", "truncation": 0.025,
+      "optimize_reason": "EMEA 抢救候选 + CROWDING: 股息通道本身低拥挤, 叠加拥挤中性化后应显著提升跨区稳健度"
+    },
+    {
+      "slot": 5,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 120), industry)",
+      "decay": 0, "neutralization": "CROWDING", "truncation": 0.025,
+      "optimize_reason": "收益端候选 + CROWDING: 检验更快窗口在拥挤中性化后能否同时拿下 Fitness 与低相关性"
+    }
+  ]
+}

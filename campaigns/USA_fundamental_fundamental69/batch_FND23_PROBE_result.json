@@ -1,0 +1,40 @@
+{
+  "multisimulation_id": "4dO7qq60Q4Ck9FVJytrTsPg",
+  "status": "COMPLETE",
+  "total_requested": 2,
+  "total_created": 2,
+  "simulation_only": true,
+  "alpha_submission_calls": 0,
+  "alpha_results": [
+    {
+      "slot": 1,
+      "alpha_id": "9qx0EXJr",
+      "expression": "group_zscore(winsorize(fnd23_icsm_m_mpns, std=3), industry)",
+      "sharpe": -0.17, "fitness": -0.04, "turnover": 0.0812, "returns": -0.0057,
+      "margin": -0.000141, "long_count": 517, "short_count": 518,
+      "sub_universe_sharpe": -0.44, "two_year_sharpe": -0.41,
+      "investability_sharpe": -0.09, "risk_neutralized_sharpe": null,
+      "ra_failed": true,
+      "authoritative_fail": ["LOW_SHARPE", "LOW_FITNESS", "LOW_SUB_UNIVERSE_SHARPE", "LOW_2Y_SHARPE"],
+      "checks_fail": ["LOW_SHARPE", "LOW_FITNESS", "LOW_SUB_UNIVERSE_SHARPE", "LOW_2Y_SHARPE"],
+      "warnings": ["CLUSTER_TEST", "MATCHES_THEMES"],
+      "checks_pass": ["LOW_TURNOVER", "HIGH_TURNOVER", "CONCENTRATED_WEIGHT", "MATCHES_PYRAMID", "MATCHES_THEMES"]
+    },
+    {
+      "slot": 2,
+      "alpha_id": "WjO8L79o",
+      "expression": "group_zscore(winsorize(ts_delta(fnd23_icsm_m_mpns, 60), std=3), industry)",
+      "sharpe": -0.57, "fitness": -0.21, "turnover": 0.1587, "returns": -0.0207,
+      "margin": -0.000261, "long_count": 516, "short_count": 520,
+      "sub_universe_sharpe": -0.06, "two_year_sharpe": 0.16,
+      "investability_sharpe": -0.48, "risk_neutralized_sharpe": null,
+      "ra_failed": true,
+      "authoritative_fail": ["LOW_SHARPE", "LOW_FITNESS", "LOW_2Y_SHARPE"],
+      "checks_fail": ["LOW_SHARPE", "LOW_FITNESS", "LOW_2Y_SHARPE"],
+      "warnings": ["CLUSTER_TEST", "MATCHES_THEMES"],
+      "checks_pass": ["LOW_TURNOVER", "HIGH_TURNOVER", "CONCENTRATED_WEIGHT", "LOW_SUB_UNIVERSE_SHARPE", "MATCHES_PYRAMID", "MATCHES_THEMES"]
+    }
+  ],
+  "batch_decision": "0/2 通过门禁，但探针任务本身达成，产出两条决定性结论。(1) **fundamental23 解决了 fnd69 的结构性死穴**：两槽广度均为 517+518 / 516+520（约 1035 只股票），CONCENTRATED_WEIGHT 全部 PASS —— 这是账户内基本面信号第一次在满广度下不触发浓度失败。(2) **字段确实日频刷新**：turnover 8.1%（水平）与 15.9%（60日变化）都不是季报快照的近零水平，说明 fundamental23 是真正的 point-in-time 日频数据集，绕开了 fnd69 的「季报窗口驱动」缺陷。(3) 净利率水平本身是弱负向信号（Sharpe -0.17），且其变化更差（-0.57）—— 利润率族不是本数据集的强机制。下一批必须换机制：现金流量表族（经营现金流 fnd23_cf_m_olto cov.94/uc1、资本开支 fnd23_cf_m_xecs cov.91/uc0、营运资本变动 fnd23_cf_m_fcos cov.94/uc0、股票发行净额 fnd23_cf_m_sspf cov.93/uc0）与资产增长/净发行类因子。分母字段已确认可用：total_assets_5 (cov 1.00, uc 0)、book_value_total_equity (cov 1.00, uc 0)。无 alpha 提交。",
+  "threshold_policy": {"all_fail_items_required_zero": true, "all_warning_items_required_zero": true, "sharpe_min": 1.58, "fitness_min": 1.0, "margin_min_bps": 10, "turnover_min": 0.05, "turnover_max": 0.5, "submission_forbidden": true}
+}

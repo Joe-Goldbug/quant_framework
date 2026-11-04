@@ -1,0 +1,88 @@
+{
+  "campaign_metadata": {
+    "region": "GLB",
+    "universe": "MINVOL1M",
+    "delay": 1,
+    "decay": 4,
+    "neutralization": "COUNTRY",
+    "truncation": 0.0,
+    "nan_handling": "ON",
+    "primary_dataset": "ai_news_scores",
+    "complementary_dataset": "fundamental23",
+    "total_batches_simulated": 17,
+    "status": "COMPLETED_PPA_READY"
+  },
+  "grand_champion": {
+    "alpha_id": "2rAO8OM5",
+    "name": "0.6892_0.0000",
+    "color": "GREEN",
+    "tags": ["PowerPoolSelected"],
+    "code": "group_rank(divide(group_neutralize(ts_mean(add(negative_score_maximum_value, negative_score_maximum_value_3, filter=True), 250), subindustry), add(group_rank(assets_total_2, subindustry), 0.01)), subindustry)",
+    "metrics": {
+      "sharpe": 1.61,
+      "fitness": 0.81,
+      "two_year_sharpe": 2.21,
+      "returns": 0.0316,
+      "turnover": 0.0209,
+      "margin_bps": 30.24,
+      "drawdown": 0.0173,
+      "pnl_usd": 2277182,
+      "sub_universe_sharpe": 1.40,
+      "emea_sharpe": 0.07,
+      "cluster_test": 1.10
+    },
+    "correlation": {
+      "prod_corr": 0.6892,
+      "prod_corr_pass": true,
+      "self_corr": 0.0000,
+      "self_corr_pass": true,
+      "power_pool_corr": 0.34
+    },
+    "gates": {
+      "fail_count": 0,
+      "fails": [],
+      "ppa_failed": false,
+      "pyramid_multipliers": [
+        {"name": "GLB/D1/FUNDAMENTAL", "multiplier": 1.4},
+        {"name": "GLB/D1/OTHER", "multiplier": 1.2}
+      ]
+    }
+  },
+  "runner_up_champions": [
+    {
+      "rank": 2,
+      "alpha_id": "mLojGWn5",
+      "name": "0.6911_0.0000",
+      "code": "group_rank(divide(group_neutralize(ts_mean(add(negative_score_maximum_value, negative_score_maximum_value_3, filter=True), 250), subindustry), add(group_rank(assets_total_2, subindustry), 0.05)), subindustry)",
+      "sharpe": 1.60,
+      "prod_corr": 0.6911,
+      "margin_bps": 30.09,
+      "drawdown": 0.0189,
+      "emea_sharpe": 0.05,
+      "status": "PASS_0_FAIL"
+    },
+    {
+      "rank": 3,
+      "alpha_id": "LLM7YOwv",
+      "name": "0.6891_0.0000",
+      "code": "group_rank(divide(group_neutralize(ts_mean(negative_score_maximum_value, 250), subindustry), add(group_rank(assets_total_2, subindustry), 0.15)), subindustry)",
+      "sharpe": 1.58,
+      "prod_corr": 0.6891,
+      "margin_bps": 29.28,
+      "drawdown": 0.0186,
+      "emea_sharpe": -0.01,
+      "status": "PASS_0_FAIL_SINGLE_FIELD"
+    },
+    {
+      "rank": 4,
+      "alpha_id": "bl6j17gN",
+      "code": "group_rank(divide(group_neutralize(ts_mean(add(negative_score_maximum_value, negative_score_maximum_value_3, filter=True), 250), subindustry), add(group_rank(assets_total_2, subindustry), 0.15)), subindustry)",
+      "sharpe": 1.59,
+      "prod_corr": 0.6997,
+      "margin_bps": 29.81,
+      "drawdown": 0.0189,
+      "emea_sharpe": 0.03,
+      "status": "PASS_0_FAIL"
+    }
+  ]
+}

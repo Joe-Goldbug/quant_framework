@@ -1,0 +1,64 @@
+{
+  "seed_id": "mLYNEWjW",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 6,
+  "neutralization": "INDUSTRY",
+  "category": "news",
+  "known_fields": [
+    "news_eod_close",
+    "news_ton_last",
+    "high_price_excursion_stddev"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "CTN_CNT_TH20",
+      "expression": "if_else(greater(abs(subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_count(high_price_excursion_stddev)), 2)))), 0.2), subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_count(high_price_excursion_stddev)), 2))), 0)",
+      "optimize_reason": "Zero-centered deadband at 0.20 on mLYNEWjW pure core with vec_count normalization. Zeros out the noisy middle 40% (ranks 0.30~0.70) while symmetrically holding top 30% shorts and bottom 30% longs. Slashes rebalancing churn from 84% down to ~35% while expanding margin."
+    },
+    {
+      "id": 2,
+      "type": "CTN_CNT_TH25",
+      "expression": "if_else(greater(abs(subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_count(high_price_excursion_stddev)), 2)))), 0.25), subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_count(high_price_excursion_stddev)), 2))), 0)",
+      "optimize_reason": "Zero-centered deadband at 0.25 on vec_count normalized drift. Zeros out middle 50% of stocks, trading only top 25% shorts and bottom 25% longs. Targets Turnover ~25% and Fitness >= 0.85."
+    },
+    {
+      "id": 3,
+      "type": "CTN_CNT_TH30",
+      "expression": "if_else(greater(abs(subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_count(high_price_excursion_stddev)), 2)))), 0.3), subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_count(high_price_excursion_stddev)), 2))), 0)",
+      "optimize_reason": "Zero-centered deadband at 0.30 on vec_count normalized drift. Zeros out middle 60%, trading only top 20% extreme overreaction tails. Compresses turnover to ~18%, entering the high-Fitness zone (Fit >= 1.00)."
+    },
+    {
+      "id": 4,
+      "type": "CTN_CNT_TH35",
+      "expression": "if_else(greater(abs(subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_count(high_price_excursion_stddev)), 2)))), 0.35), subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_count(high_price_excursion_stddev)), 2))), 0)",
+      "optimize_reason": "Zero-centered deadband at 0.35 on vec_count normalized drift. Zeros out middle 70%, trading only top/bottom 15% extreme deciles. Directly targets the <=11% turnover floor protection zone for guaranteed Fitness >= 1.00."
+    },
+    {
+      "id": 5,
+      "type": "CTN_VMAX_TH20",
+      "expression": "if_else(greater(abs(subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_max(high_price_excursion_stddev)), 2)))), 0.2), subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_max(high_price_excursion_stddev)), 2))), 0)",
+      "optimize_reason": "Deadband at 0.20 on vec_max normalized drift. Peak volatility excursion scaling. Isolates moves with heavy order-flow dislocation, testing whether peak excursion improves tail Sharpe."
+    },
+    {
+      "id": 6,
+      "type": "CTN_VMAX_TH25",
+      "expression": "if_else(greater(abs(subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_max(high_price_excursion_stddev)), 2)))), 0.25), subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_max(high_price_excursion_stddev)), 2))), 0)",
+      "optimize_reason": "Deadband at 0.25 on vec_max normalized drift. Compresses active trades to the highest 25% excursion tails, driving Margin > 4.5 bps."
+    },
+    {
+      "id": 7,
+      "type": "CTN_VAVG_TH20",
+      "expression": "if_else(greater(abs(subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_avg(high_price_excursion_stddev)), 2)))), 0.2), subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_avg(high_price_excursion_stddev)), 2))), 0)",
+      "optimize_reason": "Deadband at 0.20 on vec_avg normalized drift. Mean volatility excursion scaling across all intraday news items."
+    },
+    {
+      "id": 8,
+      "type": "CTN_VAVG_TH25",
+      "expression": "if_else(greater(abs(subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_avg(high_price_excursion_stddev)), 2)))), 0.25), subtract(0.5, rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), vec_avg(high_price_excursion_stddev)), 2))), 0)",
+      "optimize_reason": "Deadband at 0.25 on vec_avg normalized drift. Targets Turnover ~22% and Sharpe >= 1.60."
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "locations": [
+    "https://api.worldquantbrain.com/simulations/4FuGyPazi4Cdc8C18gEUF4K2",
+    "https://api.worldquantbrain.com/simulations/GbMdc1v74V7bu511AEsFOxQ",
+    "https://api.worldquantbrain.com/simulations/o8NLG2904Xdcfp1KRfEhlT",
+    "https://api.worldquantbrain.com/simulations/2L10tKf3f50P9QC1c9HWYdVr",
+    "https://api.worldquantbrain.com/simulations/3XCLo0dc74JNcEH15bbCke4r",
+    "https://api.worldquantbrain.com/simulations/dzo8O9g84sPaCLDTAujIRQ",
+    "https://api.worldquantbrain.com/simulations/3dIFVF8SE57VcrUunzQkE4i",
+    "https://api.worldquantbrain.com/simulations/CYnDj9hY4Kfcw5wmE3JIVF"
+  ],
+  "submitted_at": 1793147301,
+  "items": [
+    {
+      "id": 1,
+      "type": "B94_S1_P0OA_IN9_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 9), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 1: 10 ops: Inner 9d decay on QPvkZkQp. Reduces inner accumulation lag by 1 day, testing if Returns rises from 4.34% to >= 4.45%."
+    },
+    {
+      "id": 2,
+      "type": "B94_S2_P0OA_IN8_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 8), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 2: 10 ops: Inner 8d decay on QPvkZkQp. Focuses more heavily on the first week of post-announcement reaction."
+    },
+    {
+      "id": 3,
+      "type": "B94_S3_P0OA_IN10_OUT9",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 3: 10 ops: Inner 10d + Outer 9d. Fuses the higher returns of inner 10d with the Sharpe 1.66 of outer 9d."
+    },
+    {
+      "id": 4,
+      "type": "B94_S4_P0OA_IN9_OUT9",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 9), subindustry), 0.5), 5), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 4: 10 ops: Dual 9d alignment (Inner 9d + Outer 9d). Eliminates 2 full days of stale holding across the stack."
+    },
+    {
+      "id": 5,
+      "type": "B94_S5_5D_HORIZON_IN5_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_5d_img_news, std=3.0), sqrt(news_relevance_score_2)), 5), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_5d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 5: 10 ops: 5-Day event velocity model (prob_rank_bin1_5d_img_news) + 5d inner decay. Concentrates capital purely on the steepest first-week drift."
+    },
+    {
+      "id": 6,
+      "type": "B94_S6_5D_HORIZON_IN8_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_5d_img_news, std=3.0), sqrt(news_relevance_score_2)), 8), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_5d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 6: 10 ops: 5-Day model + 8d inner memory. Extends event memory slightly to smooth cross-sectional ranking across subindustries."
+    },
+    {
+      "id": 7,
+      "type": "B94_S7_5D_HORIZON_IN10_OUT10",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_5d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_5d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 7: 10 ops: 5-Day model + 10d inner memory. Benchmark test for 5d model under winning 10d accumulation window."
+    },
+    {
+      "id": 8,
+      "type": "B94_S8_P0OA_IN10_OUT8",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 8)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 8: 10 ops: Inner 10d + Outer 8d. Outer 8d previously generated Returns 4.38%, testing if it pushes Returns past 4.50%."
+    }
+  ]
+}

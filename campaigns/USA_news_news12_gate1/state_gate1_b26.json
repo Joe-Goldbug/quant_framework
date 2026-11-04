@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/2RySyjcIf4RScf51bCjwRwg4",
+  "submitted_at": 1792991340,
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_10D_DUAL_WINSOR",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), news_relevance_score_2), sector)",
+      "optimize_reason": "Dual 3-sigma winsorization of both NLP sentiment and DL event return prediction. Eliminates bidirectional fat-tail noise to compress turnover and lift Fitness."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_5D_10D_ENSEMBLE",
+      "expression": "group_rank(multiply(winsorize(mean_sentiment_score_transfer, std=3), add(winsorize(prob_rank_bin1_10d_img_news, std=3), winsorize(prob_rank_bin1_5d_img_news, std=3))), sector)",
+      "optimize_reason": "Multi-horizon ensemble combining 5d and 10d forward return forecasts with winsorized sentiment. Smooths predictive variance across time horizons."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_10D_SUBIND_DUAL",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), news_relevance_score_2), subindustry)",
+      "optimize_reason": "Dual winsorized news event forecast ranked within subindustry. Targets 2Y Sharpe >= 1.60 and pure Alpha Margin expansion."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_10D_RELEVANCE_FILTER",
+      "expression": "group_rank(if_else(greater(news_relevance_score_2, 50), multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), 0), sector)",
+      "optimize_reason": "Hard relevance filter (relevance > 50) gating event trades. Focuses capital strictly on high-impact focal corporate news, eliminating peripheral mentions."
+    },
+    {
+      "id": 5,
+      "type": "N84_VOL_ERM_10D_WINSOR",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), log(add(news_item_count_transfer, 1))), winsorize(prob_rank_bin1_10d_img_news, std=3)), sector)",
+      "optimize_reason": "Headline volume-weighted winsorized sentiment interacted with 10d event prediction. Heavy news coverage validates event credibility."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_10D_TIGHT_WINSOR",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=2.5), winsorize(prob_rank_bin1_10d_img_news, std=2.5)), news_relevance_score_2), sector)",
+      "optimize_reason": "Tighter 2.5-sigma winsorization on both channels to aggressively prune distribution tails and stabilize cross-sectional rank correlation."
+    },
+    {
+      "id": 7,
+      "type": "N84_ZSCORE_ERM_10D",
+      "expression": "group_rank(multiply(divide(subtract(mean_sentiment_score_transfer, ts_mean(mean_sentiment_score_transfer, 10)), add(ts_std_dev(mean_sentiment_score_transfer, 10), 0.01)), winsorize(prob_rank_bin1_10d_img_news, std=3)), sector)",
+      "optimize_reason": "10-day rolling sentiment z-score multiplied by winsorized 10d event forecast. Normalizes news sentiment across calm and high-volatility firms."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_5D_10D_SUBIND",
+      "expression": "group_rank(multiply(winsorize(mean_sentiment_score_transfer, std=3), add(winsorize(prob_rank_bin1_10d_img_news, std=3), winsorize(prob_rank_bin1_5d_img_news, std=3))), subindustry)",
+      "optimize_reason": "Multi-horizon ensemble (5d + 10d) normalized within subindustry. Targets maximum granular information extraction."
+    }
+  ]
+}

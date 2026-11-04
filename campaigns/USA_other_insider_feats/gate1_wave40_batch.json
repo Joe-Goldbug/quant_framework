@@ -1,0 +1,16 @@
+{
+  "wave": 40,
+  "theme": "新王YP1bEqmM收口轮: 幅度尾部幂次变体(p3/双层秩/窗口谱26-40-60/5d脉冲/20-250差/vec_max)",
+  "trigger": "Wave39判决: champ_tailpow Sh1.15/Fit0.66/Mgn12.1/PC0.6848 双达标新王; 尾部幂次仅在幅度核有效",
+  "base_settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025},
+  "expressions": [
+    {"tag": "tp3", "ops": 10, "note": "幂次p=3更强尾部集中", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 20), subindustry), 0.5), 3)"},
+    {"tag": "tp2_w26", "ops": 10, "note": "ts_mean窗26(Wave21最佳窗移植)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 26), subindustry), 0.5), 2)"},
+    {"tag": "tp2_dual", "ops": 10, "note": "双层秩壳(历史PC最低0.5728)+尾部幂次", "expr": "signed_power(subtract(group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 20), industry), subindustry), 0.5), 2)"},
+    {"tag": "tp2_5d", "ops": 10, "note": "5d脉冲核+尾部幂次", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_5d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 10), subindustry), 0.5), 2)"},
+    {"tag": "tp2_20250", "ops": 10, "note": "20d-250d长差+尾部幂次", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_250d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 20), subindustry), 0.5), 2)"},
+    {"tag": "tp2_w40", "ops": 10, "note": "ts_mean窗40(Wave32 RREbp3Lb Sh1.25/Mgn14.71核)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 40), subindustry), 0.5), 2)"},
+    {"tag": "tp2_w60", "ops": 10, "note": "ts_mean窗60", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 60), subindustry), 0.5), 2)"},
+    {"tag": "tp2_vecmax", "ops": 10, "note": "置信腿vec_max(尖峰信念)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_max(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 20), subindustry), 0.5), 2)"}
+  ]
+}

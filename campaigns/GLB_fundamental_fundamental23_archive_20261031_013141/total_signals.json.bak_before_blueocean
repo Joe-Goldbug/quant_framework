@@ -1,0 +1,402 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL10M",
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "signals": [
+    {
+      "id": "88RgeN6o",
+      "expression": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), industry)",
+      "economic_mechanism": "营运现金流加净利润占总资产比重的 252 日年度增量异象，按行业横截面排序。",
+      "metrics": {
+        "sharpe": 1.75,
+        "fitness": 1.14,
+        "turnover": 0.0526,
+        "returns": 0.0532,
+        "drawdown": 0.0492,
+        "margin": 0.002024,
+        "margin_bps": 20.24,
+        "longCount": 1949,
+        "shortCount": 2043,
+        "pnl": 5502055,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 1.28,
+        "two_year_sharpe": 1.76,
+        "investability_sharpe": 1.65,
+        "investability_fitness": 1.05,
+        "risk_neutralized_sharpe": 1.38
+      },
+      "ra": {
+        "failed_ra_count": 2,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_GLB_EMEA_SHARPE",
+          "LOW_GLB_APAC_SHARPE"
+        ],
+        "pyramid_short": "fundamental"
+      },
+      "checks": {
+        "fail": [],
+        "warning": [
+          {
+            "name": "LOW_GLB_EMEA_SHARPE",
+            "value": 0.63,
+            "limit": 1.0
+          },
+          {
+            "name": "LOW_GLB_APAC_SHARPE",
+            "value": 0.92,
+            "limit": 1.0
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "value": 0.94,
+            "limit": 1.58
+          }
+        ],
+        "pass": [
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "LOW_GLB_AMER_SHARPE",
+          "LOW_2Y_SHARPE",
+          "MATCHES_PYRAMID"
+        ]
+      },
+      "times": 0
+    },
+    {
+      "id": "SEED_01",
+      "cluster_ref": "应计盈余与真实经营现金流背离 (Accruals vs CFO Divergence)",
+      "field_semantics_mapping": "fnd23_net_income=权责发生制净利润(流量盈余)，fnd23_ofc=经营现金流(真实现金盈余)，fnd23_tot_assets=存量规模锚。两者先做差得到应计残差(非现金盈余)，再用 tot_assets 归一消除企业规模偏倚——不能直接比绝对额。",
+      "economic_mechanism": "Sloan 应计异象：管理层可通过收入确认时机/费用资本化做大净利而现金流不随之增加 → 高应计盈余不可持续 → 市场反应滞后 → 高应计/资产 → 做空",
+      "expression": "divide(subtract(fnd23_net_income, fnd23_ofc), add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "fnd23_net_income",
+        "fnd23_ofc",
+        "fnd23_tot_assets"
+      ],
+      "times": 1,
+      "verdict": "STEP1_EARLY_STOP: max|Sharpe|=0.12 << 1.0 (Sloan应计/资产 族在GLB/MINVOL10M无效)"
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "应计盈余与真实经营现金流背离 (Accruals vs CFO Divergence)",
+      "field_semantics_mapping": "fnd23_ofc 与 fnd23_net_income 分别除以 tot_revenue 得到现金毛利率与会计净利率，两者之差即'应计毛利率'。用剪刀差而非直接差分，使规模中性可比。",
+      "economic_mechanism": "现金毛利率−会计净利率 = 应计毛利率：负值越大(会计利润远超现金)→盈余质量越差→均值回归→做空",
+      "expression": "subtract(divide(fnd23_ofc, add(fnd23_tot_revenue, 1)), divide(fnd23_net_income, add(fnd23_tot_revenue, 1)))",
+      "fields_used": [
+        "fnd23_ofc",
+        "fnd23_net_income",
+        "fnd23_tot_revenue"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "应计盈余与真实经营现金流背离 (Accruals vs CFO Divergence)",
+      "field_semantics_mapping": "fnd23_intfvm_teno=间接法现金流量表第一行(Net Income/Starting Line，即调整前净利起点)，fnd23_ofc=同一表最终经营现金流，两者之差=全部非现金调整项总和(应计)，除以 tot_revenue 得应计强度。",
+      "economic_mechanism": "从现金流量表内部直接读取的应计总盘：起点净利与终点CFO的天然背离，占营收比重越高→盈余现金支撑越弱→做空",
+      "expression": "divide(subtract(fnd23_intfvm_teno, fnd23_ofc), fnd23_tot_revenue)",
+      "fields_used": [
+        "fnd23_intfvm_teno",
+        "fnd23_ofc",
+        "fnd23_tot_revenue"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "营运资本明细异动与渠道压货 (Working Capital Accrual Components)",
+      "field_semantics_mapping": "fnd23_intfvm_rcao=Δ应收(销售未回款)，fnd23_intfvm_bpao=Δ应付(占用供应商资金)。先做差(Δ应收−Δ应付)衡量'向下游压货但未向上游付款'的渠道张力，再除以 tot_revenue 归一。",
+      "economic_mechanism": "应收增长远超应付增长(相对销售)→渠道压货或回款恶化→收入虚高、坏账积聚→未来盈利下修→做空",
+      "expression": "divide(subtract(fnd23_intfvm_rcao, fnd23_intfvm_bpao), add(fnd23_tot_revenue, 1))",
+      "fields_used": [
+        "fnd23_intfvm_rcao",
+        "fnd23_intfvm_bpao",
+        "fnd23_tot_revenue"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "营运资本明细异动与渠道压货 (Working Capital Accrual Components)",
+      "field_semantics_mapping": "rcao=Δ应收，ltio=Δ存货。两者之差占两者之和的比重，刻画营运资本异动在'向渠道压货'与'自我囤积'之间的结构偏向，规模中性。",
+      "economic_mechanism": "Δ应收占比远高于Δ存货→主动向渠道塞货(需求表面旺)；反之→被动囤积(需求真实恶化)。两者异常失衡均预示后续收入/库存减值→做空极端值",
+      "expression": "divide(subtract(fnd23_intfvm_rcao, fnd23_intfvm_ltio), add(fnd23_intfvm_rcao, fnd23_intfvm_ltio))",
+      "fields_used": [
+        "fnd23_intfvm_rcao",
+        "fnd23_intfvm_ltio"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "营运资本明细异动与渠道压货 (Working Capital Accrual Components)",
+      "field_semantics_mapping": "rcao+ltio = 营运资本净增加(应收+存货扩张)，用 tot_revenue 归一。衡量单位营收对应的营运资本沉淀强度。",
+      "economic_mechanism": "营运资本扩张速度超过销售增长→现金被应收与存货吞噬→经营现金转化恶化→盈余质量下降→做空高扩张者",
+      "expression": "divide(add(fnd23_intfvm_rcao, fnd23_intfvm_ltio), add(fnd23_tot_revenue, 1))",
+      "fields_used": [
+        "fnd23_intfvm_rcao",
+        "fnd23_intfvm_ltio",
+        "fnd23_tot_revenue"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "现金转化质量 (Cash Conversion Quality)",
+      "field_semantics_mapping": "fnd23_ofc=经营现金流，分母 ipos(营业利润)+eote(营业支出合计)≈营业总收入规模。构造 CFO 与营业总吞吐的比值，衡量每单位营业流转产出现金的效率。",
+      "economic_mechanism": "CFO/营业总吞吐偏低→营业活动现金产出效率差→利润含金量低(可能激进确认收入或费用资本化)→做空低现金转化者",
+      "expression": "divide(fnd23_ofc, add(fnd23_intfvm_ipos, fnd23_intfvm_eote))",
+      "fields_used": [
+        "fnd23_ofc",
+        "fnd23_intfvm_ipos",
+        "fnd23_intfvm_eote"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "现金转化质量 (Cash Conversion Quality)",
+      "field_semantics_mapping": "ofc/assets = 现金ROA，net_income/assets = 会计ROA。两者剪刀差(现金ROA−会计ROA)直接量化'会计盈利与现金盈利的资产效率背离'，规模中性。",
+      "economic_mechanism": "现金ROA远低于会计ROA→资产创造的现金远低于账面利润→应计主导、盈余虚高→做空背离大的企业",
+      "expression": "subtract(divide(fnd23_ofc, add(fnd23_tot_assets, 1)), divide(fnd23_net_income, add(fnd23_tot_assets, 1)))",
+      "fields_used": [
+        "fnd23_ofc",
+        "fnd23_net_income",
+        "fnd23_tot_assets"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "资本配置纪律与投资异象 (Capital Allocation Discipline)",
+      "field_semantics_mapping": "capex=资本开支(投资流量)，ofc=内部经营现金流(可自筹资金)。capex−ofc = 超出内部现金生成能力的投资缺口(需外部融资)，除以 tot_assets 归一。",
+      "economic_mechanism": "Titman过度投资异象：capex 持续高于 CFO(依赖举债扩张)→帝国建造、产能过剩→未来回报跑输→做空高缺口者",
+      "expression": "divide(subtract(fnd23_capex, fnd23_ofc), fnd23_tot_assets)",
+      "fields_used": [
+        "fnd23_capex",
+        "fnd23_ofc",
+        "fnd23_tot_assets"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "资本配置纪律与投资异象 (Capital Allocation Discipline)",
+      "field_semantics_mapping": "capex+rnd_expense = 有形+无形总投资强度，除以 tot_assets 衡量资产更新与扩张的总投入比例。",
+      "economic_mechanism": "总投资强度极端高(相对资产)→可能过度扩张；极端低→可能投资不足、资产老化。两端均可能被市场错误定价，检验对称性",
+      "expression": "divide(add(fnd23_capex, fnd23_rnd_expense), add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "fnd23_capex",
+        "fnd23_rnd_expense",
+        "fnd23_tot_assets"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "资本配置纪律与投资异象 (Capital Allocation Discipline)",
+      "field_semantics_mapping": "rnd_expense/capex = 无形研发与有形资本投入的结构比。不同行业的合理区间不同，故仅作横截面相对排序的探针。",
+      "economic_mechanism": "研发/资本结构失衡(畸高或畸低于同业)→投资结构偏离行业常态→可能错配或护城河建设，检验横截面异常值",
+      "expression": "divide(fnd23_rnd_expense, add(fnd23_capex, 1))",
+      "fields_used": [
+        "fnd23_rnd_expense",
+        "fnd23_capex"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "财务困境防御与偿债缓冲 (Distress & Solvency Cushion)",
+      "field_semantics_mapping": "ofc−capex = 自由现金流(扣资本开支后的可支配现金)，net_debt=净债务存量。FCF/净债务衡量自由现金流对债务的覆盖能力。",
+      "economic_mechanism": "低或负 FCF/净债务覆盖→现金无法覆盖债务偿付→困境风险溢价→做空低覆盖(做多高覆盖)",
+      "expression": "divide(subtract(fnd23_ofc, fnd23_capex), add(fnd23_net_debt, 1))",
+      "fields_used": [
+        "fnd23_ofc",
+        "fnd23_capex",
+        "fnd23_net_debt"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "财务困境防御与偿债缓冲 (Distress & Solvency Cushion)",
+      "field_semantics_mapping": "ipos=营业利润(≈EBIT)，neis=净非经营利息费用(通常为负)。reverse(neis) 取其绝对值，ipos/|利息| = 利息覆盖倍数。",
+      "economic_mechanism": "经典困境预测因子：利息覆盖倍数低→偿债缓冲薄→信用风险→高收益补偿→做空低覆盖",
+      "expression": "divide(fnd23_intfvm_ipos, add(reverse(fnd23_intfvm_neis), 1))",
+      "fields_used": [
+        "fnd23_intfvm_ipos",
+        "fnd23_intfvm_neis"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "财务困境防御与偿债缓冲 (Distress & Solvency Cushion)",
+      "field_semantics_mapping": "(net_income−ofc)=应计，应计/net_debt = 应计相对债务的强度。reverse 取负 → (CFO−NI)/净债务 = '现金背书的盈余相对债务'，即质量×安全复合因子。",
+      "economic_mechanism": "现金盈余(CFO−NI)相对净债务高→盈余质量高且偿债缓冲厚→高质量+安全企业→做多；反之做空",
+      "expression": "reverse(divide(subtract(fnd23_net_income, fnd23_ofc), add(fnd23_net_debt, 1)))",
+      "fields_used": [
+        "fnd23_net_income",
+        "fnd23_ofc",
+        "fnd23_net_debt"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "财务困境防御与偿债缓冲 (Distress & Solvency Cushion)",
+      "field_semantics_mapping": "tdbl=应交所得税(流动负债中的欠税)，ofc=经营现金流。tdbl−ofc = 税款义务超过现金生成的缺口，除以 net_debt 衡量税款挤压相对债务的强度。",
+      "economic_mechanism": "应交税费显著超过经营现金生成→流动性被税款义务挤压→短期偿付压力→做空高挤压者",
+      "expression": "divide(subtract(fnd23_intfvm_tdbl, fnd23_ofc), fnd23_net_debt)",
+      "fields_used": [
+        "fnd23_intfvm_tdbl",
+        "fnd23_ofc",
+        "fnd23_net_debt"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "运营杠杆与资产周转效率 (Operating Leverage & Asset Efficiency)",
+      "field_semantics_mapping": "tot_revenue/tot_inventory=存货周转率，tot_revenue/tot_assets=资产周转率。两者剪刀差(存货周转−资产周转)隔离出'存货相对总资产的拖累程度'。",
+      "economic_mechanism": "存货周转远低于资产周转→存货沉淀拖累整体效率→需求放缓或滞销→做空存货拖累大的企业",
+      "expression": "subtract(divide(fnd23_tot_revenue, add(fnd23_tot_inventory, 1)), divide(fnd23_tot_revenue, add(fnd23_tot_assets, 1)))",
+      "fields_used": [
+        "fnd23_tot_revenue",
+        "fnd23_tot_inventory",
+        "fnd23_tot_assets"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "运营杠杆与资产周转效率 (Operating Leverage & Asset Efficiency)",
+      "field_semantics_mapping": "ofc/tot_assets = 现金ROA：单位资产创造的经营现金流。剥离会计利润扭曲，直接度量资产的现金产出效率。",
+      "economic_mechanism": "高现金ROA→资产真实盈利能力强、现金支撑扎实→做多；低现金ROA→资产低效或亏损→做空",
+      "expression": "divide(fnd23_ofc, add(fnd23_tot_assets, 1))",
+      "fields_used": [
+        "fnd23_ofc",
+        "fnd23_tot_assets"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "运营杠杆与资产周转效率 (Operating Leverage & Asset Efficiency)",
+      "field_semantics_mapping": "prgs=毛利，eote=营业支出合计。(毛利−营业支出)/(毛利+营业支出) = 经营杠杆比率，衡量毛利与营业支出的相对消长，规模中性。",
+      "economic_mechanism": "毛利增速落后于营业支出增速→经营杠杆恶化(成本刚性强、毛利被侵蚀)→盈利能力恶化→做空杠杆比下降者",
+      "expression": "divide(subtract(fnd23_intfvm_prgs, fnd23_intfvm_eote), add(fnd23_intfvm_prgs, fnd23_intfvm_eote))",
+      "fields_used": [
+        "fnd23_intfvm_prgs",
+        "fnd23_intfvm_eote"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "资本配置纪律与投资异象 (Capital Allocation Discipline)",
+      "field_semantics_mapping": "capex=资本开支，分母 ofc+net_income+1≈现金盈余+会计盈余的总盈利基底。capex 相对该盈利基底衡量'投资相对盈利能力'的强度。",
+      "economic_mechanism": "资本开支相对(现金+会计)盈利基底过高→投资超出盈利支撑→过度投资/外部融资依赖→做空高比值",
+      "expression": "divide(fnd23_capex, add(add(fnd23_ofc, fnd23_net_income), 1))",
+      "fields_used": [
+        "fnd23_capex",
+        "fnd23_ofc",
+        "fnd23_net_income"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "营运资本明细异动与渠道压货 (Working Capital Accrual Components)",
+      "field_semantics_mapping": "rcao/net_debt=应收扩张相对债务强度，ltio/net_debt=存货扩张相对债务强度，两者乘积构造'渠道压货×存货囤积'在债务约束下的复合压力。",
+      "economic_mechanism": "应收与存货双扩张且企业已高杠杆(净债务高)→营运资本吞噬现金同时债务负担重→双重困境→做空高复合压力者",
+      "expression": "multiply(divide(fnd23_intfvm_rcao, add(fnd23_net_debt, 1)), divide(fnd23_intfvm_ltio, add(fnd23_net_debt, 1)))",
+      "fields_used": [
+        "fnd23_intfvm_rcao",
+        "fnd23_intfvm_ltio",
+        "fnd23_net_debt"
+      ],
+      "times": 0
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "fundamental23 是跨区域标准化财报数据集，覆盖利润表、资产负债表与现金流量表。关键研究机会在于：该数据集同时包含权责发生制盈余（net_income / operating_income / gross_profit）与现金流量表间接法下的营运资本变动组件（Δ应收 rcao、Δ存货 ltio、Δ应付 bpao、Δ预付 yppo、Δ应计 xeao、Δ应交税费 pxto）以及经营现金流 fnd23_ofc。这使我们能直接构造 Sloan 应计异象（盈余-现金流背离）与渠道压货识别（营运资本明细异动）——这些字段 coverage 0.59~1.0 但 alphaCount 仅 0~4，基本未被挖掘，存在显著的信息摩擦定价空间。底层商业逻辑：盈余=现金流+应计，应计部分（非现金）持续性弱、更易被管理层操纵且市场反应滞后，是经典预期差来源。",
+    "economic_clusters": [
+      {
+        "cluster_name": "应计盈余与真实经营现金流背离 (Accruals vs CFO Divergence)",
+        "fields": [
+          "fnd23_net_income",
+          "fnd23_ofc",
+          "fnd23_intfvm_teno",
+          "fnd23_tot_assets",
+          "fnd23_tot_revenue"
+        ],
+        "cluster_logic": "应计 = 盈余 − 现金流。net_income/teno 代表权责发生制盈余，fnd23_ofc 代表真实现金流入。两者之差即应计部分，用 tot_assets 或 tot_revenue 剥离规模噪音。Sloan(1996): 高应计企业盈余不可持续，市场低估其均值回归速度 → 做空高应计、做多高现金转化。"
+      },
+      {
+        "cluster_name": "营运资本明细异动与渠道压货 (Working Capital Accrual Components)",
+        "fields": [
+          "fnd23_intfvm_rcao",
+          "fnd23_intfvm_ltio",
+          "fnd23_intfvm_bpao",
+          "fnd23_tot_revenue"
+        ],
+        "cluster_logic": "rcao=Δ应收（增加→未回款销售/渠道压货）、ltio=Δ存货（增加→滞销/需求恶化）、bpao=Δ应付（增加→拖延供应商货款=被动融资）。三者构成应计的明细来源，比汇总级应计更早暴露经营恶化。Δ应收+Δ存货−Δ应付 的净营运资本应计为正且持续扩大，预示盈余质量恶化。"
+      },
+      {
+        "cluster_name": "现金转化质量 (Cash Conversion Quality)",
+        "fields": [
+          "fnd23_ofc",
+          "fnd23_intfvm_ipos",
+          "fnd23_intfvm_eote",
+          "fnd23_intfvm_prgs",
+          "fnd23_tot_assets"
+        ],
+        "cluster_logic": "经营现金流相对营业利润/毛利/营业支出的转化率，衡量盈利的现金含金量。低现金转化（营业利润高但 CFO 低）暗示收入确认激进或费用资本化。用 tot_assets 归一消除规模。"
+      },
+      {
+        "cluster_name": "资本配置纪律与投资异象 (Capital Allocation Discipline)",
+        "fields": [
+          "fnd23_capex",
+          "fnd23_rnd_expense",
+          "fnd23_ofc",
+          "fnd23_tot_assets"
+        ],
+        "cluster_logic": "Titman(2004): 资本开支相对于内部现金流过高的企业（依赖外部融资扩张）倾向于过度投资、帝国建造，未来回报跑输。capex 与 ofc 的剪刀差衡量'超出内部现金生成能力的投资'；rnd/capex 衡量无形vs有形的投资结构。"
+      },
+      {
+        "cluster_name": "财务困境防御与偿债缓冲 (Distress & Solvency Cushion)",
+        "fields": [
+          "fnd23_ofc",
+          "fnd23_capex",
+          "fnd23_net_debt",
+          "fnd23_intfvm_ipos",
+          "fnd23_intfvm_neis",
+          "fnd23_intfvm_tdbl"
+        ],
+        "cluster_logic": "FCF=(ofc−capex) 对 net_debt 的覆盖率、EBIT(ipos) 对利息支出(neis)的覆盖倍数、应交税费(tdbl)对现金的挤压。低覆盖→困境风险→高收益补偿（做空低覆盖）。利息覆盖率是最经典困境预测因子。"
+      },
+      {
+        "cluster_name": "运营杠杆与资产周转效率 (Operating Leverage & Asset Efficiency)",
+        "fields": [
+          "fnd23_intfvm_prgs",
+          "fnd23_intfvm_eote",
+          "fnd23_tot_revenue",
+          "fnd23_tot_inventory",
+          "fnd23_tot_assets"
+        ],
+        "cluster_logic": "毛利与营业支出的相对消长刻画经营杠杆；存货周转 vs 资产周转的差分离存货拖累；现金 ROA (ofc/assets) 衡量资产创造现金的真实效率，剥离会计利润扭曲。"
+      }
+    ]
+  }
+}

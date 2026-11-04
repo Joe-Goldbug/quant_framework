@@ -1,0 +1,233 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "fundamental69",
+  "category": "fundamental",
+  "neutralization": "NONE",
+  "decay": 0,
+  "truncation": 0.025,
+  "submission_forbidden": true,
+  "known_fields": {
+    "fnd69_capxy2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Capital Expenditures (Quarterly) 资本开支",
+      "coverage": 0.4197,
+      "alpha_count": 2
+    },
+    "fnd69_dltry2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Long-Term Debt - Reduction (Quarterly) 长期债务偿还",
+      "coverage": 0.393,
+      "alpha_count": 1
+    },
+    "fnd69_q2ycktsrp": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Purchase of Common & Preferred Stock (Quarterly) 股票回购",
+      "coverage": 0.3897,
+      "alpha_count": 3
+    },
+    "fnd69_q2yfcnao": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Operating Activities - Net Cash Flow (Quarterly) 经营性净现金流",
+      "coverage": 0.4333,
+      "alpha_count": 4
+    },
+    "fnd69_q2yktss": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Sale of Common & Preferred Stock (Quarterly) 股票增发",
+      "coverage": 0.3883,
+      "alpha_count": 4
+    },
+    "fnd69_q2ysitld": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Long-Term Debt - Issuance (Quarterly) 长期债务发行",
+      "coverage": 0.3933,
+      "alpha_count": 1
+    },
+    "fnd69_q2yvd": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Cash Dividends (Cash Flow) (Quarterly) 现金分红",
+      "coverage": 0.401,
+      "alpha_count": 1
+    },
+    "fnd69_qta": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Assets - Total (Quarterly) 总资产(密度1.0)",
+      "coverage": 1.0,
+      "alpha_count": 7
+    },
+    "fnd69_ta": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Assets - Total (Quarterly) 总资产(密度0.511)",
+      "coverage": 0.511,
+      "alpha_count": 2
+    }
+  },
+  "items": [
+    {
+      "expression": "group_rank(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry)",
+      "counterparty": "在并购扩表期有承销与佣金动机的卖方与投行，把一次性扩表外推为持续成长",
+      "optimize_reason": "总资产同比增量除以同期均值资产 = 资产扩张率。Cooper-Gulen-Schill 资产增长异象：激进扩表公司随后被证伪并杀估值，做空扩表最快一档。分母用 ts_mean 而非 ts_delay 以消除小基数公司（壳股/新上市）的伪增长率爆炸。"
+    },
+    {
+      "expression": "group_rank(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "optimize_reason": "自由现金流（经营性净现金流减资本开支）除以总资产 = 单位资产的现金创造效率。高 FCF 生产率对应真实盈利能力，配置盘低估其持续性。两腿均先 ts_backfill(252) 阶梯化再取 abs 消除符号约定风险。"
+    },
+    {
+      "expression": "group_rank(reverse(ts_delta(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta), 252)), industry)",
+      "counterparty": "在扩产公告后系统性上调评级的卖方（与再融资/设备融资利益耦合）",
+      "optimize_reason": "资本开支强度的年度加速度（当期强度减一年前强度）。相对自身历史作差可清除公司固定效应（行业内稳态资本密集度），这正是它优于单纯水平量的地方。加速扩产是过度投资与代理问题的征兆，做空加速最快一档。已先 ts_backfill 阶梯化，避免 ts_delta 在稀疏季度序列上塌成空面板。"
+    },
+    {
+      "expression": "group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry)",
+      "counterparty": "在低利率窗口过度供给的一级信用市场与追逐杠杆的逐收益套利盘",
+      "optimize_reason": "长期债务净发行（发行减偿还）除以总资产 = 净外部债权融资强度。Bradshaw-Richardson-Sloan 净外部融资异象：大规模举债后未来收益走低，做空净举债最高一档。abs 施加在两腿内部而非差额，故净额符号（净发行 vs 净偿还）完整保留，同时具备符号约定免疫。"
+    },
+    {
+      "expression": "group_rank(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry)",
+      "counterparty": "为资本开支扩张故事提供增发与信贷供给的投行/银行，以及产能主题资金",
+      "optimize_reason": "资本开支除以总资产 = 投资强度。Titman-Wei-Xie 投资异象：高强度资本开支后未来收益显著走低，做空投资强度最高一档。abs() 消除符号约定风险。全批结构最简、无装潢算子。"
+    },
+    {
+      "expression": "group_rank(ts_delta(divide(ts_backfill(fnd69_q2yfcnao, 252), fnd69_qta), 252), industry)",
+      "counterparty": "以历史均值定级、信息渐进扩散的基本面筛选盘（其保守性是有意的估计纪律）",
+      "optimize_reason": "经营现金流生产率的同比变动量。因 Earnings = OCF + 应计，ΔOCF 近似等于负的应计变动，本槽实质是 Sloan 现金流/应计异象的间接代理。已先 ts_backfill 阶梯化，避免 ts_delta 在稀疏季度序列上塌成空面板或 0 到 x 的伪跃升。"
+    },
+    {
+      "expression": "group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry)",
+      "counterparty": "在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方",
+      "optimize_reason": "股票净发行（增发减回购）除以总资产 = 净股权融资强度。Loughran-Ritter / Pontiff-Woodgate 净股权发行异象：高净发行公司随后收益走低，做空净发行最高一档。abs 施加在两腿内部，净额符号完整保留且对符号约定免疫。"
+    },
+    {
+      "expression": "group_rank(reverse(divide(min(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry)",
+      "counterparty": "赚取续作承销费的债券承销团，与依赖滚动续作维持杠杆的资金",
+      "optimize_reason": "取债务发行与偿还的较小值除以总资产 = 真正的再融资滚动重叠额。只有“一边发一边还”的公司才在此读数上放量；纯发行（min=0）与纯偿还/主动去杠杆（min=0）均落入低读数的多头侧。这既符合“续作依赖”的真实语义，又与 S4 的净额口径 (a-b) 代数正交（由 a-b 无法决定 min(a,b)）。"
+    }
+  ],
+  "slot_meta": [
+    {
+      "slot": 1,
+      "role": "CORE_A_ASSET_GROWTH",
+      "expression": "group_rank(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry)",
+      "counterparty": "在并购扩表期有承销与佣金动机的卖方与投行，把一次性扩表外推为持续成长",
+      "mechanism": "总资产同比增量除以同期均值资产 = 资产扩张率。Cooper-Gulen-Schill 资产增长异象：激进扩表公司随后被证伪并杀估值，做空扩表最快一档。分母用 ts_mean 而非 ts_delay 以消除小基数公司（壳股/新上市）的伪增长率爆炸。",
+      "variation_source": "总资产存量的年度环比变动（唯一 100% 密度字段，无需阶梯化，无幸存者缺口）",
+      "hypothesis_lines": [
+        "对手盘：卖方与投行在并购扩表期有承销佣金动机，把一次性扩表外推为持续成长并给出过高定价。",
+        "摩擦（诚实披露）：季度存量在 delay-1 下最长滞后约 15 个月，信号衰减与反应迟滞是真实成本，低换手不是单方面的优点；reverse() 会在缩表最快一档建立多头，而缩表可能来自资产减记/处置/经营收缩，长边存在被困境股污染的风险，该异象实证上主要由空边驱动。",
+        "变动源：同比总资产增量的截面离散度（并购/产能周期驱动），与任何价格动量无关。"
+      ]
+    },
+    {
+      "slot": 2,
+      "role": "CORE_B_FCF_PRODUCTIVITY",
+      "expression": "group_rank(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "mechanism": "自由现金流（经营性净现金流减资本开支）除以总资产 = 单位资产的现金创造效率。高 FCF 生产率对应真实盈利能力，配置盘低估其持续性。两腿均先 ts_backfill(252) 阶梯化再取 abs 消除符号约定风险。",
+      "variation_source": "经营现金流与资本开支的相对强弱 x 资产规模归一化",
+      "hypothesis_lines": [
+        "对手盘：以营收/利润增长排序的朴素配置盘（LSV 式），系统性忽视现金流转化率。该对手盘的激励强度弱于承销类对手盘。",
+        "摩擦（诚实披露）：两腿原始密度 43.3% / 42.0%，已用 ts_backfill(252) 阶梯化至接近全覆盖，代价是最长可引入约 250 日陈旧值；abs() 使本式对 capex 符号约定免疫，但若某季 capex 因资产处置回冲为负，abs 会把它读成当期支出而虚减分子。",
+        "变动源：经营现金流季节性 + 资本开支周期，行业内截面可比。"
+      ]
+    },
+    {
+      "slot": 3,
+      "role": "CORE_C_INVESTMENT_ACCELERATION",
+      "expression": "group_rank(reverse(ts_delta(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta), 252)), industry)",
+      "counterparty": "在扩产公告后系统性上调评级的卖方（与再融资/设备融资利益耦合）",
+      "mechanism": "资本开支强度的年度加速度（当期强度减一年前强度）。相对自身历史作差可清除公司固定效应（行业内稳态资本密集度），这正是它优于单纯水平量的地方。加速扩产是过度投资与代理问题的征兆，做空加速最快一档。已先 ts_backfill 阶梯化，避免 ts_delta 在稀疏季度序列上塌成空面板。",
+      "variation_source": "资本开支/资产比的年度二阶变化（投资加速度，而非投资水平）",
+      "hypothesis_lines": [
+        "对手盘：卖方在扩产公告后系统性上调评级，且投行/设备融资利益与之耦合。",
+        "摩擦（诚实披露）：加速量为二阶差分，噪声高于水平量，夏普预期低于 S5；ts_backfill 引入的陈旧值（最长约 250 日）在差分后会被放大；长边为资本开支减速最快一档，必然包含资本开支崩塌与财务受限股，存在价值陷阱污染；abs 盲区记档——若某季 capex 因资产处置回冲为负，abs 会同时污染当期与一年前两个读数，产生方向不定的伪加速。",
+        "变动源：产能周期的加速度分量；水平高但不再加速的成熟资本密集企业在本槽中性，这是它相对 S5 的独立信息。"
+      ]
+    },
+    {
+      "slot": 4,
+      "role": "CORE_D_NET_DEBT_ISSUANCE",
+      "expression": "group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry)",
+      "counterparty": "在低利率窗口过度供给的一级信用市场与追逐杠杆的逐收益套利盘",
+      "mechanism": "长期债务净发行（发行减偿还）除以总资产 = 净外部债权融资强度。Bradshaw-Richardson-Sloan 净外部融资异象：大规模举债后未来收益走低，做空净举债最高一档。abs 施加在两腿内部而非差额，故净额符号（净发行 vs 净偿还）完整保留，同时具备符号约定免疫。",
+      "variation_source": "债务发行与偿还的相对节奏（再融资窗口与信用周期驱动）",
+      "hypothesis_lines": [
+        "对手盘：一级信用市场在低利率窗口过度供给，短期压低杠杆扩张的风险溢价，承销团有明确发行费动机。",
+        "摩擦（诚实披露）：两腿原始密度 39.3%，已 ts_backfill(252) 阶梯化，代价是最长可引入约 250 日陈旧值；金融行业以债务为存货，group_rank(industry) 仅部分中和；若偿还行混有转股/豁免/核销而非现金偿还，经济含义会从去杠杆漂移到债务消失。",
+        "变动源：再融资窗口开合与评级迁移，与价格动量正交。"
+      ]
+    },
+    {
+      "slot": 5,
+      "role": "CORE_E_CAPEX_INTENSITY",
+      "expression": "group_rank(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry)",
+      "counterparty": "为资本开支扩张故事提供增发与信贷供给的投行/银行，以及产能主题资金",
+      "mechanism": "资本开支除以总资产 = 投资强度。Titman-Wei-Xie 投资异象：高强度资本开支后未来收益显著走低，做空投资强度最高一档。abs() 消除符号约定风险。全批结构最简、无装潢算子。",
+      "variation_source": "产能周期导致的资本开支/资产比截面离散度",
+      "hypothesis_lines": [
+        "对手盘：为扩产故事提供增发与信贷供给的投行与银行，在开支高点有明确的融资供给动机。",
+        "摩擦（诚实披露）：资本开支原始密度 42%，已 ts_backfill(252) 阶梯化，代价是最长可引入约 250 日陈旧值；若某季 capex 因处置回冲为负，abs 会翻正为投资强度而虚增；长边为最低投资档，混入无能力投资的现金紧张公司。",
+        "变动源：行业产能周期；行业内归一消除结构性资本密集度差异，但同时也抹掉跨行业投资周期差异。"
+      ]
+    },
+    {
+      "slot": 6,
+      "role": "CORE_F_OCF_MOMENTUM",
+      "expression": "group_rank(ts_delta(divide(ts_backfill(fnd69_q2yfcnao, 252), fnd69_qta), 252), industry)",
+      "counterparty": "以历史均值定级、信息渐进扩散的基本面筛选盘（其保守性是有意的估计纪律）",
+      "mechanism": "经营现金流生产率的同比变动量。因 Earnings = OCF + 应计，ΔOCF 近似等于负的应计变动，本槽实质是 Sloan 现金流/应计异象的间接代理。已先 ts_backfill 阶梯化，避免 ts_delta 在稀疏季度序列上塌成空面板或 0 到 x 的伪跃升。",
+      "variation_source": "经营现金流生产率的年度时序差分",
+      "hypothesis_lines": [
+        "对手盘：以历史均值定级的筛选盘，其反应滞后属有意的估计纪律而非纯锚定偏差，故机制强度弱于承销类对手盘。",
+        "摩擦（诚实披露）：经营现金流的年度改善大量来自营运资本释放（去库存、压应付），其不可持续性是本假说的默认反先验，本槽未做对抗性修正；ts_backfill 的陈旧值在年度差分后会被放大；此外分母变动会机械抬升缩表公司的“生产率改善”。",
+        "变动源：经营现金流同比拐点（营运资本与收款周期驱动）。"
+      ]
+    },
+    {
+      "slot": 7,
+      "role": "CORE_G_NET_EQUITY_ISSUANCE",
+      "expression": "group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry)",
+      "counterparty": "在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方",
+      "mechanism": "股票净发行（增发减回购）除以总资产 = 净股权融资强度。Loughran-Ritter / Pontiff-Woodgate 净股权发行异象：高净发行公司随后收益走低，做空净发行最高一档。abs 施加在两腿内部，净额符号完整保留且对符号约定免疫。",
+      "variation_source": "增发与回购的相对强弱（估值窗口与公司现金流状况驱动）",
+      "hypothesis_lines": [
+        "对手盘：承销团在高估值窗口有明确承销费动机并择时增发，把供给冲击延迟转嫁给二级市场；动机最真实。",
+        "摩擦（诚实披露）：增发/回购为事件性科目，原始密度 38.8% / 39.0%，已 ts_backfill(252) 阶梯化，代价是最长可引入约 250 日陈旧值；高回购与高增发同时发生的公司会被净额抵消而落入中性档，这是净额口径的固有信息损失；若数据源把回购净额计入发行行，会产生双重计量。",
+        "变动源：估值窗口驱动的股权融资决策，行业内截面可比。"
+      ]
+    },
+    {
+      "slot": 8,
+      "role": "CORE_H_DEBT_ROLLOVER_OVERLAP",
+      "expression": "group_rank(reverse(divide(min(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry)",
+      "counterparty": "赚取续作承销费的债券承销团，与依赖滚动续作维持杠杆的资金",
+      "mechanism": "取债务发行与偿还的较小值除以总资产 = 真正的再融资滚动重叠额。只有“一边发一边还”的公司才在此读数上放量；纯发行（min=0）与纯偿还/主动去杠杆（min=0）均落入低读数的多头侧。这既符合“续作依赖”的真实语义，又与 S4 的净额口径 (a-b) 代数正交（由 a-b 无法决定 min(a,b)）。",
+      "variation_source": "债务活动的滚动重叠规模（再融资依赖度），与净额方向代数正交",
+      "hypothesis_lines": [
+        "对手盘：债券承销团从续作中持续赚取承销费，有动机维持高强度滚动并把续作风险的定价推迟到窗口收紧之后。",
+        "摩擦（诚实披露）：min 口径存在点质量退化——当任一腿为 0（无融资活动、单侧大额发行、单侧大额偿还三类公司）时 min 恒等于 0，这三类公司整体并列于多头最极端档，组内零排序分辨率，多头腿实质退化为随机抽样；回测必须报告截面上 min=0 的占比，若占比过高则本槽须重新定义。此外两腿原始密度 39.3%，已 ts_backfill(252) 阶梯化，代价是最长可引入约 250 日陈旧值。",
+        "变动源：再融资窗口的滚动重叠量；与 S4 共用同一对字段，构成本批唯一的同字段受控正交对照。"
+      ]
+    }
+  ]
+}

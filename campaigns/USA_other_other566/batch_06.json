@@ -1,0 +1,79 @@
+{
+  "batch": 6,
+  "family": "conviction_migration_regime_break",
+  "hypothesis": "形态信念迁移 = 格局突破代理: 本数据集最冷门的一对字段 (0 用户/0 alpha), 机制上最接近信息到达的可观测量。当前形态置信度与最近形态置信度之差刻画模型信念从旧形态迁移到新检测形态的速度。两个独立形态检测器 (multiL3 与 GasfMulti) 同时报告迁移 = 真实微观结构事件而非算法假象 (机制复现性检验)。",
+  "items": [
+    {
+      "id": "b6_m1",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_multil3_prob_pattern, 60), ts_zscore(oth566_multil3_prob_last_pattern, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_multil3_prob_pattern",
+        "oth566_multil3_prob_last_pattern"
+      ]
+    },
+    {
+      "id": "b6_m2",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l3r20gasfmulti_prob_pattern, 60), ts_zscore(oth566_l3r20gasfmulti_prob_last_pattern, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r20gasfmulti_prob_pattern",
+        "oth566_l3r20gasfmulti_prob_last_pattern"
+      ]
+    },
+    {
+      "id": "b6_m3",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_multil3_prob_pattern, 60), ts_zscore(oth566_multil3_prob_last_pattern, 60)), 52), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_multil3_prob_pattern",
+        "oth566_multil3_prob_last_pattern"
+      ]
+    },
+    {
+      "id": "b6_m4",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l5r20gasfculr_prob_pattern, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l5r20gasfculr_prob_pattern",
+        "oth566_l5r20gasfculr_ret"
+      ]
+    },
+    {
+      "id": "b6_m5",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_multil3_prob_pattern, 60), ts_zscore(oth566_multil3_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_multil3_prob_pattern",
+        "oth566_multil3_label"
+      ]
+    },
+    {
+      "id": "b6_m6",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l3r20gasfmulti_prob_pattern, 60), ts_zscore(oth566_l3r20gasfmulti_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r20gasfmulti_prob_pattern",
+        "oth566_l3r20gasfmulti_label"
+      ]
+    },
+    {
+      "id": "b6_m7",
+      "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l3r20gasfmulti_prob_pattern, 60), ts_zscore(oth566_l3r20gasfmulti_prob_last_pattern, 60)), 52), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r20gasfmulti_prob_pattern",
+        "oth566_l3r20gasfmulti_prob_last_pattern"
+      ]
+    },
+    {
+      "id": "b6_m8",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_l3r20gasfmulti_prob, 20), ts_zscore(oth566_l3r20gasfmulti_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r20gasfmulti_prob",
+        "oth566_l3r20gasfmulti_label"
+      ]
+    }
+  ]
+}

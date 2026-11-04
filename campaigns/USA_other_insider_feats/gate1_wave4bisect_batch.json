@@ -1,0 +1,24 @@
+{
+  "wave": "4bisect",
+  "seed_id": "GATE1_W4BISECT",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "items": [
+    {
+      "id": 1,
+      "type": "champion_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "bisect: champion@SLOW 复现(SEED04=0.88)"
+    },
+    {
+      "id": 9,
+      "type": "cnt_top5_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_tx_count_ratio_top5_60d_filled),vec_avg(buy_sell_tx_count_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "bisect: count-top5@SLOW (CROWDING=0.76/9.87)"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "card_id": "CARD_CW_01",
+  "admission_type": "FALSIFICATION_PHYSICAL_WALL",
+  "verification_rounds": 98,
+  "issue": "集中度 CW > 0.10 导致平台硬拦截",
+  "falsified_attempts": [
+    "表达式内使用 winsorize 或 truncate (零效果)",
+    "设置层使用 truncation 0.02 / 0.08 (零效果)",
+    "使用 zscore 或 ts_zscore 自身标准化 (零效果)"
+  ],
+  "proven_solution": "使用凹函数压缩极值: s_log_1p(X) 或 rank(X)",
+  "theoretical_cause": "收益来源于极少数发行人的极端重定价，仿射变换不改变排序与极值权重分布，只有凹压缩能拉平极值。"
+}

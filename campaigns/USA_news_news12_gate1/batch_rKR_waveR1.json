@@ -1,0 +1,67 @@
+{
+  "seed": "rKR1qVWo",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 25,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "pv",
+  "known_fields": [
+    "median_bias_adjusted_price_target",
+    "max_bias_adjusted_price_target",
+    "close",
+    "mean_primary_sentiment_score_transfer"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "MED_W5_D25",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 5)), sector)",
+      "optimize_reason": "【最强未测格 · 双优交叉点】decay 25 下 MAX w5 = d5KNe3kx Sh1.82 全清；decay 40 下 MED w5 = E5V905m0 Sh1.87 全清。两族的各自最优点在「MED 分子 + decay 25」处从未测过。机制：分析师一致目标价相对收盘价的隐含上行空间，减去其自身 5 日均值后的上修量在 sector 内排序 —— 上修意味着新信息尚未被价格吸收。"
+    },
+    {
+      "id": 2,
+      "type": "MED_W6_D25",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 6)), sector)",
+      "optimize_reason": "【MED 窗口 6】与 Slot1 唯一变量=均值窗口 5→6。decay25 下 MAX w6 = omoxQJ8n Sh1.77 全清。窗口 6 在该 decay 下被证明位于 CLUSTER 清区，MED 分子在 dec40 时比 MAX 更强，故 MED w6 是复现「全清」的第二大概率点。"
+    },
+    {
+      "id": 3,
+      "type": "MED_W7_D25",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 7)), sector)",
+      "optimize_reason": "【MED 窗口 7】与 Slot1/2 唯一变量=窗口 7。decay25 下 MAX w7 = 1Yjr6lkX Sh1.73 全清；decay40 下 MED w7 = omoxwmPl Sh1.76 但 CLUSTER 1.57（差 0.01 未过）。本槽是「同一构型换 decay 25 能否补上那 0.01」的直接检验。"
+    },
+    {
+      "id": 4,
+      "type": "MAX_W8_D25",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 8)), sector)",
+      "optimize_reason": "【窗口延伸 8】红队独立路线：目标价偏离是慢变量，过度短期化的差分只放大交易成本不放大信息，应沿 w5→7→8→10 拉长窗口以抬 Returns（Fit 唯一有效杠杆）。MAX w7@dec25 已全清，w8 是窗口轴的外推首格。"
+    },
+    {
+      "id": 5,
+      "type": "MAX_W10_D25",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 10)), sector)",
+      "optimize_reason": "【窗口延伸 10】与 Slot4 构成窗口轴 8/10 两点探针。若窗口拉长单调抬 Ret 且 TO 同步下降，则确认「慢变量应取长基线」；若 Ret 掉头，则窗口轴在 w7 已达峰值，路线关闭。"
+    },
+    {
+      "id": 6,
+      "type": "DISP_W5_D25",
+      "expression": "group_rank(subtract(divide(subtract(max_bias_adjusted_price_target, median_bias_adjusted_price_target), close), ts_mean(divide(subtract(max_bias_adjusted_price_target, median_bias_adjusted_price_target), close), 5)), sector)",
+      "optimize_reason": "【全新信息腿 · 分析师分歧收敛】(maxPT − medPT)/close 相对自身 5 日均值的压缩。机制：最乐观目标与一致预期的**分歧收窄**意味着分析师群体正在形成共识，目标价可信度上升、后续兑现更快；分歧扩大则相反。这是本族内零先例的第三条信息轴（前两条：目标价水平、目标价变化），且完全不引入 news84 拥挤罚项。"
+    },
+    {
+      "id": 7,
+      "type": "DISP_W10_D25",
+      "expression": "group_rank(subtract(divide(subtract(max_bias_adjusted_price_target, median_bias_adjusted_price_target), close), ts_mean(divide(subtract(max_bias_adjusted_price_target, median_bias_adjusted_price_target), close), 10)), sector)",
+      "optimize_reason": "【分歧收敛 · 窗口 10】与 Slot6 唯一变量=窗口 5→10。共识形成是以周计的慢过程，长基线更能隔离单日噪声。同时补齐「分歧腿 × 窗口」2 格，与 Slot1-5 的窗口轴结论互相印证。"
+    },
+    {
+      "id": 8,
+      "type": "MED_W5_xSENT_D25",
+      "expression": "group_rank(multiply(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 5)), mean_primary_sentiment_score_transfer), sector)",
+      "optimize_reason": "【种子情绪核控制槽 · 判决实验】与 Slot1 唯一变量=是否乘上 rKR1qVWo 的情绪核 mean_primary_sentiment_score_transfer（零拥挤一手信源，alphaCount=0）。机制：分析师目标价上修被一手新闻流情绪强度放大后更强，因为两路独立信源同向确认时该上修更可能尚未被套利消化。这是 3 字段上限下保留种子身份的唯一合法形式。判决价值：若本槽 CLUSTER 明显低于 Slot1 或 Sh 明显更低 → 实证确认「news84 情绪核无法接入 clean 族」，种子直系路线永久关闭并出具书面结论。"
+    }
+  ]
+}

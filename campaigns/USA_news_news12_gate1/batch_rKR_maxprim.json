@@ -1,0 +1,71 @@
+{
+  "seed": "rKR1qVWo",
+  "batch_id": "rKR_MAXPRIM",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 22,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "test_period": "P0Y0M",
+  "known_fields": [
+    "max_primary_sentiment_score_transfer",
+    "skew_primary_sentiment_score_transfer",
+    "min_primary_sentiment_score_transfer",
+    "mean_primary_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "rKR_MAXPRIM_S1_SEEDSHELL_P4",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "【Slot 1: 种子忠实换核裁决槽 · 峰值强度注意力非线性放大】整条保留 rKR1qVWo 冠军骨架（衰减10内层 / subindustry 截面 / 双 power 尾部聚焦），仅将内部均值核 mean_sentiment(平台实测夏普仅0.38) 换成 max_primary(平台实测1.95, 覆盖100%, alphaCount=1 零拥挤)。偶次幂4将峰值情绪转为[0,1]注意力强度，prob 置信门控与 relevance 权重放大过滤无爆点的模板公关稿，裁决'均值稀释'是否为全链路败笔。"
+    },
+    {
+      "id": 2,
+      "type": "rKR_MAXPRIM_S2_PLAIN_TSD5_IND",
+      "expression": "group_rank(ts_decay_linear(max_primary_sentiment_score_transfer, 5), industry)",
+      "optimize_reason": "【Slot 2: 情报复刻槽 · 符号保真一线】放弃偶次幂强度转换，直接保号地用 5 日线性平滑捕捉峰值催化剂信息，industry 内横截面排序剥离组内共性舆情。检验 intel 单因子1.95在种子的 decay22/TOP1000 组合下是否兑现：若此槽 Sharpe >= 0.77 可进 1.58+ 生产赛道，则证明 peak 第一信源方向信息无需任何外壳修饰。"
+    },
+    {
+      "id": 3,
+      "type": "rKR_MAXPRIM_S3_RAW_BENCHMARK",
+      "expression": "max_primary_sentiment_score_transfer",
+      "optimize_reason": "【Slot 3: 零算子纯字段基准锚】最忠实的 intel 1.95 复刻：种子同参 settings (decay22, truncation 0.025, STATISTICAL 对中性化 100% 适配) 下裸字段回测。它为整批 8 槽建立'裸字段基准值'：任何高于它的修饰槽都证明有信息增益，任何低于它的修饰槽都证明外壳在破坏信噪比。"
+    },
+    {
+      "id": 4,
+      "type": "rKR_MAXPRIM_S4_SURPRISE_GAP",
+      "expression": "group_rank(ts_decay_linear(subtract(max_primary_sentiment_score_transfer, mean_primary_sentiment_score_transfer), 5), subindustry)",
+      "optimize_reason": "【Slot 4: 催化剂-共识偏离腿】max_primary - mean_primary 数学上恒 >= 0，度量'当日最强单条PR稿相对当日共识均值拉开多少距离'，即峰值催化剂摊薄耗散强度：值越大说明该day存在一条极度吸睛的独立爆发稿(而非多条平庸稿均匀铺开)。subindustry 内排序使同行共享稿源的模板化偏差被组内扣减，正交于绝对量级。"
+    },
+    {
+      "id": 5,
+      "type": "rKR_MAXPRIM_S5_SKEW_GATE",
+      "expression": "group_rank(ts_decay_linear(multiply(max_primary_sentiment_score_transfer, add(skew_primary_sentiment_score_transfer, 1.0)), 5), subindustry)",
+      "optimize_reason": "【Slot 5: 右偏门控 · 单条吸睛稿主导日过滤器】当峰值由单条爆炸稿拉动时，当日分布整体右偏(skew > 0)；add(skew, 1.0) 把偏度平移至非负门域(尊重 [-1,1] 双负相乘禁令)，与 max 峰值相乘。最终当 sig > 0 且 skew > 0 (有右偏证据) 时仓位增强，避免灌水日中 max 偶然打满但整体分布平庸的噪声信号。"
+    },
+    {
+      "id": 6,
+      "type": "rKR_MAXPRIM_S6_FLASH_DELTA",
+      "expression": "group_rank(ts_decay_linear(ts_delta(max_primary_sentiment_score_transfer, 3), 5), subindustry)",
+      "optimize_reason": "【Slot 6: 催化剂到达脉冲腿】ts_delta(max,3) 锁定'今天新出现一条突破性PR稿'的事件边缘跃升时刻，5 日衰减承诺对 3 日前已完成爆发的过程不再重复计价，压制陈旧新闻的仓位钝化。量纲上 delta ∈ [-2,2] 边界仍完整覆盖 [-1,1] 差值域。"
+    },
+    {
+      "id": 7,
+      "type": "rKR_MAXPRIM_S7_FLOOR_MIN_P5",
+      "expression": "power(subtract(group_rank(ts_decay_linear(min_primary_sentiment_score_transfer, 10), subindustry), 0.5), 5)",
+      "optimize_reason": "【Slot 7: 防御性 floor 质量腿 · 尾部聚焦外壳对称型】min_primary(平台实测0.52)捕捉'连最坏的一条稿件都比同行好'的 franchise 安全线——同款种子尾部双 power 外壳但内核换为最小值质量维度，与 Slot1/Slot2 激进峰线形成防御对称。尾部聚焦把资金加速汇于'底稿质量都失控'的尾部个股从而获得超齐截断收益。"
+    },
+    {
+      "id": 8,
+      "type": "rKR_MAXPRIM_S8_ZSCORE60_IND",
+      "expression": "group_rank(ts_zscore(max_primary_sentiment_score_transfer, 60), industry)",
+      "optimize_reason": "【Slot 8: 自我基线化异常强度腿 · 高阶统计维度】ts_zscore(max, 60) 度量'今日峰值情绪相对自身过去 60 个交易日信道暴走多少 sigma'，剥离不同行业 PR 密度的系统性差分。配合 industry 组内排序后，信号度量成为'相对自身常态的异常催化剂'而非'跨截图对的绝对情绪量级'，是信息论意义上的强变动检测器。"
+    }
+  ]
+}

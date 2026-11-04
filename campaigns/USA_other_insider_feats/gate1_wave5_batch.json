@@ -1,0 +1,66 @@
+{
+  "wave": "5",
+  "seed_id": "GATE1_WAVE5",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "items": [
+    {
+      "id": 1,
+      "type": "window_screen",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "top5价值 20d-250d (CROWDING=0.69>champion0.62)"
+    },
+    {
+      "id": 2,
+      "type": "window_screen",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "复现冠军 top5价值 60d-250d@SLOW (~0.88 sanity)"
+    },
+    {
+      "id": 3,
+      "type": "window_screen",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top20_60d_filled),vec_avg(buy_sell_ratio_top20_250d_filled)),5), subindustry)",
+      "optimize_reason": "top20价值 60d-250d"
+    },
+    {
+      "id": 4,
+      "type": "window_screen",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top20_5d_filled),vec_avg(buy_sell_ratio_top20_250d_filled)),5), subindustry)",
+      "optimize_reason": "top20价值 5d-250d(最长差)"
+    },
+    {
+      "id": 5,
+      "type": "window_screen",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_all_20d_filled),vec_avg(buy_sell_ratio_all_250d_filled)),5), subindustry)",
+      "optimize_reason": "all价值 20d-250d"
+    },
+    {
+      "id": 6,
+      "type": "window_screen",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_all_5d_filled),vec_avg(buy_sell_ratio_all_250d_filled)),5), subindustry)",
+      "optimize_reason": "all价值 5d-250d(最长差)"
+    },
+    {
+      "id": 7,
+      "type": "window_screen",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),5), subindustry)",
+      "optimize_reason": "all笔数 20d-250d"
+    },
+    {
+      "id": 8,
+      "type": "window_screen",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_tx_count_ratio_top20_5d_filled),vec_avg(buy_sell_tx_count_ratio_top20_250d_filled)),5), subindustry)",
+      "optimize_reason": "top20笔数 5d-250d(最长差)"
+    }
+  ]
+}

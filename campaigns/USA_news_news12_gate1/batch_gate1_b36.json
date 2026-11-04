@@ -1,0 +1,66 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 18,
+  "neutralization": "SUBINDUSTRY",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_relevance_score_2",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_5d_img_news"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_TS_DECAY8_CUBIC_SUBIND",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 8), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "B34 S6 prototype under native SUBINDUSTRY neutralization. Testing whether statistical factor subtraction was muting news alpha."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_TS_DECAY5_CUBIC_SUBIND",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "B30 S6 prototype (Sharpe 1.52) under native SUBINDUSTRY neutralization."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_RAW_CUBIC_SUBIND",
+      "expression": "group_rank(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "B28 S4 prototype (Sharpe 1.50) under native SUBINDUSTRY neutralization."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_LINEAR_SQRT_SUBIND",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "B27 S2 prototype (Sharpe 1.48, 2Y 2.16) under native SUBINDUSTRY neutralization."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_SMOOTH10_CUBIC_SUBIND",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 10), subindustry)",
+      "optimize_reason": "B31 S1 prototype (Fitness 0.79) under native SUBINDUSTRY neutralization."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_SMOOTH5_LINEAR_SUBIND",
+      "expression": "group_rank(multiply(ts_decay_linear(winsorize(mean_sentiment_score_transfer, std=3), 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "B29b S8 prototype (Sharpe 1.49, 2Y 1.58, Sub 1.12) under native SUBINDUSTRY neutralization."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_10D_5D_ENSEMBLE",
+      "expression": "group_rank(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), add(multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), 0.6), multiply(winsorize(prob_rank_bin1_5d_img_news, std=3), 0.4))), subindustry)",
+      "optimize_reason": "Multi-horizon ensemble without relevance under native SUBINDUSTRY neutralization."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_WINSOR25_SQRT_SUBIND",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=2.5), winsorize(prob_rank_bin1_10d_img_news, std=2.5)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "Dual 2.5-sigma winsorization under native SUBINDUSTRY neutralization."
+    }
+  ]
+}

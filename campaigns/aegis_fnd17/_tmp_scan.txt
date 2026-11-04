@@ -1,0 +1,21 @@
+======================================================================
+batch_S1.json expr-like strings: 3
+  ['2', 'expression'] => zscore(divide(ts_backfill(fnd17_fcfmtt,252), ts_backfill(fnd17_atmtt,252)))
+  ['2', 'optimize_reason'] => ①针对的物理短板：资产负债表规模是个**伪锚**——规模大不等于赚钱多，规模/权益这类杠杆比在 AEGIS 既往战役中反复证伪（EUR 侧 fnd17_aebitd 作分母时 Sharpe 仅 0.33~0.41 且 Y2 为负）。本槽换成**现金收益率**：分子 TTM 自由现金流（ac=10），分母 TTM 总资产（ac=0，零拥挤），两者都是「总额对总额」的同量纲相除，比值本身就是无量纲的现金产出率。②数学变形的增强点：EUR/T
+  ['2', 'skeleton'] => zscore(divide(ts_backfill(fnd17_fcfmtt,NUM),ts_backfill(fnd17_atmtt,NUM)))
+======================================================================
+batch_S2.json expr-like strings: 25
+  ['0', 'expression'] => subtract(group_rank(divide(fnd17_fcfmtt, fnd17_arev), sector), group_rank(fnd17_ttmopmgn, sector))
+  ['0', 'optimize_reason'] => ①**这正是 EUR/D1 通关冠军 3qVlb3dN 的骨架直系移植**：该 alpha 在 EUR/TOPCS1600 上 Sharpe 2.14 / Fitness 1.57 / checks.fail 为空 / selfCorr 0.32 / prodCorr 0.64，是本账户 fundamental17 家族唯一的硬证据。②针对 S1 病灶(A)(C)：S1 全批用逐期差分，把季报披露噪声当信息，导致 Sh 塌到 0.01~
+  ['0', 'skeleton'] => subtract(group_rank(divide(fnd17_fcfmtt,fnd17_arev),sector),group_rank(fnd17_ttmopmgn,sector))
+  ['1', 'expression'] => zscore(group_rank(divide(fnd17_fcfmtt, fnd17_arev), sector))
+  ['1', 'optimize_reason'] => ①针对 S1 病灶(C)：S1 slot3 用 `zscore(divide(FCF,资产))` 得到 Sh=0.01 —— 现金收益率重尾，极少数极端值主导了截面 zscore。本槽把标准化**前置到 group_rank**：group_rank 是分位映射，天然把重尾压成均匀分布，任何单点异常都无法主导信号；再外包一层 zscore 恢复零均值（group_rank 本身输出 [0,1] 单边，违反铁律）。②字段选择沿用 EUR 
+  ['1', 'skeleton'] => zscore(group_rank(divide(fnd17_fcfmtt,fnd17_arev),sector))
+  ['2', 'expression'] => subtract(group_rank(fnd17_tcpaormtt, sector), group_rank(fnd17_ttmopmgn, sector))
+  ['2', 'optimize_reason'] => ①针对 S1 病灶(A)：S1 slot4 用 `add(group_zscore(ROA), group_zscore(ROI))` 得到 Sh=0.26，本质是**两个同类盈利比率的冗余相加**——ROA 与 ROI 在会计上高度共线，相加不产生新信息，只是在重复同一个因子。本槽改为**价差而非加总**：ROA = 净利/资产，营业利润率 = 营业利润/收入，两者的缺口来自**资产周转率**（杜邦分解：ROE = 净利率 × 资产周
+  ['2', 'skeleton'] => subtract(group_rank(fnd17_tcpaormtt,sector),group_rank(fnd17_ttmopmgn,sector))
+  ['3', 'expression'] => subtract(group_rank(fnd17_tcpaormtt, sector), group_rank(fnd17_aroa5yavg, sector))
+  ['3', 'optimize_reason'] => Traceback (most recent call last):
+  File "D:\python\Lib\site-packages\cnhkmcp\untracked\APP\.agents\quant_framework\campaigns\aegis_fnd17\_tmp_scan.py", line 25, in <module>
+    print(' ',p.split('/')[-2:], '=>', v[:220])
+UnicodeEncodeError: 'gbk' codec can't encode character '\u2212' in position 39: illegal multibyte sequence

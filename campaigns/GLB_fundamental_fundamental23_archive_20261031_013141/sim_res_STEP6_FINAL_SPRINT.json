@@ -1,0 +1,88 @@
+{
+  "step1": {
+    "should_prune": false,
+    "max_abs_sharpe": 1.72,
+    "qualified_count": 2,
+    "qualified_seeds": [
+      {
+        "expression": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), subindustry)",
+        "sharpe": 1.72,
+        "fitness": 1.08,
+        "margin_bps": 21.23,
+        "turnover": 0.0464,
+        "fail_count": 3,
+        "fails": [
+          "PLATFORM_FAILED",
+          "LOW_GLB_EMEA_SHARPE",
+          "LOW_GLB_APAC_SHARPE"
+        ],
+        "cw_failed": false,
+        "metrics": {
+          "sharpe": 1.72,
+          "fitness": 1.08,
+          "turnover": 0.0464,
+          "returns": 0.0493,
+          "drawdown": 0.0587,
+          "margin": 0.002123,
+          "longCount": 1898,
+          "shortCount": 2053,
+          "pnl": 5099349,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": 1.23,
+          "two_year_sharpe": 1.74,
+          "investability_sharpe": 1.63,
+          "investability_fitness": 1.0,
+          "risk_neutralized_sharpe": 1.39
+        },
+        "status": "STEP1_PASSED"
+      },
+      {
+        "expression": "group_rank(ts_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), 252), subindustry)",
+        "sharpe": 1.68,
+        "fitness": 1.02,
+        "margin_bps": 14.950000000000001,
+        "turnover": 0.0612,
+        "fail_count": 3,
+        "fails": [
+          "PLATFORM_FAILED",
+          "LOW_GLB_EMEA_SHARPE",
+          "LOW_GLB_APAC_SHARPE"
+        ],
+        "cw_failed": false,
+        "metrics": {
+          "sharpe": 1.68,
+          "fitness": 1.02,
+          "turnover": 0.0612,
+          "returns": 0.0458,
+          "drawdown": 0.0337,
+          "margin": 0.001495,
+          "longCount": 1898,
+          "shortCount": 2053,
+          "pnl": 4734603,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": 1.27,
+          "two_year_sharpe": 1.81,
+          "investability_sharpe": 1.62,
+          "investability_fitness": 0.96,
+          "risk_neutralized_sharpe": 1.54
+        },
+        "status": "STEP1_PASSED"
+      }
+    ],
+    "platform_failure": false,
+    "message": "【Step 1 通过】捕获 2 条达标种子 (最高 |Sharpe| = 1.72)"
+  },
+  "step2_passed": [],
+  "final_passed": [],
+  "prescriptions": {
+    "symptoms": [],
+    "allowed_mutations": [
+      "group_rank",
+      "industry",
+      "subindustry"
+    ],
+    "rag_prescriptions": []
+  }
+}

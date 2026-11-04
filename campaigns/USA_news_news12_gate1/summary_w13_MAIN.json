@@ -1,0 +1,442 @@
+{
+ "tag": "MAIN",
+ "settings": {
+  "neutralization": "INDUSTRY",
+  "decay": 6,
+  "universe": "TOP1000",
+  "region": "USA",
+  "delay": 1,
+  "truncation": 0.025
+ },
+ "result_file": "D:\\python\\Lib\\site-packages\\cnhkmcp\\untracked\\APP\\.agents\\quant_framework\\campaigns\\USA_news_news12_gate1\\batch_w13_MAIN_1792945280_result.json",
+ "rows": [
+  {
+   "slot": 1,
+   "role": "A",
+   "type": "B1_BF3_DL2_NOGATE",
+   "reason": "【W13-1 · B1 x E5VjpeQm 构造 · fail=[] 头号候选】B1 (RATIO/覆盖度) x bf3+dl2 (无门版是 26 行 fail=[] 俱乐部成员, Sh 1.16/TO 59.45%). 机制复合: 覆盖度折扣提取净信息含量 (B1 +0.04 Sh) + bf3+dl2 把 TO 压到 ~59% + 无门保留全部填充日 (K2: 门切填充日即死, 故本槽无门). 若 B1 的 +0.04 Sh 增益在低 TO 区保住 (Sh>=1.20) 且 TO<=70% -> fail=[] 达成且无 LOW_SHARPE 警告. 判据: fail=[] = 豁免边界+注意力轴双达成; Sh>=1.25 = B1 增益在低 TO 区完全保住.",
+   "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 3), 2)))",
+   "alpha_id": "vROQKpra",
+   "sharpe": 1.17,
+   "fitness": 0.34,
+   "turnover": 0.5964,
+   "returns": 0.0501,
+   "ret_over_to": 0.08400402414486921,
+   "margin_bps": 1.68,
+   "longCount": 427,
+   "shortCount": 416,
+   "sub_sharpe": 1.06,
+   "two_year_sharpe": 1.11,
+   "rn_sharpe": 1.49,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 2,
+   "role": "A",
+   "type": "B1_BF2_GATE",
+   "reason": "【W13-2 · B1 x bf2 x 门】B1 + W11b 家族最优降 TO 构造 (bf2+门: TO 83.7%/Sh 1.47 于 RATIO 基座). 预期 TO ~84%/Sh ~1.5: 若 TO 压不到 70%, 与槽1 (bf3+dl2) 构成'门 vs 无门'在 B1 基座上的对照 (K2 预言门版 Sh 更低); 若意外压过 70% (门 x bf x 折扣三重交互), 直接 fail=[]. 判据: fail=[] = 三重交互意外有利; Sh>=1.50 且 TO<=85% = B1xbf2 路线成立.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 2))), 0)",
+   "alpha_id": "ZYmJRdbn",
+   "sharpe": 1.49,
+   "fitness": 0.42,
+   "turnover": 0.8419,
+   "returns": 0.0678,
+   "ret_over_to": 0.08053212970661598,
+   "margin_bps": 1.61,
+   "longCount": 384,
+   "shortCount": 375,
+   "sub_sharpe": 1.44,
+   "two_year_sharpe": 1.42,
+   "rn_sharpe": 2.02,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 3,
+   "role": "A",
+   "type": "B1_BF3_GATE",
+   "reason": "【W13-3 · B1 x bf3 x 门 · K2 反证】K2 (门 x bf 强互斥) 在 B1 基座上的反向验证: bf3+门在 RATIO 基座 Sh 1.20->0.87. B1 的覆盖度折扣是否缓解互斥? (折扣放大低覆盖名的位移 = 部分抵消门造成的信号稀疏化). 若 Sh 明显高于 0.87 -> B1 与门控存在协同, 打开'B1 x 门族'新空间; 若同样崩 -> K2 是基座无关的普遍规律. 判据: Sh>=1.10 = B1 缓解门 x bf 互斥 (协同); Sh<=0.95 = K2 普遍化.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 3))), 0)",
+   "alpha_id": "pwvLqMRb",
+   "sharpe": 0.85,
+   "fitness": 0.24,
+   "turnover": 0.3965,
+   "returns": 0.0324,
+   "ret_over_to": 0.08171500630517023,
+   "margin_bps": 1.6300000000000001,
+   "longCount": 515,
+   "shortCount": 509,
+   "sub_sharpe": 0.94,
+   "two_year_sharpe": 0.38,
+   "rn_sharpe": 1.14,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 4,
+   "role": "B",
+   "type": "B1_B2_COMBO",
+   "reason": "【W13-4 · B1 x B2 双杠杆复合 (无门版, ops=13)】注意力折扣 (B1: Sh 1.63) x 波动标准化 (B2: Sh 1.59/Ret 7.89%): 位移 / (覆盖度 x 冲击std) = 单位'注意力-波动'维度的净位移. 两个杠杆经济学正交 (覆盖度 = 关注噪声, std = 波动尺度), 若可加则 Sh 应 >1.63 且 Ret 保 7.5%+. 去门处理: 门非本复合的核心变量 (B1/B2 均为无门也可读), 且省 4 ops 规避 16 上限. 风险: 乘法分母使小覆盖+小波动名的信号爆炸 (重尾), 需监控 L/S 与 CW. 判据: Sh>1.63 且无 CW fail = 双杠杆可加 (家族新前沿); Sh<1.55 = 复合反噬.",
+   "expression": "reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), multiply(add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1), add(vec_stddev(high_price_excursion_stddev), 0.01)))))",
+   "alpha_id": "d5KG231g",
+   "sharpe": 1.69,
+   "fitness": 0.42,
+   "turnover": 1.2528,
+   "returns": 0.0777,
+   "ret_over_to": 0.062021072796934876,
+   "margin_bps": 1.24,
+   "longCount": 282,
+   "shortCount": 272,
+   "sub_sharpe": 1.42,
+   "two_year_sharpe": 2.02,
+   "rn_sharpe": 1.9,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT"
+   ],
+   "fail_checks": [
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 5,
+   "role": "B",
+   "type": "B2_NOGATE",
+   "reason": "【W13-5 · B2 无门版】W12 B2 (带门) Sh 1.59/Ret 7.89%/CW fail. 去门检验: CW fail 是否由门造成的稀疏仓位集中引起? 无门版 L/S 更均衡 -> CW 或解. 同时给出 B2 的原生 TO (预期 ~120%) 与门效应配对. 判据: CW fail 消失 = 门是 CW 诱因 (无门路线); Sh>=1.60 = B2 原生质量确认.",
+   "expression": "reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_stddev(high_price_excursion_stddev), 0.01))))",
+   "alpha_id": "KPm1K5rN",
+   "sharpe": 1.58,
+   "fitness": 0.4,
+   "turnover": 1.215,
+   "returns": 0.0786,
+   "ret_over_to": 0.06469135802469135,
+   "margin_bps": 1.2899999999999998,
+   "longCount": 279,
+   "shortCount": 274,
+   "sub_sharpe": 1.26,
+   "two_year_sharpe": 1.85,
+   "rn_sharpe": 1.7,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT"
+   ],
+   "fail_checks": [
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 6,
+   "role": "B",
+   "type": "B1_MULTIEVENT",
+   "reason": "【W13-6 · B1 x 多事件日门 · 攻 CLUSTER】B1 (CLUSTER 1.52) x 系统性新闻日门 (count>2): W12 B3 单独测 count>2 门 Sh 0.86/CLUSTER 0.79 (死), 但与 B1 复合或不同 —— 多事件日的覆盖度折扣位移 = 系统性事件的净信息含量, 正面制造簇同向性. 这是 CLUSTER 1.52->1.58 的第二路径 (第一路径 winsorize 仅 +0.02). 判据: CLUSTER>1.54 = 多事件门 x 折扣是簇杠杆 (警告墙破口); Sh>=1.2 = 复合成立.",
+   "expression": "trade_when(greater(vec_count(high_price_excursion_stddev), 2), reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)))), 0)",
+   "alpha_id": "kqJAxWg6",
+   "sharpe": 0.84,
+   "fitness": 0.25,
+   "turnover": 0.3525,
+   "returns": 0.0322,
+   "ret_over_to": 0.09134751773049646,
+   "margin_bps": 1.83,
+   "longCount": 510,
+   "shortCount": 506,
+   "sub_sharpe": 0.81,
+   "two_year_sharpe": 0.44,
+   "rn_sharpe": 1.03,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 7,
+   "role": "A",
+   "type": "B1_EXPDECAY20",
+   "reason": "【W13-7 · B1 x 指数衰减】B1 + f=0.9/d20 指数衰减 (K3: 门控基座上 -7.5pp TO, W1 槽4 Sh 1.06). 与槽1 (bf3+dl2) / 槽2 (bf2) 构成 B1 基座上的三种降 TO 算子对照 (线性衰减/回填/指数). 关注覆盖度折扣与衰减的交互: 折扣后的信号更慢 (覆盖度是 20 日均值), 衰减或更温和. 判据: TO<=100% 且 Sh>=1.40 = 指数路线在 B1 上最优; Sh<=1.20 = 衰减族在 B1 基座同样杀 Sh.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_exp_window(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 20, factor=0.9))), 0)",
+   "alpha_id": "omod1Jo2",
+   "sharpe": 1.04,
+   "fitness": 0.32,
+   "turnover": 0.4477,
+   "returns": 0.0418,
+   "ret_over_to": 0.09336609336609336,
+   "margin_bps": 1.8699999999999999,
+   "longCount": 511,
+   "shortCount": 517,
+   "sub_sharpe": 0.93,
+   "two_year_sharpe": 0.93,
+   "rn_sharpe": 1.44,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 8,
+   "role": "A",
+   "type": "B1_BF2_DL2_GATE",
+   "reason": "【W13-8 · B1 x bf2 x dl2 x 门 · 四重网格角】B1 + W12-A2 构造 (bf2+dl2+门: Sh 1.41/TO 71.8% 于 RATIO 基座, 距豁免框 1.8pp). B1 的 +0.04~0.22 Sh 增益 (W12 B1 vs 母本 +0.04; 但 B2 vs B1 显示折扣轴在低 TO 区增益或更大) 若在四重构造上保住, 落点 (TO~72%, Sh~1.5) —— 差 2pp TO 与 0.31 Sh 到 fail=[]. 判据: fail=[] = 家族首次在 B1 基座击穿豁免框; Sh>=1.45 且 TO<=73% = 前沿最近点.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 2), 2))), 0)",
+   "alpha_id": "omod1Jol",
+   "sharpe": 1.44,
+   "fitness": 0.43,
+   "turnover": 0.7233,
+   "returns": 0.0632,
+   "ret_over_to": 0.08737729849301812,
+   "margin_bps": 1.75,
+   "longCount": 385,
+   "shortCount": 375,
+   "sub_sharpe": 1.27,
+   "two_year_sharpe": 1.46,
+   "rn_sharpe": 1.8,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  }
+ ],
+ "gate": {
+  "step1": {
+   "should_prune": false,
+   "max_abs_sharpe": 1.69,
+   "qualified_count": 6,
+   "qualified_seeds": [
+    {
+     "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 3), 2)))",
+     "sharpe": 1.17,
+     "metrics": {
+      "sharpe": 1.17,
+      "fitness": 0.34,
+      "turnover": 0.5964,
+      "returns": 0.0501,
+      "drawdown": 0.0544,
+      "margin": 0.000168,
+      "longCount": 427,
+      "shortCount": 416,
+      "pnl": 4995514,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.06,
+      "two_year_sharpe": 1.11,
+      "investability_sharpe": 1.08,
+      "investability_fitness": 0.34,
+      "risk_neutralized_sharpe": 1.49
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 2))), 0)",
+     "sharpe": 1.49,
+     "metrics": {
+      "sharpe": 1.49,
+      "fitness": 0.42,
+      "turnover": 0.8419,
+      "returns": 0.0678,
+      "drawdown": 0.0564,
+      "margin": 0.000161,
+      "longCount": 384,
+      "shortCount": 375,
+      "pnl": 6764335,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.44,
+      "two_year_sharpe": 1.42,
+      "investability_sharpe": 1.38,
+      "investability_fitness": 0.45,
+      "risk_neutralized_sharpe": 2.02
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), multiply(add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1), add(vec_stddev(high_price_excursion_stddev), 0.01)))))",
+     "sharpe": 1.69,
+     "metrics": {
+      "sharpe": 1.69,
+      "fitness": 0.42,
+      "turnover": 1.2528,
+      "returns": 0.0777,
+      "drawdown": 0.0545,
+      "margin": 0.000124,
+      "longCount": 282,
+      "shortCount": 272,
+      "pnl": 7751722,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.42,
+      "two_year_sharpe": 2.02,
+      "investability_sharpe": 1.58,
+      "investability_fitness": 0.48,
+      "risk_neutralized_sharpe": 1.9
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_stddev(high_price_excursion_stddev), 0.01))))",
+     "sharpe": 1.58,
+     "metrics": {
+      "sharpe": 1.58,
+      "fitness": 0.4,
+      "turnover": 1.215,
+      "returns": 0.0786,
+      "drawdown": 0.0542,
+      "margin": 0.000129,
+      "longCount": 279,
+      "shortCount": 274,
+      "pnl": 7844654,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.26,
+      "two_year_sharpe": 1.85,
+      "investability_sharpe": 1.35,
+      "investability_fitness": 0.41,
+      "risk_neutralized_sharpe": 1.7
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_exp_window(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 20, factor=0.9))), 0)",
+     "sharpe": 1.04,
+     "metrics": {
+      "sharpe": 1.04,
+      "fitness": 0.32,
+      "turnover": 0.4477,
+      "returns": 0.0418,
+      "drawdown": 0.065,
+      "margin": 0.000187,
+      "longCount": 511,
+      "shortCount": 517,
+      "pnl": 4175503,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 0.93,
+      "two_year_sharpe": 0.93,
+      "investability_sharpe": 0.96,
+      "investability_fitness": 0.3,
+      "risk_neutralized_sharpe": 1.44
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)), 2), 2))), 0)",
+     "sharpe": 1.44,
+     "metrics": {
+      "sharpe": 1.44,
+      "fitness": 0.43,
+      "turnover": 0.7233,
+      "returns": 0.0632,
+      "drawdown": 0.0487,
+      "margin": 0.000175,
+      "longCount": 385,
+      "shortCount": 375,
+      "pnl": 6307132,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.27,
+      "two_year_sharpe": 1.46,
+      "investability_sharpe": 1.3,
+      "investability_fitness": 0.43,
+      "risk_neutralized_sharpe": 1.8
+     },
+     "status": "STEP1_PASSED"
+    }
+   ],
+   "message": "【Step 1 通过】捕获 6 条达标种子 (最高 |Sharpe| = 1.69)"
+  },
+  "step2_count": 0,
+  "final_count": 0,
+  "step2": [],
+  "final": []
+ }
+}

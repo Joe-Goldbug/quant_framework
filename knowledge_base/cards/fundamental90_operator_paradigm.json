@@ -1,0 +1,50 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset_family": "fundamental (VECTOR 事件型)",
+  "distilled_at": "2026-10-29 01:10:50",
+  "paradigms": [
+    {
+      "name": "类型降维前置范式",
+      "pattern": "ts_*(vec_avg(字段), 窗口)",
+      "gain": "从'平台拒绝执行'到'回测可跑'，是该类数据集的唯一入场券",
+      "note": "vec_* 属类型强制转换，不应计入数学算子预算。"
+    },
+    {
+      "name": "外层时序平滑消死重范式",
+      "pattern": "ts_mean(<因果合成>, 20)",
+      "gain": "换手 42.5% -> 3.7%，Margin -0.18bps -> 10.24bps，CONCENTRATED_WEIGHT 由 FAIL 转为 PASS",
+      "note": "必须置于最外层；置于内层(逐腿平滑)效果反转为负 (R5 Slot5 Sharpe -0.13)。"
+    },
+    {
+      "name": "去中枢后做减法的符号守恒范式",
+      "pattern": "subtract(ts_zscore(A, 252), ts_zscore(B, 252))",
+      "gain": "避开双有符号变量相乘的伪因果；本战役全部正 Sharpe 候选均出自该结构",
+      "note": "严禁裸乘；严禁对稀疏 [0,1] 字段减 0.5。"
+    },
+    {
+      "name": "截面排序拉平持仓范式",
+      "pattern": "rank(<外层平滑后的合成>)",
+      "gain": "在保持 Sharpe 0.60 的同时把 Sub-universe Sharpe 抬到 0.76 (本批最高)",
+      "note": "对 CONCENTRATED_WEIGHT 有效，但对 Fitness 提升有限。"
+    }
+  ],
+  "counter_paradigms": [
+    {
+      "name": "rank 直接加总",
+      "pattern": "add(rank(A), rank(B))",
+      "verdict": "被 AST 量纲编译器物理封杀 (无量纲排序加总属数学拼凑)"
+    },
+    {
+      "name": "裸 z-score 合成不加平滑",
+      "pattern": "add(ts_zscore(A), ts_zscore(B))",
+      "verdict": "换手 44.6%，Margin 0.50bps，CW FAIL"
+    },
+    {
+      "name": "逐腿平滑替代外层平滑",
+      "pattern": "subtract(group_rank(ts_mean(A,20)), group_rank(ts_mean(B,20)))",
+      "verdict": "Sharpe -0.13，优于外层平滑方案的 0.60，证明平滑位置必须外置"
+    }
+  ]
+}

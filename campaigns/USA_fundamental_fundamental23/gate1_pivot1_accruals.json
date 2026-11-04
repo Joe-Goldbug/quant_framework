@@ -1,0 +1,68 @@
+{
+  "wave": "pivot1_accruals",
+  "seed_id": "USA23_PIVOT1_ACCRUALS",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "dataset": "fundamental23",
+  "hypothesis": "USA fnd23 earnings-quality pivot (Sloan accruals anomaly). GLB double-dead-end was PC 0.72-0.73 (YoY-delta formula family) + EMEA/APAC sub-gates. USA removes the sub-gate (single region) and fundamental23 has cov=1.0 on net_income/ofc/tot_assets. The LEVEL topology (not ts_delta) is the UNTESTED family — GLB PC floor was measured on the YoY-delta family only. Accruals = NI-OFC, earnings quality, contrarian (Sloan 1996), slow quarterly -> high margin. Economics orthogonal to fundamental momentum -> hope PC<0.65. Probe: cash-conversion level (id1), cash-ROA (id2), cash-margin (id3), cash-conversion/rev (id4), NI-ROA (id5), EBIT-ROA (id6), EBIT-margin (id7) all LEVEL; id8 YoY-delta PC control (expect ~0.72, to prove level-vs-delta PC lever).",
+  "items": [
+    {
+      "id": 1,
+      "type": "cash_conversion_level",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(divide(subtract(fnd23_ofc, fnd23_net_income), add(fnd23_tot_assets,1)), sector)",
+      "optimize_reason": "P1 Sloan cash conversion (OFC-NI)/TA level, long high cash-backed earnings: earnings quality, contrarian, slow quarterly -> high margin. 3 fields 5 op. THE pivot hypothesis."
+    },
+    {
+      "id": 2,
+      "type": "cash_roa_level",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(divide(fnd23_ofc, add(fnd23_tot_assets,1)), sector)",
+      "optimize_reason": "P2 Cash ROA level (long high): cash generation per assets, quality. 2 fields 3 op. Isolates cash leg of P1."
+    },
+    {
+      "id": 3,
+      "type": "cash_margin_level",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(divide(fnd23_ofc, add(sales_revenue_total,1)), sector)",
+      "optimize_reason": "P3 Cash margin (OFC/rev) level: cash per revenue. 2 fields 3 op. Revenue-denominated quality."
+    },
+    {
+      "id": 4,
+      "type": "cash_conversion_per_rev",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(divide(subtract(fnd23_ofc, fnd23_net_income), add(sales_revenue_total,1)), sector)",
+      "optimize_reason": "P4 Cash conversion per revenue (OFC-NI)/rev: accruals anomaly revenue-normalized. 3 fields 5 op."
+    },
+    {
+      "id": 5,
+      "type": "ni_roa_level",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(divide(fnd23_net_income, add(fnd23_tot_assets,1)), sector)",
+      "optimize_reason": "P5 NI ROA level (quality control): classic profitability, expected PC>=0.72 crowded. 2 fields 3 op. Contrast with P1 to prove accruals-decorrelation."
+    },
+    {
+      "id": 6,
+      "type": "ebit_roa_level",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(divide(fnd23_ebit, add(fnd23_tot_assets,1)), sector)",
+      "optimize_reason": "P6 EBIT ROA level (profitability control): accrual-basis profitability. 2 fields 3 op. Expected crowded."
+    },
+    {
+      "id": 7,
+      "type": "ebit_margin_level",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(divide(fnd23_ebit, add(sales_revenue_total,1)), sector)",
+      "optimize_reason": "P7 EBIT margin level (profitability control): accrual-basis margin. 2 fields 3 op. Expected crowded."
+    },
+    {
+      "id": 8,
+      "type": "cash_conversion_yoy_delta_control",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(subtract(fnd23_ofc, fnd23_net_income), add(fnd23_tot_assets,1)), 252), sector)",
+      "optimize_reason": "P8 YoY-delta CONTROL of P1: expected PC~0.72 (formula-family lock). Proves level-vs-delta PC lever: if P1 PC < P8 PC, level topology decorrelates."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "wave": 26,
+  "seed_id": "GATE1_WAVE26",
+  "purpose": "blind-spot 5/6: divide structure + count / volume / absolute-volume field dimensions",
+  "fetched_at": "2026-11-04T14:20:00Z",
+  "location": "https://api.worldquantbrain.com/simulations/1tjNUg6gU56ybcpusFZdyq3",
+  "note": "first attempt (SmMvy2XM4BjcclaFm3XHHv) was fully CANCELLED: field buy_sell_tx_count_ratio_top20_20d_filled does not exist (only top20_20d / top20_60d, plus 250d_filled). Retried with real field ids.",
+  "alpha_results": [
+    {"id": "rKROQNq9", "slot": "divide(20d/60d) raw", "metrics": {"sharpe": 0.15, "fitness": 0.03, "turnover": 0.0596, "margin": 0.000157, "two_year_sharpe": -0.61}, "cluster_test": 0.15},
+    {"id": "58Ez7NmJ", "slot": "divide with +0.001", "metrics": {"sharpe": 0.7, "fitness": 0.3, "turnover": 0.0629, "margin": 0.000729, "two_year_sharpe": 0.08}, "cluster_test": 0.65},
+    {"id": "GrWb0E2Z", "slot": "tx_count_ratio top20 20d-60d", "metrics": {"sharpe": 0.4, "fitness": 0.15, "turnover": 0.0638, "margin": 0.00055, "two_year_sharpe": 0.17}, "cluster_test": 0.27},
+    {"id": "xAr3wXZm", "slot": "tx_count_ratio top20 60d-250d", "metrics": {"sharpe": 0.37, "fitness": 0.14, "turnover": 0.04, "margin": 0.000873, "two_year_sharpe": -0.36}, "cluster_test": 0.29},
+    {"id": "xAr3wXZb", "slot": "tx_count_ratio all 20d-60d", "metrics": {"sharpe": 1.12, "fitness": 0.6, "turnover": 0.0688, "margin": 0.001028, "two_year_sharpe": 0.97}, "cluster_test": 0.56},
+    {"id": "3qoXYgNP", "slot": "volume ratio top20 10d-250d", "metrics": {"sharpe": 0.86, "fitness": 0.42, "turnover": 0.0628, "margin": 0.000932, "two_year_sharpe": 0.35}, "cluster_test": 0.54},
+    {"id": "JjeN0R6j", "slot": "absolute sale volume confirm", "metrics": {"sharpe": -0.09, "fitness": -0.02, "turnover": 0.0841, "margin": -0.000085, "two_year_sharpe": -0.95}, "cluster_test": -0.14, "warnings": ["UNITS: incompatible unit for add at index 1 (CSShare vs dimensionless)"]},
+    {"id": "j2YAlNqW", "slot": "250d-60d reverse value pair", "metrics": {"sharpe": 0.69, "fitness": 0.36, "turnover": 0.0438, "margin": 0.001519, "two_year_sharpe": 1.03}, "cluster_test": 0.36}
+  ],
+  "wave26_verdict": {
+    "result": "FAILED on strength, PARTIAL WIN on correlation — divide 结构全线崩溃 (0.15~0.70)，计数/成交量维度最高仅 1.12 (all 队列) 但 CLUSTER 显著更低 (0.54~0.56)",
+    "finding": "比值结构在本族失效：两窗比率量纲相同但分母在接近 0 时爆炸，比率比的分布重尾无法用秩壳修复。计数/成交量维度提供的低相关性 (CLUSTER 0.54~0.56) 是真实增量信息，但信号强度不足。绝对量维度有量纲冲突 (UNITS warning)，不可与无量纲确认通道直接相乘。"
+  }
+}

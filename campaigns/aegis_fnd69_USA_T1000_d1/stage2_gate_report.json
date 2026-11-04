@@ -1,0 +1,202 @@
+{
+  "slots": [
+    {
+      "slot": 1,
+      "role": "CORE_A_ASSET_GROWTH",
+      "expression": "group_rank(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 2,
+      "role": "CORE_B_FCF_PRODUCTIVITY",
+      "expression": "group_rank(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 3,
+      "role": "CORE_C_INVESTMENT_ACCELERATION",
+      "expression": "group_rank(reverse(ts_delta(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta), 252)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_capxy2q"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 4,
+      "role": "CORE_D_NET_DEBT_ISSUANCE",
+      "expression": "group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2ysitld",
+          "fnd69_dltry2q",
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 5,
+      "role": "CORE_E_CAPEX_INTENSITY",
+      "expression": "group_rank(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_capxy2q"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 6,
+      "role": "CORE_F_OCF_MOMENTUM",
+      "expression": "group_rank(ts_delta(divide(ts_backfill(fnd69_q2yfcnao, 252), fnd69_qta), 252), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_q2yfcnao"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 7,
+      "role": "CORE_G_NET_EQUITY_ISSUANCE",
+      "expression": "group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2ycktsrp",
+          "fnd69_q2yktss",
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 8,
+      "role": "CORE_H_DEBT_ROLLOVER_OVERLAP",
+      "expression": "group_rank(reverse(divide(min(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2ysitld",
+          "fnd69_dltry2q",
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    }
+  ],
+  "all_valid": false,
+  "skeleton_check": {
+    "status": "FAIL",
+    "error": "ValueError('[AST Sandbox 拦截] 本批次检测到 8 条已测过的历史组合！\\n严禁进行简单参数微调。必须引入新的数学逻辑或正交字段！\\n重复项:\\n- group_rank(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry) (曾测过: group_rank(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry))\\n- group_rank(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry) (曾测过: group_rank(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry))\\n- group_rank(reverse(ts_delta(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta), 252)), industry) (曾测过: group_rank(reverse(ts_delta(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta), 252)), industry))\\n- group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry) (曾测过: group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry))\\n- group_rank(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry) (曾测过: group_rank(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry))\\n- group_rank(ts_delta(divide(ts_backfill(fnd69_q2yfcnao, 252), fnd69_qta), 252), industry) (曾测过: group_rank(ts_delta(divide(ts_backfill(fnd69_q2yfcnao, 252), fnd69_qta), 252), industry))\\n- group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry) (曾测过: group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry))\\n- group_rank(reverse(divide(min(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry) (曾测过: group_rank(reverse(divide(min(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), industry))')"
+  },
+  "red_team": {
+    "all_passed": true,
+    "summary_hash": "eb52382cef614a4f87cde85692b2b5f5db610b07450a43f191179b5b2b683e25",
+    "per_slot": [
+      {
+        "slot": 1,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 2,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 3,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 4,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 5,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 6,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 7,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 8,
+        "verdict": "PASS",
+        "issues": []
+      }
+    ]
+  }
+}

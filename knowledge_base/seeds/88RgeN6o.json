@@ -1,0 +1,87 @@
+{
+  "id": "88RgeN6o",
+  "code": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), industry)",
+  "status": "UNSUBMITTED",
+  "stage": "IS",
+  "settings": {
+    "instrumentType": "EQUITY",
+    "region": "GLB",
+    "universe": "MINVOL10M",
+    "delay": 1,
+    "decay": 0,
+    "neutralization": "SUBINDUSTRY",
+    "truncation": 0.025,
+    "pasteurization": "ON",
+    "unitHandling": "VERIFY",
+    "nanHandling": "ON",
+    "maxTrade": "OFF",
+    "maxPosition": "OFF",
+    "language": "FASTEXPR",
+    "visualization": false,
+    "startDate": "2014-01-01",
+    "endDate": "2023-12-31",
+    "simulationMode": "FULL"
+  },
+  "metrics": {
+    "sharpe": 1.75,
+    "fitness": 1.14,
+    "turnover": 0.0526,
+    "returns": 0.0532,
+    "drawdown": 0.0492,
+    "margin": 0.002024,
+    "margin_bps": 20.24,
+    "longCount": 1949,
+    "shortCount": 2043,
+    "pnl": 5502055,
+    "bookSize": 20000000,
+    "startDate": "2014-01-01",
+    "sub_universe_sharpe": 1.28,
+    "two_year_sharpe": 1.76,
+    "investability_sharpe": 1.65,
+    "investability_fitness": 1.05,
+    "risk_neutralized_sharpe": 1.38
+  },
+  "ra": {
+    "failed_ra_count": 2,
+    "failed_ppa_count": 0,
+    "ra_failed": true,
+    "ppa_failed": false,
+    "ra_failed_checks": [
+      "LOW_GLB_EMEA_SHARPE",
+      "LOW_GLB_APAC_SHARPE"
+    ],
+    "pyramid_short": "fundamental"
+  },
+  "checks": {
+    "fail": [],
+    "warning": [
+      {
+        "name": "LOW_GLB_EMEA_SHARPE",
+        "value": 0.63,
+        "limit": 1.0
+      },
+      {
+        "name": "LOW_GLB_APAC_SHARPE",
+        "value": 0.92,
+        "limit": 1.0
+      },
+      {
+        "name": "CLUSTER_TEST",
+        "value": 0.94,
+        "limit": 1.58
+      }
+    ],
+    "pass": [
+      "LOW_SHARPE",
+      "LOW_FITNESS",
+      "LOW_TURNOVER",
+      "HIGH_TURNOVER",
+      "CONCENTRATED_WEIGHT",
+      "LOW_SUB_UNIVERSE_SHARPE",
+      "LOW_GLB_AMER_SHARPE",
+      "LOW_2Y_SHARPE",
+      "MATCHES_PYRAMID"
+    ]
+  },
+  "economic_mechanism": "营运现金流加净利润占总资产比重的 252 日年度增量异象，按行业横截面排序。"
+}

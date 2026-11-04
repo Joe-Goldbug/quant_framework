@@ -1,0 +1,80 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B87_S1_KPJ_SECTOR_NEUT_D12",
+      "expression": "ts_decay_linear(group_neutralize(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), sector), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 9 ops: Sector neutralization alternative on KPJ36KRz. Neutralizing by GICS 11 sectors removes broad macro risk while preserving granular cross-industry news dispersion, targeting CLUSTER_TEST stability >= 1.58."
+    },
+    {
+      "id": 2,
+      "type": "B87_S2_KPJ_HORIZON_ALIGN_OUT8_D10",
+      "expression": "ts_decay_linear(group_neutralize(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), industry), 8)",
+      "decay": 10,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 9 ops: Holding horizon alignment (8d outer + 10d sim = 18d total). Eliminates holding stale positions past the 10-day event window of prob_rank_bin1_10d_img_news, boosting Returns from 4.31% to >= 4.8%."
+    },
+    {
+      "id": 3,
+      "type": "B87_S3_KPJ_HORIZON_ALIGN_OUT7_D12",
+      "expression": "ts_decay_linear(group_neutralize(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), industry), 7)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 9 ops: 7-day outer decay on KPJ36KRz. Captures the prime Day 1-7 PEAD post-earnings announcement drift window with higher margin and returns."
+    },
+    {
+      "id": 4,
+      "type": "B87_S4_KPJ_PRUNE_RELEVANCE_7OP",
+      "expression": "ts_decay_linear(group_neutralize(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), subindustry), 0.5), industry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 7 ops: Prunes news_relevance_score_2 to eliminate potential multiplicative noise. Streamlines formula to 7 operators and tests pure sentiment-regression synergy."
+    },
+    {
+      "id": 5,
+      "type": "B87_S5_KPJ_DUAL_IND_SECTOR_NEUT_10OP",
+      "expression": "ts_decay_linear(group_neutralize(group_neutralize(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), industry), sector), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Dual-tier hierarchical neutralization (industry + sector). Strips both subindustry tilt and macro sector factor risk, directly stabilizing CLUSTER_TEST to >= 1.58."
+    },
+    {
+      "id": 6,
+      "type": "B87_S6_KPJ_OUTER_PWR3_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), industry), 10)",
+      "decay": 12,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 6: 10 ops: Non-linear Power 3 tail expansion before neutralization. Concentrates capital onto high-conviction events, expanding Returns toward >= 4.8%."
+    },
+    {
+      "id": 7,
+      "type": "B87_S7_KPJ_WINS25_D12",
+      "expression": "ts_decay_linear(group_neutralize(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry), 0.5), industry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 9 ops: Tighter std=2.5 winsorize on KPJ36KRz. Suppresses regression outliers to push turnover from 12.89% down below 12.50% floor to maximize Fitness."
+    },
+    {
+      "id": 8,
+      "type": "B87_S8_KPJ_20D_HORIZON_ALIGN_D12",
+      "expression": "ts_decay_linear(group_neutralize(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_20d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), industry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 9 ops: 20-day horizon alignment. Since total holding period is 22 days, switches to the native 20-day forward return model (prob_rank_bin1_20d_img_news), testing if horizon matching unlocks Fitness >= 1.00."
+    }
+  ]
+}

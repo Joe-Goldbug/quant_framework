@@ -1,0 +1,14 @@
+{
+  "direction": "Y",
+  "hypothesis": "单位新闻关注度所承载的价格振幅越大，说明该移动越是关注度稀缺下的流动性冲击（做市商风险预算约束、知情交易者缺席、信息缓慢扩散），随后向基准回归；bf60 回填压换手与权重集中、industry 组内秩分散暴露、振幅字段保 2Y 稳定，reverse 系统性捕捉该回归。",
+  "slots": [
+    {"id": 1, "type": "vecavg振幅每关注度bf60", "expression": "reverse(group_rank(ts_backfill(divide(vec_avg(high_price_excursion_stddev), add(vec_count(low_price_excursion_stddev), 1)), 60), industry))", "economic_story": "高单位关注度振幅意味关注稀缺下的流动性冲击因为做市商风险预算约束下薄盘口放大位移随后回归。"},
+    {"id": 2, "type": "maxup金额每关注度bf60", "expression": "reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(vec_count(high_price_excursion_stddev), 1)), 60), industry))", "economic_story": "高单关注度最大上涨金额意味关注稀缺下的买盘冲击因为薄盘口被大单直接打穿随后涨幅回落。"},
+    {"id": 3, "type": "vecmax振幅每关注度bf60", "expression": "reverse(group_rank(ts_backfill(divide(vec_max(high_price_excursion_stddev), add(vec_count(low_price_excursion_stddev), 1)), 60), industry))", "economic_story": "高极端振幅每关注度意味关注稀缺下的极端冲击因为知情交易缺席时价格被单向打偏随后回归。"},
+    {"id": 4, "type": "高低振幅差每关注度bf60", "expression": "reverse(group_rank(ts_backfill(divide(subtract(news_high_exc_stddev, news_low_exc_stddev), add(vec_count(high_price_excursion_stddev), 1)), 60), industry))", "economic_story": "高上行振幅相对下行振幅占优每关注度意味买盘冲击主导因为做市商上方风险预算更薄位移难持续随后回落。"},
+    {"id": 5, "type": "收盘溢价每关注度bf60对照", "expression": "reverse(group_rank(ts_backfill(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 60), industry))", "economic_story": "高收盘相对均价溢价每关注度意味收盘时段流动性冲击因为关注稀缺时收盘集中单推离均价随后回归。"},
+    {"id": 6, "type": "vecavg每关注度bf250", "expression": "reverse(group_rank(ts_backfill(divide(vec_avg(high_price_excursion_stddev), add(vec_count(low_price_excursion_stddev), 1)), 250), industry))", "economic_story": "高单位关注度振幅长期持续意味未被消化的关注稀缺冲击因为冲击修复需要时间随后缓慢回归。"},
+    {"id": 7, "type": "tsrank极端每关注度", "expression": "reverse(group_rank(ts_rank(divide(news_high_exc_stddev, add(vec_count(high_price_excursion_stddev), 1)), 250), industry))", "economic_story": "高历史极端振幅每关注度意味关注稀缺下的冲击正处极端因为做市商风险预算约束下位移难持续随后回归。"},
+    {"id": 8, "type": "日内价差每关注度bf60", "expression": "reverse(group_rank(ts_backfill(divide(subtract(news_eod_high, news_eod_low), add(vec_count(high_price_excursion_stddev), 1)), 60), industry))", "economic_story": "高日内高低价差每关注度意味关注稀缺下的全日流动性冲击因为薄盘口在稀缺关注中振幅放大随后回归。"}
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "batch_id": "EPS_Q1_EPS_GROWTH_SIGNAL_ROUTE",
+  "parent_best_alpha_id": "mLoMq1jx",
+  "parent_best_expression": "group_zscore(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), std=3), industry)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "research_hypothesis": "The previous FCF campaign (fnd69) repeatedly failed to cross the platform gates, and the user has judged that family to be exhausted. This batch switches the economic route to fundamental6 EPS fields (fnd6 EVENT VECTOR family) and tests whether an earnings-based signal can produce a cleaner risk profile than the cash-flow constructions. The economic content is earnings momentum/level, not cash change; the hypothesis does not assume direction of return and is judged by every platform check.",
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "EPS_LEVEL_RELATIVE_RANK_WITH_INDUSTRY_NEUTRALIZATION",
+      "expression": "group_rank(zscore(fnd6_newqeventv110_xoptd12), industry)",
+      "fields_used": ["fnd6_newqeventv110_xoptd12"],
+      "counterparty": "Positions built directly on raw implied-earnings level without removing sector/industry composition effects.",
+      "economic_mechanism": "The implied option EPS diluted 12-month figure is first standardized across instruments, then ranked within industry so that a name is assessed relative to peers with similar business models. The cross-sectional ordering captures whether a stock screens expensive or cheap on that earnings proxy within its industry.",
+      "optimize_reason": "Provides a simple baseline EPS-signal route using the most-used fnd6 field so the batch has a reference point. It must pass the local audits and the platform warnings policy; any substantive warning still disqualifies it.",
+      "technical_audit": {"passed": true, "operator_count": 3, "used_fields": ["fnd6_newqeventv110_xoptd12"]}
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "EPS_LEVEL_WITH_TAIL_CONTROL_BEFORE_STANDARDIZATION",
+      "expression": "group_zscore(winsorize(fnd6_newqeventv110_xoptd12, std=3), industry)",
+      "fields_used": ["fnd6_newqeventv110_xoptd12"],
+      "counterparty": "Standardization computed on a raw earnings level that may include a small number of extreme implied-EPS reporters.",
+      "economic_mechanism": "The implied EPS series is winsorized across instruments first, then centered within industry, so a single extreme implied-earnings reporter does not dominate the standardized peer deviation. The industry-relative interpretation is preserved.",
+      "optimize_reason": "Directly tests whether tail control before industry standardization produces a different concentration profile than the raw-level baseline in Slot 1. The flag is falsifiable: if concentration still fails, the tail is not the controlling mechanism.",
+      "technical_audit": {"passed": true, "operator_count": 4, "used_fields": ["fnd6_newqeventv110_xoptd12"]}
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "EPS_QUARTER_CHANGE_SIGNAL",
+      "expression": "group_zscore(ts_delta(fnd6_newqeventv110_xoptd12, 63), industry)",
+      "fields_used": ["fnd6_newqeventv110_xoptd12"],
+      "counterparty": "Earnings-based positioning that ignores the change in the implied EPS proxy and uses only its level.",
+      "economic_mechanism": "The quarter-scale change in the implied diluted EPS proxy is taken as the signal, then centered within industry, so the batch tests whether earnings momentum contributes anything independent of the level constructions already in the batch. The sign and magnitude of the change are retained.",
+      "optimize_reason": "Adds the first earnings-change variant against the level route. It is retained only if it improves breadth or reduces warnings compared with the level baseline; no direction of return is assumed.",
+      "technical_audit": {"passed": true, "operator_count": 4, "used_fields": ["fnd6_newqeventv110_xoptd12"]}
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "EPS_CHANGE_WITH_TAIL_CONTROL_BEFORE_STANDARDIZATION",
+      "expression": "group_zscore(winsorize(ts_delta(fnd6_newqeventv110_xoptd12, 63), std=3), industry)",
+      "fields_used": ["fnd6_newqeventv110_xoptd12"],
+      "counterparty": "Standardization of the raw earnings change without capping extreme reporters.",
+      "economic_mechanism": "The quarter-scale change in implied EPS is winsorized across instruments, then standardized within industry, so the change signal is protected against single-name extremes before peer centering. Both the direction and the relative peer position are preserved.",
+      "optimize_reason": "Directly tests whether tail control on the change signal improves the risk profile relative to the uncapped change in Slot 3. It is a targeted response to the measured platform warnings rather than an assumed improvement.",
+      "technical_audit": {"passed": true, "operator_count": 5, "used_fields": ["fnd6_newqeventv110_xoptd12"]}
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "EPS_LEVEL_WITH_SUBINDUSTRY_NEUTRALIZATION",
+      "expression": "group_zscore(winsorize(fnd6_newqeventv110_xoptd12, std=3), subindustry)",
+      "fields_used": ["fnd6_newqeventv110_xoptd12"],
+      "counterparty": "Industry-level centering that treats economically dissimilar peers as equivalent judges of implied-EPS standing.",
+      "economic_mechanism": "The same winsorized implied-EPS level is centered among subindustry peers, whose reporting and business-model norms are more homogeneous, then assessed relative to that tighter peer set. The cost is potentially thinner groups on some dates.",
+      "optimize_reason": "Isolates the peer-set question at the same tail-control level as Slot 2. If subindustry groups are too thin for a stable denominator, concentration and breadth should reflect that explicitly; otherwise the finer peer matching may improve the profile.",
+      "technical_audit": {"passed": true, "operator_count": 5, "used_fields": ["fnd6_newqeventv110_xoptd12"]}
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "EPS_CHANGE_WITH_SUBINDUSTRY_NEUTRALIZATION_AND_TAIL_CONTROL",
+      "expression": "group_zscore(winsorize(ts_delta(fnd6_newqeventv110_xoptd12, 63), std=3), subindustry)",
+      "fields_used": ["fnd6_newqeventv110_xoptd12"],
+      "counterparty": "Earnings-change signal standardized only inside broad industry groups.",
+      "economic_mechanism": "The tail-capped quarter-scale change in implied EPS is centered among subindustry peers, combining the change signal with finer peer matching. The interpretation of a positive or negative earnings shift is retained, and only the peer reference changes.",
+      "optimize_reason": "Extends the subindustry comparison to the change signal so the batch can tell whether subindustry matching helps the change route the way it might help the level route. The result must be judged by concentration, breadth and all platform warnings.",
+      "technical_audit": {"passed": true, "operator_count": 6, "used_fields": ["fnd6_newqeventv110_xoptd12"]}
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "EPS_LEVEL_RANK_WITH_SUBINDUSTRY_NEUTRALIZATION",
+      "expression": "group_rank(zscore(fnd6_newqeventv110_xoptd12), subindustry)",
+      "fields_used": ["fnd6_newqeventv110_xoptd12"],
+      "counterparty": "Cross-sectional rank within industry that does not use the finer subindustry peer set.",
+      "economic_mechanism": "The standardized implied-EPS level is ranked within subindustry rather than industry, so a stock is compared with its closest business-model peers. This preserves the rank-based construction from Slot 1 while changing the peer reference.",
+      "optimize_reason": "Provides a rank-based subindustry variant for direct comparison with the industry-rank baseline. It is retained only if it improves breadth or reduces warnings relative to Slot 1; no return direction is assumed.",
+      "technical_audit": {"passed": true, "operator_count": 4, "used_fields": ["fn

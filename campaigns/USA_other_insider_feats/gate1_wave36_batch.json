@@ -1,0 +1,20 @@
+{
+  "wave": 36,
+  "seed_id": "GATE1_WAVE36",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "xAr3dxlm (dr20@IND, PC 0.5757, Mgn 8.77) / JjeNvpoj (dr33@IND, PC 0.7136, Mgn 11.59)",
+  "hypothesis": "双层秩窗口-PC 梯度已测绘：20→0.576/8.77bps，33→0.714/11.59bps，40→0.732/12.37bps。前沿插值带 26~29 是 Margin≥10 与 PC<0.70 的唯一交叠区。decay 8 已实证 +0.9~1.0bps 且无 2Y 副作用——全批 decay 8。同时叠加 vec_max（Fitness 杠杆）、双平滑（2Y 杠杆）、top5 笔数比确认源（PC 0.6691 源）三个增量。",
+  "items": [
+    {"id": "w36_dr26_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),26), industry), subindustry)", "optimize_reason": "插值带主槽：窗26 预期 PC~0.65/Mgn~10+，decay8 再+1bps。Margin 与 PC 双门的关键探针。8算子/3字段。"},
+    {"id": "w36_dr29_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),29), industry), subindustry)", "optimize_reason": "插值带上界：窗29 预期 PC~0.68~0.70/Mgn~11，锁定 PC 梯度的临界窗。8算子/3字段。"},
+    {"id": "w36_dr33_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33), industry), subindustry)", "optimize_reason": "JjeNvpoj 的 decay8 版：Mgn 11.59→12.6+，观测 decay 是否推动 PC（0.7136 临界）回落或上升。8算子/3字段。"},
+    {"id": "w36_dr33_vecmax_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_max(buy_sell_tx_count_ratio_all_20d_filled),vec_max(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33), industry), subindustry)", "optimize_reason": "vec_max Fitness 杠杆 × dr33：window 20 时 vecmax 无增益，窗 33 下重测（平滑窗更长时极值统计量更稳定）。8算子/3字段。"},
+    {"id": "w36_drdw20_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_decay_exp_window(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),10), industry), subindustry)", "optimize_reason": "双平滑 × 双层秩：指数衰减保近期权重→2Y 杠杆，等效窗 30 的 Margin 增益，PC 预期近 dr26。9算子/3字段。"},
+    {"id": "w36_drdw33_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_decay_exp_window(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33),10), industry), subindustry)", "optimize_reason": "双平滑 33+10 × 双层秩：Margin 冲 13+ 且 2Y 损失小于 ts_mean(40)。9算子/3字段。"},
+    {"id": "w36_dr33_gjeb_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),33), industry), subindustry)", "optimize_reason": "确认腿换 top5 笔数比（gJebmOxK 的 PC 0.6691 源）× dr33：确认源贡献 PC 的假设检验，若 PC<0.70 且 Sharpe 保留则解锁窗 33~40 区间。8算子/3字段。"},
+    {"id": "w36_dr26_vecmax_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_max(buy_sell_tx_count_ratio_all_20d_filled),vec_max(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),26), industry), subindustry)", "optimize_reason": "插值带 × vec_max：若 dr26 本身双门通过，vecmax 是 Fitness 增量的即插即用组件。8算子/3字段。"}
+  ]
+}

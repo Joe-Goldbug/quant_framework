@@ -1,0 +1,70 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/4F1x4ncz24xkaP7pPBAh4UW",
+  "submitted_at": 1793074595,
+  "items": [
+    {
+      "id": 1,
+      "type": "B68_S1_WPQ_D12_TRUNC03",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 1: wpQKJ1K5 with Truncation 0.03: expands top weights from 2.5% to 3.0% to test Returns expansion."
+    },
+    {
+      "id": 2,
+      "type": "B68_S2_WPQ_D12_TRUNC04",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.04,
+      "optimize_reason": "Slot 2: wpQKJ1K5 with Truncation 0.04: allows top news catalysts to reach 4% weight, targeting Returns >= 4.8%."
+    },
+    {
+      "id": 3,
+      "type": "B68_S3_WPQ_D12_TRUNC05",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.05,
+      "optimize_reason": "Slot 3: wpQKJ1K5 with Brain recommended Truncation 0.05: unleashes high conviction ideas to drive Fitness >= 1.00."
+    },
+    {
+      "id": 4,
+      "type": "B68_S4_WPQ_D12_TRUNC08",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.08,
+      "optimize_reason": "Slot 4: wpQKJ1K5 with Truncation 0.08: maximum weight relaxation to test upper bound of Fitness."
+    },
+    {
+      "id": 5,
+      "type": "B68_S5_KPJ_D15_TRUNC03",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 15,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 5: KPJlxe5l (Sharpe 1.58, 2Y 2.22) with Truncation 0.03: tests if higher weight expands Sharpe above 1.60."
+    },
+    {
+      "id": 6,
+      "type": "B68_S6_KPJ_D15_TRUNC05",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 15,
+      "truncation": 0.05,
+      "optimize_reason": "Slot 6: KPJlxe5l with Truncation 0.05: tests impact of Brain recommended truncation on Sharpe record holder."
+    },
+    {
+      "id": 7,
+      "type": "B68_S7_KPJ_D16_TRUNC03",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 16,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 7: KPJlxe5l with Decay 16 + Truncation 0.03: micro-decay increase to lower turnover while expanding returns."
+    },
+    {
+      "id": 8,
+      "type": "B68_S8_WPQ_D11_TRUNC04",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 11,
+      "truncation": 0.04,
+      "optimize_reason": "Slot 8: wpQKJ1K5 with Decay 11 + Truncation 0.04: dual optimization of reactivity (Sharpe) and weight expression (Fitness)."
+    }
+  ]
+}

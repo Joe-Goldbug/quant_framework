@@ -1,0 +1,232 @@
+{
+  "round": 6,
+  "fix": "fnd89 腿全域 ts_backfill(252) 阶梯化",
+  "neutralization": "NONE",
+  "slots": [
+    {
+      "slot": 1,
+      "role": "CTRL_FND89_ACCRUAL_LEVEL_BF",
+      "datasets": [
+        "fundamental89"
+      ],
+      "expression": "group_zscore(reverse(ts_backfill(fnd89_major_11_11, 252)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd89_major_11_11"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 2,
+      "role": "CTRL_FND89_NONCURRENT_ACCRUAL_BF",
+      "datasets": [
+        "fundamental89"
+      ],
+      "expression": "group_zscore(reverse(ts_backfill(fnd89_asset_51_11, 252)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd89_asset_51_11"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 3,
+      "role": "X_ACCRUAL_x_DEBT_ISSUE_BF",
+      "datasets": [
+        "fundamental69",
+        "fundamental89"
+      ],
+      "expression": "group_zscore(reverse(add(zscore(ts_backfill(fnd89_major_11_11, 252)), zscore(divide(abs(ts_backfill(fnd69_q2ysitld, 252)), fnd69_qta)))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 9,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_q2ysitld",
+          "fnd89_major_11_11"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 4,
+      "role": "X_ACCRUAL_minus_BUYBACK_BF",
+      "datasets": [
+        "fundamental69",
+        "fundamental89"
+      ],
+      "expression": "group_zscore(reverse(subtract(zscore(ts_backfill(fnd89_major_11_11, 252)), zscore(divide(abs(ts_backfill(fnd69_q2ycktsrp, 252)), fnd69_qta)))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 9,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_q2ycktsrp",
+          "fnd89_major_11_11"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 5,
+      "role": "X_ACCRUAL_x_REVENUE_GROWTH_BF",
+      "datasets": [
+        "fundamental89",
+        "other466"
+      ],
+      "expression": "group_zscore(reverse(add(ts_backfill(fnd89_major_11_11, 252), divide(ts_delta(oth466_is_revenue_q, 252), ts_delay(oth466_is_revenue_q, 252)))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 7,
+        "used_fields": [
+          "oth466_is_revenue_q",
+          "fnd89_major_11_11"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 6,
+      "role": "X_ACCRUAL_x_SHARE_DILUTION_BF",
+      "datasets": [
+        "fundamental89",
+        "other466"
+      ],
+      "expression": "group_zscore(reverse(add(ts_backfill(fnd89_major_11_11, 252), divide(ts_delta(oth466_de_cshoq_q, 252), ts_delay(oth466_de_cshoq_q, 252)))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 7,
+        "used_fields": [
+          "oth466_de_cshoq_q",
+          "fnd89_major_11_11"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 7,
+      "role": "X_ACCRUAL_minus_CASH_BUFFER_BF",
+      "datasets": [
+        "fundamental89",
+        "other466"
+      ],
+      "expression": "group_zscore(reverse(subtract(ts_backfill(fnd89_major_11_11, 252), divide(oth466_bs_cash_equiv_q, oth466_bs_assets_tot_q))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "oth466_bs_assets_tot_q",
+          "fnd89_major_11_11",
+          "oth466_bs_cash_equiv_q"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 8,
+      "role": "X_TTM_FCF_OVER_REVENUE",
+      "datasets": [
+        "fundamental69",
+        "other466"
+      ],
+      "expression": "group_zscore(winsorize(divide(subtract(ts_mean(ts_backfill(fnd69_q2yfcnao, 252), 252), abs(ts_mean(ts_backfill(fnd69_capxy2q, 252), 252))), oth466_is_revenue_q), std=3), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 9,
+        "used_fields": [
+          "oth466_is_revenue_q",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    }
+  ],
+  "all_valid": true,
+  "skeleton_check": {
+    "status": "PASS"
+  },
+  "red_team": {
+    "all_passed": true,
+    "per_slot": [
+      {
+        "slot": 1,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 2,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 3,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 4,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 5,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 6,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 7,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 8,
+        "verdict": "PASS",
+        "issues": []
+      }
+    ]
+  }
+}

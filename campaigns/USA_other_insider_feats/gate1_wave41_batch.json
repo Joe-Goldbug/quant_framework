@@ -1,0 +1,16 @@
+{
+  "wave": 41,
+  "theme": "三轴联合细扫: 窗口25/30/35中间带 + 幂次1.5/2.5梯度 + top5冷口径置信腿压PC",
+  "trigger": "Wave40判决: 窗口20->60驱动PC 0.685->0.818, 幂次2->3驱动PC 0.685->0.718; 唯一双达标=w20/p2",
+  "base_settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025},
+  "expressions": [
+    {"tag": "tp2_w25", "ops": 10, "note": "窗口25中间带", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 25), subindustry), 0.5), 2)"},
+    {"tag": "tp2_w30", "ops": 10, "note": "窗口30中间带", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 30), subindustry), 0.5), 2)"},
+    {"tag": "tp2_w35", "ops": 10, "note": "窗口35中间带", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 35), subindustry), 0.5), 2)"},
+    {"tag": "tp2_p15", "ops": 10, "note": "幂次1.5弱集中(PC下界探测)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 20), subindustry), 0.5), 1.5)"},
+    {"tag": "tp2_p25", "ops": 10, "note": "幂次2.5", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 20), subindustry), 0.5), 2.5)"},
+    {"tag": "tp2_top5conf", "ops": 10, "note": "信念腿换top5笔数比60d(更冷压PC)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)), 20), subindustry), 0.5), 2)"},
+    {"tag": "tp2_top5conf250", "ops": 10, "note": "信念腿换top5笔数比250d", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(buy_sell_tx_count_ratio_top5_250d_filled)), 20), subindustry), 0.5), 2)"},
+    {"tag": "tp2_w40_top5conf", "ops": 10, "note": "w40性能+top5冷置信腿赌PC回落", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)), 40), subindustry), 0.5), 2)"}
+  ]
+}

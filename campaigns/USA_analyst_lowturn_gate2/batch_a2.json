@@ -1,0 +1,71 @@
+{
+  "seed_id": "acq_target_v1",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 0,
+  "neutralization": "SUBINDUSTRY",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "other",
+  "known_fields": [
+    "global_percentile_acquisition_likelihood",
+    "country_percentile_acquisition_likelihood",
+    "industry_percentile_acquisition_likelihood",
+    "global_valuation_percentile_rank",
+    "region_company_size_percentile_rank",
+    "global_credit_quality_percentile_rank",
+    "global_fundamental_factor_percentile_rank",
+    "global_text_factor_percentile_rank"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "EXCESS_TARGETNESS_VS_INDUSTRY",
+      "expression": "zscore(subtract(vec_avg(global_percentile_acquisition_likelihood), vec_avg(industry_percentile_acquisition_likelihood)))",
+      "optimize_reason": "全球目标概率 − 行业同行内目标概率（2 字段）。这一槽直接剔掉「并购浪潮」这一共同因子：当某个行业整体进入整合期（例如 2015 年制药、2021 年半导体），全行业所有公司的目标概率会同步抬升，此时做多整个行业只是买入了行业 beta，与个股是否真会被收购无关。减去同行内的百分位之后，剩下的才是『在同一批候选买家中，为什么偏偏是你』—— 这才是控制权溢价真正对应的那一部分。统计上这是行业固定效应的差分消除，等价于在行业内部做排序，与 SUBINDUSTRY 中性化形成双重保险；经济上是把『行业性整合预期』（不可交易）与『个体可收购性』（可交易）分离。若本槽显著强于槽 3/4，说明该数据集的可交易边缘来自个体属性而非行业叙事。"
+    },
+    {
+      "id": 2,
+      "type": "TARGETNESS_PER_SIZE",
+      "expression": "zscore(divide(vec_avg(global_percentile_acquisition_likelihood), add(vec_avg(region_company_size_percentile_rank), 1)))",
+      "optimize_reason": "目标概率 / 规模百分位（2 字段）。规模是被收购概率最强的单一决定因素：收购方要的是能消化、能整合、融资压力小的标的，所以小公司天然更容易被买。若直接做多高目标概率，实际买到的是一篮子小盘股，这在 TOP1000 里等价于做空大盘 —— 一个已经在规模因子上高度拥挤的暴露。除以规模百分位就是把『因为小所以容易被买』这一机械成分剔除，只留下『在同规模档位里谁更可能被买』。这与槽 1 的行业差分是同一逻辑的另一个轴（规模轴），两者合起来覆盖了目标概率的两个最大混杂因子（行业 + 规模），是本批唯一可能给出低波动、高 Sharpe 轮廓的两条槽之一。分母 +1 是除零保护（百分位最低为 1）。"
+    },
+    {
+      "id": 3,
+      "type": "CHEAP_TARGETS",
+      "expression": "zscore(multiply(vec_avg(global_percentile_acquisition_likelihood), vec_avg(global_valuation_percentile_rank)))",
+      "optimize_reason": "目标概率 × 估值吸引力（2 字段）。这是控制权市场最经典的一对条件：买家买的是『便宜的好公司』。高目标概率只说明有人在看，估值分量才说明『为什么现在买划算』—— 两者相乘构成价值与催化剂的交集，是并购套利文献里的标准候选筛选条件（低估值 × 高被收购概率 = 交易发生概率与成交溢价同时最优）。经济学上，估值的折价部分本身就是控制权溢价的来源：收购方支付的溢价往往只是把标的从『同业估值折价』拉回『同业估值中枢』，因此初始折价越大、可兑现的溢价空间越大。量纲上两个百分位相乘是 0-10000 的量，但外层 zscore 已把它标准化为截面零均值，且组合层面还会被 SUBINDUSTRY 中性化，因此不引入尺度问题。本槽与槽 8（估值除法）严格互为镜像，两者同时存在才能判定方向是否真实、而非数据巧合。"
+    },
+    {
+      "id": 4,
+      "type": "TEXT_DRIVEN_TARGETS",
+      "expression": "zscore(multiply(vec_avg(global_percentile_acquisition_likelihood), vec_avg(global_text_factor_percentile_rank)))",
+      "optimize_reason": "目标概率 × 模型文本分量（2 字段）。该数据集的模型由四个分量合成：估值、规模、信用、基本面、文本，其中文本分量是**直接由新闻语料 NLP 抽取**的那一块（收购传闻、战略评估、资产出售、 activist 介入）。本槽把总概率与其文本分量相乘，等价于把可交易的注意力集中在『新闻层面已经出现并购线索』的标的上：总概率高但文本分量低，通常意味着是被基本面/估值打分推高的静态候选（可能常年挂着却从未成交）；而文本分量高的标的，说明市场已经在讨论交易，定价会更贴近事件、兑现更快。这是本批中唯一直接依赖新闻文本的构造，也是对『新闻类数据可否单独贡献可交易边缘』的最后一次严格检验（前三次证伪的都是情感/语调，这一次测的是**事件线索**，机制完全不同）。若本槽为全批最强，说明新闻类数据的价值在事件而非情绪，这将直接改写后续研究路线。"
+    },
+    {
+      "id": 5,
+      "type": "TARGETS_WITH_WEAK_CREDIT",
+      "expression": "zscore(divide(vec_avg(global_percentile_acquisition_likelihood), add(vec_avg(global_credit_quality_percentile_rank), 1)))",
+      "optimize_reason": "目标概率 / 信用质量百分位（2 字段）。信用弱的目标更容易成为标的：杠杆过高、评级承压、再融资窗口紧闭的公司，董事会面对收购要约时的谈判地位最弱，也最缺乏独立生存的选项 —— 这是『被迫卖方』（distressed seller）逻辑，在 2015-2016 能源、2020 疫情冲击、2022 加息周期中都曾集中出现。除以信用质量就是把这一层『卖方意愿』作为条件加入。风险也必须写清：弱信用标的的股价本身可能因基本面恶化而下跌，这会与并购溢价方向相反，因此本槽是 8 槽中**唯一带负偏风险**的构造；它在 DD 与 sub_universe_sharpe 上的读数将直接检验『被迫卖方』逻辑能否覆盖基本面恶化。若它显著弱于槽 3，说明在该数据集上控制权溢价必须与财务健康度同向，『捡便宜』策略会掉进价值陷阱。"
+    },
+    {
+      "id": 6,
+      "type": "TARGETS_WITH_STRONG_FUNDAMENTALS",
+      "expression": "zscore(multiply(vec_avg(global_percentile_acquisition_likelihood), vec_avg(global_fundamental_factor_percentile_rank)))",
+      "optimize_reason": "目标概率 × 基本面强度（2 字段）。与槽 5 构成严格对立的一对：如果『被迫卖方』成立，槽 5 应更强；如果『买家买好公司』成立，本槽应更强。经济上后者有更强的理论支撑 —— 收购方付出 20-35% 的溢价，必须买到一个能产生协同的资产，而协同的来源是标的的经营质量（渠道、技术、客户关系），不是它的财务困境；困境资产更多走的是债转股与重组而非现金收购。此外，基本面强的标的即使并购不成，其独立价值也托底，因此本槽的下行风险显著小于槽 5，DD 与 investability 都应更好。这一对（槽 5 vs 槽 6）是整批最有信息量的消融：它一次性回答『该数据集的可交易边缘属于质量侧还是困境侧』，而这个答案可以直接写进知识库，决定后续所有并购类研究的条件化方向，无需再烧配额试错。"
+    },
+    {
+      "id": 7,
+      "type": "DOMESTIC_VS_GLOBAL_TARGETNESS",
+      "expression": "zscore(subtract(vec_avg(global_percentile_acquisition_likelihood), vec_avg(country_percentile_acquisition_likelihood)))",
+      "optimize_reason": "全球目标概率 − 母国同行内目标概率（2 字段）。这一槽测的是『跨国收购的稀缺性溢价』：当一个美国公司的全球目标概率显著高于它在美国本土同行中的排名时，说明它的可收购性主要来自**海外买家视角**（估值、市场准入、汇率、监管套利），而这类买家池更小、搜寻成本更高、谈判周期更长 —— 对应更慢的定价与更大的折价，恰好匹配『单笔报酬大、换手低』的物理要求。与槽 1（行业差分）相比，本槽差分的是**投资者国籍维度**而非行业维度，两者在数学上都是百分位差分，但对应的经济机制完全不同（行业整合 vs 跨境套利），而且本国/外国买家的活跃期并不同步（美元强弱周期主导跨境并购），因此本槽的 PnL 时序与槽 1 天然错开，是本批最重要的去相关候选。"
+    },
+    {
+      "id": 8,
+      "type": "TARGETS_PER_VALUATION_MIRROR",
+      "expression": "zscore(divide(vec_avg(global_percentile_acquisition_likelihood), add(vec_avg(global_valuation_percentile_rank), 1)))",
+      "optimize_reason": "目标概率 / 估值吸引力（2 字段）—— 槽 3 的严格镜像。本槽的目的不是找 alpha，而是**做方向性对照**：若『便宜的目标更值得买』成立，槽 3（乘法）应显著为正、本槽应为负；若两者符号相同，说明方向来自目标概率本身，而估值维度只是噪声（此时槽 3 与槽 8 的 PnL 会高度正相关，可直接识别）。保留一个明知可能为负的槽是刻意的科学设计：在只有一个数据集、一次配额的情况下，方向性证伪比多找一个可能的赢家更有价值 —— 它把『估值条件化』这一维度的符号钉死，避免下一批在符号上来回试错。此外，若本槽意外为正，则说明市场对『贵的目标』定价更充分（拍卖竞争推高成交价），这同样是一条可用的经济学结论。"
+    }
+  ]
+}

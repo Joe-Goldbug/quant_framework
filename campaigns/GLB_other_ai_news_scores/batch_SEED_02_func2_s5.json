@@ -1,0 +1,110 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "dataset_id": "ai_news_scores",
+  "expected_polarity": 1,
+  "step": 5,
+  "seed_id": "SEED_02",
+  "max_ast_operators": 6,
+  "task_tag": "SEED_02_func2_s5",
+  "known_fields": [
+    "negative_score_average_value",
+    "negative_score_average_value_2",
+    "negative_score_average_value_3",
+    "negative_score_average_value_4",
+    "negative_score_average_value_5",
+    "negative_score_maximum_value",
+    "negative_score_maximum_value_2",
+    "negative_score_maximum_value_3",
+    "negative_score_maximum_value_4",
+    "negative_score_median_value",
+    "negative_score_median_value_3",
+    "negative_score_median_value_5",
+    "negative_score_minimum_value",
+    "negative_score_minimum_value_2",
+    "negative_score_standard_deviation",
+    "negative_score_standard_deviation_2",
+    "negative_sentiment_dispersion_2",
+    "negative_sentiment_lowest_value_2",
+    "negative_sentiment_peak_value_3",
+    "neutral_score_average_value",
+    "neutral_score_maximum_value_2",
+    "positive_score_average_value",
+    "positive_score_average_value_5",
+    "positive_score_maximum_value_2",
+    "positive_score_maximum_value_3",
+    "positive_score_maximum_value_4",
+    "positive_score_median_value",
+    "positive_score_minimum_value_2",
+    "positive_score_standard_deviation",
+    "positive_score_standard_deviation_2"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 120), ts_mean(negative_score_maximum_value_3, 120)), subindustry)",
+      "optimize_reason": "【EMEA 修复·USA+EUR 同构极值融合·N=120】字段核实结果：negative_score_maximum_value = USA(prv24, D0)，negative_score_maximum_value_3 = EUR(prv23, D0)，两者同为「单日最恶性事件的极值」、同为当日 D0、量纲同为 [0,1]，是严格同构配对（铁律 A：分子用冷门 9-alpha 的 EUR 字段，分母/搭档用 16-alpha 的 USA 字段）。上一轮冠军 Vkxp3OWA 的 EMEA Sharpe = -0.03、EMEA 换手仅 0.57%，是纯粹的「区域缺数据死区」而非机制失效——美国序列在欧洲的截面几乎没有有效取值。本槽把 EUR 极值正向相加（不是母本那种 USA max − EUR median 的跨聚合错配），让同一经济机制在欧洲也拥有自己的打分源，预期 EMEA 从 0 收益提升至正贡献，从而把整体 Sharpe 从 1.47 推向 1.58。算子数=4。"
+    },
+    {
+      "slot": 2,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(negative_score_maximum_value_3, 250)), subindustry)",
+      "optimize_reason": "【EMEA 修复·USA+EUR 同构极值融合·2N=250·参数高原】与 slot 1 严格同骨架，频率窗口 120→250，构成区域融合族的 (N,2N) 成对探针。参照上一轮实测：单 USA 序列在 250 窗最优（Sharpe 1.47 / 换手 2.72% / Margin 20.7bps），而 120 窗为 1.35；若融合后 250 窗依然优于 120 窗且 EMEA 由负转正，则「双区域同构融合 + 年度窗口」即为最终骨架，可直接锁定为冠军提交版。若 250 窗 EMEA 反而被稀释，说明欧洲事件频率低于美国、长窗把 EUR 信号抹平，应保留 120 窗。算子数=4。"
+    },
+    {
+      "slot": 3,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_neutralize(add(ts_mean(negative_score_maximum_value, 120), ts_mean(negative_score_maximum_value_3, 120)), subindustry)",
+      "optimize_reason": "【EMEA 修复·融合幅度壳·N=120】与 slot 1 同字段同窗口，仅把外层由 group_rank 换成 group_neutralize，检验「双区域融合」在保留连续幅度的形态下是否同样成立。这一点直接关系到 ProdCorr：上一轮 Vkxp3OWA 的 ProdCorr 已达 0.6945，逼近 0.70 红线，根因正是 group_rank(ts_mean(x,250)) 这个全平台最基础的双算子模板极易撞车。幅度壳不把持仓压成 [0,1] 均匀位次，权重形态与存量 rank 因子天然不同，是压低 ProdCorr 最直接的手段（铁律 B）。若本槽 Sharpe 不低于 slot 1 的 85%、且 Margin 更高，则应优先作为提交版以换取相关性安全边际。算子数=4。"
+    },
+    {
+      "slot": 4,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_neutralize(add(ts_mean(negative_score_maximum_value, 250), ts_mean(negative_score_maximum_value_3, 250)), subindustry)",
+      "optimize_reason": "【EMEA 修复·融合幅度壳·2N=250·参数高原】与 slot 3 同骨架，窗口 120→250，构成幅度壳融合族的 (N,2N) 成对探针。该对同时回答两个问题：一是幅度壳是否在长窗下失血（上一轮单支路幅度壳 250 窗 Sharpe 0.70 vs rank 壳 1.47，说明幅度壳对长窗更敏感）；二是 ProdCorr 安全度是否值得用 Sharpe 换取。决策规则预先锁定：只有当幅度壳 Sharpe ≥ 1.30 且 Margin ≥ 25bps 时，才允许以「降相关性」为由替代 rank 壳提交，否则以 Sharpe 优先。算子数=4。"
+    },
+    {
+      "slot": 5,
+      "type": "explore",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 120), market)",
+      "optimize_reason": "【EMEA 结构修复·全市场分组·N=120】平台合法分组变量仅 subindustry / sector / industry / market（country 不是合法 group），本槽因此改用 market 做全市场统一截面：母本与冠军都用 subindustry 分组，会把 EMEA 的小样本子行业桶（部分国家某子行业只有 1~2 只成分股）压成近乎常数，导致欧洲股票的分数被美国股票的整体分布压制——这正是 EMEA 换手仅 0.57%、Sharpe -0.03 的结构性原因。改成 market 分组后，每只股票都进入同一个全球截面排序，不再因子行业桶过小而退化；这是零新增字段、零量纲风险的纯分组结构修复。算子数=2。"
+    },
+    {
+      "slot": 6,
+      "type": "explore",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), market)",
+      "optimize_reason": "【EMEA 结构修复·全市场分组·2N=250·参数高原】与 slot 5 严格同骨架，窗口 120→250，构成全市场分组族的 (N,2N) 成对探针。若 market 分组在 250 窗仍保持 Sharpe ≥1.45 且 EMEA 转正，则它比「多字段融合」更优雅（算子数仅 2，奥卡姆最优，且分组维度不同使与存量 subindustry 模板的 ProdCorr 明显低于 0.6945）。若去掉行业条件化后 Sharpe 崩塌（说明收益本质来自行业内相对位次），则确认行业中性化不可放弃，EMEA 只能靠 EUR 字段融合补齐。算子数=2。"
+    },
+    {
+      "slot": 7,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_neutralize(add(add(ts_mean(negative_score_maximum_value, 120), ts_mean(negative_score_maximum_value_3, 120)), ts_mean(negative_score_maximum_value_4, 120)), subindustry)",
+      "optimize_reason": "【全区域覆盖·USA+EUR+ASI 三源融合·N=120】把覆盖推到极限：三源分别是 USA(prv24)、EUR(prv23)、ASI(prv22)，同为「单日最恶性事件极值」、同为 D0、同为 [0,1] 量纲，是全数据集内唯一在语义上完全同构的三元组。上一轮实测表明单独加 ASI(_4) 会稀释美国主线（1.45 vs 1.47），但那是在缺少 EUR 的情况下——若 EUR 补上欧洲、ASI 补上亚太，三元平衡后全球三个区域的截面都有各自的信号源，反而可能因为区域分散化而提升整体 Sharpe 并同时修复 EMEA/APAC。算子数=6（add×2, ts_mean×3, group_neutralize），正好卡在冠军算子预算上限。"
+    },
+    {
+      "slot": 8,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_neutralize(add(add(ts_mean(negative_score_maximum_value, 250), ts_mean(negative_score_maximum_value_3, 250)), ts_mean(negative_score_maximum_value_4, 250)), subindustry)",
+      "optimize_reason": "【全区域覆盖·USA+EUR+ASI 三源融合·2N=250·参数高原】与 slot 7 同骨架，窗口 120→250，构成三源融合族的 (N,2N) 成对探针。这是本战役的收官实验：若 7/8 的 Sharpe ≥ 1.55 且 EMEA/AMER/APAC 三区同时为正，则它同时满足「全区域覆盖 + 0 WARNING（区域项）+ 低换手 + 高 Margin + 算子 6」，可立即作为该主锚的唯一代表提交；若三源在长窗下互相抵消（Sharpe 低于双源），则确认「越融合越稀释」，最终冠军锁定为 slot 1/2 的双源版，并在报告中明确记录『区域覆盖必须按区域逐一验证，不能靠堆字段解决』这一负结果。算子数=6。"
+    }
+  ]
+}

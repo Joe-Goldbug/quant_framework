@@ -1,0 +1,118 @@
+{
+  "researcher": "A",
+  "theme": "信号处理增益：S1/S4 种子的分组/窗口/排序消融",
+  "candidates": [
+    {
+      "slot": 1,
+      "role": "A_S1_subindustry",
+      "expression": "group_zscore(reverse(ts_backfill(fnd89_major_11_11, 252)), subindustry)",
+      "counterparty": "做多低应计、做空高应计的 Sloan 套利盘",
+      "mechanism": "S1 纯应计反转因子，去中枢粒度细化到 subindustry 降低行业内拥挤",
+      "variation_source": "fundamental89 | 分组=subindustry",
+      "datasets": ["fundamental89"],
+      "hypothesis_lines": [
+        "对手盘：低应计质量股被长期低配，高应计股被过度追逐",
+        "摩擦（诚实披露）：subindustry 分组降低样本内自由度，覆盖率可能略降",
+        "变动源：相对 S1 仅把 group=industry 改为 subindustry"
+      ]
+    },
+    {
+      "slot": 2,
+      "role": "A_S1_sector",
+      "expression": "group_zscore(reverse(ts_backfill(fnd89_major_11_11, 252)), sector)",
+      "counterparty": "做多低应计、做空高应计的 Sloan 套利盘",
+      "mechanism": "S1 纯应计反转因子，粗粒度 sector 去中枢以缓解 subindustry 样本稀薄",
+      "variation_source": "fundamental89 | 分组=sector",
+      "datasets": ["fundamental89"],
+      "hypothesis_lines": [
+        "对手盘：低应计质量股被长期低配，高应计股被过度追逐",
+        "摩擦（诚实披露）：sector 颗粒更粗，去中枢可能残留行业 beta 偏移",
+        "变动源：相对 S1 仅把 group=industry 改为 sector"
+      ]
+    },
+    {
+      "slot": 3,
+      "role": "A_S4_win60",
+      "expression": "group_zscore(reverse(subtract(zscore(ts_backfill(fnd89_major_11_11, 60)), zscore(divide(abs(ts_backfill(fnd69_q2ycktsrp, 60)), fnd69_qta)))), industry)",
+      "counterparty": "做多低应计低回购、做空高应计高回购的资本回报盘",
+      "mechanism": "S4 结构不变，仅把 fnd89/fnd69 腿 backfill 窗口从 252 缩到 60，信号更鲜以抬升 2y",
+      "variation_source": "fundamental89+fundamental69 | ts_backfill 窗口 252->60",
+      "datasets": ["fundamental89", "fundamental69"],
+      "hypothesis_lines": [
+        "对手盘：高应计叠加回购粉饰的盈余管理股是天然做空标的",
+        "摩擦（诚实披露）：窗口缩短牺牲财报时点覆盖率，空仓期可能增多",
+        "变动源：相对 S4 将两处 ts_backfill 第二个参数由 252 改为 60"
+      ]
+    },
+    {
+      "slot": 4,
+      "role": "A_S4_rank",
+      "expression": "subtract(group_rank(reverse(subtract(zscore(ts_backfill(fnd89_major_11_11, 252)), zscore(divide(abs(ts_backfill(fnd69_q2ycktsrp, 252)), fnd69_qta)))), industry), 0.5)",
+      "counterparty": "做多低应计低回购、做空高应计高回购的资本回报盘",
+      "mechanism": "S4 结构不变，去中枢由 group_zscore 换为序数变换 group_rank-0.5，对小市值极端值更稳健",
+      "variation_source": "fundamental89+fundamental69 | 排序变换 group_zscore->group_rank-0.5",
+      "datasets": ["fundamental89", "fundamental69"],
+      "hypothesis_lines": [
+        "对手盘：高应计叠加回购粉饰的盈余管理股是天然做空标的",
+        "摩擦（诚实披露）：序数变换压缩幅度，极端信号权重下降，可能拉低峰值 Sharpe",
+        "变动源：相对 S4 仅将外层 group_zscore 改为 group_rank(x,industry)-0.5"
+      ]
+    },
+    {
+      "slot": 5,
+      "role": "A_S4_debtiss",
+      "expression": "group_zscore(reverse(add(zscore(ts_backfill(fnd89_major_11_11, 252)), zscore(divide(abs(ts_backfill(fnd69_q2ysitld, 252)), fnd69_qta)))), industry)",
+      "counterparty": "做多低应计低债务发行、做空高应计高融资盘的权益稀释盘",
+      "mechanism": "净外部融资异象：高债务发行=未来低收益，与高应计同置空头侧（add 使两质量负面信号叠加做空双高组合）；红队修正原 subtract 把债务发行错置多头侧的符号错误。",
+      "variation_source": "fundamental89+fundamental69 | 回购腿->债务发行腿(fnd69_q2ysitld)",
+      "datasets": ["fundamental89", "fundamental69"],
+      "hypothesis_lines": [
+        "对手盘：高应计叠加大量债务发行的财务虚弱股是做空标的",
+        "摩擦（诚实披露）：债务发行 cov 仅 .393，分母/覆盖率弱于回购腿",
+        "变动源：相对 S4 将 fnd69_q2ycktsrp 替换为 fnd69_q2ysitld（同为 abs 流出项）"
+      ]
+    },
+    {
+      "slot": 6,
+      "role": "A_S4_div",
+      "expression": "group_zscore(reverse(subtract(zscore(ts_backfill(fnd89_major_11_11, 252)), zscore(divide(abs(ts_backfill(fnd69_q2yvd, 252)), fnd69_qta)))), industry)",
+      "counterparty": "做多低应计高分红、做空高应计低分红的现金质量盘（分红作为应计的多头侧对冲，与 R6 S4 回购同侧）",
+      "mechanism": "分红是比回购更稳定的现金流质量代理，置于多头侧（subtract 使高分红→更偏多头），作为高应计的盈利质量背书；与 S4 回购腿做 A/B 对照，检验哪类派现是更优的对冲。",
+      "variation_source": "fundamental89+fundamental69 | 回购腿->分红腿(fnd69_q2yvd)",
+      "datasets": ["fundamental89", "fundamental69"],
+      "hypothesis_lines": [
+        "对手盘：高应计却高分红的现金错配股是做空标的",
+        "摩擦（诚实披露）：分红 cov 仅 .401，弱于回购腿且季节性更强",
+        "变动源：相对 S4 将 fnd69_q2ycktsrp 替换为 fnd69_q2yvd（同为 abs 流出项）"
+      ]
+    },
+    {
+      "slot": 7,
+      "role": "A_S1_major13",
+      "expression": "group_zscore(reverse(ts_backfill(fnd89_major_13_11, 252)), industry)",
+      "counterparty": "做多低应计(ex-D&A)、做空高应计(ex-D&A)的纯净质量盘",
+      "mechanism": "用应计 ex-D&A(major_13) 替代 major_11，剔除折旧噪声使应计暴露更纯净",
+      "variation_source": "fundamental89 | 字段 major_11_11->major_13_11",
+      "datasets": ["fundamental89"],
+      "hypothesis_lines": [
+        "对手盘：低(净利+D&A-OCF)/资产 的质量股长期被低配",
+        "摩擦（诚实披露）：major_13 cov .841 略低于 major_11 的 .866",
+        "变动源：相对 S1 仅将 fnd89_major_11_11 替换为 fnd89_major_13_11"
+      ]
+    },
+    {
+      "slot": 8,
+      "role": "A_S5_major13_revgr",
+      "expression": "group_zscore(reverse(add(zscore(ts_backfill(fnd89_major_13_11, 252)), zscore(divide(ts_delta(oth466_is_revenue_q, 252), ts_delay(oth466_is_revenue_q, 252))))), industry)",
+      "counterparty": "做多低应计低营收增长、做空高应计高营收增长的盈利质量盘",
+      "mechanism": "应计(major_13) + 营收 YoY 增长两质量负面信号线性叠加（add 同置空头侧，红队修正原 multiply 的四象限符号错配）；营收同比改回 252/ts_delay 标准 YoY 口径，major_13 替 major_11 升级 S5。",
+      "variation_source": "fundamental89+other466 | S5 同构，major_11->major_13",
+      "datasets": ["fundamental89", "other466"],
+      "hypothesis_lines": [
+        "对手盘：高应计且营收停滞的虚增利润股是天然做空标的",
+        "摩擦（诚实披露）：营收增长腿与应计腿方向叠加，峰值 Sharpe 或不及单应计",
+        "变动源：相对 R6 S5 将 accrual 腿由 major_11 升级为 major_13，其余同构"
+      ]
+    }
+  ]
+}

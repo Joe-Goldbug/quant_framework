@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/26GLGZ3a04OK9QG4zmuaBTf",
+  "submitted_at": 1793072157,
+  "items": [
+    {
+      "id": 1,
+      "type": "FIT6_S1_GROUP_ZSCORE_SUBIND_10D",
+      "expression": "ts_decay_linear(group_zscore(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 10)",
+      "optimize_reason": "\u3010Slot 1: \u8fde\u7eed\u622a\u9762 Z-Score + \u5916\u5c42 10 \u65e5\u5e73\u6ed1\uff08\u4e25\u683c 7 \u7b97\u5b50\uff09\u3011\u4ee5 group_zscore \u66ff\u4ee3\u79bb\u6563 group_rank\uff0c\u7701\u53bb subtract \u7b97\u5b50\u3002Z-Score \u5929\u7136\u5177\u6709\u96f6\u5747\u503c\u5bf9\u79f0\u6027\uff0c\u5bf9\u771f\u6b63\u91cd\u5927\u65b0\u95fb\u6807\u7684\u8d4b\u4e88\u8fde\u7eed\u65b9\u5dee\u6743\u91cd\uff0c\u907f\u514d\u5747\u5300\u5206\u4f4d\u6b7b\u91cd\uff0c\u76f4\u51fb Returns >= 5.0% \u4e0e Fitness >= 1.00\u3002"
+    },
+    {
+      "id": 2,
+      "type": "FIT6_S2_GROUP_ZSCORE_SUBIND_12D",
+      "expression": "ts_decay_linear(group_zscore(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 12)",
+      "optimize_reason": "\u3010Slot 2: \u8fde\u7eed Z-Score + \u5916\u5c42 12 \u65e5\u5e73\u6ed1\uff08\u4e25\u683c 7 \u7b97\u5b50\uff09\u301112 \u65e5\u5e73\u6ed1\u8fdb\u4e00\u6b65\u589e\u5f3a\u8fde\u7eed Z-Score \u7684\u6301\u4ed3\u60ef\u6027\uff0c\u5c06\u6362\u624b\u7387\u7262\u7262\u9501\u6b7b\u5728 11%~12% \u6781\u9650\uff0c\u91ca\u653e Margin \u81f3 7+ bps\u3002"
+    },
+    {
+      "id": 3,
+      "type": "FIT6_S3_GROUP_ZSCORE_SUBIND_8D",
+      "expression": "ts_decay_linear(group_zscore(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 8)",
+      "optimize_reason": "\u3010Slot 3: \u8fde\u7eed Z-Score + \u5916\u5c42 8 \u65e5\u5e73\u6ed1\uff08\u4e25\u683c 7 \u7b97\u5b50\uff09\u30118 \u65e5\u5e73\u6ed1\u4fdd\u6301\u9002\u5ea6\u65f6\u5e8f\u654f\u9510\u5ea6\uff0c\u517c\u987e 2Y Ladder \u6062\u590d\u4e0e\u4f4e\u6362\u624b\u7387\uff0c\u8ffd\u6c42 Sharpe >= 1.58 \u4e0e Fitness >= 1.00 \u6700\u4f73\u5171\u632f\u3002"
+    },
+    {
+      "id": 4,
+      "type": "FIT6_S4_GROUP_ZSCORE_WINSORIZED_OUTER10D",
+      "expression": "ts_decay_linear(winsorize(group_zscore(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), std=3.0), 10)",
+      "optimize_reason": "\u3010Slot 4: \u53cc\u91cd Winsorize \u4fdd\u62a4\uff08Z-Score \u622a\u65ad\u4fdd\u62a4\uff0c\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u5728\u8f93\u5165\u7aef\u4e0e Z-Score \u8f93\u51fa\u7aef\u53cc\u91cd\u5e03\u8bbe std=3.0 \u4fdd\u62a4\uff0c\u675c\u7edd\u6781\u7aef\u79bb\u7fa4\u4e2a\u80a1\u62c9\u7206\u6743\u91cd\uff0c\u5b9e\u73b0\u8d85\u7a33\u5065\u6536\u76ca\u5206\u5e03\u3002"
+    },
+    {
+      "id": 5,
+      "type": "FIT6_S5_GROUP_ZSCORE_INDUSTRY_10D",
+      "expression": "ts_decay_linear(group_zscore(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), industry), 10)",
+      "optimize_reason": "\u3010Slot 5: \u5927\u6837\u672c Industry \u622a\u9762\u8fde\u7eed Z-Score\uff08\u4e25\u683c 7 \u7b97\u5b50\uff09\u3011\u4ee5 industry \u5927\u6837\u672c\u6c60\u8ba1\u7b97 Z-Score\uff0c\u6d88\u9664\u7ec6\u5206\u884c\u4e1a\u6837\u672c\u8fc7\u5c0f\u5bfc\u81f4\u7684\u65b9\u5dee\u4f30\u8ba1\u6f02\u79fb\uff0c\u63d0\u5347\u622a\u9762\u6709\u6548\u4fe1\u566a\u6bd4\u3002"
+    },
+    {
+      "id": 6,
+      "type": "FIT6_S6_RANK_DECAY10_SENT_P45",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "optimize_reason": "\u3010Slot 6: Batch 61 \u51a0\u519b\u62d3\u6251 + \u60c5\u7eea 4.5 \u6b21\u65b9\u5fae\u51f8\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u5728 Batch 61 (Fitness 0.85) \u67b6\u6784\u4e0a\u5c06\u60c5\u7eea\u51f8\u6027\u7531 4.0 \u5fae\u8c03\u81f3 4.5\uff0c\u8fdb\u4e00\u6b65\u653e\u5927\u91cd\u78c5\u65b0\u95fb\u80a1\u7968\u6536\u76ca\u5f39\u6027\uff0c\u51b2\u51fb Returns >= 4.8%\u3002"
+    },
+    {
+      "id": 7,
+      "type": "FIT6_S7_RANK_DECAY10_SENT_P50",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "optimize_reason": "\u3010Slot 7: Batch 61 \u51a0\u519b\u62d3\u6251 + \u60c5\u7eea 5 \u6b21\u65b9\u805a\u7126\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u5f3a\u5316\u5bf9\u9876\u7ea7\u6b63\u9762\u50ac\u5316\u4e8b\u4ef6\u7684\u8d44\u672c\u503e\u659c\uff0c\u6d4b\u8bd5\u60c5\u7eea\u975e\u7ebf\u6027\u6ce8\u610f\u529b\u5728\u4f4e\u6362\u624b\u67b6\u6784\u4e0b\u7684\u6536\u76ca\u653e\u5927\u4e34\u754c\u70b9\u3002"
+    },
+    {
+      "id": 8,
+      "type": "FIT6_S8_RANK_DECAY10_SENT_P35",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 3.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "optimize_reason": "\u3010Slot 8: Batch 61 \u51a0\u519b\u62d3\u6251 + \u60c5\u7eea 3.5 \u6b21\u65b9\u5e7f\u8c31\uff08\u4e25\u683c 8 \u7b97\u5b50\uff09\u3011\u6e29\u548c\u4e0b\u8c03\u60c5\u7eea\u5e42\u6b21\u81f3 3.5\uff0c\u63d0\u9ad8\u5bf9\u4e2d\u7b49\u65b0\u95fb\u4e8b\u4ef6\u7684\u8986\u76d6\u5e7f\u5ea6\uff0c\u6d4b\u8bd5\u6536\u76ca\u5e7f\u5ea6\u5bf9\u590f\u666e\u7a33\u5b9a\u6027\u7684\u8fb9\u9645\u6539\u5584\u3002"
+    }
+  ]
+}

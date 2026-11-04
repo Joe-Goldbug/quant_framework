@@ -1,0 +1,20 @@
+{
+  "wave": 42,
+  "theme": "跨数据集轮1: insider双腿×外部第3腿(risk59/risk60轧空族 + pv47特质动量), 幅度核+尾部幂次壳",
+  "user_ruling": "允许跨一个数据集, 2<=字段数<=3, op不限, 必须严谨经济学假设, 目标全绿",
+  "hypotheses": {
+    "H2_squeeze": "内部人知情增持 × 空头拥挤(高借费/高SI/高轧空分) = 轧空放大器; 高借费腿同时过滤2017/2022接飞刀区(空头不拥挤的伪增持)",
+    "H1_idio_trend": "增持 × 正累计特质收益 = 趋势确认, 负特质趋势(接飞刀区)自动减仓/翻转"
+  },
+  "base_settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025},
+  "expressions": [
+    {"tag": "x_sqrisk", "fields": 3, "note": "f20-f60差×S3轧空风险分", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(rsk59_squeeze_risk)), 20), subindustry), 0.5), 2)"},
+    {"tag": "x_fee", "fields": 3, "note": "×借券费率(offer_rate)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(rsk59_offer_rate)), 20), subindustry), 0.5), 2)"},
+    {"tag": "x_util", "fields": 3, "note": "×借贷额度利用率", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(rsk59_s3utilization)), 20), subindustry), 0.5), 2)"},
+    {"tag": "x_shortmo", "fields": 3, "note": "×空头动量(做空/回补活动)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(rsk59_short_momentum)), 20), subindustry), 0.5), 2)"},
+    {"tag": "x_sipct", "fields": 3, "note": "×SI占流通盘比", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(rsk59_shortinterestpct)), 20), subindustry), 0.5), 2)"},
+    {"tag": "x_r60fee", "fields": 3, "note": "×risk60借费(覆盖1.0)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(rsk60_offer)), 20), subindustry), 0.5), 2)"},
+    {"tag": "x_dtcover", "fields": 3, "note": "×10日回补天数", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(rsk59_daystocover10day)), 20), subindustry), 0.5), 2)"},
+    {"tag": "x_spret", "fields": 3, "note": "H1: ×20日累计特质收益(pv47, 趋势确认/接飞刀过滤)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), ts_sum(pv47_spret, 20)), 20), subindustry), 0.5), 2)"}
+  ]
+}

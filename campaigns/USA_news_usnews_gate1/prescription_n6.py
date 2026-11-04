@@ -1,0 +1,211 @@
+"""
+prescription_n6.py — Gate 1 · Batch 6：换宇宙 TOP3000 × 线性衰减保边（TO / Sh 的联合搜寻）
+
+【Batch n5 的裁决（TOP1000，8 槽，同 settings）】
+  归一化层级（不归一 / 当日区间 / 30日标准差 / 量能 z）全部测完，Sharpe 上限 1.05，fail=0 但警告未清：
+    纯度(amt) 1.04 · 纯度(ret) 1.05 · 波动标准差版 1.03 · ATR 归一 0.93 · zscore 外层 0.66
+  → TOP1000/delay1 的 LOW_SHARPE limit = 1.58，缺口约 50%，**靠归一化与外层算子补不上**。
+
+【本批的两条依据】
+  1) 知识库已实测：本族**原始**口径在更大股票池上到过 Sh 1.37（TO 129.9%），
+     即换手问题与强度问题在 TOP1000 上是绑死的；TOP3000 多出 2000 只中低波动、
+     定价效率更低的股票，事件后的单边行情更常由信息而非噪声主导 —— 这是未测的强度轴。
+  2) FALS_NEWS12_006：**线性**衰减对该族几乎是无损的（decay_linear(A,20) 保边 98.5%，Sh 1.35），
+     问题只在于它把 TO 只降了 12%（114.2%）。本批把两个已知事实交叉：
+     「TOP3000 抬 Sh」×「decay_linear 抑 TO」，并补两档 group_rank 包装
+     （FALS_NEWS12_002：group_rank 可把 TO 压到 49.9% 但 Sh 1.37→0.71 —— 该数字在 TOP1000 量测，
+     本批检验它在更大池 + 更长线性衰减下是否仍成立）。
+
+【经济学】同前：新闻后的一次性单边位移 = 信息定价 + 流动性冲击 + 收盘拍卖机械压力；
+取「方向纯度」的反向，做空被外推的单边行情、做多被打压的一侧。
+八槽 = 2 个口径（上冲金额比 / 上冲标准差比）× 4 种降换手段（线性衰减 20、
+线性衰减 40、衰减+组内排序、衰减+组内排序+更粗分组），构成一张 TO-Sh 联合前沿。
+
+settings: USA / TOP3000 / delay 1 / decay 6 / INDUSTRY / truncation 0.025 / nanHandling ON
+  —— 与 n5 逐项相同，唯一变量是 universe 与表达式内平滑结构，因此可直接做 A/B 归因。
+"""
+
+UPA = "news_max_up_amt"
+DNA = "news_max_dn_amt"
+HIEX = "news_high_exc_stddev"
+LOEX = "news_low_exc_stddev"
+
+
+def a_amt():
+    return f"divide(subtract({UPA}, {DNA}), add(add({UPA}, {DNA}), 0.01))"
+
+
+def a_exc():
+    return f"divide({HIEX}, add({HIEX}, {LOEX}))"
+
+
+def plain(core):
+    return f"reverse(rank(ts_backfill({core}, 3)))"
+
+
+def lin(core, n):
+    return f"reverse(rank(ts_decay_linear(ts_backfill({core}, 3), {n})))"
+
+
+def lin_grp(core, n, grp="sector"):
+    return f"reverse(group_rank(ts_decay_linear(ts_backfill({core}, 3), {n}), {grp}))"
+
+
+BATCH = {
+    "seed_id": "news12_top3000_v1",
+    "region": "USA",
+    "universe": "TOP3000",
+    "delay": 1,
+    "decay": 6,
+    "neutralization": "INDUSTRY",
+    "truncation": 0.025,
+    "nan_handling": "ON",
+    "category": "news",
+    "known_fields": [UPA, DNA, HIEX, LOEX],
+    "items": [
+        {
+            "id": 1,
+            "type": "AMT_ASYM_RAW_TOP3000",
+            "expression": plain(a_amt()),
+            "optimize_reason": (
+                "方向纯度原始版（仅回填 3 日，不加衰减），2 字段：最大上冲 + 最大下冲，+0.01 除零保护。"
+                "这是**池子效应的直接读数**：同口径在 TOP1000 上（n5 槽 1，带 6 日衰减）得到 Sh 1.04 / TO 51%，"
+                "而知识库里该族在更宽的池子上曾到 1.37 / TO 129.9%。"
+                "本槽把 universe 换成 TOP3000、去掉表达式内衰减，测的是这个族在更宽股票池上的**真实强度上限**。"
+                "经济上，TOP3000 多出的 2000 只股票多为中低波动、覆盖度低、机构参与度低的标的，"
+                "新闻后的单边行情更容易由信息不对称与卖空约束主导（而不是套利资金迅速抹平），"
+                "因此外推偏差的幅度更大 —— 这正是 1.37 那个读数的来源假设。"
+                "它是整批的标定锚：若本槽 Sh 仍停在 1.1-1.2，则「池子效应」不存在，"
+                "后续 7 槽应立即停止；若回到 1.35+，则只需解决 TO（见槽 2-4）。"
+                "注意：本槽预期 TO 会超过 70%，因此它只用于强度标定，不作为交付候选。"
+            ),
+        },
+        {
+            "id": 2,
+            "type": "AMT_ASYM_LIN20",
+            "expression": lin(a_amt(), 20),
+            "optimize_reason": (
+                "方向纯度 + 线性衰减 20 日，2 字段。"
+                "依据是 FALS_NEWS12_006 的实测：**ts_decay_linear 在该族上近乎无损**"
+                "（decay_linear(A,20) 保边 98.5%，Sh 1.35 vs 原始 1.37），"
+                "唯一缺陷是它对换手的抑制有限（只降 12%，129.9%→114.2%）。"
+                "本批的赌注是：那个 12% 的降幅是在 TOP1000 的日频噪声下量的，"
+                "在 TOP3000 上，多出的 2000 只股票多为低换手、报价离散的标的，"
+                "其信号本身跳变更少，线性衰减的抑制效果应当更强。"
+                "若本槽 TO 落到 70% 以内且 Sh 守在 1.3 以上，"
+                "则与阈值 1.58 的缺口就只剩纯度 → 强度一步（此时再叠加组内排序，见槽 3）。"
+                "这是本批**最可能直接产出交付候选**的一槽。"
+            ),
+        },
+        {
+            "id": 3,
+            "type": "AMT_ASYM_LIN20_GROUP",
+            "expression": lin_grp(a_amt(), 20, "sector"),
+            "optimize_reason": (
+                "方向纯度 + 线性衰减 20 + sector 组内排序，2 字段。"
+                "FALS_NEWS12_002 记录：group_rank 包装可把 TO 压到 49.9%，代价是 Sh 1.37→0.71。"
+                "该数字是在 TOP1000、且**未叠加线性衰减**的条件下测的。本槽的假设是两处不同："
+                "(a) 更大的池子里组内样本更多，sector 分组后的排名更稳定、跨日重排更少；"
+                "(b) 先做线性衰减再做组内排序，等于「先平滑、后分组」，"
+                "与「先分组、后按原始值排序」的噪声结构完全不同 —— 前者把日频噪声在组内平均掉了。"
+                "经济上 sector 分组还做了一件 rank 做不到的事：它把行业整体的并购潮/行业性新闻"
+                "从信号里剥离，只保留个股特异的事件过度反应，"
+                "这应当同时改善 sub_universe_sharpe 与 investability。"
+                "本槽是 TO 与 Sh 联合优化的**第二条路**（与槽 2 的纯时序平滑互补）。"
+            ),
+        },
+        {
+            "id": 4,
+            "type": "AMT_ASYM_LIN40_GROUP",
+            "expression": lin_grp(a_amt(), 40, "sector"),
+            "optimize_reason": (
+                "同槽 3 但线性衰减拉到 40 日，2 字段。"
+                "40 日（约两个月）把持仓周期推到月度级别：若信号的经济内容是「事件后的单边行情」，"
+                "那么一次事件的修复期通常在数周到两个月之间（处置效应的减退速度），"
+                "40 日窗口恰好覆盖一个完整的修复周期，同时把换手压到最低。"
+                "风险与诊断价值都在这里：FALS_NEWS12_001 证伪了 ts_mean 长窗（MA20 0.25 / MA60 0.11），"
+                "但那测的是**均值**（把脉冲摊平 N 倍）；ts_decay_linear 是线性加权、"
+                "保留最近观测的权重远高于历史，且不除以 N —— 二者的数学差别正是本槽要验证的。"
+                "若槽 3 → 槽 4 的 Sh 单调下降且 TO 已不再下降，说明最优衰减在 20 日附近，"
+                "视界轴就此封闭；若槽 4 仍保持 Sh 且 TO 继续降，则 Margin（该族此前 17-18bps）还有空间。"
+            ),
+        },
+        {
+            "id": 5,
+            "type": "EXC_ASYM_RAW_TOP3000",
+            "expression": plain(a_exc()),
+            "optimize_reason": (
+                "波动标准化上冲占比（仅回填，不加衰减），2 字段：上冲/30日标准差、下冲/30日标准差。"
+                "它与槽 1 是同一命题的两种口径：槽 1 用当日实际价格单位的上下冲测，"
+                "本槽用已经除以 30 日收盘标准差的冲测 —— 即以个股自身波动为单位的路径不对称。"
+                "在 TOP3000 这一多出大量中低波动股票的池子里，波动标准化的价值被放大："
+                "不归一的上冲金额在小盘低波动股上会系统性偏小，导致信号暗含规模暴露；"
+                "标准化版本则让「以自身波动衡量的单边性」在全部 3000 只股票间可比。"
+                "本槽与槽 1 同 settings、同平滑结构的对照，直接给出『口径 × 池子』的交互效应 —— "
+                "若本槽在 TOP3000 上反超槽 1，"
+                "说明池子越大、归一化越重要，这条结论会直接决定后续在宽池上的默认口径。"
+            ),
+        },
+        {
+            "id": 6,
+            "type": "EXC_ASYM_LIN20",
+            "expression": lin(a_exc(), 20),
+            "optimize_reason": (
+                "波动标准化上冲占比 + 线性衰减 20，2 字段。"
+                "与槽 2 构成口径平行的一对（金额口径 vs 标准差口径，同样线性衰减 20）。"
+                "两条并排的意义在于：FALS_NEWS12_006 中「线性衰减保边 98.5%」这一结论"
+                "只在金额口径上量过，本槽把它扩展到标准化口径 —— "
+                "标准化序列的自相关结构不同（分母是 30 日滚动标准差，本身更平滑），"
+                "线性衰减对它的抑制效果可能更好，即**换手可能降得更多而 Sharpe 几乎不掉**。"
+                "若本槽 TO 明显低于槽 2 而 Sh 相当，则它是整批 TO-Sh 联合最优的直接候选。"
+                "经济上它仍是同一个机制（单边行情的外推与回吐），"
+                "只是把「单边性」的量尺从当日价格换成个股自身波动，属于量纲层面的严格改进。"
+            ),
+        },
+        {
+            "id": 7,
+            "type": "EXC_ASYM_LIN20_GROUP",
+            "expression": lin_grp(a_exc(), 20, "sector"),
+            "optimize_reason": (
+                "波动标准化上冲占比 + 线性衰减 20 + sector 组内排序，2 字段。"
+                "这是**三条降换手段的合体**：标准差归一（口径层）、线性衰减（时序层）、"
+                "组内排序（横截面层）。"
+                "经济上组内排序在此处有一层额外含义：并购潮、行业轮动造成的『全行业单边行情』"
+                "是行业级事件，不应由个股信号承担；sector 组内排序把这一层剥离后，"
+                "剩下的才是『单只股票被外推』的个股特异成分。"
+                "在 TOP3000 上，中盘股的行业联动比大盘股更强，"
+                "因此这一层剥离在宽池上的边际价值应高于 TOP1000 —— 本槽正是测这个交互。"
+                "若本槽 Sh ≥ 1.58 且 TO ≤ 70%，它就是本批的交付候选，"
+                "随后立刻核 PROD_CORRELATION 与 MATCHES_THEMES 两项。"
+            ),
+        },
+        {
+            "id": 8,
+            "type": "AMT_ASYM_LIN20_IND_GROUP",
+            "expression": lin_grp(a_amt(), 20, "industry"),
+            "optimize_reason": (
+                "方向纯度 + 线性衰减 20 + **industry** 组内排序（分组粒度对照），2 字段。"
+                "与槽 3 的唯一差别是分组从 sector（粗）变成 industry（细）。"
+                "已有证据指向：news21 族上 industry 层组内标准化劣于全截面、"
+                "subindustry 更差（FALS_NEWS21_009），因为跨行业对比是该族收益的不可分割来源；"
+                "但那是**组内标准化**（zscore），本槽是**组内排序**（rank），二者不同 —— "
+                "排序保留了组间幅度信息的缺失，但仍切断了跨组比较。"
+                "在 TOP3000 的宽池里，industry 分组会产生 100+ 个规模不均的组，"
+                "小组内的 rank 噪声更大；sector 分组只有 11 个大组、排名更稳。"
+                "本槽是**分组粒度的最后一维**：一旦本槽与槽 3 的对比结果出来，"
+                "「分组该多粗」就从猜测变成实测结论，可直接写入知识库。"
+            ),
+        },
+    ],
+}
+
+if __name__ == "__main__":
+    import json
+    import os
+
+    out = os.path.join(os.path.dirname(__file__), "batch_n6.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(BATCH, f, ensure_ascii=False, indent=2)
+    print(f"batch written -> {out} ({len(BATCH['items'])} slots, decay={BATCH['decay']}, "
+          f"neut={BATCH['neutralization']}, uni={BATCH['universe']})")
+    assert len(BATCH["items"]) == 8

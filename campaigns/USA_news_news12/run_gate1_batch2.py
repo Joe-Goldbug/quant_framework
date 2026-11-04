@@ -1,0 +1,133 @@
+"""
+run_gate1_batch2.py
+Gate 1: AEGIS 多 Agent 研发攻坚多重回测 (批次 2)
+数据集: USA / news12 / delay 1 / TOP1000
+核心攻坚靶点:
+将 rank/group_rank 下沉至 trade_when 内部，消除每日全局重排造成的 85% 虚高换手！
+利用高置信度事件门控 (vec_count > 1, vec_avg > 0.8, vec_max > 1.2 等) 压缩无效交易，
+预期将换手率压缩至 10%~20%，直接撬动 Margin >= 10.0 bps 与 Fitness >= 1.00，全维度冲击可提交门禁！
+"""
+
+import asyncio
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, r"D:\brain-mcp")
+os.environ["BRAIN_MCP_CONFIG"] = r"D:\brain-mcp\user_config.json"
+
+from quant_framework.core.dimension_rules import DimensionAuditor
+from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+from quant_framework.core.gatekeeper import Gatekeeper
+from quant_framework.core.sim_runner import SimBatchRunner
+
+PRESCRIPTIONS_GATE1_B2 = [
+    {
+        "slot": 1,
+        "seed_id": "GATE1_B2_S1",
+        "question_type": "Q1_INTERNAL_SUBINDUSTRY_RANK",
+        "name": "组内排序内置 + 持仓保持 + 15日平滑",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(group_rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), subindustry)), -1), 15)",
+        "optimize_reason": "【组内排序内置于 trade_when 阻断外层截面翻仓】关键微观结构改进：此前批次将 group_rank/group_zscore 置于最外层，导致每日全市场股票截面相对均值变动，迫使所有持仓每日被动微调（换手率居高不下于 85%）。本处方将 group_rank 移入 trade_when 内部：只有在过去 2 天触发新闻时才计算其在子行业内的最新相对强弱，非事件日严格维持原有相对排名 (exit=-1)。最外层施加 15 日线性平滑。由于阻断了非事件股票的被动调仓，预期换手率将断崖式降至 20% 左右，直接拉抬 Margin 至合规线。"
+    },
+    {
+        "slot": 2,
+        "seed_id": "GATE1_B2_S2",
+        "question_type": "Q2_HIGH_FREQUENCY_EVENT_GATE",
+        "name": "高频新闻事件门控 (vec_count > 1) 捕捉极端注意力",
+        "expression": "ts_decay_linear(trade_when(greater(vec_count(high_price_excursion_stddev), 1), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), -1), 15)",
+        "optimize_reason": "【高频多新闻集中爆发过度反应门控】经济学逻辑：单日单条新闻往往是常规信息，市场定价效率较高；而单日发生 2 次及以上新闻冲测 (vec_count > 1) 的股票，往往是突发黑天鹅或重组并购等重大事件，吸引了海量散户盲目追涨杀跌，产生最极端的非理性过度反应。通过将触发条件收窄为 vec_count > 1，过滤掉 70% 的日常平庸波动，只在注意力极度亢奋时入场做空，持仓维持 15 日线性平滑，交易次数大幅降低但单笔反转深度急剧增加，直击 Margin >= 10 bps。"
+    },
+    {
+        "slot": 3,
+        "seed_id": "GATE1_B2_S3",
+        "question_type": "Q3_AVG_EXCURSION_STDDEV_GATE",
+        "name": "平均冲测偏离度门控 (vec_avg > 0.8)",
+        "expression": "ts_decay_linear(trade_when(greater(vec_avg(high_price_excursion_stddev), 0.8), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), -1), 15)",
+        "optimize_reason": "【平均标准差偏离门控剔除低波动噪音】微观因果假设：high_price_excursion_stddev 以历史标准差度量日内向上冲刺幅度。若平均冲测幅度小于 0.8 个标准差，说明当日新闻只是微澜，后续不存在足够的套利价差覆盖交易摩擦。本处方硬性规定 vec_avg > 0.8 作为建仓准入底线，确保每次参与的都是统计学显著的异动浪潮。由于仅在显著冲顶时开仓，非事件日维持持仓，组合持仓周期拉长，换手率自然压低至 15% 区间，推动 Margin 与 Fitness 同步飞跃。"
+    },
+    {
+        "slot": 4,
+        "seed_id": "GATE1_B2_S4",
+        "question_type": "Q4_MAX_EXCURSION_PEAK_GATE",
+        "name": "最大冲测峰值门控 (vec_max > 1.2)",
+        "expression": "ts_decay_linear(trade_when(greater(vec_max(high_price_excursion_stddev), 1.2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), -1), 15)",
+        "optimize_reason": "【极端峰值脉冲做空门控】经济学微观假设：在新闻交易中，日内最高点往往由恐慌性跟风盘或轧空流动性枯竭瞬间形成。当 vec_max 突破 1.2 倍标准差时，表明价格已被短期推至流动性极限，属于典型的高估值狂热顶点。针对这种顶点实施反转建仓，持仓保持 15 日线性衰减退出，能吃满从顶点回落至公允价值的完整深度，单笔交易边际收益极大，为突破 10 bps Margin 死线提供极强弹药支持。"
+    },
+    {
+        "slot": 5,
+        "seed_id": "GATE1_B2_S5",
+        "question_type": "Q5_RELATIVE_RET_AVG_STD_COMBO",
+        "name": "相对收益 + 均值偏离双重约束 + 子行业排序",
+        "expression": "ts_decay_linear(trade_when(and(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), greater(vec_avg(high_price_excursion_stddev), 0.5)), reverse(group_rank(divide(divide(subtract(news_eod_close, news_ton_last), news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), subindustry)), -1), 15)",
+        "optimize_reason": "【多维正交联合：相对收益归一与偏离度门控】本处方将三个成功要素深度融合：1. 除以 news_ton_last 实现百分比收益率标准化，消除名义股价偏差；2. group_rank(..., subindustry) 置于内部，剔除行业系统性 Beta；3. 注入 vec_avg > 0.5 温和偏离门槛，过滤完全无振幅的死水新闻。通过双重过滤与内部组排，实现低换手 (15%~20%)、低回撤与高信息比率的完美均衡，预期全面达成全维度生产指标。"
+    },
+    {
+        "slot": 6,
+        "seed_id": "GATE1_B2_S6",
+        "question_type": "Q6_PERCENT_MOVE_GATE_SUBRANK",
+        "name": "日内绝对涨幅门控 (>1%) + 子行业内置排序",
+        "expression": "ts_decay_linear(trade_when(greater(abs(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 0.01), reverse(group_rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), subindustry)), -1), 15)",
+        "optimize_reason": "【百分比涨跌幅阈值过滤与子行业内部排序】微观因果假设：新闻发布至收盘净变动超过 1% 的个股才具备足够的后续反转空间。将大于 1% 作为开仓触发器，并将 subindustry 排序限制在触发池内部，其余股票维持历史持仓并线性衰减。该机制彻底消除了小幅横盘股对资金的占用，使得每笔建仓均落在高波动力竭点上，显著扩大每笔交易的实际盈利基点 (Margin)，同时把换手率稳定锁死在 15% 的黄金区间。"
+    },
+    {
+        "slot": 7,
+        "seed_id": "GATE1_B2_S7",
+        "question_type": "Q7_MAX_UP_RET_DIRECT_GATE",
+        "name": "最大上冲幅度门控 (>1.5%) 反转",
+        "expression": "ts_decay_linear(trade_when(greater(news_max_up_ret, 0.015), reverse(rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last))), -1), 15)",
+        "optimize_reason": "【盘中最大脉冲直接门控】吸取 Batch 1 中 S3 的经验：S3 成功将 Margin 提升至 5.41 bps，但因剪刀差方向定义相反导致 Sharpe 偏低。本处方直接使用原始正确的反转方向 reverse(rank((P_close - P_ton) / P_ton))，但继承 S3 的优秀门控 greater(news_max_up_ret, 0.015)。当盘中上冲逾 1.5% 时启动做空，在保留母本高 Sharpe (1.6+) 的同时继承 S3 的超低换手率与深厚 Margin，预期直接跃过 10.0 bps 门槛！"
+    },
+    {
+        "slot": 8,
+        "seed_id": "GATE1_B2_S8",
+        "question_type": "Q8_CONCAVE_INTERNAL_SUBRANK_20D",
+        "name": "凹函数压缩 + 子行业内部排序 + 20日平滑",
+        "expression": "ts_decay_linear(trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(group_rank(s_log_1p(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), subindustry)), -1), 20)",
+        "optimize_reason": "【凹压缩内置子行业排序与 20 日极限平滑】微观因果机制：s_log_1p 对数凹压缩削弱了狂暴个股的极端权重，使资金更均匀地分配到子行业内的优质均值回归标的上，避免单股黑天鹅冲击。配合 20 日深度线性平滑与内部 group_rank，使投资组合呈现高度平缓的持仓更迭，预期将换手率压缩至 10%~12% 极限水平，在保持年化收益 6%~8% 的同时，推动 Margin 冲上 12~15 bps，实现 Fitness > 1.20 的全面达标。"
+    }
+]
+
+async def main():
+    campaign_dir = os.path.join("quant_framework", "campaigns", "USA_news_news12")
+    os.makedirs(campaign_dir, exist_ok=True)
+    batch_file = os.path.join(campaign_dir, "batch_gate1_b2.json")
+
+    payload = {
+        "seed_id": "GATE1_CAMPAIGN_BATCH2",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "category": "news",
+        "known_fields": [
+            "news_eod_close", "news_ton_last", "high_price_excursion_stddev", "news_max_up_ret"
+        ],
+        "items": PRESCRIPTIONS_GATE1_B2
+    }
+
+    with open(batch_file, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+    print(f"✅ Gate 1 Batch 2 配置文件生成完毕: {batch_file}")
+    print("🚀 启动 SimBatchRunner 后台静默执行批次 (decay=8, neutralization=INDUSTRY)...")
+
+    res = await SimBatchRunner.run_batch_silently(
+        batch_file_path=batch_file,
+        region="USA",
+        universe="TOP1000",
+        delay=1,
+        category="news",
+        neutralization="INDUSTRY",
+        decay=8,
+        truncation=0.025,
+        nan_handling="ON"
+    )
+
+    print("\n🏁 Gate 1 Batch 2 回测与门禁终审完成!")
+    output_summary = batch_file.replace(".json", "_summary.json")
+    with open(output_summary, "w", encoding="utf-8") as f:
+        json.dump(res, f, ensure_ascii=False, indent=2)
+
+if __name__ == "__main__":
+    asyncio.run(main())

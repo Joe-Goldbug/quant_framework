@@ -1,0 +1,20 @@
+{
+  "wave": 44,
+  "theme": "跨数据集轮3(收官): ai_news_scores新闻情绪腿(H5确认/逆向) + sentiment1分析师净推荐",
+  "hypotheses": {
+    "H5a_confirm": "内部人增持 × 正面新闻流 = 信息双确认",
+    "H5b_contrarian": "内部人增持 × 负面新闻压制/平静 = 知情者逆共识, 信息不对称最强",
+    "H5c_dispersion": "内部人增持 × 新闻分歧度 = 不确定性溢价"
+  },
+  "base_settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025},
+  "expressions": [
+    {"tag": "ns_pos_raw", "fields": 3, "note": "×20日均正面新闻分(RavenPack)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), ts_mean(positive_score_average_value_3, 20)), 20), subindustry), 0.5), 2)"},
+    {"tag": "ns_neg_calm", "fields": 3, "note": "逆向: ×负新闻分反转(内部人买+负面平静)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 20), subindustry), 0.5), 2)"},
+    {"tag": "ns_neg_high", "fields": 3, "note": "逆向: ×负新闻分原向(内部人买+悲观共识)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), ts_mean(negative_score_average_value_3, 20)), 20), subindustry), 0.5), 2)"},
+    {"tag": "ns_pos_z", "fields": 3, "note": "×正面新闻zscore(保号归一)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), zscore(ts_mean(positive_score_average_value_3, 20))), 20), subindustry), 0.5), 2)"},
+    {"tag": "ns_negz_calm", "fields": 3, "note": "×负新闻zscore反转", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(zscore(ts_mean(negative_score_average_value_3, 20)))), 20), subindustry), 0.5), 2)"},
+    {"tag": "s1_netrec", "fields": 3, "note": "×分析师净买入推荐%(sentiment1)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), snt1_d1_netrecpercent), 20), subindustry), 0.5), 2)"},
+    {"tag": "s1_core5", "fields": 3, "note": "×综合分析师分-5(居中)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), subtract(snt1_cored1_score, 5)), 20), subindustry), 0.5), 2)"},
+    {"tag": "ns_disp", "fields": 3, "note": "×负面情绪分歧度(信息不对称)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), negative_sentiment_dispersion_2), 20), subindustry), 0.5), 2)"}
+  ]
+}

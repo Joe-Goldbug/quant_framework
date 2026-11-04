@@ -1,0 +1,47 @@
+{
+  "card_id": "CARD_NEWS21_CONTRARIAN_NEGATIVE_TONE",
+  "dataset": "news21",
+  "cohort": "2026-03-01 (dateCreated)",
+  "region_universe_delay": "USA / TOP1000 / delay 1",
+  "discovery_date": "2026-10-25",
+  "economic_thesis": "做多负面措辞密集的公司、做空乐观措辞密集的公司。管理层电话会的好听话是低成本的预期管理工具，已被市场即时甚至过度定价；而负面词密集反映真实经营压力被披露，投资者偏好叙事因而反应不足，随后的慢速重估构成可捕捉的 drift。与 news12 实证最强家族 reverse(divide(up, up+dn)) 同构。",
+  "best_expressions": {
+    "highest_sharpe": {
+      "expr": "ts_target_tvr_decay(zscore(ts_backfill(vec_avg(event_negative_sentiment_score), 20)), lambda_min=0, lambda_max=1, target_tvr=0.15)",
+      "settings": "STATISTICAL",
+      "sharpe": 1.23,
+      "fitness": 0.53,
+      "returns": 0.0384,
+      "turnover": 0.21,
+      "margin_bps": 3.6,
+      "drawdown": 0.043,
+      "alpha_id": "npAllVeM"
+    },
+    "best_out_of_sample": {
+      "expr": "ts_decay_linear(zscore(ts_backfill(vec_avg(event_negative_sentiment_score), 20)), 10)",
+      "settings": "STATISTICAL",
+      "sharpe": 1.22,
+      "fitness": 0.49,
+      "returns": 0.0349,
+      "turnover": 0.218,
+      "margin_bps": 3.2,
+      "two_year_sharpe": 1.15,
+      "sub_universe_sharpe": 1.21,
+      "alpha_id": "78orr9vQ"
+    },
+    "best_margin": {
+      "expr": "zscore(ts_backfill(vec_avg(event_negative_sentiment_score), 60))",
+      "settings": "MARKET",
+      "sharpe": 0.38,
+      "fitness": 0.18,
+      "returns": 0.0291,
+      "turnover": 0.069,
+      "margin_bps": 8.4,
+      "ret_over_turnover": 0.42,
+      "two_year_sharpe": 1.47,
+      "alpha_id": "2rjxVxoJ"
+    }
+  },
+  "verification": "方向由 TS_zscore(tone) 的 RN_sharpe 从 -0.74 精确镜面翻转为 +0.74 确认；三条独立构造（tone / pos_word_share / neg_sent_score）同时指向同一方向。其中 tone 与 pos_word_share 已被证明为仿射等价（见 FALS_NEWS21_002），因此真正独立的验证只有 tone 系与 neg_score 系两条。",
+  "status": "NOT_SUBMITTABLE — Sharpe 距 1.58 差 0.35，Margin 距 10bps 差 1.6 bps，二者经 neutralization 轴互斥"
+}

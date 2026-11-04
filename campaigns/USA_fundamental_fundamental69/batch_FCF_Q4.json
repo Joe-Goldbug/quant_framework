@@ -1,0 +1,100 @@
+{
+  "batch_id": "FCF_Q4_ROBUST_CASH_CHANGE_CONCENTRATION",
+  "parent_best_alpha_id": "omEMvVX5",
+  "parent_best_expression": "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), industry)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "research_hypothesis": "Q3's 60-day change in operating cash flow net of dividends and capital expenditures was the strongest observed balanced long-short construction, but a single-name weight concentration of 0.5 and Sharpe 1.15 remained warnings. The economic hypothesis is that changes in cash available after both shareholder distributions and reinvestment contain information about evolving internal financing flexibility, while extreme accounting-flow magnitudes may be dominated by rare issuer scale, one-off items, or reporting jumps. This batch tests economically interpretable robustness transformations—signed concave compression, winsorization, issuer-history standardization, and peer granularity—without changing the three-field cash-flow definition. Quarterly fields are sparse, sign conventions and observed distributions are not panel-verified, so no transformation is presumed successful.",
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "CONCAVE_COMPRESSION_OF_FREE_CASH_CHANGE",
+      "expression": "group_zscore(s_log_1p(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60)), industry)",
+      "fields_used": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"],
+      "counterparty": "Investors who treat an exceptional accounting-flow change as proportionally more informative regardless of its magnitude or one-off nature.",
+      "economic_mechanism": "The signed logarithm preserves whether post-payout, post-investment internal cash improved or deteriorated while reducing the marginal influence of very large changes. If extreme values reflected issuer scale or one-off accounting events rather than persistent financing flexibility, concave compression could reduce position concentration without discarding direction.",
+      "optimize_reason": "Q3 recorded balanced breadth and strong multi-year/sub-universe diagnostics but an explicit 0.5 concentrated-weight warning. This is a targeted tail-leverage remedy: apply sign-preserving concavity to the same 60-day cash residual change, then retain industry-relative centering. It preserves the three-flow economic construct, unlike adding unrelated fields. It will only be retained if concentration falls and return metrics remain robust; signed-log compression can also erase genuine information in economically large changes.",
+      "technical_audit": {"passed": true, "operator_count": 5, "used_fields": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"]}
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "WINSORIZED_FREE_CASH_CHANGE",
+      "expression": "group_zscore(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), std=3), industry)",
+      "fields_used": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"],
+      "counterparty": "Portfolio construction that lets a few extreme reported cash-flow changes dominate otherwise broad peer exposures.",
+      "economic_mechanism": "Winsorization limits the influence of the far tails of the 60-day change in cash remaining after dividends and capital expenditure. The hypothesis is not that outliers are always erroneous, but that cross-sectional tail observations can include episodic transactions or scale effects and need not carry proportionally greater expected return.",
+      "optimize_reason": "This directly targets the observed concentration warning using a standard robust-statistics transform rather than changing the economic definition or betting on another time window. The 3-standard-deviation cap is a conventional outlier-resistance rule, not fitted to these results. Industry z-scoring preserves signed long/short comparisons. Since true cash-flow shocks may be valuable, this is a falsifiable trade-off between concentration control and information loss.",
+      "technical_audit": {"passed": true, "operator_count": 5, "used_fields": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"]}
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "ISSUER_HISTORY_STANDARDIZED_CASH_SURPRISE",
+      "expression": "group_zscore(ts_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), 252), industry)",
+      "fields_used": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"],
+      "counterparty": "Investors comparing absolute cash-flow changes without accounting for how unusual a change is for each issuer's own history.",
+      "economic_mechanism": "A 60-day change in post-payout, post-investment cash is standardized against its own trailing annual distribution before peer centering. This asks whether an unusually large improvement or deterioration relative to the firm's own cash-flow-change regime is more informative than raw magnitude, potentially reducing the influence of persistently large reporters.",
+      "optimize_reason": "Q3's large weight concentration may reflect cross-issuer differences in cash-flow scale. Issuer-history standardization targets that scale heterogeneity while preserving the same three fields and 60-day economic change. A trailing year is chosen to represent a business cycle rather than to tune a grid; repeated quarterly values can make the estimate stale or unstable, so concentration, breadth, and all platform warnings must be inspected.",
+      "technical_audit": {"passed": true, "operator_count": 6, "used_fields": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"]}
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "ROBUST_ISSUER_HISTORY_CASH_SURPRISE",
+      "expression": "group_zscore(ts_quantile(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), 252), industry)",
+      "fields_used": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"],
+      "counterparty": "Investors who infer signal strength from the raw distance of an extreme flow change rather than its position in the issuer's historical distribution.",
+      "economic_mechanism": "The time-series quantile transform represents the 60-day internal-cash change by its historical standing, reducing sensitivity to heavy-tailed flow magnitudes while preserving whether it is unusually high or low for that issuer. Industry centering then compares similar broad business models.",
+      "optimize_reason": "This is a robust alternative to ordinary own-history z-scoring: the mechanism concerns whether cash-retention changes are unusual, not whether their dollar scale is extreme. It directly addresses single-name weight dominance while preserving the Q3 three-field cash-flow definition. Sparse quarterly updates can create tied ranks or unstable quantiles, so low concentration alone is insufficient; all Sharpe, Fitness, margin, turnover, warnings, and breadth gates remain mandatory.",
+      "technical_audit": {"passed": true, "operator_count": 5, "used_fields": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"]}
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "SMOOTHED_INPUT_CASH_CHANGE",
+      "expression": "group_zscore(ts_delta(ts_decay_linear(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 20), 60), industry)",
+      "fields_used": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"],
+      "counterparty": "Investors who overreact to a single quarterly report or transient accounting adjustments in a firm's residual internal cash.",
+      "economic_mechanism": "The residual cash-flow series is smoothed before measuring its 60-day change, testing whether a persistent shift in internally available funding is more informative than one disclosure-day jump. Smoothing before differencing is intended to damp reporting noise at signal formation rather than merely delay the already formed signal.",
+      "optimize_reason": "Q3's best 60-day delta may still be dominated by a single report-date jump, which is consistent with a concentrated-weight warning. This tests a reporting-noise mechanism using a short linear filter on the same economic cash residual before computing the change. It is not assumed to improve concentration or returns: quarterly stale values could instead introduce lag, and any warning or failed threshold disqualifies it.",
+      "technical_audit": {"passed": true, "operator_count": 6, "used_fields": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"]}
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "SUBINDUSTRY_CASH_CHANGE_COMPARISON",
+      "expression": "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), subindustry)",
+      "fields_used": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"],
+      "counterparty": "Broad-industry comparisons that confuse a firm's cash-flow change with systematic differences in reinvestment and payout models among subindustries.",
+      "economic_mechanism": "The same measured 60-day residual cash change is centered among closer business-model peers. More granular peer comparison can separate firm-specific financing-flexibility changes from systematic differences in capital intensity, payout practice, and quarterly cash conversion.",
+      "optimize_reason": "Retain the best observed economic signal exactly and change only the peer set. If the warning-level concentration arose because broad industry groups mix structurally different cash-flow distributions, subindustry centering could make the relative signal more comparable. This isolates peer-composition effects; smaller groups may increase estimation noise and cannot be presumed to improve risk-adjusted performance.",
+      "technical_audit": {"passed": true, "operator_count": 4, "used_fields": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"]}
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "SUBINDUSTRY_CONCAVE_CASH_SURPRISE",
+      "expression": "group_zscore(s_log_1p(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60)), subindustry)",
+      "fields_used": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"],
+      "counterparty": "Investors who extrapolate extreme cash-flow changes across firms whose subindustry-specific capital allocation regimes are not comparable.",
+      "economic_mechanism": "Signed concave compression limits the marginal influence of exceptional residual-cash changes, while subindustry centering compares financing flexibility among firms with closer reinvestment and distribution economics. The proposed channel is relative cash-retention change, not a universal preference for higher or lower capex.",
+      "optimize_reason": "Combine the most direct concentration remedy with a more homogeneous peer baseline while leaving the Q3 cash-flow fields and 60-day horizon frozen. It is a distinct economic comparison from Slot 1, not a simple parameter change: both tail influence and peer-business heterogeneity are addressed. Sparse groups and loss of genuine extreme-shock information are explicit risks; every check must pass without warnings.",
+      "technical_audit": {"passed": true, "operator_count": 5, "used_fields": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"]}
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "MEDIAN_FILTERED_CASH_CHANGE",
+      "expression": "group_zscore(ts_median(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), 20), industry)",
+      "fields_used": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"],
+      "counterparty": "Investors who assign full weight to a transient reporting jump in the change in internally retained cash.",
+      "economic_mechanism": "A rolling median of the 60-day cash-residual change reduces sensitivity to isolated jumps and heavy-tailed observations while retaining the central tendency of the recent financing-flexibility change. The hypothesized mispricing is delayed interpretation of persistent rather than one-off cash-flow improvement.",
+      "optimize_reason": "Use a robust temporal location statistic rather than an arithmetic decay to test whether a small number of report-day spikes drive the Q3 concentration warning. This maintains the exact three-field economic construct, but the median may suppress a genuinely informative report or delay recognition. Coverage, exposure concentration, full return thresholds, and zero warnings are decisive.",
+      "technical_audit": {"passed": true, "operator_count": 6, "used_fields": ["fnd69_q2yfcnao", "fnd69_q2yvd", "fnd69_capxy2q"]}
+    }
+  ],
+  "known_fields": {
+    "fnd69_q2yfcnao": {"type": "MATRIX", "domain": "unbounded", "is_sparse": false, "description": "Operating Activities - Net Cash Flow (Quarterly)"},
+    "fnd69_q2yvd": {"type": "MATRIX", "domain": "unbounded", "is_sparse": true, "description": "Cash Dividends (Cash Flow) (Quarterly)"},
+    "fnd69_capxy2q": {"type": "MATRIX", "domain": "unbounded", "is_sparse": true, "description": "Capital Expenditures (Quarterly)"}
+  },
+  "technical_audit": {"passed_count": 8, "total": 8, "exact_fingerprint_duplicates": [], "cross_batch_skeleton_duplicates_checked": false},
+  "submission_forbidden": true
+}

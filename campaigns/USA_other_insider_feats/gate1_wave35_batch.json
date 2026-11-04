@@ -1,0 +1,20 @@
+{
+  "wave": 35,
+  "seed_id": "GATE1_WAVE35",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "KPJNbZ0k (双层嵌套秩@SUBIND, PC 0.5728 历史最低, Sh 1.02, Mgn 8.85)",
+  "hypothesis": "Wave34/33 判决：①双层嵌套秩 group_rank(group_rank(core,industry),subindustry) 是全新去相关器（PC 0.8178→0.5728，远超 STATISTICAL 的 0.6222，且 Sharpe 保留 1.02）；②SUBINDUSTRY 设置对笔数比骨架是毒药但@INDUSTRY 未测；③vec_range 极差切片 Margin 30.73bps 但 @SUBIND 下 MATCHES_THEMES 命中。本波把双层秩移植回 INDUSTRY 基座，与最强幅度引擎（窗40/vec_max/lookback_20/vec_range）交叉，攻 PC<0.70 + Margin≥10 + Sharpe/2Y 同抬。",
+  "items": [
+    {"id": "w35_dr20_ind", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), industry), subindustry)", "optimize_reason": "KPJNbZ0k 的 @INDUSTRY 直译版：隔离设置层贡献，观测双层秩本身在 INDUSTRY 下的 PC/Sharpe/Margin。8算子/3字段。"},
+    {"id": "w35_dr33_ind", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33), industry), subindustry)", "optimize_reason": "双层秩 × 窗33：Margin 杠杆（窗梯度 20→33 ≈ +3bps）叠加去相关结构，冲 Margin≥10 同时保 PC<0.70。8算子/3字段。"},
+    {"id": "w35_dr40_ind", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),40), industry), subindustry)", "optimize_reason": "双层秩 × 窗40（RREbp3Lb 的 Sharpe 最优窗 1.25）：Sharpe 引擎 × PC 引擎的正面交叉。8算子/3字段。"},
+    {"id": "w35_dr20_ctr20", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), industry), subindustry)", "optimize_reason": "双层秩 × lookback_20 近端确认（w1 的 Sharpe 杠杆）：确认腿提速在去相关骨架上的增益测试。8算子/3字段。"},
+    {"id": "w35_dr20_vecmax", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_max(buy_sell_tx_count_ratio_all_20d_filled),vec_max(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), industry), subindustry)", "optimize_reason": "双层秩 × vec_max 信念腿（LLMNAXG9 的 Fitness 杠杆 0.82）：Fitness 缺口 × PC 缺口的联合攻击。8算子/3字段。"},
+    {"id": "w35_range20_ind", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_range(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)", "optimize_reason": "vec_range Margin 炸弹（30.73bps）的 @INDUSTRY 版：隔离 MATCHES_THEMES 是否 SUBINDUSTRY 特有，并测 Margin 优势在 INDUSTRY 是否保留。7算子/3字段。"},
+    {"id": "w35_dr40_vecmax", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_max(buy_sell_tx_count_ratio_all_20d_filled),vec_max(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),40), industry), subindustry)", "optimize_reason": "三杠杆叠加：双层秩（PC）× vec_max（Fitness）× 窗40（Sharpe/Margin）。8算子/3字段。"},
+    {"id": "w35_dr33_ctr20", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),33), industry), subindustry)", "optimize_reason": "双层秩 × 窗33 × lookback_20：Margin+Sharpe 双杠杆在去相关骨架上的全叠加。8算子/3字段。"}
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/2mZ9EXgxt4ypbGBclCXtVds",
+  "submitted_at": 1792986715,
+  "items": [
+    {
+      "id": 1,
+      "type": "THEME_DUAL_HORIZON_20_10",
+      "expression": "rank(add(winsorize(prob_rank_bin1_20d_img_news, std=4), winsorize(prob_rank_bin1_10d_img_news, std=4)))",
+      "optimize_reason": "Multi-horizon deep learning news event return prediction (20d + 10d). Natural 2-to-4 week holding period drives Turnover < 15%, expanding Margin >= 15.0 bps and Fitness >= 1.00."
+    },
+    {
+      "id": 2,
+      "type": "THEME_TRIPLE_HORIZON",
+      "expression": "rank(add(winsorize(prob_rank_bin1_20d_img_news, std=4), add(winsorize(prob_rank_bin1_10d_img_news, std=4), winsorize(prob_rank_bin1_5d_img_news, std=4))))",
+      "optimize_reason": "Cascading multi-frequency news prediction blending long-term drift (20d) with mid-term drift (10d, 5d). Targets Turnover < 18%, Margin >= 15.0 bps, and Sharpe >= 1.65."
+    },
+    {
+      "id": 3,
+      "type": "THEME_PROB_SPREAD_REL",
+      "expression": "rank(multiply(subtract(prob_rank_bin5_label4_20d_img_news, prob_rank_bin5_label0_20d_img_news), news_relevance_score_2))",
+      "optimize_reason": "Top-quantile minus bottom-quantile 20-day event probability scaled by news relevance. High signal purity eliminates non-relevant noise, targeting Turnover < 12%, Margin >= 18 bps."
+    },
+    {
+      "id": 4,
+      "type": "THEME_DRIFT_20D_REL",
+      "expression": "rank(multiply(winsorize(prob_rank_bin1_20d_img_news, std=4), news_relevance_score_2))",
+      "optimize_reason": "Continuous 20-day expected return amplified by entity relevance score. Smooth cross-sectional rank targets Turnover < 14%, Margin >= 16 bps, Fitness >= 1.10."
+    },
+    {
+      "id": 5,
+      "type": "CROSS_THEME_SEED_20D",
+      "expression": "add(rank(winsorize(prob_rank_bin1_20d_img_news, std=4)), reverse(rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last))))",
+      "optimize_reason": "Combines slow institutional 20d event drift with fast retail overreaction dip-buying. Synergistic holding structure suppresses turnover to < 25% while boosting Sharpe >= 1.70."
+    },
+    {
+      "id": 6,
+      "type": "CROSS_THEME_SEED_10D",
+      "expression": "add(rank(winsorize(prob_rank_bin1_10d_img_news, std=4)), reverse(rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last))))",
+      "optimize_reason": "10-day event drift blended with intraday news reversion. Provides sharper event timing, targeting Turnover < 28%, Margin >= 15 bps, Fitness >= 1.05."
+    },
+    {
+      "id": 7,
+      "type": "CROSS_THEME_COND_BUY",
+      "expression": "if_else(greater(winsorize(prob_rank_bin1_20d_img_news, std=4), 0), reverse(rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last))), 0)",
+      "optimize_reason": "Conditionally buys oversold post-news dips ONLY for stocks with positive 20-day institutional event outlook. Prevents falling knives, targeting Turnover < 20%, Sharpe >= 1.65."
+    },
+    {
+      "id": 8,
+      "type": "CROSS_THEME_MULT_INTERACT",
+      "expression": "rank(multiply(winsorize(prob_rank_bin1_20d_img_news, std=4), reverse(rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last)))))",
+      "optimize_reason": "Non-linear multiplicative interaction between multi-week fundamental drift and short-term liquidity dislocation. Targets Turnover < 22%, Margin >= 16 bps, Fitness >= 1.15."
+    }
+  ]
+}

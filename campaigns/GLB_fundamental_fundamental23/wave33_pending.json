@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "region": "GLB",
+    "universe": "MINVOL10M",
+    "delay": 1,
+    "decay": 0,
+    "neutralization": "COUNTRY",
+    "truncation": 0.025
+  },
+  "items": [
+    {
+      "tag": "W33_1_dual_ind",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(fnd23_ofc, fnd23_intfvalld1_letq), 63)), industry)"
+    },
+    {
+      "tag": "W33_2_dual_weighted",
+      "expression": "group_rank(multiply(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(fnd23_ofc, fnd23_intfvalld1_letq), 63)), divide(fnd23_ofc, add(fnd23_ofc, fnd23_intfvalld1_ipos))), industry)"
+    },
+    {
+      "tag": "W33_3_dual_sector",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(fnd23_ofc, fnd23_intfvalld1_letq), 63)), sector)"
+    },
+    {
+      "tag": "W33_4_dual_189",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 189), ts_delta(divide(fnd23_ofc, fnd23_intfvalld1_letq), 42)), industry)"
+    }
+  ]
+}

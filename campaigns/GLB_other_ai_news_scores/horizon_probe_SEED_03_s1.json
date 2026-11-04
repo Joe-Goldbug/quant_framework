@@ -1,0 +1,197 @@
+{
+  "summary": {
+    "pairs": 10,
+    "counts": {
+      "PLATEAU": 5,
+      "SPIKE": 0,
+      "WEAK": 5,
+      "NO_DATA": 0
+    },
+    "plateau_slots": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        11,
+        12
+      ],
+      [
+        13,
+        14
+      ],
+      [
+        15,
+        16
+      ]
+    ],
+    "spike_slots": [],
+    "paired_slot_count": 20
+  },
+  "verdicts": [
+    {
+      "slots": [
+        1,
+        2
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 1.05,
+      "sharpe_long": 1.05,
+      "stable_min_abs_sharpe": 1.05,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_linear(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        3,
+        4
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 1.09,
+      "sharpe_long": 1.09,
+      "stable_min_abs_sharpe": 1.09,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_exp_window(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM,factor=NUM),subindustry)"
+    },
+    {
+      "slots": [
+        5,
+        6
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": 0.67,
+      "sharpe_long": 0.63,
+      "stable_min_abs_sharpe": 0.63,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_neutralize(ts_mean(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        7,
+        8
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 0.65,
+      "sharpe_long": 0.56,
+      "stable_min_abs_sharpe": 0.56,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_neutralize(ts_std_dev(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        9,
+        10
+      ],
+      "windows": [
+        20,
+        40
+      ],
+      "sharpe_short": 0.49,
+      "sharpe_long": 0.4,
+      "stable_min_abs_sharpe": 0.4,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_zscore(ts_zscore(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        11,
+        12
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": 1.27,
+      "sharpe_long": 1.25,
+      "stable_min_abs_sharpe": 1.25,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_rank(ts_decay_linear(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        13,
+        14
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 1.02,
+      "sharpe_long": 0.87,
+      "stable_min_abs_sharpe": 0.87,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_rank(ts_decay_exp_window(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM,factor=NUM),subindustry)"
+    },
+    {
+      "slots": [
+        15,
+        16
+      ],
+      "windows": [
+        30,
+        60
+      ],
+      "sharpe_short": 1.15,
+      "sharpe_long": 1.24,
+      "stable_min_abs_sharpe": 1.15,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_rank(ts_mean(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        17,
+        18
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": 0.51,
+      "sharpe_long": 0.46,
+      "stable_min_abs_sharpe": 0.46,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_rank(ts_std_dev(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        19,
+        20
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 0.79,
+      "sharpe_long": 0.79,
+      "stable_min_abs_sharpe": 0.79,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_rank(ts_scale(divide(subtract(positive_score_maximum_value_3,positive_score_median_value_3),add(positive_score_average_value,NUM)),NUM),subindustry)"
+    }
+  ]
+}

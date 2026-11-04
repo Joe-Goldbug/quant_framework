@@ -1,0 +1,361 @@
+{
+ "direction": "L",
+ "direction_name": "VECTOR 字段探针 (vec_* 归约)",
+ "hypothesis": "800 个 VECTOR 字段的聚合口径携带 MATRIX 单事件快照不具备的稳健边缘",
+ "settings": {
+  "neutralization": "INDUSTRY",
+  "universe": "TOP1000",
+  "decay": 6,
+  "truncation": 0.025,
+  "region": "USA",
+  "delay": 1,
+  "nan_handling": "ON"
+ },
+ "rows": [
+  {
+   "slot": 1,
+   "type": "VEC_SPEED_ASYM_4PCT",
+   "expression": "reverse(divide(vec_avg(minutes_to_4pct_increase), add(vec_avg(minutes_to_4pct_increase), vec_avg(minutes_to_4pct_decline))))",
+   "alpha_id": "omoXMbM6",
+   "sharpe": -0.08,
+   "fitness": -0.01,
+   "turnover": 1.4355,
+   "returns": -0.0326,
+   "ret_over_to": -0.022709857192615812,
+   "drawdown": 1.6702,
+   "margin_bps": -0.45,
+   "longCount": 7,
+   "shortCount": 7,
+   "sub_sharpe": 0.06,
+   "two_year_sharpe": 0.17,
+   "inv_sharpe": 0.34,
+   "rn_sharpe": -0.12,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 2,
+   "type": "VEC_SPEED_ASYM_2PCT",
+   "expression": "reverse(divide(vec_avg(minutes_to_2pct_increase), add(vec_avg(minutes_to_2pct_increase), vec_avg(minutes_to_2pct_decline))))",
+   "alpha_id": "QPYALxLg",
+   "sharpe": 0.41,
+   "fitness": 0.09,
+   "turnover": 1.5826,
+   "returns": 0.082,
+   "ret_over_to": 0.05181347150259068,
+   "drawdown": 0.4828,
+   "margin_bps": 1.04,
+   "longCount": 33,
+   "shortCount": 33,
+   "sub_sharpe": 0.3,
+   "two_year_sharpe": -0.19,
+   "inv_sharpe": 0.07,
+   "rn_sharpe": 0.5,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 3,
+   "type": "VEC_EXC_DIFF",
+   "expression": "reverse(subtract(vec_avg(high_price_excursion_stddev), vec_avg(low_price_excursion_stddev)))",
+   "alpha_id": "e76PoYRp",
+   "sharpe": 0.72,
+   "fitness": 0.13,
+   "turnover": 1.123,
+   "returns": 0.0378,
+   "ret_over_to": 0.033659839715048975,
+   "drawdown": 0.1023,
+   "margin_bps": 0.67,
+   "longCount": 299,
+   "shortCount": 294,
+   "sub_sharpe": 0.37,
+   "two_year_sharpe": 1.69,
+   "inv_sharpe": 0.66,
+   "rn_sharpe": 0.84,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 4,
+   "type": "VEC_EXC_RATIO",
+   "expression": "reverse(divide(vec_avg(high_price_excursion_stddev), add(vec_avg(high_price_excursion_stddev), vec_avg(low_price_excursion_stddev))))",
+   "alpha_id": "GrgNp2J3",
+   "sharpe": 1.13,
+   "fitness": 0.23,
+   "turnover": 1.1868,
+   "returns": 0.048,
+   "ret_over_to": 0.04044489383215369,
+   "drawdown": 0.0739,
+   "margin_bps": 0.81,
+   "longCount": 284,
+   "shortCount": 286,
+   "sub_sharpe": 0.76,
+   "two_year_sharpe": 1.86,
+   "inv_sharpe": 1.08,
+   "rn_sharpe": 1.46,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 5,
+   "type": "VEC_EXC_DIFF_1555",
+   "expression": "reverse(subtract(vec_avg(high_price_deviation_std_1555), vec_avg(low_price_deviation_std_1555)))",
+   "alpha_id": "vROb3Egr",
+   "sharpe": 0.83,
+   "fitness": 0.16,
+   "turnover": 1.4256,
+   "returns": 0.054,
+   "ret_over_to": 0.03787878787878788,
+   "drawdown": 0.102,
+   "margin_bps": 0.76,
+   "longCount": 247,
+   "shortCount": 243,
+   "sub_sharpe": 0.49,
+   "two_year_sharpe": 0.95,
+   "inv_sharpe": 0.79,
+   "rn_sharpe": 1.01,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 6,
+   "type": "VEC_RANGE_OVER_ATR",
+   "expression": "reverse(divide(vec_avg(main_session_price_range), vec_avg(average_true_range_14d)))",
+   "alpha_id": "A1Q5MpKE",
+   "sharpe": -0.07,
+   "fitness": -0.01,
+   "turnover": 1.0066,
+   "returns": -0.0138,
+   "ret_over_to": -0.013709517186568647,
+   "drawdown": 0.9715,
+   "margin_bps": -0.26999999999999996,
+   "longCount": 330,
+   "shortCount": 164,
+   "sub_sharpe": -0.18,
+   "two_year_sharpe": 0.39,
+   "inv_sharpe": 0.11,
+   "rn_sharpe": -0.06,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 7,
+   "type": "VEC_VWAP_CLOSE_GAP",
+   "expression": "reverse(subtract(vec_avg(end_of_day_vwap_2), vec_avg(end_of_session_close_price)))",
+   "alpha_id": "ZYm9e8L3",
+   "sharpe": -0.67,
+   "fitness": -0.13,
+   "turnover": 1.1772,
+   "returns": -0.0431,
+   "ret_over_to": -0.03661230037376826,
+   "drawdown": 0.5119,
+   "margin_bps": -0.73,
+   "longCount": 285,
+   "shortCount": 293,
+   "sub_sharpe": -0.66,
+   "two_year_sharpe": -0.4,
+   "inv_sharpe": -0.2,
+   "rn_sharpe": -0.36,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 8,
+   "type": "VEC_VOLSURGE_OVER_ATR",
+   "expression": "reverse(divide(vec_avg(current_to_average_volume_ratio_2), vec_avg(average_true_range_14d)))",
+   "alpha_id": "N1eGvdop",
+   "sharpe": 0.35,
+   "fitness": 0.08,
+   "turnover": 0.8508,
+   "returns": 0.0394,
+   "ret_over_to": 0.0463093559003291,
+   "drawdown": 0.2695,
+   "margin_bps": 0.9299999999999999,
+   "longCount": 455,
+   "shortCount": 164,
+   "sub_sharpe": 0.01,
+   "two_year_sharpe": -0.74,
+   "inv_sharpe": 0.01,
+   "rn_sharpe": 0.33,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  }
+ ],
+ "gate": {
+  "step1": {
+   "should_prune": false,
+   "max_abs_sharpe": 1.13,
+   "qualified_count": 1,
+   "qualified_seeds": [
+    {
+     "expression": "reverse(divide(vec_avg(high_price_excursion_stddev), add(vec_avg(high_price_excursion_stddev), vec_avg(low_price_excursion_stddev))))",
+     "sharpe": 1.13,
+     "metrics": {
+      "sharpe": 1.13,
+      "fitness": 0.23,
+      "turnover": 1.1868,
+      "returns": 0.048,
+      "drawdown": 0.0739,
+      "margin": 8.1e-05,
+      "longCount": 284,
+      "shortCount": 286,
+      "pnl": 4793002,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 0.76,
+      "two_year_sharpe": 1.86,
+      "investability_sharpe": 1.08,
+      "investability_fitness": 0.26,
+      "risk_neutralized_sharpe": 1.46
+     },
+     "status": "STEP1_PASSED"
+    }
+   ],
+   "message": "【Step 1 通过】捕获 1 条达标种子 (最高 |Sharpe| = 1.13)"
+  },
+  "step2_count": 0,
+  "final_count": 0,
+  "step2": [],
+  "final": []
+ }
+}

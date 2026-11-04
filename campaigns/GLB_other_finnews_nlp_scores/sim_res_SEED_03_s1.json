@@ -1,0 +1,35 @@
+{
+  "step1": {
+    "should_prune": true,
+    "max_abs_sharpe": 0.84,
+    "qualified_count": 0,
+    "qualified_seeds": [],
+    "all_sharpes": {
+      "group_neutralize(ts_delta(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": 0.04,
+      "group_neutralize(ts_delta(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": 0.03,
+      "group_neutralize(ts_zscore(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": -0.09,
+      "group_neutralize(ts_zscore(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": 0.11,
+      "group_neutralize(ts_mean(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": 0.84,
+      "group_neutralize(ts_mean(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": 0.45,
+      "group_zscore(ts_std_dev(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": -0.21,
+      "group_zscore(ts_std_dev(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": -0.81,
+      "group_rank(ts_mean(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": 0.09,
+      "group_rank(ts_mean(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": 0.35,
+      "group_neutralize(ts_decay_linear(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": 0.03,
+      "group_neutralize(ts_decay_linear(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": -0.03,
+      "group_rank(ts_delta(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": 0.03,
+      "group_rank(ts_delta(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": -0.11,
+      "trade_when(ts_delta(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), 5) > 0, divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 0)": 0.79,
+      "trade_when(ts_delta(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), 10) > 0, divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 0)": 0.66,
+      "group_rank(ts_zscore(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": 0.35,
+      "group_rank(ts_zscore(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": 0.29,
+      "group_rank(ts_rank(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 5), subindustry)": -0.48,
+      "group_rank(ts_rank(divide(subtract(median_positive_sentiment_score_4, median_negative_sentiment_score_5), subtract(fnd23_tot_assets, 1)), 10), subindustry)": -0.53
+    },
+    "platform_failure": false,
+    "message": "【Step 1 熔断退出】全批变体最高 |Sharpe| 仅为 0.84 (< 1.00)！判定主信号为伪因果，立即剪枝，秒级切换下一个主信号！"
+  },
+  "step2_passed": [],
+  "final_passed": [],
+  "prescriptions": null
+}

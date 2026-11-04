@@ -1,0 +1,66 @@
+{
+  "seed_id": "mLYNEWjW",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 6,
+  "neutralization": "INDUSTRY",
+  "category": "news",
+  "known_fields": [
+    "news_eod_close",
+    "news_ton_last",
+    "news_eod_vwap",
+    "news_open",
+    "high_price_excursion_stddev"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "CTN_BF2_DEC3",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2), 3)))",
+      "optimize_reason": "Shaves the remaining 2% turnover from Batch 11 Slot 2 (72.0% -> ~62%) by extending the decay window from 2 to 3 days on the pure CTN engine. Retains fresh Day 1 signal conviction while ensuring compliant turnover."
+    },
+    {
+      "id": 2,
+      "type": "CTN_BF2_DEC4",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2), 4)))",
+      "optimize_reason": "4-day decay window on 2-day backfilled CTN. Weights 4/10, 3/10, 2/10, 1/10. Compresses turnover to ~54% while maintaining high Sharpe."
+    },
+    {
+      "id": 3,
+      "type": "CVWAP_BF2_DEC3",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 2), 3)))",
+      "optimize_reason": "Injects the N1eGk79E champion engine (close - vwap, Sharpe 1.63) into the clean CW denominator (add(vec_count, 1)) with 2-day backfill and 3-day decay. Targets Sharpe >= 1.58 with Turnover <= 65%."
+    },
+    {
+      "id": 4,
+      "type": "CVWAP_BF2_DEC4",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 2), 4)))",
+      "optimize_reason": "4-day decay on the close - vwap champion engine. Targets Turnover ~52% and Sharpe >= 1.58."
+    },
+    {
+      "id": 5,
+      "type": "DUAL_OPEN_BF2_DEC3",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 2), 3)))",
+      "optimize_reason": "Shaves the 1.5% turnover from Batch 11 Slot 4 (71.5% -> ~62%) on the 8.40% return / 2Y 1.86 dual open engine."
+    },
+    {
+      "id": 6,
+      "type": "DUAL_OPEN_BF2_DEC4",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 2), 4)))",
+      "optimize_reason": "4-day decay on the dual open engine. Targets Turnover ~54% and Margin > 2.5 bps."
+    },
+    {
+      "id": 7,
+      "type": "VMAX_BF2_DEC3",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_max(high_price_excursion_stddev), 1)), 2), 3)))",
+      "optimize_reason": "Peak volatility standardization: normalizes by peak excursion magnitude + 1, filtering out low-volatility drift and boosting Sharpe."
+    },
+    {
+      "id": 8,
+      "type": "CVWAP_IND_BF2_DEC3",
+      "expression": "reverse(group_rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 2), 3), industry))",
+      "optimize_reason": "Within-industry rank on smoothed close - vwap. Eliminates sector-level beta, targeting zero fails and zero cluster warnings."
+    }
+  ]
+}

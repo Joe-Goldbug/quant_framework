@@ -1,0 +1,31 @@
+{
+  "step1": {
+    "should_prune": true,
+    "max_abs_sharpe": 0.71,
+    "qualified_count": 0,
+    "qualified_seeds": [],
+    "all_sharpes": {
+      "ts_zscore(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 5)": -0.58,
+      "ts_zscore(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 10)": -0.61,
+      "ts_av_diff(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 10)": -0.17,
+      "ts_av_diff(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 20)": -0.16,
+      "ts_delta(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 5)": -0.05,
+      "ts_delta(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 10)": -0.27,
+      "group_neutralize(ts_mean(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 10), subindustry)": 0.16,
+      "group_neutralize(ts_mean(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 20), subindustry)": 0.22,
+      "group_neutralize(ts_scale(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 10), subindustry)": -0.63,
+      "group_neutralize(ts_scale(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 20), subindustry)": -0.56,
+      "group_zscore(ts_rank(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 5), subindustry)": -0.3,
+      "group_zscore(ts_rank(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 10), subindustry)": -0.07,
+      "group_rank(ts_arg_max(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 5), subindustry)": 0.68,
+      "group_rank(ts_arg_max(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 10), subindustry)": 0.59,
+      "group_zscore(ts_std_dev(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 5), subindustry)": -0.12,
+      "group_zscore(ts_std_dev(divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1)), 10), subindustry)": -0.71
+    },
+    "platform_failure": false,
+    "message": "【Step 1 熔断退出】全批变体最高 |Sharpe| 仅为 0.71 (< 1.00)！判定主信号为伪因果，立即剪枝，秒级切换下一个主信号！"
+  },
+  "step2_passed": [],
+  "final_passed": [],
+  "prescriptions": null
+}

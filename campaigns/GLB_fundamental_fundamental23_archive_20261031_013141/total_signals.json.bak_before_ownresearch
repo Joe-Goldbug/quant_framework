@@ -1,0 +1,328 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL10M",
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "signals": [
+    {
+      "id": "SEED_BO_01",
+      "cluster_ref": "核心盈余纯度与非营业噪音剥离",
+      "field_semantics_mapping": "net_income_before_tax = 税前总利润；non_operating_income_total = 非营业收入（处置/汇兑/杂项）；fnd23_intfvmalld1_tota = 零拥挤总资产锚（alpha_count=1）。",
+      "economic_mechanism": "税前利润减去非营业收入，得到只能由主营产生的税前利润。被非营业收入垫高的利润不可持续且常在次年反转；剥离后以零拥挤资产锚归一化，得到可持续的核心盈余强度。该指标在 2020 疫情冲击与 2023 利率切换期应显著抗跌，因为非营业收入的反转不再计入多头组合。",
+      "expression": "divide(subtract(net_income_before_tax, non_operating_income_total), fnd23_intfvmalld1_tota)",
+      "fields_used": [
+        "net_income_before_tax",
+        "non_operating_income_total",
+        "fnd23_intfvmalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_02",
+      "cluster_ref": "核心盈余纯度与非营业噪音剥离",
+      "field_semantics_mapping": "net_income_before_extraordinary = 扣非前净利润；other_net_income_total = 其他净收益；fnd23_blsm_tota = 季度总资产锚（alpha_count=0）。",
+      "economic_mechanism": "扣非利润已剔除非常项目，但仍含『其他净收益』这类常被用来平滑利润的杂项。用比率剪刀差（扣非利润率 − 杂项收益率）而非简单相减，可在不同资产规模公司间保持可比：高剪刀差意味着利润几乎全部来自主营，低剪刀差甚至为负意味着利润靠杂项拼凑。",
+      "expression": "subtract(divide(net_income_before_extraordinary, fnd23_blsm_tota), divide(other_net_income_total, fnd23_blsm_tota))",
+      "fields_used": [
+        "net_income_before_extraordinary",
+        "other_net_income_total",
+        "fnd23_blsm_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_03",
+      "cluster_ref": "核心盈余纯度与非营业噪音剥离",
+      "field_semantics_mapping": "税前利润、非营业收入、其他净收益、第二套零拥挤资产锚（alpha_count=1）。",
+      "economic_mechanism": "同时剔除两类噪音（营业外 + 营业内非经常），避免管理层在两类科目间腾挪以规避单一剔除。两类噪音的会计来源不同，同时剔除后残差更接近真实主营盈利。用第二套资产锚归一化，与 SEED_BO_01 形成口径交叉验证。",
+      "expression": "divide(subtract(net_income_before_tax, add(non_operating_income_total, other_net_income_total)), fnd23_intfvmfm2_tota)",
+      "fields_used": [
+        "net_income_before_tax",
+        "non_operating_income_total",
+        "other_net_income_total",
+        "fnd23_intfvmfm2_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_04",
+      "cluster_ref": "同源口径背离摩擦",
+      "field_semantics_mapping": "net_income_before_tax = 年度总账口径税前利润；fnd23_icsm_m_tbie = 季度 icsm 口径税前利润（同一经济量的两套独立来源）；fnd23_intfvm_tdbs = 递延所得税负债；tota = 资产锚。",
+      "economic_mechanism": "两口径税前利润之差是重述/追溯调整强度，递延税负强度是税务确认被推迟的程度。二者相减得到『净口径摩擦』：既重述又递延的公司报表可信度最低。这是纯摩擦项，不含量级信息，与任何传统财务比率正交。",
+      "expression": "subtract(divide(subtract(net_income_before_tax, fnd23_icsm_m_tbie), fnd23_intfvmalld1_tota), divide(fnd23_intfvm_tdbs, fnd23_intfvmalld1_tota))",
+      "fields_used": [
+        "net_income_before_tax",
+        "fnd23_icsm_m_tbie",
+        "fnd23_intfvm_tdbs",
+        "fnd23_intfvmalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_05",
+      "cluster_ref": "核心盈余纯度与非营业噪音剥离",
+      "field_semantics_mapping": "net_income_before_extraordinary = 扣非净利润；fnd23_intfvmalld1_tota = 零拥挤总资产锚（alpha_count=1）。",
+      "economic_mechanism": "最朴素的扣非 ROA，但分母换成 alpha_count=1 的冷门资产锚，而非 22 条存量 Alpha 共用的 fnd23_tot_assets。它作为本批的基准骨架：若最简扣非 ROA 在低拥挤锚点上已显著，说明拥挤度来自分母而非分子，后续复杂骨架的增益才可归因。",
+      "expression": "divide(net_income_before_extraordinary, fnd23_intfvmalld1_tota)",
+      "fields_used": [
+        "net_income_before_extraordinary",
+        "fnd23_intfvmalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_06",
+      "cluster_ref": "有效税负与递延税盾摩擦",
+      "field_semantics_mapping": "fnd23_icsm_m_tbie = 季度税前利润（alpha_count=0）；fnd23_icsm_m_tait = 季度税后利润（alpha_count=0）；fnd23_blsm_tota = 季度资产锚（alpha_count=0）。",
+      "economic_mechanism": "税前减税后即实际税负金额，除以资产得税负强度。税负异常轻意味着税务确认被推迟或依赖税收优惠，一旦优惠到期或税率上行，利润会断崖式回落。该指标度量利润的税务可持续性，与利润水平本身正交。",
+      "expression": "divide(subtract(fnd23_icsm_m_tbie, fnd23_icsm_m_tait), fnd23_blsm_tota)",
+      "fields_used": [
+        "fnd23_icsm_m_tbie",
+        "fnd23_icsm_m_tait",
+        "fnd23_blsm_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_07",
+      "cluster_ref": "有效税负与递延税盾摩擦",
+      "field_semantics_mapping": "fnd23_icsm_m_tbie = 税前利润；fnd23_icsm_m_tait = 税后利润；fnd23_intfvm_tdbs = 长期递延所得税负债。",
+      "economic_mechanism": "分子是账面已确认的税负，分母是税前利润扣除已递延税负后的应税基础。比值衡量税务确认的激进程度：分子小而分母大，说明大量税负被推到未来，当期利润是纸面的。比率形式自动消除规模效应，可跨公司直接比较。",
+      "expression": "divide(subtract(fnd23_icsm_m_tbie, fnd23_icsm_m_tait), subtract(fnd23_icsm_m_tbie, fnd23_intfvm_tdbs))",
+      "fields_used": [
+        "fnd23_icsm_m_tbie",
+        "fnd23_icsm_m_tait",
+        "fnd23_intfvm_tdbs"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_08",
+      "cluster_ref": "有效税负与递延税盾摩擦",
+      "field_semantics_mapping": "fnd23_icsm_m_tait = 税后利润；fnd23_intfvm_tdbs = 递延所得税负债；tota = 资产锚。",
+      "economic_mechanism": "递延所得税负债是已确认但未缴纳的税，本质是对未来现金流的优先索取权。税后利润加递延税负债再归一化，得到合计索取权口径：递延税负越重，当前利润中尚未被税务现金流出侵蚀的部分越少。这是把税盾从利润表搬到资产负债表的跨表度量。",
+      "expression": "divide(add(fnd23_icsm_m_tait, fnd23_intfvm_tdbs), fnd23_intfvmalld1_tota)",
+      "fields_used": [
+        "fnd23_icsm_m_tait",
+        "fnd23_intfvm_tdbs",
+        "fnd23_intfvmalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_09",
+      "cluster_ref": "有效税负与递延税盾摩擦",
+      "field_semantics_mapping": "tbie/tait = 税前/税后利润（利润表口径）；tdbs = 递延税负债（资产负债表口径）；tota = 资产锚。",
+      "economic_mechanism": "两个税务激进度指标的乘积交互项：左边是有效税率（利润表），右边是递延税负强度（资产负债表）。只有两者同时极端（有效税率极低 + 递延税负极重）时才产生大值，因此它捕捉的是『双重确认激进』的少数公司，而非任一维度偏高的公司。乘积形式是真正的交互项。",
+      "expression": "multiply(divide(subtract(fnd23_icsm_m_tbie, fnd23_icsm_m_tait), fnd23_icsm_m_tbie), divide(fnd23_intfvm_tdbs, fnd23_intfvmalld1_tota))",
+      "fields_used": [
+        "fnd23_icsm_m_tbie",
+        "fnd23_icsm_m_tait",
+        "fnd23_intfvm_tdbs",
+        "fnd23_intfvmalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_10",
+      "cluster_ref": "短期刚性兑付压力与缓冲资产",
+      "field_semantics_mapping": "net_income_before_tax = 税前利润（内生偿债能力）；short_term_notes_current_2 = 当前短期票据余额（刚性兑付，alpha_count=1）；tota 锚。",
+      "economic_mechanism": "税前利润减去短期票据，衡量一年内必须兑付的刚性债务能否被当期内生盈利覆盖。覆盖为负意味着必须再融资或变卖资产；2022-2023 再融资成本飙升期，这类公司被迫高息滚续，利润被利息侵蚀形成负反馈。该指标是利率敏感度的直接度量。",
+      "expression": "divide(subtract(net_income_before_tax, short_term_notes_current_2), fnd23_intfvmfm2_tota)",
+      "fields_used": [
+        "net_income_before_tax",
+        "short_term_notes_current_2",
+        "fnd23_intfvmfm2_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_11",
+      "cluster_ref": "短期刚性兑付压力与缓冲资产",
+      "field_semantics_mapping": "税前利润、短期票据、季度资产锚。",
+      "economic_mechanism": "与 SEED_BO_10 同经济含义，但改用比率剪刀差（利润率 − 短债率）而非先减后除。两种代数形式不等价：先减后除会被小资产公司放大，比率剪刀差对分母更稳健。这一对构成『代数形式』的单变量对照。",
+      "expression": "subtract(divide(net_income_before_tax, fnd23_blsm_tota), divide(short_term_notes_current_2, fnd23_blsm_tota))",
+      "fields_used": [
+        "net_income_before_tax",
+        "short_term_notes_current_2",
+        "fnd23_blsm_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_12",
+      "cluster_ref": "短期刚性兑付压力与缓冲资产",
+      "field_semantics_mapping": "fnd23_intfvm_acos = 其他流动资产（可动用缓冲，alpha_count=0）；short_term_notes_current_2 = 短期票据；tota = 资产锚。",
+      "economic_mechanism": "缓冲资产率减去刚性短债率，得到流动性净头寸率。用比率剪刀差而非先减后除，可避免小资产公司被放大。该指标纯资产负债表口径，不涉及利润表，与所有盈利类因子正交，是信贷收缩期的安全边际度量。",
+      "expression": "subtract(divide(fnd23_intfvm_acos, fnd23_intfvmalld1_tota), divide(short_term_notes_current_2, fnd23_intfvmalld1_tota))",
+      "fields_used": [
+        "fnd23_intfvm_acos",
+        "short_term_notes_current_2",
+        "fnd23_intfvmalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_13",
+      "cluster_ref": "短期刚性兑付压力与缓冲资产",
+      "field_semantics_mapping": "短期票据（分子，压力）、其他流动资产（缓冲）、税前利润（第二重缓冲）。",
+      "economic_mechanism": "刚性兑付压力率 = 短债 /(缓冲资产 + 内生盈利)。分母越大覆盖越充分，压力率越低。与减法形式不同，比率形式对分母规模敏感，能区分『大公司的小压力』与『小公司的大压力』。取反向即得多头组合。",
+      "expression": "divide(short_term_notes_current_2, add(fnd23_intfvm_acos, net_income_before_tax))",
+      "fields_used": [
+        "short_term_notes_current_2",
+        "fnd23_intfvm_acos",
+        "net_income_before_tax"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_14",
+      "cluster_ref": "资本开支转化效率与内生造血差",
+      "field_semantics_mapping": "扣非净利润、季度资本开支（alpha_count=0）、两套零拥挤资产锚。",
+      "economic_mechanism": "扣非利润减资本开支即扣非自由现金流，除以双资产锚合计得到单位资产的内生造血。用两套独立资产口径相加作分母，可抵消单一资产锚的口径误差，使分母更稳健。该指标区分内生造血式扩张与烧钱式扩产。",
+      "expression": "divide(subtract(net_income_before_extraordinary, quarterly_icex_value), add(fnd23_intfvmalld1_tota, fnd23_blsm_tota))",
+      "fields_used": [
+        "net_income_before_extraordinary",
+        "quarterly_icex_value",
+        "fnd23_intfvmalld1_tota",
+        "fnd23_blsm_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_15",
+      "cluster_ref": "资本开支转化效率与内生造血差",
+      "field_semantics_mapping": "扣非利润、资本开支、总资产、普通股本。资产减股本 = 负债型资本。",
+      "economic_mechanism": "『扣非利润 − 资本开支』除以负债型资本，衡量单位债务型资本所产生的净造血，直接回答『借来的钱有没有赚回本』。比值越高说明扩张靠内生现金流而非持续举债，在融资收紧时更抗压。",
+      "expression": "divide(subtract(net_income_before_extraordinary, quarterly_icex_value), subtract(fnd23_blsm_tota, fnd23_blsm_smcq))",
+      "fields_used": [
+        "net_income_before_extraordinary",
+        "quarterly_icex_value",
+        "fnd23_blsm_tota",
+        "fnd23_blsm_smcq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_16",
+      "cluster_ref": "资本开支转化效率与内生造血差",
+      "field_semantics_mapping": "quarterly_icex_value = 季度资本开支；fnd23_blsm_smcq = 季度普通股本（alpha_count=1，低拥挤权益锚）。",
+      "economic_mechanism": "资本开支 / 普通股本 = 股东权益被再投资的强度。纯资本配置强度度量，不含利润表信息，与盈利类因子完全正交。高再投资强度本身不是坏事，但必须由未来盈利增长偿付；在资本回报率下行的宏观环境中，高强度再投资反而是价值毁灭。",
+      "expression": "divide(quarterly_icex_value, fnd23_blsm_smcq)",
+      "fields_used": [
+        "quarterly_icex_value",
+        "fnd23_blsm_smcq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_17",
+      "cluster_ref": "资本开支转化效率与内生造血差",
+      "field_semantics_mapping": "扣非利润、资本开支、资产锚、股本锚。",
+      "economic_mechanism": "『扣非利润 − 资本开支』除以『总资产 + 普通股本』，得到单位综合资本投入的净造血。分母同时包含债务型资本（资产）与权益型资本（股本），比单用资产更贴近真实资本成本基础。这是四字段骨架中经济含义最完整的一条。",
+      "expression": "divide(subtract(net_income_before_extraordinary, quarterly_icex_value), add(fnd23_intfvmalld1_tota, fnd23_blsm_smcq))",
+      "fields_used": [
+        "net_income_before_extraordinary",
+        "quarterly_icex_value",
+        "fnd23_intfvmalld1_tota",
+        "fnd23_blsm_smcq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_18",
+      "cluster_ref": "核心盈余纯度与非营业噪音剥离",
+      "field_semantics_mapping": "扣非利润、其他净收益、非营业收入、资产锚。",
+      "economic_mechanism": "三重剥离：扣非利润率 − 杂项收益率 − 非营业收益率。这是本批最彻底的利润纯度度量，把营业内杂项与营业外收入逐层剥掉，剩下的才是主营真正赚到的部分。三层剥离在会计上对应利润表的三个层级，因此残差的经济含义明确而非统计凑数。",
+      "expression": "subtract(subtract(divide(net_income_before_extraordinary, fnd23_intfvmalld1_tota), divide(other_net_income_total, fnd23_intfvmalld1_tota)), divide(non_operating_income_total, fnd23_intfvmalld1_tota))",
+      "fields_used": [
+        "net_income_before_extraordinary",
+        "other_net_income_total",
+        "non_operating_income_total",
+        "fnd23_intfvmalld1_tota"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_19",
+      "cluster_ref": "资本开支转化效率与内生造血差",
+      "field_semantics_mapping": "扣非利润、总资产、普通股本。分母 = 负债型资本。",
+      "economic_mechanism": "扣非利润除以负债型资本，是债务资本回报率的冷门口径。与 ROA（分母含权益）和 ROE（分母仅权益）都不同，它单独衡量债权资金被使用的效率。低杠杆公司该比值接近 ROA，高杠杆公司则被放大，因此天然携带杠杆交互信息。",
+      "expression": "divide(net_income_before_extraordinary, subtract(fnd23_intfvmalld1_tota, fnd23_blsm_smcq))",
+      "fields_used": [
+        "net_income_before_extraordinary",
+        "fnd23_intfvmalld1_tota",
+        "fnd23_blsm_smcq"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_BO_20",
+      "cluster_ref": "核心盈余纯度与非营业噪音剥离",
+      "field_semantics_mapping": "非营业收入、税前利润、资产锚。",
+      "economic_mechanism": "反向构造：非营业收入减税前利润再取 reverse，经济含义与 SEED_BO_01 相同但代数符号路径不同。用于检验信号是否对符号路径稳健——若两者回测高度一致，说明信号来自经济实质而非代数巧合；若不一致，说明中间存在非线性截断。",
+      "expression": "reverse(divide(subtract(non_operating_income_total, net_income_before_tax), fnd23_intfvmalld1_tota))",
+      "fields_used": [
+        "non_operating_income_total",
+        "net_income_before_tax",
+        "fnd23_intfvmalld1_tota"
+      ],
+      "times": 0
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "fundamental23 是 Point-in-Time 季度财务报表库，1748 个字段中 1138 个从未被任何 Alpha 使用。核心信息摩擦不在『利润高低』，而在三处会计口径接缝：(1) 同一经济量由不同报表口径重复披露，其背离即重述与口径摩擦；(2) 有效税负与递延所得税负债的背离，暴露会计确认激进程度；(3) 刚性短期票据与缓冲性流动资产的期限错配。本批刻意回避 fnd23_ofc / fnd23_net_income / fnd23_tot_assets（存量 Alpha 分别 55 / 43 / 22 条），改用 alpha_count 为 0~2 的细粒度科目与低拥挤规模锚点，从源头切断与生产库的共线通道。",
+    "economic_clusters": [
+      {
+        "cluster_name": "核心盈余纯度与非营业噪音剥离",
+        "fields": [
+          "net_income_before_tax",
+          "net_income_before_extraordinary",
+          "non_operating_income_total",
+          "other_net_income_total"
+        ],
+        "cluster_logic": "管理层在盈利承压期通过资产处置与杂项收益粉饰表观利润；剥离非营业噪音后得到只能靠主营赚出的部分，其在衰退期的持续性显著高于表观利润。"
+      },
+      {
+        "cluster_name": "有效税负与递延税盾摩擦",
+        "fields": [
+          "fnd23_icsm_m_tbie",
+          "fnd23_icsm_m_tait",
+          "fnd23_intfvm_tdbs",
+          "fnd23_intfvmalld1_tdbs"
+        ],
+        "cluster_logic": "账面有效税率异常低而递延税负累积，说明利润的税务确认被推迟（账面利润高于应税利润），税率上行周期会被强制回吐。"
+      },
+      {
+        "cluster_name": "短期刚性兑付压力与缓冲资产",
+        "fields": [
+          "short_term_notes_current_2",
+          "fnd23_intfvm_acos",
+          "fnd23_intfvmalld1_acoa",
+          "net_income_before_tax"
+        ],
+        "cluster_logic": "短期票据是刚性兑付，其他流动资产是可动用缓冲；用内生利润与缓冲覆盖短债，衡量再融资成本飙升时的财务免疫度。"
+      },
+      {
+        "cluster_name": "资本开支转化效率与内生造血差",
+        "fields": [
+          "quarterly_icex_value",
+          "net_income_before_extraordinary",
+          "fnd23_blsm_smcq",
+          "fnd23_intfvmalld1_tota"
+        ],
+        "cluster_logic": "扣非盈利增量与季度资本开支的剪刀差，区分内生造血式扩张与烧钱式扩产。"
+      },
+      {
+        "cluster_name": "同源口径背离摩擦",
+        "fields": [
+          "net_income_before_tax",
+          "fnd23_icsm_m_tbie",
+          "fnd23_intfvm_taiv"
+        ],
+        "cluster_logic": "同一经济量由两套独立口径披露，其背离即重述与口径摩擦，是纯数据摩擦信号，与传统比率正交。"
+      }
+    ]
+  }
+}

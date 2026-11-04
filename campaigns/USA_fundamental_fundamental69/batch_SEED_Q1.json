@@ -1,0 +1,241 @@
+{
+  "seed_id": "SEED_Q1_INVARIANCE",
+  "seed_expression": "divide(fnd69_capxy2q, fnd69_qta)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "slot_quota": {
+    "parent_evolution": 4,
+    "orthogonal_exploration": 4
+  },
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "PARENT_CROSS_SECTIONAL_SYMMETRY",
+      "expression": "group_zscore(divide(fnd69_capxy2q, fnd69_qta), subindustry)",
+      "optimize_reason": "母本衡量季度资本开支相对资产规模的投资强度；本槽仅把截面映射从原始比率换为子行业组内Z分数，旨在纠正非负或偏态比率通过rank产生只做多、无法形成对称组合的问题。组内标准化会以当日可用同业横截面均值和标准差居中，不对字段常数做臆测，也不引入第二个有符号量的乘积。资本开支与资产规模单位经比值消除规模维度，行业内比较控制商业模式差异。仍需实测字段是否普遍为零、是否报告更新期间长时间不变，以及小组标准差是否退化；Z分数不保证消除缺失选择，也不承诺预测方向。字段使用为2、算子数2、窗口无调参。",
+      "counterparty": "按原始资本开支金额或全市场强弱排序、忽视资产规模及同业差异的基本面投资者",
+      "economic_mechanism": "资本投入强度相对同业的偏离可能比原始金额更贴近资本配置效率；组内居中测试市场是否忽略同业相对效率。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 2,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "a401b4d0cb056ffee02fcb2abf0e79ce1e81682e8f3242b2d65525616369859c",
+        "reviewed_expr": "group_zscore(divide(fnd69_capxy2q, fnd69_qta), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "PARENT_INNOVATION_THEN_GROUP_STANDARDIZATION",
+      "expression": "group_zscore(ts_av_diff(divide(fnd69_capxy2q, fnd69_qta), 60), subindustry)",
+      "optimize_reason": "本母本演进先计算资本开支/资产比率，再用60日平均差提取相对自身近期基线的创新，最后做子行业组内标准化。资本开支强度可能长期受企业投资周期支配，静态截面水平容易挤入传统资本密集度风格；去掉自身历史均值后，信号转为近期投资强度相对过去的抬升或回落。最外层组内Z分数保持双边表达并限制行业尺度影响。季度字段每日重复会使60日窗口的观测有效样本远低于日数，若期间无更新，创新可能退化为零或仅在披露附近跳动；因此需重点阅读实际Long/Short、换手和收益年份，而不能把理论预期当成实证。仅用2字段、3算子、标准60窗口，非网格搜索。",
+      "counterparty": "把长期投资水平当成持续增长趋势、未区分近期资本配置变化的投资者",
+      "economic_mechanism": "资本开支强度相对自身近两月基线的变化可能包含增量信息，测试公告间市场反应是否迟缓。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "35c1cbf412828d0b12cab04b055ea3c89979f3d301ea6a1b58a71bfe5ea44295",
+        "reviewed_expr": "group_zscore(ts_av_diff(divide(fnd69_capxy2q, fnd69_qta), 60), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "PARENT_RAW_FLOW_INNOVATION",
+      "expression": "group_zscore(divide(ts_av_diff(fnd69_capxy2q, 60), fnd69_qta), subindustry)",
+      "optimize_reason": "与槽2保持同一经济假设，但将先做比率再去均值改为对资本开支金额本身做60日平均差，再除以当前总资产并进行子行业标准化。此受控结构比较的是基线差分与规模调整的先后顺序：若资产分母慢变，分子创新之后按资产归一可保留资本开支绝对增量对投资能力的经济解释；若金额横截面规模差过大，组内标准化能降低极端值影响。该顺序并非代数等价，资产变动可能改变其经济含义，且低覆盖字段可能产生长段缺失。对手盘是假设依据最新支出规模或原始比率作静态判断的人，而不是特定市场方向。使用平均差算子简化差分节点，所有窗口限定60日、2字段、3算子。",
+      "counterparty": "仅看资本开支绝对规模或比率水平、忽视近期支出增量的投资者",
+      "economic_mechanism": "以资产尺度表达近期新增投资强度，可检验资本开支创新而非规模本身是否被定价。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "4160c3a4a430089511aff66d744cb527e061df9ae75a93031ec9b6983d19e442",
+        "reviewed_expr": "group_zscore(divide(ts_av_diff(fnd69_capxy2q, 60), fnd69_qta), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "PARENT_OUTER_TEMPORAL_SMOOTHING",
+      "expression": "group_zscore(ts_decay_linear(divide(fnd69_capxy2q, fnd69_qta), 20), subindustry)",
+      "optimize_reason": "本槽保留资本开支/资产强度母本，在完整比率构造之后统一施加20日线性时序平滑，随后按子行业标准化。经济逻辑是假设资本计划信息的市场吸收并非瞬时完成，近期多个有效观测可以比单次更新更稳定；该式检验信息吸收速度，并非催化剂触发或非线性放大；将平滑放在最外层也避免只滤波一个分支而留下未平滑分支产生高频信号。另一方面，季报字段的重复值会让20日平滑只是延迟报告信号，可能继续降低已经偏低的基本面换手，不能先验认为改善Fitness。必须观察 turnover 与实际更新频率，并对小样本/缺失造成的平滑偏差保持警惕。该变体只改变处理拓扑，不扫描衰减窗口；标准20日、2字段、3算子，非线性权重不用于对字段相乘。",
+      "counterparty": "追逐单次财务披露脉冲、未考虑资本计划信息持续性与日间噪声的短线参与者",
+      "economic_mechanism": "资本投入信息可能逐步被吸收，外层时序平滑测试持续性是否提高稳健性并减少披露间噪声。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "8ca8d735f488d5ee727ab2ea90dd85c612b8b685cf4206005ece4bf3a540b972",
+        "reviewed_expr": "group_zscore(ts_decay_linear(divide(fnd69_capxy2q, fnd69_qta), 20), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "EXPLORATION_CASHFLOW_CAPEX_COMPOSITE",
+      "expression": "group_zscore(add(divide(fnd69_capxy2q, fnd69_qta), divide(fnd69_q2yfcnao, fnd69_qta)), subindustry)",
+      "optimize_reason": "本槽探索跨字段资本配置协同：先分别计算资产归一的资本支出强度与经营活动净现金流强度，再相加并对完整复合信号做子行业Z标准化。投资强度表达资金用途，经营现金流表达内部资金来源；若高资本投入伴随强经营现金创造，可能代表自我融资的成长投资，而现金流弱可能反映融资压力。此结构不直接相乘两条有符号信号，避免负负得正；先统一资产尺度再相加，并以组内标准化控制两者截面量级。潜在弱点是共用资产分母、报告覆盖和记账时点不同，可能造成伪协同或抵消。交易对手为分别阅读现金流报表项目、未整合资金来源与资金用途的人。3字段、4算子，机制与母本正交。",
+      "counterparty": "将经营现金创造与资本投资用途分开评估、未识别自我融资投资质量的参与者",
+      "economic_mechanism": "同业标准化后整合资金来源和资金用途，检验二者一致性是否提供单一资本支出比率没有的增量。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "901cef37dbb65187f1f5eb6127a25a23c3a077089764afb946e550fdb8cd4f28",
+        "reviewed_expr": "group_zscore(add(divide(fnd69_capxy2q, fnd69_qta), divide(fnd69_q2yfcnao, fnd69_qta)), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "EXPLORATION_LONG_HORIZON_POSITION",
+      "expression": "group_zscore(ts_rank(divide(fnd69_capxy2q, fnd69_qta), 252), subindustry)",
+      "optimize_reason": "本槽以252日滚动时序排名替代当前强度值，衡量公司资本投入强度处于自身年度历史的相对位置，再做子行业标准化。该构造降低跨公司静态商业模式差异，转向企业自身资本周期的位置；投资者可能将高资本支出视为短期现金流负担，却未识别其相对公司自身历史的制度性上行或收缩。年度窗口是标准金融周期且在生成前固定，不参与细网格搜索。季度字段按日重复会产生大量并列样本，排名可能由少数披露时点决定，因此须检查换手、Long/Short持仓和收益稳定性；字段覆盖缺口也不能靠排名修复。只包含母本2字段，嵌套rank与组内标准化共3个算子，不加入外部价格或收益变量。",
+      "counterparty": "以跨公司静态资本强度比较替代企业自身投资周期定位的投资者",
+      "economic_mechanism": "资本开支强度相对公司年度历史的位置可能揭示投资周期转折，检验静态水平错价是否是主因。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "dd053ff9ed040f6e037f6f71f827bb1e300993e79eabe3c405f0d4ed5e99d3ef",
+        "reviewed_expr": "group_zscore(ts_rank(divide(fnd69_capxy2q, fnd69_qta), 252), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "EXPLORATION_INVESTMENT_UNCERTAINTY",
+      "expression": "group_zscore(ts_std_dev(divide(fnd69_capxy2q, fnd69_qta), 60), subindustry)",
+      "optimize_reason": "本槽把方向性投资强度换成资本开支/资产比率的60日时序波动，解释为投资计划稳定性或不确定性，而非预设波动必然利好或利空。稳定的资本预算可能帮助市场评估未来回报，不稳定的项目支出则可能代表调整、并购整合或盈利可见度下降；市场可能低估披露频率低时的变化风险。组内标准化控制行业固有投资周期差异，保留可做多可做空的相对极端波动。稀疏季度更新会让标准差在无报告阶段机械偏低或在新报告日突跳，这是关键反证点，且60日里有效变动样本可能极少。字段仅2个，算子3个，窗口预先固定，不以极值调参。",
+      "counterparty": "只把资本支出视为方向性成长信息、忽略投资计划可预测性和不确定性的投资者",
+      "economic_mechanism": "同业内投资强度的时间不稳定性可能承载风险与可见度差异，检验其是否有别于投资强度水平。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "63a95c074e2d3f86d332a71575f51b47d2a6b3e5c81a249cce3134e825124d4d",
+        "reviewed_expr": "group_zscore(ts_std_dev(divide(fnd69_capxy2q, fnd69_qta), 60), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "EXPLORATION_CAPEX_CASHFLOW_SYNCHRONY",
+      "expression": "group_zscore(ts_corr(divide(fnd69_capxy2q, fnd69_qta), divide(fnd69_q2yfcnao, fnd69_qta), 60), subindustry)",
+      "optimize_reason": "本槽使用60日滚动相关性测试资本支出强度和经营现金流强度是否同步，而非把它们的静态水平简单加总。若投资随内部现金生成而扩张，可能是自我融资能力较强的资本配置；若支出与经营现金流错位，可能反映前置投资或资金压力。相关算子输出有符号，故直接按子行业做Z分数而非乘以任一字段，避免双有符号乘积语义反转。它与槽5的标准化水平加总形成明确正交机制：协动结构而非水平品质。两变量共用总资产分母可能引入共同分母相关性，且季度字段在60日内有效变化可能不足以估计相关，必须将无效/缺失警示纳入结果解释。3个数据字段、4个算子、标准60日，无价格量价污染。",
+      "counterparty": "分别解读资本支出和经营现金流、忽略二者资金来源协同结构的投资者",
+      "economic_mechanism": "投资和内部现金生成之间的时序协同可能传递资金来源与投资约束信息，测试分割式报表解读是否延迟定价。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao",
+          "fnd69_qta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "0f1969247ff4785176ba077c3fc0af8a84de573c18a24584a9a029507bf3c480",
+        "reviewed_expr": "group_zscore(ts_corr(divide(fnd69_capxy2q, fnd69_qta), divide(fnd69_q2yfcnao, fnd69_qta), 60), subindustry)"
+      }
+    }
+  ]
+}

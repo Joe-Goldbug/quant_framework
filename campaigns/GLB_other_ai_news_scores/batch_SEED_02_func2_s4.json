@@ -1,0 +1,148 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "dataset_id": "ai_news_scores",
+  "expected_polarity": 1,
+  "step": 4,
+  "seed_id": "SEED_02",
+  "max_ast_operators": 6,
+  "task_tag": "SEED_02_func2_s4",
+  "known_fields": [
+    "negative_score_average_value",
+    "negative_score_average_value_2",
+    "negative_score_average_value_4",
+    "negative_score_average_value_5",
+    "negative_score_confidence_lower_bound_2",
+    "negative_score_confidence_upper_bound_3",
+    "negative_score_maximum_value",
+    "negative_score_maximum_value_4",
+    "negative_score_median_value_3",
+    "negative_score_median_value_5",
+    "negative_score_minimum_value_2",
+    "negative_score_standard_deviation",
+    "negative_score_standard_deviation_2",
+    "negative_sentiment_dispersion_2",
+    "neutral_score_average_value",
+    "neutral_score_average_value_5",
+    "neutral_score_confidence_lower_bound_2",
+    "neutral_score_confidence_upper_bound_2",
+    "neutral_score_maximum_value_2",
+    "neutral_score_median_value_2",
+    "neutral_score_median_value_3",
+    "positive_score_average_value",
+    "positive_score_average_value_2",
+    "positive_score_average_value_5",
+    "positive_score_confidence_lower_bound_2",
+    "positive_score_confidence_lower_bound_3",
+    "positive_score_confidence_upper_bound_2",
+    "positive_score_confidence_upper_bound_3",
+    "positive_score_maximum_value_2",
+    "positive_score_maximum_value_3",
+    "positive_score_maximum_value_4",
+    "positive_score_median_value",
+    "positive_score_median_value_3",
+    "positive_score_minimum_value_2",
+    "positive_score_standard_deviation",
+    "positive_score_standard_deviation_2"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 120), ts_mean(negative_score_maximum_value_4, 120)), subindustry)",
+      "optimize_reason": "【深水区·跨评分器共识·N=120】上一轮实锤：group_rank(ts_mean(maximum_value,250)) 达到 Sharpe 1.47 / 换手 2.72% / Margin 20.69bps / 多空 4119:5049，病灶（换手、失衡、Margin）已被结构性治愈，唯一未达标项是 Fitness 0.70（因换手已低于 12.5% 的截断下限，Fitness 只剩「绝对收益」一个自由度）。本槽在频率内核不变的前提下引入第二个独立评分器 maximum_value_4（prv25 变体，alpha_count 极低=冷门字段，符合铁律 A）：单评分器可能有模型偏差，两个平行模型都给出「持续被负面事件触达」的判定时，才是稳健的状态信号。相加是量纲同源的同极性融合，不引入跨聚合（median/avg）污染。算子数=4。"
+    },
+    {
+      "slot": 2,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(negative_score_maximum_value_4, 250)), subindustry)",
+      "optimize_reason": "【深水区·跨评分器共识·2N=250·参数高原】与 slot 1 严格同骨架，频率窗口 120→250，构成共识族的 (N,2N) 成对探针。若两窗 Sharpe 都高于单评分器基线 1.35/1.47，说明跨模型共识确实提升了信噪比（多评分器降噪是教科书级的稳定性来源，不是拟合）；若共识反而稀释了单评分器的强度，则说明 maximum_value_4 的覆盖区域与主序列正交过多，应回退纯单字段版本。这是储能判断冠军骨架的最后一票。算子数=4。"
+    },
+    {
+      "slot": 3,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(ts_mean(subtract(negative_score_maximum_value, negative_score_average_value), 120), subindustry)",
+      "optimize_reason": "【深水区·尾部厚度状态化·N=120】上一轮真正赚钱的是这条线：连续壳 group_neutralize(ts_mean(max-avg,250),20) 拿到 4.44% 年化收益与 67.68bps Margin（全批最高），但 Sharpe 仅 0.77、且多空 2099:4862 仍失衡。诊断：失衡与低 Sharpe 来自连续幅度壳的权重量级分布（少数极端股吃掉大部分仓位），而非信号本身失效。本槽保留它的收益内核（max−avg 的慢变均值），只把外层换成 rank 拍平，把「幅度」换成「位次」，预期 Sharpe 显著抬升而收益基本保留——这将是「Sharpe 主干 + 收益主干」两支融合前的必要中介形态。算子数=3。"
+    },
+    {
+      "slot": 4,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(ts_mean(subtract(negative_score_maximum_value, negative_score_average_value), 250), subindustry)",
+      "optimize_reason": "【深水区·尾部厚度状态化·2N=250·参数高原】与 slot 3 同骨架，窗口 120→250，构成尾部厚度状态族的 (N,2N) 成对探针。该对是在验证一个关键命题：上一轮 4.4% 的高收益到底来自「慢变状态」还是「幅度保留」。若 rank 化后收益基本不变而 Sharpe 抬升，则收益来自状态、rank 只是噪声抑制器，可放心与频率主干并列；若收益随 rank 化大幅缩水，则说明高收益依赖少数极端股的幅度，必须保留连续壳并用其余手段补 Sharpe。算子数=3。"
+    },
+    {
+      "slot": 5,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "add(group_neutralize(ts_mean(negative_score_maximum_value, 120), subindustry), group_neutralize(ts_mean(subtract(negative_score_maximum_value, negative_score_average_value), 120), subindustry))",
+      "optimize_reason": "【深水区·双主干等权融合·连续壳·N=120】第一次把两支证据最硬的主干合成：频率主干（Sharpe 1.47、Margin 20.7bps、多空近乎对称）与尾部厚度主干（收益 4.4%、Margin 48~68bps）。等权相加后两端在同一量纲（子行业去均值后的幅度）上叠加，Sharpe 由分散化效应抬升、收益由第二主干补足，这正是 Fitness 从 0.70 走向 1.0 的唯一可能路径。保留连续幅度（非 rank 外壳）以满足铁律 B 并压低与平台存量 rank 因子的 ProdCorr——rank 拍平是 ProdCorr 0.65~0.85 的主因。算子数=6（add, group_neutralize×2, ts_mean×2, subtract）。"
+    },
+    {
+      "slot": 6,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "add(group_neutralize(ts_mean(negative_score_maximum_value, 250), subindustry), group_neutralize(ts_mean(subtract(negative_score_maximum_value, negative_score_average_value), 250), subindustry))",
+      "optimize_reason": "【深水区·双主干等权融合·连续壳·2N=250·参数高原】与 slot 5 同骨架，两主干窗口同步 120→250，构成融合族的 (N,2N) 成对探针。这是冠军台的最强候选：若两窗 Sharpe 均 ≥1.5 且收益 ≥3.5%、Margin ≥15bps、多空接近 1:1，则它同时满足「参数高原 + 低换手 + 高 Margin + 幅度保留 + 算子 ≤6」，可直接作为该主锚的唯一代表提交。若 250 窗显著优于 120，则说明状态记忆以年度为周期，最终版应锁 250。算子数=6。"
+    },
+    {
+      "slot": 7,
+      "type": "explore",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(negative_score_maximum_value, add(negative_score_standard_deviation, 1)), 120), subindustry)",
+      "optimize_reason": "【深水区·强度×争议状态化·N=120】第三条主干是上一轮 Margin 最高的构造（强度×分歧，Margin 32~50bps、收益 3.8~4.1%，但 Sharpe 仅 0.5）。它低 Sharpe 的原因在于两个分量各自波动大，而不是信息本身无效。本槽不采用「两路 rank 相加」（无量纲 rank 加总属纯数学拼凑，已被 AST 门禁物理拦截），而把分歧做成强度的乘数：max×(1+σ)。这是有量纲意义的构造——极值事件得分被「叙事分歧度」加权：同一件坏事被多条互相矛盾的报道同日围困时得分最高，叙事统一时完全不放大（σ=0 时退回原始强度，不破坏已有信息）。算子数=4，且只保留一个 rank 外壳，与平台存量 rank 因子的 ProdCorr 更低。"
+    },
+    {
+      "slot": 8,
+      "type": "explore",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(negative_score_maximum_value, add(negative_score_standard_deviation, 1)), 250), subindustry)",
+      "optimize_reason": "【深水区·强度×争议状态化·2N=250·参数高原】与 slot 7 严格同骨架，频率窗口 120→250，构成争议加权族的 (N,2N) 成对探针。若两窗 Sharpe 均高于纯强度频率主干（1.35/1.47），则「用分歧给强度加权」提供了真实增量信息（可解释为市场对争议性坏消息的定价更不充分），可作最终版第二分量；若被稀释，则分歧度只是噪声放大器，最终版只用纯强度。算子数=4。"
+    },
+    {
+      "slot": 9,
+      "type": "explore",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "INDUSTRY",
+      "expression": "add(group_zscore(ts_mean(negative_score_maximum_value, 120), subindustry), group_zscore(ts_mean(negative_score_average_value, 120), subindustry))",
+      "optimize_reason": "【深水区·极值×均值双状态·连续壳·N=120】上一轮 group_zscore 单用 average_value 的频率形态只拿到 0.19~0.21 夏普（几乎无效），而单用 maximum_value 的 rank 形态有 1.35~1.47，说明均值场单独不足以承载信号。但均值场的价值在于它是「叙事基调」而非「事件强度」，与极值场在截面上并不完全共线。本槽把两者的连续 z-score 相加：若合并后 Sharpe 超过极值单干，则说明基调场提供了增量信息（可解释为「长期被负面报道包围」的独立溢价）；若被稀释，则确定均值场在频率维度上无增量，最终版只用极值场。这是奥卡姆剪枝的证据来源。算子数=5。"
+    },
+    {
+      "slot": 10,
+      "type": "explore",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "INDUSTRY",
+      "expression": "add(group_zscore(ts_mean(negative_score_maximum_value, 250), subindustry), group_zscore(ts_mean(negative_score_average_value, 250), subindustry))",
+      "optimize_reason": "【深水区·极值×均值双状态·连续壳·2N=250·参数高原】与 slot 9 同骨架，窗口同步 250，构成双状态族的 (N,2N) 成对探针。长窗下均值场的记忆更接近「年度新闻基调」，若此窗增益大于 120 窗，说明基调信息需要更长窗口才能沉淀（与频率主干的 250 优于 120 相互印证）；若两窗都无增量，则坚定剔除均值场。该对同时是非 rank 外壳（铁律 B）与低 ProdCorr 探索的代表。算子数=5。"
+    },
+    {
+      "slot": 11,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "add(group_neutralize(ts_mean(negative_score_maximum_value, 120), subindustry), group_neutralize(ts_mean(negative_score_average_value, 120), subindustry))",
+      "optimize_reason": "【深水区·极值×均值双状态·幅度壳·N=120】与 slot 9 同字段同窗口，仅把外层由 group_zscore 换成 group_neutralize（去均值但不去尺度），检验「双状态融合」的效力是否依赖标准化方式。z-score 会强制把每个支路压成单位方差，若某一支路本身是弱信号（均值场），标准化会把它放大到与强支路等权，反而稀释；group_neutralize 保留原始量级，让强信号（极值场，量级约 0.35~0.98）自然主导，弱信号只做微调。若本槽显著优于 slot 9，则最终版的幅度融合应使用 group_neutralize 而非 group_zscore。算子数=5。"
+    },
+    {
+      "slot": 12,
+      "type": "exploit",
+      "original_alpha": "Vkxp3OWA",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "add(group_neutralize(ts_mean(negative_score_maximum_value, 250), subindustry), group_neutralize(ts_mean(negative_score_average_value, 250), subindustry))",
+      "optimize_reason": "【深水区·极值×均值双状态·幅度壳·2N=250·参数高原】与 slot 11 同骨架，窗口同步 250，构成幅度壳双状态族的 (N,2N) 成对探针。这是本批最后一块拼图：若 11/12 的 Sharpe 与 Margin 同时优于 5/6（双主干融合），则证伪了「尾部厚度是第二主干」的假设，真正的第二分量是均值基调；反之则维持 max−avg 分支。无论哪支胜出，本批 12 槽已覆盖「频率主干 × {共识/尾部厚度/争议共振/均值基调}」的全部两两组合空间，冠军可直接依据实测挤占决定。算子数=5。"
+    }
+  ]
+}

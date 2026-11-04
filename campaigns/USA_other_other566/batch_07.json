@@ -1,0 +1,79 @@
+{
+  "batch": 7,
+  "family": "freshness_gating_trade_when",
+  "hypothesis": "预测新鲜度门控: other566 模型每日重训重估, 但多数个股预测数日内不变。跟随未变化的预测是纯换手噪音。trade_when 只在信息真正到达 (预测发生变化) 时更新持仓, 事件之间冻结 = 信念持有, 与「分析师评级上调后持有 N 日」的事件驱动逻辑同构。8 个槽位分别对不同更新条件 (预测变 / 置信变) 与不同信号腿 (水平 / 修正) 交叉, 以确定最优门控对象。",
+  "items": [
+    {
+      "id": "b7_t1",
+      "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_r20marsi_ret, 1), 0), multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), -1), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b7_t2",
+      "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_r20marsi_ret, 5), 0), multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), -1), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b7_t3",
+      "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_l5r20gasfculr_ret, 1), 0), multiply(ts_zscore(oth566_l5r20gasfculr_ret, 60), group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), -1), subindustry)",
+      "ops": 6,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_l5r20gasfculr_prob_pattern"
+      ]
+    },
+    {
+      "id": "b7_t4",
+      "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_multil3_label, 1), 0), multiply(ts_zscore(oth566_multil3_label, 60), group_rank(oth566_multil3_prob, industry)), -1), subindustry)",
+      "ops": 6,
+      "fields": [
+        "oth566_multil3_label",
+        "oth566_multil3_prob"
+      ]
+    },
+    {
+      "id": "b7_t5",
+      "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_l3r5_prob, 1), 0), multiply(oth566_l3r5_label, group_rank(oth566_l3r5_prob, industry)), -1), subindustry)",
+      "ops": 6,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ]
+    },
+    {
+      "id": "b7_t6",
+      "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_r20marsi_prob_5, 1), 0), multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), -1), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b7_t7",
+      "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_l5r20gasfculr_ret, 1), 0), multiply(ts_delta(oth566_l5r20gasfculr_ret, 5), group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), -1), subindustry)",
+      "ops": 6,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_l5r20gasfculr_prob_pattern"
+      ]
+    },
+    {
+      "id": "b7_t8",
+      "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_return, 1), 0), multiply(ts_delta(oth566_return, 5), group_rank(oth566_prob_2, industry)), -1), subindustry)",
+      "ops": 6,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ]
+    }
+  ]
+}

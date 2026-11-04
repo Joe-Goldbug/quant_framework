@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "region": "GLB",
+    "universe": "MINVOL10M",
+    "delay": 1,
+    "decay": 0,
+    "neutralization": "COUNTRY",
+    "truncation": 0.025
+  },
+  "items": [
+    {
+      "tag": "W28_1_w3_ind",
+      "expression": "group_rank(add(ts_delta(winsorize(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), std=3), 252), ts_delta(winsorize(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), std=3), 63)), industry)"
+    },
+    {
+      "tag": "W28_2_w3_sector",
+      "expression": "group_rank(add(ts_delta(winsorize(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), std=3), 252), ts_delta(winsorize(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), std=3), 63)), sector)"
+    },
+    {
+      "tag": "W28_3_w25_ind",
+      "expression": "group_rank(add(ts_delta(winsorize(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), std=2.5), 252), ts_delta(winsorize(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), std=2.5), 63)), industry)"
+    },
+    {
+      "tag": "W28_4_w3_subind",
+      "expression": "group_rank(add(ts_delta(winsorize(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), std=3), 252), ts_delta(winsorize(divide(add(fnd23_intfvalld1_tait, fnd23_ofc), fnd23_intfvalld1_letq), std=3), 63)), subindustry)"
+    }
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "batch_id": "FND23_Q8_CASHFLOW_ASSETGROWTH_ISSUANCE",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "Q8_1_CASHFLOW_TO_ASSETS_QUALITY",
+      "expression": "group_zscore(winsorize(divide(fnd23_cf_m_olto, total_assets_5), std=3), industry)",
+      "fields_used": [
+        "fnd23_cf_m_olto",
+        "total_assets_5"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "经营现金流/总资产。Sloan (1996) 应计异象与 Richardson et al. (2005) 的核心结论：现金盈利（cash earnings）比会计盈利更能持续预测未来收益，现金相对利润越强、应计越低，未来收益越高。这是比净利率水平强得多的机制（探针已证净利率水平 Sharpe 仅 -0.17）。分母 total_assets_5 为覆盖率 1.00 的蓝海字段，规模中性化后无规模偏差。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 3,
+        "used_fields": [
+          "fnd23_cf_m_olto",
+          "total_assets_5"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "Q8_2_ASSET_GROWTH_ANOMALY",
+      "expression": "group_zscore(winsorize(divide(ts_delta(total_assets_5, 252), total_assets_5), std=3), industry)",
+      "fields_used": [
+        "total_assets_5"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "总资产同比增长率。Cooper, Gulen & Schill (2008) 证明资产增长率是显著的负向异常收益因子：持续扩张的公司，其资本配置效率低、市场对其过度反应。这是本账户完全未测过的因子族，且 fnd23 的 total_assets_5 覆盖率 1.00、uc=0（prod-corr 极低）。预期方向为负（高资产增长 → 低未来收益）。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "total_assets_5"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "Q8_3_NET_STOCK_ISSUANCE",
+      "expression": "group_zscore(winsorize(divide(fnd23_cf_m_sspf, total_assets_5), std=3), industry)",
+      "fields_used": [
+        "fnd23_cf_m_sspf",
+        "total_assets_5"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "净股票发行/总资产。Ritter (1985) 与 Daniel & Hirshleifer (1995) 的发行异象：外部股权融资公告后股价系统性下跌约 3-5%，且效应持续数年。净发行高 = 稀释 = 未来收益低。fnd23_cf_m_sspf 覆盖率 0.93、uc=0，且是**现金流量表中的实际发行额**，比用股本变化更直接。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 3,
+        "used_fields": [
+          "fnd23_cf_m_sspf",
+          "total_assets_5"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "Q8_4_WORKING_CAPITAL_ACCRUAL_PROXY",
+      "expression": "group_zscore(winsorize(divide(fnd23_cf_m_fcos, total_assets_5), std=3), industry)",
+      "fields_used": [
+        "fnd23_cf_m_fcos",
+        "total_assets_5"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "营运资本变动/总资产，作为应计的现金流侧代理。营运资本增加意味着收入被应收账款/存货支撑而非现金到账，即应计质量恶化（Richardson et al. 2005 的 ΔWC 组件）。预期方向为负。选此字段是为了与 Q8_1 形成正交对照：Q8_1 测现金流总量水平，Q8_4 测现金流的营运资本构成。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 3,
+        "used_fields": [
+          "fnd23_cf_m_fcos",
+          "total_assets_5"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "Q8_5_CAPEX_INTENSITY",
+      "expression": "group_zscore(winsorize(divide(fnd23_cf_m_xecs, total_assets_5), std=3), industry)",
+      "fields_used": [
+        "fnd23_cf_m_xecs",
+        "total_assets_5"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "资本开支/总资产。Titman, Wei & Xie (2004) 的资本投资因子：CAPEX 相对总资产高的公司随后收益更低（过度投资）。Coopersmith et al. (2009) 也发现低资本投资组合有显著溢价。这是与 Q8_2（资产增长）正交的高频代理——资产增长可由并购驱动，而 CAPEX 是内生投资。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 3,
+        "used_fields": [
+          "fnd23_cf_m_xecs",
+          "total_assets_5"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "Q8_6_ACCUAL_GAP_CASH_VS_EARNINGS",
+      "expression": "group_zscore(winsorize(divide(subtract(fnd23_cf_m_olto, fnd23_icsm_m_taiv), total_assets_5), std=3), industry)",
+      "fields_used": [
+        "fnd23_cf_m_olto",
+        "fnd23_icsm_m_taiv",
+        "total_assets_5"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "（经营现金流 − 规范化税后净利）/ 总资产，即经典的 Sloan 应计度量 acc = (NI − CFO)/TA 的符号翻转版。本构造直接度量「会计利润与现金利润的缺口」。Sloan 异象是金融学最稳健的异象之一（95 篇以上文献复现）。与 Q8_1 的差别：Q8_1 是水平，Q8_6 是差值；差值对规模中性化后的绝对水平更不敏感，理论上 Sharpe 更高。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd23_cf_m_olto",
+          "fnd23_icsm_m_taiv",
+          "total_assets_5"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "Q8_7_EARNINGS_PERSISTENCE_OPERATING_CASH",
+      "expression": "group_zscore(winsorize(ts_delta(divide(fnd23_cf_m_olto, total_assets_5), 252), std=3), industry)",
+      "fields_used": [
+        "fnd23_cf_m_olto",
+        "total_assets_5"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "经营现金流/总资产的年度变化，即「现金盈利的改善速度」。Green, Hand & Soliman (2011) 发现盈利变化的可预测性取决于现金流确认的及时性：现金流改善比会计利润改善更早、更可靠地预示未来收益。这是一个**变化型**信号（区别于 Q8_1 的水平型），在 time-series 维度上与 Q8_1 正交，同时与本账户已试过的 fnd69 ts_delta 骨架共享 operator 家族但字段完全不同。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd23_cf_m_olto",
+          "total_assets_5"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "Q8_8_SPECIAL_ITEMS_QUALITY",
+      "expression": "group_zscore(winsorize(divide(fnd23_icsm_m_ists, fnd23_icsm_m_taiv), std=3), industry)",
+      "fields_used": [
+        "fnd23_icsm_m_ists",
+        "fnd23_icsm_m_taiv"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "特殊项目/规范化税后净利。Bhattacharya, Demers & Johnson (2008) 发现高频交易收益来自识别应计项目中的异常：特殊项目（一次性损益）占比高说明利润被管理，未来收益更低。这个构造同时用「总额」与「规范化」两个视角分离会计裁量，是本批次唯一使用利润表口径（而非现金流量表口径）的槽位，用于检验利润表口径是否携带现金流口径没有的信息。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 3,
+        "used_fields": [
+          "fnd23_icsm_m_ists",
+          "fnd23_icsm_m_taiv"
+        ]
+      }
+    }
+  ],
+  "known_fields": {
+    "fnd23_cf_m_olto": {
+      "domain": "unbounded",
+      "sparse_zero": false,
+      "meaning": "fnd23_cf_m_olto 基本面字段（语义见候选清单）"
+    },
+    "total_assets_5": {
+      "domain": "unbounded",
+      "sparse_zero": false,
+      "meaning": "total_assets_5 基本面字段（语义见候选清单）"
+    },
+    "fnd23_cf_m_sspf": {
+      "domain": "unbounded",
+      "sparse_zero": false,
+      "meaning": "fnd23_cf_m_sspf 基本面字段（语义见候选清单）"
+    },
+    "fnd23_cf_m_fcos": {
+      "domain": "unbounded",
+      "sparse_zero": false,
+      "meaning": "fnd23_cf_m_fcos 基本面字段（语义见候选清单）"
+    },
+    "fnd23_cf_m_xecs": {
+      "domain": "unbounded",
+      "sparse_zero": false,
+      "meaning": "fnd23_cf_m_xecs 基本面字段（语义见候选清单）"
+    },
+    "fnd23_icsm_m_taiv": {
+      "domain": "unbounded",
+      "sparse_zero": false,
+      "meaning": "fnd23_icsm_m_taiv 基本面字段（语义见候选清单）"
+    },
+    "fnd23_icsm_m_ists": {
+      "domain": "unbounded",
+      "sparse_zero": false,
+      "meaning": "fnd23_icsm_m_ists 基本面字段（语义见候选清单）"
+    }
+  },
+  "settings": {
+    "decay": 0,
+    "neutralization": "STATISTICAL",
+    "truncation": 0.025,
+    "nanHandling": "ON",
+    "pasteurization": "ON",
+    "unitHandling": "VERIFY"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "seed_id": "news12_eventdrift_v1",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 6,
+  "neutralization": "INDUSTRY",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "news_indx_perf",
+    "news_atr_ratio",
+    "news_atr14",
+    "news_max_up_ret",
+    "news_max_dn_ret",
+    "news_eod_close",
+    "news_eod_vwap",
+    "news_eod_high",
+    "news_eod_low",
+    "news_vol_stddev",
+    "news_high_exc_stddev",
+    "news_low_exc_stddev",
+    "news_short_interest"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "ABNORMAL_DRIFT_PER_RANGE",
+      "expression": "reverse(zscore(ts_backfill(divide(news_indx_perf, add(news_atr_ratio, 1)), 3)))",
+      "optimize_reason": "市场调整后的异常漂移 / 当日区间倍数（2 字段：news_indx_perf + news_atr_ratio）。经济机制：news_indx_perf 已经剔除 SPY 同期变动，是纯粹的个股特异位移——这一步至关重要，因为新闻日的位移有相当部分是行业/市场共振，不剔除就会得到一个高 β 的伪 alpha（账户里 news12 旧族 2Y Sharpe 上不去、Investability 也偏低的根因就在这里）。但『位移 5%』在不同波动的股票上意义完全不同：对一只日波动 1% 的公用事业股是 5 个西格玛事件，对一只日波动 8% 的生物科技股只是平常的一天。除以当日区间/20 日 ATR 倍数，把位移换算成『多少个正常交易日的波动』，即标准化的事件冲击强度，对应 Ball-Brown 意义上的『标准化意外』。取 reverse：标准化冲击越大说明市场越可能过度外推，随后回吐。ts_backfill(3) 处理无新闻日的快照缺口（事件型数据的标准做法），避免非事件日出现 NaN 导致持仓塌缩。本槽是整批的机制标定锚。"
+    },
+    {
+      "id": 2,
+      "type": "EXCURSION_ASYMMETRY_REVERSAL",
+      "expression": "reverse(zscore(ts_backfill(divide(subtract(news_max_up_ret, news_max_dn_ret), add(add(news_max_up_ret, news_max_dn_ret), 0.01)), 3)))",
+      "optimize_reason": "冲测不对称度的反转（2 字段：最大上冲% + 最大下冲%）。经济机制：(上冲 − 下冲)/(上冲 + 下冲) 是当日在新闻之后的**路径不对称度**，值域 (−1,1)、以 0 为对称锚，量纲在比值中完全相消。它测量的不是漂移的方向，而是『盘中曾经多强 / 曾经多弱』的相对幅度——在行为金融上这是外推偏差最直接的测量：投资者记住的是盘中摸到的高点，而不是收盘价，所以上冲远大于下冲的股票会被系统性地高估，随后回吐。账户既有证据支持这个方向：该比值在原始未平滑时的 |Sharpe| 达 1.37（本族最强单一构造），但原始换手 130% 不可用；本槽用 ts_backfill(3) + settings decay 6 把换手压回门禁内，并保留其方向信息，是本批最有希望在强度上突破的主攻槽。分母 +0.01 是除零保护（两极值可能同时为 0，即当日几乎无位移）。"
+    },
+    {
+      "id": 3,
+      "type": "CLOSE_PRESSURE_PER_ATR",
+      "expression": "reverse(zscore(ts_backfill(divide(subtract(news_eod_close, news_eod_vwap), news_atr14), 3)))",
+      "optimize_reason": "收盘订单流压力 / ATR（3 字段：收盘价 + 新闻后 VWAP + 14 日 ATR）。经济机制：news_eod_vwap 是『新闻时刻至收盘』的成交均价，收盘价高于该均价意味着新闻之后进场的人平均是浮亏的买入方——即尾盘存在净买入压力（可能是被动资金调仓、也可能是散户追高）。把它除以 ATR14 而不是除以事件条数，是相对既有实现的一处实质性改进：旧写法 divide(…, vec_count(...)) 的量纲是『美元/条』，与个股价格水平强相关，本质上混入了规模因子；除以 ATR 后量纲化为『多少个正常波动单位』，信号与股价水平、市值彻底脱钩，这应当直接改善可投资性与子宇宙 Sharpe。取 reverse：尾盘净买入压力越大，越可能是流动性/情绪驱动的错价，随后回归。这是 Graham-Harvey 意义上『收盘拍卖机制约束下的临时价格压力』，与信息类信号在机制上完全正交。"
+    },
+    {
+      "id": 4,
+      "type": "DRIFT_PER_VOLUME_SUPPORT",
+      "expression": "reverse(zscore(ts_backfill(divide(news_indx_perf, add(news_vol_stddev, 1)), 3)))",
+      "optimize_reason": "量能标准化的异常漂移（2 字段：市场调整位移 + 当日量能 z 值）。经济机制：同样幅度的新闻后位移，若伴随极高的异常成交量，说明是信息事件引发的真实重定价（大量资金在重新估值，价格发现完成度高）；若成交量平平却出现大幅位移，说明是流动性稀缺下的临时冲击（少数订单就能推动价格），随后必然回归。把位移除以 30 日量能 z 值，等价于按『成交量支撑度』给冲击打折：有量支撑的位移被压低、无量位移被放大，从而只保留流动性冲击这一类。这在市场微观结构文献里是标准的 Amihud 逻辑：价格冲击与成交量成反比，单位成交量带来的冲击越大，随后的反转越强。这条与第 1 槽用区间 normalize 是两条独立路径（一个用波动、一个用量能），二者的差值可以直接读出『究竟是波动尺度还是流动性尺度决定可交易性』，为后续四批的归一化选择定调。"
+    },
+    {
+      "id": 5,
+      "type": "DRIFT_PER_UPSIDE_EXCURSION",
+      "expression": "reverse(zscore(ts_backfill(divide(news_indx_perf, add(news_high_exc_stddev, 0.01)), 3)))",
+      "optimize_reason": "位移 / 上冲幅度（2 字段：市场调整位移 + 标准化上冲）。经济机制：news_high_exc_stddev 是 (EODHigh − TONLast) 除以 30 日收盘标准差，即『盘中最多涨了多少个标准差的波动』。它和收盘位移的比值刻画的是**位移的持续性**：比值接近 1 说明价格一路走高并收在高位（信息定价、趋势健康）；比值很小说明盘中冲高但收盘回落（典型的情绪脉冲 + 获利了结），这类股票随后往往继续走弱。因此该比值是『位移质量』而非『位移幅度』的度量，与第 1/4 槽的尺度归一在信息维度上正交。取 reverse 后，信号 = 做空『冲高但没守住』、做多『跌下去但没继续跌』的股票，经济叙事对应处置效应（disposition effect）：投资者在浮盈时过早卖出，压抑了真正的利好漂移，之后才补涨。该槽是整批唯一把『盘中路径形态』与『收盘结果』放在同一个比值里的构造。"
+    },
+    {
+      "id": 6,
+      "type": "SHORT_SQUEEZE_CONDITIONED_DRIFT",
+      "expression": "reverse(zscore(ts_backfill(divide(news_indx_perf, add(news_short_interest, 0.01)), 3)))",
+      "optimize_reason": "空头比例条件化的异常漂移（2 字段：市场调整位移 + 空头比例）。经济机制：news_short_interest 是流通股中被卖空的比例，它是『被迫买盘』的存量池。新闻引发的上涨在空头比例高的股票上包含相当比例的挤空买盘——这部分买盘不是估值判断，而是风控驱动的强制平仓，一旦挤空完成就会消失，价格回落。因此『位移 / 空头比例』本质上是位移里『有多少被挤压机制放大』的度量：比值越大，越说明位移是被挤压而非信息驱动。取 reverse 即做空挤压放大的上涨、做多挤压放大的下跌。该槽在账户里是全新维度：既有的 news12 战役从未引入空头比例条件化，因此它的 PnL 与家族其它成员相关性最低，是去相关的主力候选。分母 +0.01 避免零空头股票除零（此时信号被放大，需靠 truncation 0.025 与 zscore 的双侧对称性控制尾部）。"
+    },
+    {
+      "id": 7,
+      "type": "STANDARDIZED_EXCURSION_SPREAD",
+      "expression": "reverse(zscore(ts_backfill(subtract(news_high_exc_stddev, news_low_exc_stddev), 3)))",
+      "optimize_reason": "标准化上冲与下冲之差（2 字段：high excursion − low excursion）。与第 2 槽用百分比不同，本槽用的是**已经除以 30 日收盘标准差**的标准化幅度，因此它是『以个股自身波动为单位的路径宽幅』之差，天生不受股价水平与个股波动率影响，也与当日的 ATR 倍数无关。经济机制上这是最强的『外推偏差』度量：投资者对盘中能摸到的极端价位记得最牢，而上冲 3 个标准差 vs 下冲 0.5 个标准差，会让市场对这只股票形成『它有爆发力』的叙事，推高后续的追涨需求，随后被基本面修正。取 reverse 即做空这种『叙事被路径放大』的标的。与第 2 槽构成干净的对照：同一经济命题的两种标准化方式（自比 vs 波动标准化），哪一个给出更高的 Sharpe，就直接决定后续批次用哪个量纲。该槽不含任何漂移均值信息，只含路径信息，因此与第 1/3/4/5 槽天然低相关。"
+    },
+    {
+      "id": 8,
+      "type": "CLOSE_LOCATION_IN_RANGE",
+      "expression": "reverse(zscore(ts_backfill(divide(subtract(news_eod_high, news_eod_close), add(subtract(news_eod_high, news_eod_low), 0.01)), 3)))",
+      "optimize_reason": "收盘在事件区间中的位次（3 字段：事件后最高 + 收盘 + 事件后最低）。经济机制：(EODHigh − EODClose)/(EODHigh − EODLow) 是收盘价距离当区间最高点的相对距离，值域 [0,1]、无量纲，0 表示收在最高、1 表示收在最低。它是收盘拍卖机制与尾盘订单流最纯粹的度量：收在最高点说明尾盘仍有持续的净买盘，收在最低点说明尾盘有持续的净卖盘。与第 3 槽（收盘 vs VWAP）相比，本槽不涉及成交量加权，只看区间位置，因此不受大单成交分布的影响，是更稳健的『收盘强度』代理。经济上，新闻日收盘的强弱包含明显的机械成分：被动基金按收盘价成交、做市商在收盘前调整库存，这些行为与信息无关，会在次日被逆转。因此取 reverse，做空『收在最高』的强势股、做多『收在最低』的弱势股。这是本批唯一的纯区间位置构造，不含任何位移幅度信息，与其余 7 槽在信息集上几乎不重叠，是家族去相关的最后一块拼图。"
+    }
+  ]
+}

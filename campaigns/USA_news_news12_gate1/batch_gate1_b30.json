@@ -1,0 +1,67 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 18,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_relevance_score_2",
+    "prob_rank_bin1_10d_img_news",
+    "news_eod_close",
+    "news_ton_last"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N12_OVERREACTION_RAW_SUBIND",
+      "expression": "group_rank(reverse(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), subindustry)",
+      "optimize_reason": "Native news12 intraday price overreaction with subindustry group ranking under decay 18."
+    },
+    {
+      "id": 2,
+      "type": "N12_ERM_CONFLUENCE",
+      "expression": "group_rank(multiply(reverse(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), winsorize(prob_rank_bin1_10d_img_news, std=3)), subindustry)",
+      "optimize_reason": "News12 price overreaction interacted with event return model 10d forecast under subindustry ranking."
+    },
+    {
+      "id": 3,
+      "type": "N12_N84_CONFLUENCE",
+      "expression": "group_rank(multiply(reverse(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), winsorize(mean_sentiment_score_transfer, std=3)), subindustry)",
+      "optimize_reason": "News12 price overreaction interacted with news84 mean sentiment under subindustry ranking."
+    },
+    {
+      "id": 4,
+      "type": "N12_OVERREACTION_TS_DECAY",
+      "expression": "group_rank(ts_decay_linear(reverse(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 10), subindustry)",
+      "optimize_reason": "News12 price overreaction with 10-day linear decay smoothing to compress turnover below 20%."
+    },
+    {
+      "id": 5,
+      "type": "N12_OVERREACTION_WINSOR",
+      "expression": "group_rank(winsorize(reverse(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), std=3), subindustry)",
+      "optimize_reason": "News12 price overreaction with 3-sigma winsorization to eliminate extreme penny-stock price jumps."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_TS_DECAY_CUBIC",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "5-day linearly decayed cubic sentiment interacted with 10d forecast and sqrt relevance under subindustry ranking."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_SIGNAL_TS_DECAY10",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 10), subindustry)",
+      "optimize_reason": "10-day linear decay on full ensemble product to compress turnover and push Margin above 10 bps."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_TS_DECAY_5D_SUBIND",
+      "expression": "group_rank(multiply(multiply(ts_decay_linear(winsorize(mean_sentiment_score_transfer, std=3), 5), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "Slot 8 from B29b (Sharpe 1.49, 2Y 1.58, Sub 1.12) verified for consistency and potential."
+    }
+  ]
+}

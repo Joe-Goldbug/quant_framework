@@ -1,0 +1,213 @@
+{
+  "summary": {
+    "pairs": 10,
+    "counts": {
+      "PLATEAU": 9,
+      "SPIKE": 0,
+      "WEAK": 1,
+      "NO_DATA": 0
+    },
+    "plateau_slots": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        9,
+        10
+      ],
+      [
+        11,
+        12
+      ],
+      [
+        13,
+        14
+      ],
+      [
+        15,
+        16
+      ],
+      [
+        19,
+        20
+      ]
+    ],
+    "spike_slots": [],
+    "paired_slot_count": 20
+  },
+  "verdicts": [
+    {
+      "slots": [
+        1,
+        2
+      ],
+      "windows": [
+        120,
+        240
+      ],
+      "sharpe_short": 1.48,
+      "sharpe_long": 1.4,
+      "stable_min_abs_sharpe": 1.4,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_linear(scale(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        3,
+        4
+      ],
+      "windows": [
+        90,
+        180
+      ],
+      "sharpe_short": 2.22,
+      "sharpe_long": 2.22,
+      "stable_min_abs_sharpe": 2.22,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_exp_window(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23),NUM,factor=NUM),subindustry)"
+    },
+    {
+      "slots": [
+        5,
+        6
+      ],
+      "windows": [
+        120,
+        240
+      ],
+      "sharpe_short": 1.48,
+      "sharpe_long": 1.39,
+      "stable_min_abs_sharpe": 1.39,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_linear(group_zscore(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23),sector),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        7,
+        8
+      ],
+      "windows": [
+        120,
+        240
+      ],
+      "sharpe_short": 1.54,
+      "sharpe_long": 1.46,
+      "stable_min_abs_sharpe": 1.46,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(group_neutralize(ts_decay_linear(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23),NUM),subindustry),sector)"
+    },
+    {
+      "slots": [
+        9,
+        10
+      ],
+      "windows": [
+        90,
+        180
+      ],
+      "sharpe_short": 2.2,
+      "sharpe_long": 2.2,
+      "stable_min_abs_sharpe": 2.2,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_exp_window(group_zscore(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23),sector),NUM,factor=NUM),subindustry)"
+    },
+    {
+      "slots": [
+        11,
+        12
+      ],
+      "windows": [
+        90,
+        180
+      ],
+      "sharpe_short": 1.58,
+      "sharpe_long": 1.49,
+      "stable_min_abs_sharpe": 1.49,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_linear(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_second_quantile_ten_day_return_23),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        13,
+        14
+      ],
+      "windows": [
+        90,
+        180
+      ],
+      "sharpe_short": 2.2,
+      "sharpe_long": 2.2,
+      "stable_min_abs_sharpe": 2.2,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_exp_window(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_second_quantile_ten_day_return_23),NUM,factor=NUM),subindustry)"
+    },
+    {
+      "slots": [
+        15,
+        16
+      ],
+      "windows": [
+        90,
+        180
+      ],
+      "sharpe_short": 1.56,
+      "sharpe_long": 1.44,
+      "stable_min_abs_sharpe": 1.44,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_linear(add(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23),multiply(NUM,subtract(predicted_fourth_quantile_ten_day_return_23,predicted_second_quantile_ten_day_return_23))),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        17,
+        18
+      ],
+      "windows": [
+        120,
+        240
+      ],
+      "sharpe_short": -0.05,
+      "sharpe_long": -0.15,
+      "stable_min_abs_sharpe": 0.05,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_neutralize(ts_decay_linear(divide(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23),add(ts_std_dev(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23),NUM),NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        19,
+        20
+      ],
+      "windows": [
+        60,
+        120
+      ],
+      "sharpe_short": 1.72,
+      "sharpe_long": 1.52,
+      "stable_min_abs_sharpe": 1.52,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(group_rank(ts_decay_linear(subtract(predicted_fifth_quantile_ten_day_return_23,predicted_third_quantile_ten_day_return_23),NUM),subindustry),sector)"
+    }
+  ]
+}

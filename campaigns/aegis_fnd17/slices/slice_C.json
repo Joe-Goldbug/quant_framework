@@ -1,0 +1,49 @@
+{
+ "agent": "C",
+ "candidates": [
+  {
+   "id": "CAND_C_0",
+   "question_type": "Q5_Structure",
+   "expression": "group_zscore(ts_backfill(subtract(fnd17_apayratio, fnd17_apayratio2), 120), subindustry)",
+   "fields": [],
+   "mechanism": "干跑占位",
+   "counterparty": "干跑占位",
+   "optimize_reason": "干跑占位：捕捉边际变化与结构变化，用于验证装配器。",
+   "treatment_tag": "none",
+   "self_check": {}
+  },
+  {
+   "id": "CAND_C_1",
+   "question_type": "Q5_Structure",
+   "expression": "zscore(subtract(fnd17_ttmpayrat, fnd17_ttmdivshr))",
+   "fields": [],
+   "mechanism": "干跑占位",
+   "counterparty": "干跑占位",
+   "optimize_reason": "干跑占位：捕捉边际变化与结构变化，用于验证装配器。",
+   "treatment_tag": "none",
+   "self_check": {}
+  },
+  {
+   "id": "CAND_C_2",
+   "question_type": "Q6_Accumulation",
+   "expression": "zscore(ts_mean(winsorize(subtract(fnd17_cftrendgr, fnd17_revtrendgr), std=3), 60))",
+   "fields": [],
+   "mechanism": "干跑占位",
+   "counterparty": "干跑占位",
+   "optimize_reason": "干跑占位：捕捉边际变化与结构变化，用于验证装配器。",
+   "treatment_tag": "none",
+   "self_check": {}
+  },
+  {
+   "id": "CAND_C_3",
+   "question_type": "Q6_Accumulation",
+   "expression": "zscore(ts_decay_linear(subtract(fnd17_qtotce, fnd17_qtotce2), 60))",
+   "fields": [],
+   "mechanism": "干跑占位",
+   "counterparty": "干跑占位",
+   "optimize_reason": "干跑占位：捕捉边际变化与结构变化，用于验证装配器。",
+   "treatment_tag": "none",
+   "self_check": {}
+  }
+ ]
+}

@@ -1,0 +1,158 @@
+{
+  "slots": [
+    {
+      "id": "R9_S1_PARENT_WINDOW_10",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_cf_cash_int_pay, 252)), 10)",
+      "math_ops": 6,
+      "fields_used": [
+        "fnd90_us_game_cash_flow_coverage",
+        "fnd90_us_game_short_term_debt",
+        "oth466_cf_cash_int_pay"
+      ],
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R9_S2_EIR_INSTEAD_OF_SHORTDEBT",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_eff_interest_rate), 252)), ts_zscore(oth466_cf_cash_int_pay, 252)), 20)",
+      "math_ops": 6,
+      "fields_used": [
+        "fnd90_us_game_cash_flow_coverage",
+        "fnd90_us_game_eff_interest_rate",
+        "oth466_cf_cash_int_pay"
+      ],
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R9_S3_CROSS_SECTIONAL_LEGS",
+      "expression": "ts_mean(subtract(subtract(group_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), subindustry), group_zscore(vec_avg(fnd90_us_game_short_term_debt), subindustry)), ts_zscore(oth466_cf_cash_int_pay, 252)), 20)",
+      "math_ops": 6,
+      "fields_used": [
+        "fnd90_us_game_cash_flow_coverage",
+        "fnd90_us_game_short_term_debt",
+        "oth466_cf_cash_int_pay"
+      ],
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R9_S4_ACCRUAL_LEG_WINDOW_10",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_a_tnix, 252)), 10)",
+      "math_ops": 6,
+      "fields_used": [
+        "fnd90_us_game_cash_flow_coverage",
+        "fnd90_us_game_short_term_debt",
+        "oth466_a_tnix"
+      ],
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R9_S5_ADD_REAL_CASHFLOW_LEG",
+      "expression": "ts_mean(add(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_cf_cash_int_pay, 252)), ts_zscore(oth466_rt_cf_sales_q, 252)), 20)",
+      "math_ops": 6,
+      "fields_used": [
+        "fnd90_us_game_cash_flow_coverage",
+        "oth466_cf_cash_int_pay",
+        "oth466_rt_cf_sales_q"
+      ],
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R9_S6_NET_CASH_CUSHION_PLUS_MODEL",
+      "expression": "ts_mean(add(subtract(ts_zscore(oth466_cf_cash_from_oper, 252), ts_zscore(oth466_cf_cash_int_pay, 252)), ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252)), 20)",
+      "math_ops": 6,
+      "fields_used": [
+        "fnd90_us_game_cash_flow_coverage",
+        "oth466_cf_cash_from_oper",
+        "oth466_cf_cash_int_pay"
+      ],
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R9_S7_RANK_TWOLEG_WINDOW_5",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_cf_cash_int_pay, 252)), 5))",
+      "math_ops": 5,
+      "fields_used": [
+        "fnd90_us_game_cash_flow_coverage",
+        "oth466_cf_cash_int_pay"
+      ],
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R9_S8_DUAL_REAL_DEBT_LEGS",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_ttld, 252)), ts_zscore(oth466_cf_cash_int_pay, 252)), 20)",
+      "math_ops": 6,
+      "fields_used": [
+        "fnd90_us_game_cash_flow_coverage",
+        "oth466_a_ttld",
+        "oth466_cf_cash_int_pay"
+      ],
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    }
+  ],
+  "all_green": true,
+  "skeleton_freq": {
+    "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_short_term_debt),NUM)),ts_zscore(oth466_cf_cash_int_pay,NUM)),NUM)": 1,
+    "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_eff_interest_rate),NUM)),ts_zscore(oth466_cf_cash_int_pay,NUM)),NUM)": 1,
+    "ts_mean(subtract(subtract(group_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),subindustry),group_zscore(vec_avg(fnd90_us_game_short_term_debt),subindustry)),ts_zscore(oth466_cf_cash_int_pay,NUM)),NUM)": 1,
+    "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_short_term_debt),NUM)),ts_zscore(oth466_a_tnix,NUM)),NUM)": 1,
+    "ts_mean(add(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_cf_cash_int_pay,NUM)),ts_zscore(oth466_rt_cf_sales_q,NUM)),NUM)": 1,
+    "ts_mean(add(subtract(ts_zscore(oth466_cf_cash_from_oper,NUM),ts_zscore(oth466_cf_cash_int_pay,NUM)),ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM)),NUM)": 1,
+    "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_cf_cash_int_pay,NUM)),NUM))": 1,
+    "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(oth466_a_ttld,NUM)),ts_zscore(oth466_cf_cash_int_pay,NUM)),NUM)": 1
+  }
+}

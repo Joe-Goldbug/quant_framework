@@ -1,0 +1,138 @@
+========================================================================
+A. CL 上限与 CL-Sh 联合分布
+========================================================================
+CL max=1.56  行数 CL>=1.5: 6, CL>=1.4: 22, CL>=1.3: 53
+CL=1.56 Sh=1.57 gap=-0.01 TO=1.127 [batch_gate1_b9] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(divide(subtrac
+CL=1.55 Sh=1.56 gap=-0.01 TO=1.131 [batch_gate1_b9] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(divide(subtrac
+CL=1.55 Sh=1.57 gap=-0.02 TO=1.127 [batch_gate1_b9] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(divide(subtrac
+CL=1.54 Sh=1.53 gap=+0.01 TO=1.128 [batch_gate1_b9] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(divide(subtrac
+CL=1.54 Sh=1.59 gap=-0.05 TO=1.146 [batch_w10h_1792863617] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtrac
+CL=1.52 Sh=1.63 gap=-0.11 TO=1.159 [batch_w12_MAIN_1792944870] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(divide(
+CL=1.48 Sh=1.62 gap=-0.14 TO=1.178 [batch_w10e_1792862552] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(divide(subtrac
+CL=1.48 Sh=1.56 gap=-0.08 TO=1.151 [batch_w11b_SMOKE_1792943312] reverse(rank(divide(winsorize(subtract(news_eod_close, news_ton_last), std=3), add(vec_count(high_price_excurs
+CL=1.47 Sh=1.61 gap=-0.14 TO=1.201 [batch_gate4_N_1792844308] reverse(rank(divide(subtract(news_eod_close, news_ton_last), ts_backfill(vec_count(high_price_excursion_stddev
+CL=1.47 Sh=1.61 gap=-0.14 TO=1.201 [batch_gate5_Q_1792845438] reverse(rank(divide(subtract(news_eod_close, news_ton_last), ts_backfill(vec_count(low_price_excursion_stddev)
+
+-- CL>=1.5 行的共同特征 --
+  ts_mean            1/6
+  trade_when         6/6
+  字段族: {'excursion': 6, 'vwap_close': 6}
+  中性化: {'INDUSTRY': 6}
+
+========================================================================
+B. TO<=25% 区现状
+========================================================================
+TO<=25% 行数: 78, max Sh=0.89
+  Sh=0.89 TO=0.220 CL=0.92 Fit=0.37 [batch_gate1_b11] trade_when(greater(abs(divide(subtract(news_eod_close, news_open), news_open)), 0.01), reverse(rank(ts_backfil
+  Sh=0.78 TO=0.086 CL=0.82 Fit=0.36 [batch_w14_MAIN_1792946185] reverse(ts_rank(ts_decay_exp_window(divide(ts_sum(news_max_up_amt, 60), add(ts_sum(news_max_up_amt, 60), ts_su
+  Sh=0.70 TO=0.197 CL=0.69 Fit=0.24 [batch_w10c_C_1792861681] reverse(ts_rank(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), in
+  Sh=0.63 TO=0.054 CL=0.57 Fit=0.26 [batch_w10c_C_1792861681] reverse(group_rank(ts_rank(divide(ts_sum(news_max_up_amt, 60), add(ts_sum(news_max_up_amt, 60), ts_sum(news_ma
+  Sh=0.61 TO=0.052 CL=0.52 Fit=0.25 [batch_w10a_D25_1792859581] reverse(ts_rank(divide(ts_sum(news_max_up_amt, 60), add(ts_sum(news_max_up_amt, 60), ts_sum(news_max_dn_amt, 6
+  Sh=0.57 TO=0.228 CL=0.46 Fit=0.20 [batch_gate8_N_1792854563] reverse(rank(ts_mean(divide(subtract(news_eod_close, news_ton_last), ts_backfill(vec_count(high_price_excursio
+  Sh=0.51 TO=0.202 CL=0.36 Fit=0.17 [batch_gate3_J_1792843375] trade_when(greater(rank(news_short_interest), 0.8), reverse(divide(news_max_up_amt, add(news_max_up_amt, news_
+  Sh=0.51 TO=0.132 CL=-0.36 Fit=0.24 [batch_w11a_1792941539] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), trade_when(greater(rank(new
+
+========================================================================
+C. 机制组合覆盖度（高 Sh 区 Sh>=1.4 的 n=60 行用了什么）
+========================================================================
+  ts_backfill                                                            11
+  trade_when                                                             10
+  plain_rank_or_raw                                                      10
+  ts_rank                                                                8
+  trade_when+ts_backfill                                                 5
+  trade_when+ts_rank                                                     4
+  ts_backfill+ts_rank                                                    2
+  winsorize                                                              2
+  trade_when+ts_backfill+winsorize                                       1
+  trade_when+ts_backfill+ts_decay                                        1
+  trade_when+ts_backfill+ts_decay+winsorize                              1
+  trade_when+ts_mean                                                     1
+  trade_when+ts_mean+winsorize                                           1
+  trade_when+ts_backfill+ts_mean                                         1
+  ts_mean                                                                1
+  trade_when+ts_backfill+ts_decay+ts_mean                                1
+
+-- 全库机制出现次数 --
+  ts_rank              79
+  ts_backfill          151
+  ts_decay_linear      20
+  ts_mean              42
+  ts_std_dev           1
+  ts_delta             3
+  ts_sum               36
+  winsorize            9
+  group_rank           37
+  ts_zscore            6
+  trade_when           119
+  vec_avg              67
+  vec_count            200
+  vec_max              11
+  vec_stddev           3
+  quantile             2
+  days_from_last_change 85
+
+-- 关键交叉：ts_decay_linear × group_*；ts_rank × group_*；ts_zscore × ts_backfill --
+  ts_decay_linear  x group_rank       : 0
+  ts_decay_linear  x group_neutralize : 0
+  ts_rank          x group_rank       : 5
+  ts_rank          x group_neutralize : 0
+  ts_zscore        x ts_backfill      : 4
+  ts_zscore        x group_rank       : 0
+  ts_decay_linear  x winsorize        : 1
+  ts_decay_linear  x ts_backfill      : 12
+  hump             x ts_backfill      : 0
+  regression_neutral x ts_backfill      : 0
+  ts_mean          x group_rank       : 3
+  winsorize        x group_rank       : 0
+  ts_backfill      x trade_when       : 54
+  ts_rank          x trade_when       : 16
+
+-- ts_mean / ts_decay_linear / ts_backfill 窗口使用 --
+  ts_mean          {1: 9, 5: 9, 10: 4, 20: 25, 60: 7, 120: 4}
+  ts_decay_linear  {1: 14, 2: 13, 3: 5, 5: 2, 10: 1, 20: 6, 60: 13, 120: 2}
+  ts_std_dev       {60: 1}
+  ts_delta         {1: 2, 5: 2, 20: 1, 60: 1}
+  ts_sum           {5: 2, 10: 2, 20: 15, 30: 3, 40: 3, 60: 67, 120: 9, 180: 3}
+
+========================================================================
+D. 前沿形状量化：Sh~TO 与 Sh~gap 条件关系
+========================================================================
+corr(TO, Sh) 全库 = +0.339
+  TO[0.00,0.25): n= 78 gap mean=+0.0383 med=+0.0500  Sh mean=0.17 max=0.89
+  TO[0.25,0.50): n= 87 gap mean=-0.0030 med=-0.0300  Sh mean=0.71 max=1.19
+  TO[0.50,0.75): n= 36 gap mean=+0.0269 med=-0.0100  Sh mean=0.75 max=1.45
+  TO[0.75,1.00): n= 25 gap mean=-0.0768 med=-0.1000  Sh mean=1.01 max=1.49
+  TO[1.00,1.15): n= 52 gap mean=-0.0762 med=-0.0800  Sh mean=0.92 max=1.59
+  TO[1.15,1.35): n=106 gap mean=-0.1299 med=-0.1100  Sh mean=1.03 max=1.69
+
+-- Sh 与 CL 的联合：满足 Sh>=1.58 的行 CL 分布 --
+n=13, CL: min=1.37 med=1.47 max=1.54
+
+-- amplitude 族：输出层 x 预平滑 的 TO/Sh 矩阵 --
+  ('backfill[120]', 'smoothed') n=  2 TOmed=0.372 Shmax=1.10 Shmed=1.10
+  ('backfill[1]', 'smoothed') n=  1 TOmed=0.249 Shmax=0.43 Shmed=0.43
+  ('backfill[20]', 'smoothed') n=  3 TOmed=0.377 Shmax=1.06 Shmed=0.79
+  ('backfill[250]', 'smoothed') n=  1 TOmed=0.371 Shmax=1.10 Shmed=1.10
+  ('backfill[5]', 'smoothed') n=  1 TOmed=0.530 Shmax=1.10 Shmed=1.10
+  ('backfill[60]', 'smoothed') n= 15 TOmed=0.376 Shmax=1.19 Shmed=1.10
+  ('decay', 'smoothed')  n=  3 TOmed=1.131 Shmax=1.28 Shmed=1.06
+  ('rank', 'raw')        n= 16 TOmed=0.586 Shmax=1.44 Shmed=0.82
+  ('rank', 'smoothed')   n=  1 TOmed=0.076 Shmax=0.14 Shmed=0.14
+  ('raw', 'raw')         n= 19 TOmed=1.169 Shmax=1.37 Shmed=0.65
+  ('raw', 'smoothed')    n=  7 TOmed=0.086 Shmax=0.57 Shmed=0.11
+  ('ts_mean', 'smoothed') n=  2 TOmed=1.245 Shmax=0.75 Shmed=0.75
+  ('ts_rank1', 'raw')    n=  1 TOmed=1.214 Shmax=0.43 Shmed=0.43
+  ('ts_rank100', 'raw')  n=  1 TOmed=0.520 Shmax=0.87 Shmed=0.87
+  ('ts_rank120', 'raw')  n=  1 TOmed=1.292 Shmax=1.27 Shmed=1.27
+  ('ts_rank120', 'smoothed') n=  1 TOmed=0.070 Shmax=0.42 Shmed=0.42
+  ('ts_rank180', 'smoothed') n=  1 TOmed=0.037 Shmax=0.34 Shmed=0.34
+  ('ts_rank20', 'smoothed') n=  2 TOmed=0.150 Shmax=0.49 Shmed=0.49
+  ('ts_rank250', 'raw')  n=  6 TOmed=1.183 Shmax=1.35 Shmed=1.10
+  ('ts_rank250', 'smoothed') n=  2 TOmed=0.147 Shmax=0.27 Shmed=0.27
+  ('ts_rank30', 'smoothed') n=  1 TOmed=0.121 Shmax=0.33 Shmed=0.33
+  ('ts_rank40', 'smoothed') n=  1 TOmed=0.106 Shmax=0.24 Shmed=0.24
+  ('ts_rank500', 'raw')  n=  1 TOmed=1.291 Shmax=1.32 Shmed=1.32
+  ('ts_rank60', 'smoothed') n= 17 TOmed=0.093 Shmax=1.15 Shmed=0.48
+  ('zscore', 'raw')      n=  2 TOmed=1.290 Shmax=1.33 Shmed=1.33
+
+done v3

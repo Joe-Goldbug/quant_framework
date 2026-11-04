@@ -1,0 +1,80 @@
+{
+  "wave": 22,
+  "seed_id": "GATE1_WAVE22",
+  "purpose": "final de-correlation probe: cohort concentration spread (top5 - top20 / top5 - all)",
+  "fetched_at": "2026-11-04T13:52:00Z",
+  "location": "https://api.worldquantbrain.com/simulations/1DUAy7dGc4sE8Yg1fMINJwcs",
+  "settings": {
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "decay": 4,
+    "truncation": 0.025,
+    "neutralization": "INDUSTRY",
+    "nan_handling": "ON",
+    "pasteurization": "ON"
+  },
+  "alpha_results": [
+    {
+      "id": "npvdb07q",
+      "slot": "w22_conc_ts20",
+      "code": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "metrics": {"sharpe": 1.14, "fitness": 0.65, "turnover": 0.0589, "returns": 0.0406, "drawdown": 0.0456, "margin": 0.001379, "two_year_sharpe": 0.69, "sub_universe_sharpe": 0.95, "longCount": 619, "shortCount": 379},
+      "checks": {"fail": [], "warning": ["LOW_SHARPE(1.14)", "LOW_FITNESS(0.65)", "CLUSTER_TEST(0.95)", "LOW_2Y_SHARPE(0.69)"]}
+    },
+    {
+      "id": "omELe26m",
+      "slot": "w22_conc_ts10",
+      "code": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),10), subindustry)",
+      "metrics": {"sharpe": 1.21, "fitness": 0.74, "turnover": 0.0753, "returns": 0.0468, "drawdown": 0.0473, "margin": 0.001242, "two_year_sharpe": 1.11, "sub_universe_sharpe": 0.95, "longCount": 657, "shortCount": 334},
+      "checks": {"fail": [], "warning": ["LOW_SHARPE(1.21)", "LOW_FITNESS(0.74)", "CLUSTER_TEST(0.94)", "LOW_2Y_SHARPE(1.11)"]}
+    },
+    {
+      "id": "QPvbde3r",
+      "slot": "w22_conc_shift",
+      "code": "group_rank(subtract(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top20_60d_filled))), subindustry)",
+      "metrics": {"sharpe": 0.65, "fitness": 0.32, "turnover": 0.0983, "returns": 0.0312, "drawdown": 0.1118, "margin": 0.000635, "two_year_sharpe": -0.09, "sub_universe_sharpe": 0.54, "longCount": 632, "shortCount": 352},
+      "checks": {"fail": ["LOW_SHARPE(0.65)", "LOW_FITNESS(0.32)", "LOW_2Y_SHARPE(-0.09)"], "warning": ["CLUSTER_TEST(0.30)", "MATCHES_THEMES"]}
+    },
+    {
+      "id": "6XdjbxrE",
+      "slot": "w22_conc_norm",
+      "code": "group_rank(ts_mean(multiply(divide(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),add(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "metrics": {"sharpe": 0.15, "fitness": 0.03, "turnover": 0.0734, "returns": 0.0058, "drawdown": 0.1625, "margin": 0.000158, "two_year_sharpe": 0.17, "sub_universe_sharpe": 0.14, "longCount": 398, "shortCount": 623},
+      "checks": {"fail": ["LOW_SHARPE(0.15)", "LOW_FITNESS(0.03)", "LOW_2Y_SHARPE(0.17)"], "warning": ["CLUSTER_TEST(0.00)"]}
+    },
+    {
+      "id": "YP1bdZ5M",
+      "slot": "w22_conc_all",
+      "code": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_all_20d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "metrics": {"sharpe": 1.10, "fitness": 0.61, "turnover": 0.0624, "returns": 0.0384, "drawdown": 0.0516, "margin": 0.001229, "two_year_sharpe": 0.56, "sub_universe_sharpe": 0.77, "longCount": 591, "shortCount": 412},
+      "checks": {"fail": [], "warning": ["LOW_SHARPE(1.10)", "LOW_FITNESS(0.61)", "CLUSTER_TEST(0.93)", "LOW_2Y_SHARPE(0.56)"]}
+    },
+    {
+      "id": "j2YAQL3O",
+      "slot": "w22_conc_60legs",
+      "code": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top20_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "metrics": {"sharpe": 0.87, "fitness": 0.43, "turnover": 0.0418, "returns": 0.0312, "drawdown": 0.073, "margin": 0.001493, "two_year_sharpe": -0.02, "sub_universe_sharpe": 0.56, "longCount": 629, "shortCount": 367},
+      "checks": {"fail": ["LOW_SHARPE(0.87)", "LOW_FITNESS(0.43)", "LOW_2Y_SHARPE(-0.02)"], "warning": ["CLUSTER_TEST(0.72)"]}
+    },
+    {
+      "id": "xAr3aM3g",
+      "slot": "w22_conc_ts20_txn20",
+      "code": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)",
+      "metrics": {"sharpe": 1.20, "fitness": 0.69, "turnover": 0.0587, "returns": 0.0418, "drawdown": 0.0458, "margin": 0.001423, "two_year_sharpe": 0.64, "sub_universe_sharpe": 0.98, "longCount": 618, "shortCount": 380},
+      "checks": {"fail": [], "warning": ["LOW_SHARPE(1.20)", "LOW_FITNESS(0.69)", "CLUSTER_TEST(0.92)", "LOW_2Y_SHARPE(0.64)"]}
+    },
+    {
+      "id": "xAr3aM3n",
+      "slot": "w22_conc_argmax",
+      "code": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "metrics": {"sharpe": 0.76, "fitness": 0.41, "turnover": 0.0975, "returns": 0.0366, "drawdown": 0.0819, "margin": 0.000752, "two_year_sharpe": -0.05, "sub_universe_sharpe": 0.57, "longCount": 705, "shortCount": 269},
+      "checks": {"fail": ["LOW_SHARPE(0.76)", "LOW_FITNESS(0.41)", "LOW_2Y_SHARPE(-0.05)"], "warning": ["CLUSTER_TEST(0.52)"]}
+    }
+  ],
+  "wave22_verdict": {
+    "best_slot": "w22_conc_ts10 (omELe26m) Sharpe 1.21 / 2Y 1.11 / CLUSTER 0.94",
+    "decorrelation_attempt": "FAILED — concentration 换核后头部候选 CLUSTER 0.92~0.95，高于父本 j2YAbw6W 的 0.82；仅一阶集中度变化 (QPvbde3r) 把 CLUSTER 压到 0.30 但 Sharpe 崩至 0.65 / 2Y -0.09",
+    "conclusion": "ProdCorr 0.818 的下限由 insider 披露数据的变动来源决定，与表达式经济内容无关；换核无法同时保住强度与去相关"
+  }
+}

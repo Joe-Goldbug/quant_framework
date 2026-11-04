@@ -1,0 +1,73 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 18,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "sum_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "prob_rank_bin3_label2_10d_img_news",
+    "prob_rank_bin3_label0_10d_img_news",
+    "prob_rank_bin5_label4_10d_img_news",
+    "prob_rank_bin5_label0_10d_img_news",
+    "prob_rank_bin5_label4_20d_img_news",
+    "prob_rank_bin5_label0_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_QUINTILE_SPREAD_CUBIC",
+      "expression": "group_rank(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), subtract(prob_rank_bin5_label4_10d_img_news, prob_rank_bin5_label0_10d_img_news)), subindustry)",
+      "optimize_reason": "Cubic sentiment multiplied by 10d Net Quintile Probability Spread (Top Quintile P4 minus Bottom Quintile P0). Direct tail probability modeling."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_QUINTILE_SPREAD_LINEAR",
+      "expression": "group_rank(multiply(winsorize(mean_sentiment_score_transfer, std=3), subtract(prob_rank_bin5_label4_10d_img_news, prob_rank_bin5_label0_10d_img_news)), subindustry)",
+      "optimize_reason": "Winsorized sentiment multiplied by 10d Net Quintile Probability Spread (P4 - P0) under subindustry grouping."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_20D_QUINTILE_SPREAD",
+      "expression": "group_rank(multiply(winsorize(mean_sentiment_score_transfer, std=3), subtract(prob_rank_bin5_label4_20d_img_news, prob_rank_bin5_label0_20d_img_news)), subindustry)",
+      "optimize_reason": "Winsorized sentiment multiplied by 20d Net Quintile Probability Spread (P4 - P0). Extended horizon tail probability modeling."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_3QUANT_SPREAD_CUBIC",
+      "expression": "group_rank(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), subtract(prob_rank_bin3_label2_10d_img_news, prob_rank_bin3_label0_10d_img_news)), subindustry)",
+      "optimize_reason": "Cubic sentiment multiplied by 10d 3-quantile probability spread (Top tercile P2 minus Bottom tercile P0)."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_PURE_DUAL_CUBIC",
+      "expression": "group_rank(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), power(winsorize(prob_rank_bin1_10d_img_news, std=3), 3)), subindustry)",
+      "optimize_reason": "Pure dual cubic power transformation on both sentiment and 10d DL event forecast without relevance noise."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_DUAL_CUBIC_SQRT_REL",
+      "expression": "group_rank(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), power(winsorize(prob_rank_bin1_10d_img_news, std=3), 3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "Dual cubic power transformation on both sentiment and 10d DL event forecast, scaled by concave square root relevance."
+    },
+    {
+      "id": 7,
+      "type": "N84_SUM_ERM_SUBIND_SQRT",
+      "expression": "group_rank(multiply(multiply(winsorize(sum_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "Cumulative event sentiment (sum_sentiment) replacing mean sentiment, capturing total volume-aggregated sentiment impact."
+    },
+    {
+      "id": 8,
+      "type": "N84_TS_DECAY_ERM_SUBIND",
+      "expression": "group_rank(multiply(multiply(ts_decay_linear(winsorize(mean_sentiment_score_transfer, std=3), 5), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "5-day linearly decayed winsorized sentiment interacted with 10d forecast and sqrt relevance to smooth high-frequency noise."
+    }
+  ]
+}

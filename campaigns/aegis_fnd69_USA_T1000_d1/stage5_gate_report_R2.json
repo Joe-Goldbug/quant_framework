@@ -1,0 +1,201 @@
+{
+  "round": 2,
+  "design": "4 cores x 2 centering mappings",
+  "slots": [
+    {
+      "slot": 1,
+      "role": "S7_NET_EQUITY_ISSUANCE__MAP_RANK_CENTERED",
+      "expression": "subtract(group_rank(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry), 0.5)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 9,
+        "used_fields": [
+          "fnd69_q2ycktsrp",
+          "fnd69_qta",
+          "fnd69_q2yktss"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 2,
+      "role": "S7_NET_EQUITY_ISSUANCE__MAP_ZSCORE",
+      "expression": "group_zscore(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2ycktsrp",
+          "fnd69_qta",
+          "fnd69_q2yktss"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 3,
+      "role": "S2_FCF_PRODUCTIVITY__MAP_RANK_CENTERED",
+      "expression": "subtract(group_rank(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry), 0.5)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 7,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 4,
+      "role": "S2_FCF_PRODUCTIVITY__MAP_ZSCORE",
+      "expression": "group_zscore(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 5,
+      "role": "S5_CAPEX_INTENSITY__MAP_RANK_CENTERED",
+      "expression": "subtract(group_rank(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry), 0.5)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_capxy2q"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 6,
+      "role": "S5_CAPEX_INTENSITY__MAP_ZSCORE",
+      "expression": "group_zscore(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_capxy2q"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 7,
+      "role": "S1_ASSET_GROWTH__MAP_RANK_CENTERED",
+      "expression": "subtract(group_rank(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry), 0.5)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 8,
+      "role": "S1_ASSET_GROWTH__MAP_ZSCORE",
+      "expression": "group_zscore(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    }
+  ],
+  "all_valid": true,
+  "skeleton_check": {
+    "status": "PASS"
+  },
+  "red_team": {
+    "all_passed": true,
+    "per_slot": [
+      {
+        "slot": 1,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 2,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 3,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 4,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 5,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 6,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 7,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 8,
+        "verdict": "PASS",
+        "issues": []
+      }
+    ]
+  }
+}

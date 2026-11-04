@@ -1,0 +1,10 @@
+{
+  "card_id": "CARD_NEWS_CONVEX_HUMP_01",
+  "tag": "sparse_event_convex_hump",
+  "domain": "cross_sectional_pruning",
+  "title": "稀疏事件驱动高阶凸性与近零死重截断处方",
+  "one_line": "新闻稀疏事件型：三元乘法算子压缩 + 5阶尾部凸性 + hump 截断近零死重 + 细分行业去偏",
+  "symptom": "事件型数据集 70%+ 个股无新闻导致截面排序后近零聚集，资金被大量死重持仓摊薄，年化收益率被锁在 4.1%~4.3%，Margin 偏低 (<7.0 bps)",
+  "authorized_operators": ["multiply", "power", "hump", "group_rank", "group_neutralize"],
+  "prescription_recipe": "1. 算子压缩：使用 FastExpr 原生三元乘法 multiply(A, B, C) 代替嵌套乘法节省 1 个算子槽位；2. 尾部凸性：使用 power(..., 5) 赋予头部重磅事件标的高弹性权重；3. 死重剪枝：使用 hump(X, hump=0.0003) 将中间 40% 的无新闻个股持仓强制归零；4. 结构去偏：使用 group_neutralize(..., subindustry) 消除小行业非对称偏态；5. 时滞对齐：内层 10d + 外层 10d + 仿真 Decay 13 完美匹配 10 日事件半衰期。"
+}

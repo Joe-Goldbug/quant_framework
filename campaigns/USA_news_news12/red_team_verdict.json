@@ -1,0 +1,233 @@
+{
+  "batch_size": 20,
+  "all_passed": false,
+  "verdicts": [
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "e0cba6b4f57b8d678179de4b4af90d67059243710adcbe50a60237c63337e21b",
+      "reviewed_expr": "group_rank(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=0.8), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "765ab33ca5d1a96123af0e2addd276ac93e85ca7b68316bf1f138094161470fc",
+      "reviewed_expr": "group_neutralize(winsorize(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=1.0), std=3), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "b95f3823811ad12011ff0e174842d4e41123b053e201c84238bf9f0d3ac2780b",
+      "reviewed_expr": "group_rank(ts_zscore(subtract(news12_feat_1, news12_feat_2), 60), subindustry)"
+    },
+    {
+      "verdict": "REJECT",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": false,
+        "parsimony_check": true
+      },
+      "issues": [
+        "假设声称施加催化剂门控或非线性放大，但 AST 缺乏乘积/条件门控结构！"
+      ],
+      "signature": "e06101204e35634647917dafdce4a600d3859ac43628dbb632201da4b06a36e1",
+      "reviewed_expr": "group_rank(ts_decay_linear(subtract(subtract(news12_feat_1, news12_feat_2), ts_mean(subtract(news12_feat_1, news12_feat_2), 20)), 15), subindustry)"
+    },
+    {
+      "verdict": "REJECT",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": false,
+        "parsimony_check": true
+      },
+      "issues": [
+        "假设声称施加催化剂门控或非线性放大，但 AST 缺乏乘积/条件门控结构！"
+      ],
+      "signature": "ae660a5c0ad8c90b43962877915560485e0fd45497a9911cb2a4b48dc7640170",
+      "reviewed_expr": "group_rank(s_log_1p(winsorize(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 3), 10, factor=1.0), std=3)), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "e25de73166a2c48aeb68f0d7dcaac4f4d973cd1a717b1b786ab8bee14849e270",
+      "reviewed_expr": "group_rank(signed_power(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), 10, factor=1.0), 0.5), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "d790c2484ba33f1be2c2ca07f34f31adf60fc978256b6dae4917216df3989fd0",
+      "reviewed_expr": "group_neutralize(ts_decay_linear(ts_delta(subtract(news12_feat_1, news12_feat_2), 2), 5), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "0ee76ded7056252b6fcf336a9cefb36765aee9ec3848a72b905f5bcf616271ef",
+      "reviewed_expr": "group_rank(ts_decay_linear(subtract(news12_feat_1, news12_feat_2), 40), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "d1a9c6bd824f00ac266f2dad714a4fe733574d783bb7e7349533926dd973430c",
+      "reviewed_expr": "group_rank(divide(ts_delta(subtract(news12_feat_1, news12_feat_2), 5), add(ts_std_dev(subtract(news12_feat_1, news12_feat_2), 20), 1e-4)), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "f39fe22f4dd28b8bdd14228ca3c77bd6cf1eb452794c42e81b8a6441125fa7e1",
+      "reviewed_expr": "group_rank(winsorize(ts_decay_exp_window(subtract(news12_feat_1, news12_feat_2), 12, factor=0.7), std=2.5), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "aa6bb485111ae1c3fe7ecb89096ec9a3e4e66cf319ec6d2f5756819356c4e95c",
+      "reviewed_expr": "group_neutralize(winsorize(subtract(news12_feat_1, news12_feat_2), std=3), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "a9d42ed0a35495319f92030a703aa8f19290c40426c7695e4f892b56128701c2",
+      "reviewed_expr": "group_rank(ts_decay_exp_window(ts_zscore(subtract(news12_feat_1, news12_feat_2), 30), 10, factor=0.7), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "63ca9bf01dea9ea0fba504bd7667551e125d7ec6f86bf675ebd02f41d9ecdd4f",
+      "reviewed_expr": "group_rank(s_log_1p(ts_decay_linear(ts_delta(subtract(news12_feat_1, news12_feat_2), 4), 10)), subindustry)"
+    },
+    {
+      "verdict": "REJECT",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": false,
+        "parsimony_check": true
+      },
+      "issues": [
+        "假设声称施加催化剂门控或非线性放大，但 AST 缺乏乘积/条件门控结构！"
+      ],
+      "signature": "d83a39ccb521b737ed058ebcd386725a558868443462e57aae43bf2ee4f2f2c3",
+      "reviewed_expr": "group_neutralize(ts_decay_linear(subtract(subtract(news12_feat_1, news12_feat_2), ts_mean(subtract(news12_feat_1, news12_feat_2), 10)), 12), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "359ef6f6781e3fa6e7bcac80f645a92d1f661d8e63ee843444d8bbdd99531ce4",
+      "reviewed_expr": "group_rank(signed_power(winsorize(ts_decay_exp_window(subtract(news12_feat_1, news12_feat_2), 8, factor=0.9), std=3), 0.5), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "5b31e2ab922d1daf8364f49a78c8ff9e9b8843a88274ec146e2471ae973b12d9",
+      "reviewed_expr": "group_neutralize(ts_decay_exp_window(ts_delta(subtract(news12_feat_1, news12_feat_2), 7), 15, factor=0.85), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "002c3e9e6f580bd0ce6ca7d816c56039897a0ba088121268544803b16abf3ac7",
+      "reviewed_expr": "group_rank(ts_rank(ts_decay_linear(subtract(news12_feat_1, news12_feat_2), 10), 20), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "f2907568180b853e9353d38c2761c7ea8bedb04a8b24fd903ceef73cbab1dc4e",
+      "reviewed_expr": "group_neutralize(winsorize(ts_decay_linear(ts_delta(subtract(news12_feat_1, news12_feat_2), 3), 8), std=2.5), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "bb07a64483f5fbcc320b73f7772304dcc81dda082914ac87e0006cc02372ecac",
+      "reviewed_expr": "group_rank(ts_decay_linear(ts_zscore(subtract(news12_feat_1, news12_feat_2), 45), 20), subindustry)"
+    },
+    {
+      "verdict": "PASS",
+      "checks": {
+        "domain_alignment_check": true,
+        "hypothesis_to_ast_fidelity": true,
+        "parsimony_check": true
+      },
+      "issues": [],
+      "signature": "eda3db5424eed9bf5cc21cb3939f88df552dab036a055b6d3c5ee1906d4a80d3",
+      "reviewed_expr": "group_neutralize(s_log_1p(winsorize(ts_decay_exp_window(subtract(news12_feat_1, news12_feat_2), 10, factor=0.75), std=3)), subindustry)"
+    }
+  ],
+  "summary_hash": "f51c238063bb2b582e26c1458d3ee360fe82f322f0fa06b407ed6fbf04ab8f92"
+}

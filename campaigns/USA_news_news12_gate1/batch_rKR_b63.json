@@ -1,0 +1,72 @@
+{
+  "seed": "rKR1qVWo",
+  "batch_id": "rKR_B63",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 22,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "test_period": "P0Y0M",
+  "design_axis": "Tabu forced core-switch batch: abandon locked pair mean:prob10d, explore 5 untested field pairs under crown architecture (power-gundl + inner linear decay + subsindustry rank), settings reverted to verified healthy trunc 0.025/decay 22 after B62's decisive falsification of trunc 0.08; strict non-submission, zero code changes",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "max_primary_sentiment_score_transfer",
+    "skew_primary_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B63_S1_MEAN_P20D_CROWN_LINEAR5",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_20d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), 5)",
+      "optimize_reason": "换核令主槽 #1 (mean:prob20d 对): 冠军架构 (B61 S2: 内层 linear10 记忆 + group_rank 阶梯谱系 + 3 字段乘积 + power5 凸性 + 外层 linear5) 下把 10d 臂换成 20d 臂, trunc 回归 B62 已判证 0.025 健康位。已有证据链: B61 S7 裸壳 20d 臂 1.33/16.7%/2Y 1.23 (0 硬失败唯一行), 本槽加外层 linear5 后 TO 理论入地板 (11.5% 档), 关键考题是把 B62 已证明的 2Y 损伤 (线性外推必扣 0.5) 换到 20d 臂是否换来更高 Ret/更稳 Sub。若本槽 Fit>=0.85 (B61 S2 水位), 则 20d 主臂方案可与 10d 版本对拼家族最好壳。"
+    },
+    {
+      "id": 2,
+      "type": "B63_S2_MEAN_REL_PAIR_CROWN",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "换核令主槽 #2 (mean:rel 全新未测对, 7 算子): 彻底剥离 prob 预测臂, 冠架构下的'注意力 x 相关度'双因子裸uct: mean^4 (注意力强度) x sqrt(relevance) (相关度二阶门)。95% 家族历史从未同时验证过'prob_ranrk 边的信源独立预测力到底有多少', 本槽与 S6 (window 20) 同骨架构成相关度轴的最简对照族。若 Sharpe>=1.3, 相关度腿有独立预测力, prob 臂的可替代性+家族信息密度减半的可能路径出现; 若 <=1.0, 则 prob 臂 (Q3 截面独立性) 已被实证为不可剥离的核心腿, 相关度轴永久降级为增广腿。"
+    },
+    {
+      "id": 3,
+      "type": "B63_S3_MAXPRIM_P10D_REL_DIRECT_MIX",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3), news_relevance_score_2), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "换核主槽 #3 (maxprim:prob10d 对第 2 次考验): maxprim 核 + 冠架构 + rel 直乘 3 参 (无 sqrt 二阶变换, 换取全新骨架避开 MD5 重复)。B61 S6 (带 sqrt rel) 在 trunc 0.025 下实测 1.27/0.67/11.0%/2Y 1.53, 与 mean 核 1.48/0.85 差 0.21 Sharpe; 但 B62 的核心教训是'trunc 0.08 下的 maxprim 探针污染了核对比的纯度' —— 本槽在健康 trunc 0.025 下对 maxprim 做第三种架构 (rel 直乘)。判决: maxprim 若第三次仍弱于 mean 水位, maxprim 核在 news12 族内永久除名 (batch_rKR_maxprim 已首测 0 水位, 3 批离熔断还剩 1 批额度)。"
+    },
+    {
+      "id": 4,
+      "type": "B63_S4_MAXPRIM_P20D_CROWN_CLONE",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_20d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "换核主槽 #4 (maxprim:prob20d 全新未测对): 冠架构 maxprim 核 + 20d 臂, 9 算子。三种信息源的百年拼图: maxprim (首信源峰值, 夏普 1.95) x prob20d (中期机构建仓趋势) x relevance (相关度门)。若 maxprim 在 20d 臂下反超 mean:20d 的 B61 S7 (1.33), 则核 x 臂交叉优化空间存在; 若明显更低, 'maxprim x 20d' 组合进入衰减名单, 换核搜索空间向 mean 系对称收敛。与 S3 同为 maxprim 双臂对拼, 单变量隔离 (10d vs 20d)。"
+    },
+    {
+      "id": 5,
+      "type": "B63_S5_MAXPRIM_SKEW_RIGHT_TAIL_GATE",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(add(skew_primary_sentiment_score_transfer, 1.0), winsorize(prob_rank_bin1_10d_img_news, std=3))), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "换核主槽 #5 (maxprim:skew 全新未测对): 右尾形态门换到 maxprim 核下 (correction of B62 S8: skew 门在 mean 核下 1.29/12.0/0.82 2Y, 未通过; 换核令给 skew 轴新核重测)。物理: maxprim 的峰值信息天然与 skew (右尾偏度) 同向——重磅稿拉动日 maxprim 打高且 skew 右偏, viable 二阶确认链; add(skew,1.0) 平移非负门域遵循'双 [-1,1] 裸乘伪因果'铁律。B62 已证明 skew 门在 B 壳里压 Sharpe, 若在 maxprim 核下穿正检验 (Sharpe>1.35 且 2Y>1.3), skew 门作为跨核增广腿转正保留; 否则 Q7 分布形态轴永久除名。"
+    },
+    {
+      "id": 6,
+      "type": "B63_S6_MEAN_REL_PAIR_WINDOW20",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), sqrt(news_relevance_score_2)), 20), subindustry), 0.5), 5)",
+      "optimize_reason": "S2 的唯一变量对照 (同骨架 2/2 合规): 内层 linear 窗口 10 -> 20 (窗口 grid {5,10,20} 内标准参数)。物理: relevance 是相关度门, 天然事件稀疏度低于 mean (不是零新闻日 0 值事件型), 20 日的记忆拉伸对'媒体注意力衰减节奏'的时间常数匹配是否更契合? 若 S6 Sharpe > S2, 相关度信息需要更长记忆窗 (类似机构跟踪), 内层窗口终态回到 20; 若 S6 下降 20 日窗使'过时 relevance'污染信号, 则 10 日窗定格, 与 mean:prob10d 家族的 10 日一致。判决价值在窗口终态地位。"
+    },
+    {
+      "id": 7,
+      "type": "B63_S7_MEAN_P20D_TVR_TARGET_WEAPON_TRANSFER",
+      "expression": "ts_target_tvr_decay(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_20d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), lambda_min=0, lambda_max=1, target_tvr=0.11)",
+      "optimize_reason": "武器迁移槽: B62 S6 已证明 ts_target_tvr_decay 机械锁定 TO=7.5%/Margin 9.2b 家族史峰 (但当时 trunc 0.08 导致 CW fail + 2Y 0.17 腰斩)。本槽满分三重修正: (1) trunc 回 0.025 清 CW 源头, (2) 字段对按换核令换到 mean:prob20d, (3) target_tvr 从引擎搜到的 7.5% 提到地板区 11% (避免过度平滑戕害 2Y)。判决: 若 2Y 相比 B62 S6 的 0.17 显著回正 (>1.0) 且 Margin 保留 5+bps, 武器转正为家族的机械化 L4; 若 2Y 仍低, tvr 引擎惩罚过度平滑, 家族最后的 L4 途径是'无外推 + decay settings 轴' (与 B61/B62 的三重证据闭合)。"
+    },
+    {
+      "id": 8,
+      "type": "B63_S8_MEAN_P20D_EVENT_HOLD_LOCK",
+      "expression": "trade_when(mean_sentiment_score_transfer, power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_20d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), -1)",
+      "optimize_reason": "换手轴第三形态 (Q6): trade_when 事件持仓锁, 换核令内 mean:prob20d 对。物理: 条件 = mean_sentiment_score_transfer 本体真值 ([0,1] 稀疏事件分, 非零=当日有新闻; 90% 零新闻日条件为假=持仓权重冻结在事件日原值), 条件为真才重算'冠军架构'信号, exit=-1 永不主动平仓。与 decay/hump/tvr 三种平滑哲学本质不同: 前三者是'降低调仓幅度', 本槽是'只允许调仓的时机窗口'——无新闻的静默日完全不触碰, TO 直坠; 新闻簇发期按冠军架构全速建仓。算子数 9。判决: TO 若 <=10% 而 Ret 比冠军壳水化更低有限, 则事件锁是家族的正交武器; 若系统性错过事件间的趋势延续, 2Y 与 Sharpe 双杀, 事件锁归档。"
+    }
+  ]
+}

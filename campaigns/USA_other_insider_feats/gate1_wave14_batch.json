@@ -1,0 +1,67 @@
+{
+  "wave": 14,
+  "seed_id": "GATE1_WAVE14",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "INDUSTRY neutralization is the winner for txn×volume resonance (Sh 0.81, Fit 0.64, Marg 25bps, TO 6.1%, ret 7.7%). Push this: 1) txn 20d-60d × value_level as 3rd field at INDUSTRY, 2) SUBINDUSTRY test, 3) value family at INDUSTRY, 4) longer vol window (250d) as conviction proxy.",
+  "items": [
+    {
+      "id": 1,
+      "type": "w14_industry",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(buy_sell_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W14-1: txn_momentum × value_all_60d @ INDUSTRY — cross-family multiply, value level as conviction, 3 fields"
+    },
+    {
+      "id": 2,
+      "type": "w14_industry",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_250)),5), subindustry)",
+      "optimize_reason": "W14-2: txn_momentum × volume_250d @ INDUSTRY — long-window volume as regime/conviction proxy (coverage 0.83)"
+    },
+    {
+      "id": 3,
+      "type": "w14_subindustry",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W14-3: best resonance @ SUBINDUSTRY — finer neutralization may preserve IC better than INDUSTRY"
+    },
+    {
+      "id": 4,
+      "type": "w14_subindustry",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),5), subindustry)",
+      "optimize_reason": "W14-4: baseline txn 20d-60d @ SUBINDUSTRY — compare neutralization impact"
+    },
+    {
+      "id": 5,
+      "type": "w14_value_industry",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W14-5: value_momentum × volume_10d @ INDUSTRY — test value family at winning neutralization"
+    },
+    {
+      "id": 6,
+      "type": "w14_value_industry",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_all_20d_filled),vec_avg(buy_sell_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W14-6: value_all_momentum × volume_10d @ INDUSTRY — broader value base"
+    },
+    {
+      "id": 7,
+      "type": "w14_sign_industry",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),sign(vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled))),5), subindustry)",
+      "optimize_reason": "W14-7: txn_momentum × sign(volume) @ INDUSTRY — binary gate may preserve IC better than multiply"
+    },
+    {
+      "id": 8,
+      "type": "w14_baseline",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "W14-8: reproduce best resonance @ INDUSTRY with arg_max(8) — avoids fingerprint collision"
+    }
+  ]
+}

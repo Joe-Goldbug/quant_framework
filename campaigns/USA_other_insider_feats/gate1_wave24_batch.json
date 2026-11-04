@@ -1,0 +1,22 @@
+{
+  "wave": 24,
+  "seed_id": "GATE1_WAVE24",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "j2YAbw6W",
+  "hypothesis": "盲区3/铁律2：季报对齐窗 d=66/132 从未测试。insider 披露是事件驱动，日频窗 (10/20/40) 在稀疏事件下信号不均，导致年分布 2017/2019/2020 走弱而 2021/2023 极强。季报对齐窗应使持仓期与披露/财报节奏对齐，目标是把年分布压平并抬 2Y 稳健性。含 N/2N 成对 (66/132) 与 33 对照。",
+  "items": [
+    {"id": "w24_rank66", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),66), subindustry)", "optimize_reason": "季报对齐主槽：d=66 (~1 季度) 替代 20，秩壳保持与父本可比。成对基准 132。"},
+    {"id": "w24_rank132", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),132), subindustry)", "optimize_reason": "N/2N 对：d=132 (~2 季度)。若 66/132 双窗同向走强则为真高原；单窗尖峰一票否决。"},
+    {"id": "w24_decay66", "neutralization": "INDUSTRY", "expression": "group_rank(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),66), subindustry)", "optimize_reason": "季报窗 + 线性衰减：同窗长下比较 mean 与 decay 两种平滑，判断季报对齐的增益是否与平滑核形状独立。"},
+    {"id": "w24_decay132", "neutralization": "INDUSTRY", "expression": "group_rank(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),132), subindustry)", "optimize_reason": "配对另一半：decay 132，与 decay66 构成 N/2N。"},
+    {"id": "w24_ne66", "neutralization": "INDUSTRY", "expression": "group_neutralize(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),66), subindustry)", "optimize_reason": "盲区1×盲区3 交叉：非秩外壳 + 季报窗。若两轴增益可叠加，这是最可能同时过 Margin 与 2Y 的一槽。"},
+    {"id": "w24_ne132", "neutralization": "INDUSTRY", "expression": "group_neutralize(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),132), subindustry)", "optimize_reason": "同上 N/2N 另一半，交叉轴的成对验证。"},
+    {"id": "w24_rank33", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33), subindustry)", "optimize_reason": "N/2N 反向外推：33 (~半月) 作为 66 的一半，检查季报窗收益是单调还是单点，避免把 66 的偶然峰值当成结构。"},
+    {"id": "w24_rank66_orig", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),66), subindustry)", "optimize_reason": "母本原始价值窗 (60d-250d) × 季报平滑窗：检验季报窗能否把母本被证弱的 2Y 结构救回来，从而分离『价值窗旋转』与『平滑窗对齐』两个病灶处置的真实贡献。"},
+    {"id": "w24_div20", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(divide(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "盲区5结构轴：subtract差值 -> divide比值（insider字段本为比率，比值scale-invariant）。与冠军同窗20直接A/B，分离结构贡献。"},
+    {"id": "w24_div66", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(divide(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),66), subindustry)", "optimize_reason": "盲区5×3交叉：divide结构 + 季报窗66，与w24_div20构成窗口对。"}
+  ]
+}

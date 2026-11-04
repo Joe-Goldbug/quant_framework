@@ -1,0 +1,281 @@
+usable rows: 416
+rows with gap: 416
+gap: mean=-0.0442 median=-0.0500 min=-0.8700 max=0.8500
+
+======================================================================
+1. GAP 驱动因素（gap = CLUSTER_TEST - Sharpe）
+======================================================================
+
+-- 相关度 (Pearson / Spearman) --
+sub_universe_sharpe        n=416  pearson=-0.376  spearman=-0.420
+two_year_sharpe            n=416  pearson=-0.327  spearman=-0.370
+turnover                   n=416  pearson=-0.344  spearman=-0.324
+returns                    n=416  pearson=-0.447  spearman=-0.497
+longCount                  n=416  pearson=+0.185  spearman=+0.193
+shortCount                 n=416  pearson=+0.167  spearman=+0.195
+width                      n=416  pearson=+0.178  spearman=+0.172
+drawdown                   n=416  pearson=+0.064  spearman=+0.207
+margin                     n=416  pearson=-0.058  spearman=-0.192
+risk_neutralized_sharpe    n=408  pearson=-0.444  spearman=-0.491
+sharpe                     n=416  pearson=-0.427  spearman=-0.468
+fitness                    n=416  pearson=-0.417  spearman=-0.436
+
+-- gap 分组统计（按特征有无）--
+ts_rank_other  ON : n= 79 mean=-0.0167 med=-0.0400 | OFF: n=337 mean=-0.0506 med=-0.0500 | diff=+0.0339
+rank           ON : n=214 mean=-0.0657 med=-0.0700 | OFF: n=202 mean=-0.0213 med=-0.0100 | diff=-0.0444
+ts_backfill    ON : n=151 mean=-0.0632 med=-0.0700 | OFF: n=265 mean=-0.0333 med=-0.0400 | diff=-0.0299
+ts_mean        ON : n= 42 mean=-0.0312 med=-0.0600 | OFF: n=374 mean=-0.0456 med=-0.0500 | diff=+0.0145
+ts_zscore      ON : n=  6 mean=+0.0300 med=+0.0400 | OFF: n=410 mean=-0.0453 med=-0.0500 | diff=+0.0753
+winsorize      ON : n=  9 mean=-0.0844 med=-0.1200 | OFF: n=407 mean=-0.0433 med=-0.0500 | diff=-0.0412
+reverse        ON : n=398 mean=-0.0489 med=-0.0600 | OFF: n= 18 mean=+0.0606 med=+0.0700 | diff=-0.1095
+ts_decay       ON : n= 20 mean=-0.1095 med=-0.1000 | OFF: n=396 mean=-0.0409 med=-0.0500 | diff=-0.0686
+group_neutral  ON : n= 39 mean=-0.0031 med=-0.0100 | OFF: n=377 mean=-0.0484 med=-0.0600 | diff=+0.0454
+vec_avg        ON : n= 67 mean=-0.0076 med=+0.0000 | OFF: n=349 mean=-0.0512 med=-0.0600 | diff=+0.0436
+
+-- gap 按 settings --
+neutralization=INDUSTRY: n=376 mean=-0.0319 med=-0.0400 min=-0.8700 max=+0.8500
+neutralization=MARKET: n= 24 mean=-0.1096 med=-0.1300 min=-0.2300 max=+0.0100
+neutralization=STATISTICAL: n=  8 mean=-0.0237 med=-0.0400 min=-0.3600 max=+0.3200
+neutralization=SUBINDUSTRY: n=  8 mean=-0.4450 med=-0.5200 min=-0.7800 max=-0.0300
+decay=20: n=  8 mean=-0.0025 med=+0.0900 min=-0.2700 max=+0.2700
+decay=25: n= 16 mean=-0.0281 med=-0.0100 min=-0.3400 max=+0.2300
+decay=6: n=392 mean=-0.0457 med=-0.0500 min=-0.8700 max=+0.8500
+universe=TOP1000: n=400 mean=-0.0401 med=-0.0500 min=-0.8700 max=+0.8500
+universe=TOP3000: n=  8 mean=-0.1713 med=-0.1100 min=-0.3400 max=+0.0700
+universe=TOP500: n=  8 mean=-0.1213 med=-0.1200 min=-0.3100 max=+0.0300
+
+-- gap 按字段族（单族取该族行）--
+fundamental        n=  9 mean=-0.1122 med=-0.1500
+ret                n= 14 mean=-0.1114 med=-0.0500
+vwap_close         n=231 mean=-0.0823 med=-0.0900
+intraday           n= 13 mean=-0.0692 med=+0.0100
+atr                n= 12 mean=-0.0600 med=+0.0000
+excursion_stddev   n=224 mean=-0.0546 med=-0.0700
+vol                n=  3 mean=-0.0333 med=-0.0500
+amplitude          n=108 mean=-0.0136 med=-0.0100
+none               n= 35 mean=-0.0074 med=-0.0100
+other_news         n=  1 mean=+0.1900 med=+0.1900
+
+-- gap 按输出层 --
+raw            n=119 mean=-0.0512 med=-0.0700
+reverse        n=284 mean=-0.0451 med=-0.0400
+rank           n= 13 mean=+0.0408 med=+0.0500
+
+-- gap 最小的 10 行 --
+#1 gap=-0.8700  Sh=0.51 CL=-0.36 TO=0.132 Fit=0.24 Ret=0.0283 sub=0.02 2Y=0.27 RN=0.38 [batch_w11a_1792941539]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), trade_when(greater(rank(news_short_interest), 0.88), reverse(rank(divide(news_indx_perf, add(vec_count(high_price_excursion_stddev), 1)))
+#2 gap=-0.7800  Sh=1.29 CL=0.51 TO=1.286 Fit=0.26 Ret=0.0521 sub=0.88 2Y=0.50 RN=1.31 [batch_w10g_1792863241]
+     reverse(rank(divide(subtract(news_eod_close, news_eod_vwap), ts_backfill(vec_count(high_price_excursion_stddev), 120))))
+#3 gap=-0.6500  Sh=1.15 CL=0.50 TO=1.313 Fit=0.22 Ret=0.0499 sub=0.71 2Y=0.40 RN=1.09 [batch_w10g_1792863241]
+     reverse(rank(divide(subtract(news_eod_close, news_eod_vwap), vec_max(high_price_excursion_stddev))))
+#4 gap=-0.6200  Sh=1.03 CL=0.41 TO=1.347 Fit=0.25 Ret=0.0819 sub=0.21 2Y=2.52 RN=1.15 [batch_gate4_N_1792844308]
+     reverse(multiply(rank(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt))), rank(news_open_gap)))
+#5 gap=-0.5500  Sh=0.85 CL=0.30 TO=0.312 Fit=0.32 Ret=0.0431 sub=0.52 2Y=0.50 RN=0.96 [batch_w10g_1792863241]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_mean(divide(subtract(news_eod_close, news_ton_last), ts_backfill(vec_count(high_price_excursion_stddev), 120)), 5))), 0)
+#6 gap=-0.5300  Sh=0.21 CL=-0.32 TO=1.579 Fit=0.05 Ret=0.0760 sub=0.26 2Y=-0.39 RN=0.29 [batch_gate3_I_1792843350]
+     reverse(divide(news_mins_3_pct_up, add(news_mins_3_pct_up, news_mins_3_pct_dn)))
+#7 gap=-0.5300  Sh=1.51 CL=0.98 TO=1.231 Fit=0.35 Ret=0.0672 sub=0.97 2Y=1.79 RN=1.68 [batch_w10g_1792863241]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), ts_backfill(vec_count(high_price_excursion_stddev), 120)))), 0)
+#8 gap=-0.5200  Sh=1.48 CL=0.96 TO=1.233 Fit=0.34 Ret=0.0656 sub=0.94 2Y=1.79 RN=1.64 [batch_w10g_1792863241]
+     reverse(rank(divide(subtract(news_eod_close, news_ton_last), ts_backfill(vec_count(high_price_excursion_stddev), 120))))
+#9 gap=-0.4700  Sh=1.50 CL=1.03 TO=1.228 Fit=0.33 Ret=0.0602 sub=0.94 2Y=1.30 RN=1.81 [batch_gate7_W_1792852639]
+     reverse(ts_rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 250))
+#10 gap=-0.4600  Sh=1.53 CL=1.07 TO=1.227 Fit=0.34 Ret=0.0615 sub=0.94 2Y=1.45 RN=1.83 [batch_gate7_W_1792852639]
+     reverse(ts_rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 500))
+
+======================================================================
+2. (Sh, TO) 前沿：TO 10% 分桶
+======================================================================
+TO bucket        n    maxSh   Sh@max  Fit@max  Ret@max    medSh
+[0.0,0.1)     35     0.78    0.36  0.0263    0.14
+[0.1,0.2)     24     0.70    0.24  0.0232    0.24
+[0.2,0.3)     27     0.89    0.37  0.0382    0.40
+[0.3,0.4)     48     1.19    0.38  0.0374    0.86
+[0.4,0.5)     32     1.07    0.36  0.0463    0.79
+[0.5,0.6)     19     1.17    0.31  0.0406    0.96
+[0.6,0.7)     10     1.20    0.33  0.0532    0.71
+[0.7,0.8)     12     1.45    0.44  0.0649    1.35
+[0.8,0.9)     17     1.49    0.43  0.0693    1.15
+[0.9,1.0)      2     1.10    0.24  0.0439    1.10
+[1.0,1.1)     15     1.37    0.32  0.0571    0.69
+[1.1,1.2)     69     1.65    0.42  0.0786    1.21
+[1.2,1.3)     66     1.69    0.42  0.0777    1.29
+[1.3,1.4)     20     1.29    0.30  0.0769    1.16
+[1.4,1.5)     18     1.49    0.30  0.0579    0.09
+[1.5,1.6)      2     0.41    0.09  0.0820    0.41
+
+-- 全史 Fit top10 --
+#1 Fit=0.440 Sh=1.45 TO=0.718 Ret=0.0649 2Y=1.61 sub=1.27 CL=1.33 [batch_w12_MAIN_1792944870]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excur
+#2 Fit=0.430 Sh=1.49 TO=0.837 Ret=0.0693 2Y=1.53 sub=1.42 CL=1.43 [batch_w11b_W1_1792943501]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)
+#3 Fit=0.430 Sh=1.44 TO=0.723 Ret=0.0632 2Y=1.46 sub=1.27 CL=1.21 [batch_w13_MAIN_1792945280]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev
+#4 Fit=0.420 Sh=1.65 TO=1.198 Ret=0.0786 2Y=2.10 sub=1.30 CL=1.47 [batch_w10d_1792862164]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), ts_backfill(vec_count(high_price_excursion_stddev), 120)))), 0)
+#5 Fit=0.420 Sh=1.47 TO=0.837 Ret=0.0681 2Y=1.49 sub=1.41 CL=1.41 [batch_w11b_W1_1792943501]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)
+#6 Fit=0.420 Sh=1.41 TO=0.718 Ret=0.0636 2Y=1.55 sub=1.26 CL=1.31 [batch_w12_MAIN_1792944870]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)),
+#7 Fit=0.420 Sh=1.63 TO=1.159 Ret=0.0756 2Y=2.02 sub=1.42 CL=1.52 [batch_w12_MAIN_1792944870]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_coun
+#8 Fit=0.420 Sh=1.49 TO=0.842 Ret=0.0678 2Y=1.42 sub=1.44 CL=1.36 [batch_w13_MAIN_1792945280]
+     trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_m
+#9 Fit=0.420 Sh=1.69 TO=1.253 Ret=0.0777 2Y=2.02 sub=1.42 CL=1.38 [batch_w13_MAIN_1792945280]
+     reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), multiply(add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1), add(vec_stddev(high_price_excursi
+#10 Fit=0.410 Sh=1.26 TO=0.829 Ret=0.0893 2Y=1.72 sub=0.89 CL=1.21 [batch_gate1_b10]
+     reverse(rank(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 2)))
+
+Sh>=1.63 & TO<=25%: 0 行;  Sh>=1.58 & TO<=40%: 0 行
+TO<=40%% 中 Sh 最高 5 行:
+  Sh=1.19 TO=0.375 Fit=0.38 CL=1.15 [batch_gate7_Z_1792852639] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 5), reverse(group_rank(ts_backfill(divide
+  Sh=1.17 TO=0.378 Fit=0.37 CL=1.1 [batch_gate3_K_1792843399] reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), industry))
+  Sh=1.16 TO=0.378 Fit=0.36 CL=1.09 [batch_gate7_Z_1792852639] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 10), reverse(group_rank(ts_backfill(divid
+  Sh=1.15 TO=0.378 Fit=0.36 CL=1.05 [batch_gate4_O_1792844334] reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), industry))
+  Sh=1.15 TO=0.370 Fit=0.36 CL=1.13 [batch_gate7_Z_1792852639] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(group_rank(ts_backfill(divide
+
+======================================================================
+3. Turnover 机理：ts_rank250 vs rank vs ts_backfill
+======================================================================
+ts_rank(X,250) n=0
+rank(X) only (no ts_rank)                n=212 TO: mean=0.810 med=0.842 p10=0.202 p25=0.397 p75=1.206 p90=1.369 | Sh mean=0.82 med=1.04 max=1.69
+ts_backfill any                          n=151 TO: mean=0.578 med=0.406 p10=0.228 p25=0.371 p75=0.816 p90=1.197 | Sh mean=0.82 med=0.88 max=1.65
+neither ts_rank nor ts_backfill          n=199 TO: mean=0.945 med=1.150 p10=0.153 p25=0.498 p75=1.265 p90=1.401 | Sh mean=0.63 med=0.70 max=1.69
+
+-- ts_rank250 子组：输入是否预平滑（ts_mean/ts_decay/ts_sum/ts_delta）--
+ts_rank250 + 预平滑 n=0
+ts_rank250 + 裸信号(无预平滑) n=0
+
+-- ts_rank 窗口细分 --
+ts_rank(...,20)                          n=  2 TO: mean=0.120 med=0.150 p10=0.090 p25=0.090 p75=0.150 p90=0.150 | Sh mean=0.40 med=0.49 max=0.49
+ts_rank(...,60)                          n= 14 TO: mean=0.152 med=0.088 p10=0.054 p25=0.081 p75=0.095 p90=0.140 | Sh mean=0.39 med=0.47 max=1.15
+ts_rank(...,120)                         n=  2 TO: mean=0.055 med=0.070 p10=0.041 p25=0.041 p75=0.070 p90=0.070 | Sh mean=0.39 med=0.42 max=0.42
+ts_rank(...,250) n=0
+ts_rank(...,500) n=0
+
+-- rank(X) 子组：X 是否预平滑 --
+rank + 预平滑/backfill                      n=121 TO: mean=0.658 med=0.687 p10=0.134 p25=0.295 p75=1.059 p90=1.231 | Sh mean=0.84 med=0.96 max=1.69
+rank + 裸信号                               n= 91 TO: mean=1.011 med=1.171 p10=0.296 p25=0.525 p75=1.313 p90=1.410 | Sh mean=0.78 med=1.10 max=1.59
+
+-- ts_backfill 窗口细分 --
+ts_backfill(...,1) n=0
+ts_backfill(...,2) n=0
+ts_backfill(...,3) n=0
+ts_backfill(...,5) n=0
+ts_backfill(...,10) n=0
+ts_backfill(...,20) n=0
+ts_backfill(...,60) n=0
+ts_backfill(...,120)                     n= 43 TO: mean=0.850 med=1.103 p10=0.312 p25=0.403 p75=1.201 p90=1.257 | Sh mean=1.00 med=1.10 max=1.65
+ts_backfill(...,250)                     n=  5 TO: mean=0.476 med=0.210 p10=0.084 p25=0.107 p75=0.780 p90=1.201 | Sh mean=0.36 med=0.21 max=1.61
+
+-- 控制字段族：族内 ts_rank250 vs rank TO 对比 --
+
+======================================================================
+4. 低 TO 区 [10%, 40%] Sh 天花板
+======================================================================
+低 TO 行数: 99 / 416
+
+-- 按字段族（含多族拆算）--
+amplitude          n= 36 maxSh=1.19 (TO=0.375 Fit=0.38) medSh=0.70
+      best:  trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 5), reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), industry)), -1)
+excursion_stddev   n= 64 maxSh=1.19 (TO=0.375 Fit=0.38) medSh=0.54
+      best:  trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 5), reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), industry)), -1)
+vwap_close         n= 45 maxSh=0.94 (TO=0.397 Fit=0.28) medSh=0.55
+      best:  trade_when(greater(vec_count(high_price_excursion_stddev), 0), reverse(rank(divide(subtract(news_eod_close, news_ton_last), ts_backfill(vec_count(high_price_excursion_stddev), 120)))), 0)
+none               n=  3 maxSh=0.78 (TO=0.391 Fit=0.21) medSh=0.12
+      best:  reverse(ts_backfill(divide(vec_avg(high_price_deviation_std_1555), add(vec_avg(high_price_deviation_std_1555), vec_avg(low_price_deviation_std_1555))), 60))
+fundamental        n=  7 maxSh=0.54 (TO=0.349 Fit=0.16) medSh=0.44
+      best:  trade_when(less(rank(news_cap), 0.2), reverse(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt))), -1)
+ret                n=  3 maxSh=0.51 (TO=0.132 Fit=0.24) medSh=0.26
+      best:  trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), trade_when(greater(rank(news_short_interest), 0.88), reverse(rank(divide(news_indx_perf, add(vec_count(high_price_exc
+other_news         n=  1 maxSh=0.24 (TO=0.247 Fit=0.05) medSh=0.24
+      best:  trade_when(greater(rank(news_dividend_yield), 0.8), reverse(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt))), -1)
+vol                n=  1 maxSh=0.20 (TO=0.170 Fit=0.04) medSh=0.20
+      best:  trade_when(greater(rank(news_ratio_vol), 0.8), reverse(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt))), -1)
+atr                n=  2 maxSh=-0.04 (TO=0.193 Fit=-0.00) medSh=-0.04
+      best:  trade_when(greater(news_atr_ratio, 1.2), reverse(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt))), 0)
+
+-- 按结构特征 --
+ts_rank_other  n= 15 maxSh=1.10 medSh=0.30  best: reverse(ts_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), 250
+rank           n= 52 maxSh=1.13 medSh=0.51  best: reverse(rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60)))
+ts_backfill    n= 59 maxSh=1.19 medSh=0.78  best: trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 5), reverse(group_ran
+ts_mean        n= 20 maxSh=0.85 medSh=0.33  best: trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_m
+ts_zscore      n=  2 maxSh=0.33 medSh=0.33  best: rank(multiply(ts_zscore(ts_backfill(vec_avg(nws12_mainz_epsactual), 250), 63), subtract(1, rank(ts_m
+reverse        n= 94 maxSh=1.19 medSh=0.57  best: trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 5), reverse(group_ran
+ts_decay       n=  2 maxSh=0.86 medSh=0.86  best: trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_d
+group_neutral  n= 16 maxSh=1.19 medSh=0.81  best: trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 5), reverse(group_ran
+
+-- amplitude 族 bf 参数覆盖 --
+amplitude 行数: 108
+amplitude bf 窗口分布: {'NO_BF': 108}
+全部行 bf 窗口分布: {'120': 43, '250': 7, 'NO_BF': 265}
+amplitude 低TO行: 36, maxSh=1.19
+   Sh=1.19 TO=0.375 CL=1.15 trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 5), reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max
+   Sh=1.17 TO=0.378 CL=1.1 reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), industry))
+   Sh=1.16 TO=0.378 CL=1.09 trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 10), reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_ma
+   Sh=1.15 TO=0.378 CL=1.05 reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), industry))
+   Sh=1.15 TO=0.370 CL=1.13 trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max
+
+-- amplitude 按 bf 窗口的表现 --
+bf=NO_BF  n=108 TO med=0.403 Sh max=1.44 med=0.69
+
+saved _w11f_tmp_analysis.json
+
+======================================================================
+1b. 条件 gap：Sh>=1.3 子集（n 变化）与 Sh>=1.58 子集
+======================================================================
+
+-- Sh>=1.30: n=78 gap mean=-0.1623 med=-0.1300 --
+-- 特征 ON/OFF --
+ts_rank_other  ON : n= 19 mean=-0.1832 med=-0.1300 | OFF: n= 59 mean=-0.1556 med=-0.1300 | diff=-0.0276
+rank           ON : n= 54 mean=-0.1700 med=-0.1400 | OFF: n= 24 mean=-0.1450 med=-0.1200 | diff=-0.0250
+ts_backfill    ON : n= 27 mean=-0.1826 med=-0.1400 | OFF: n= 51 mean=-0.1516 med=-0.1200 | diff=-0.0310
+ts_mean        ON : n=  8 mean=-0.1813 med=-0.1600 | OFF: n= 70 mean=-0.1601 med=-0.1200 | diff=-0.0211
+winsorize      ON : n=  6 mean=-0.1167 med=-0.0800 | OFF: n= 72 mean=-0.1661 med=-0.1400 | diff=+0.0494
+ts_decay       ON : n=  4 mean=-0.1400 med=-0.1100 | OFF: n= 74 mean=-0.1635 med=-0.1300 | diff=+0.0235
+-- 字段族 --
+vwap_close         n= 71 mean=-0.1770 med=-0.1400
+excursion_stddev   n= 62 mean=-0.1702 med=-0.1300
+ret                n=  2 mean=-0.1400 med=-0.0200
+none               n=  1 mean=-0.1200 med=-0.1200
+amplitude          n=  7 mean=-0.0671 med=-0.0100
+-- settings --
+neutralization=INDUSTRY: n= 75 mean=-0.1513 med=-0.1300
+neutralization=STATISTICAL: n=  1 mean=-0.2600 med=-0.2600
+neutralization=SUBINDUSTRY: n=  2 mean=-0.5250 med=-0.5200
+decay=20: n=  4 mean=-0.1625 med=-0.1200
+decay=25: n=  3 mean=-0.2133 med=-0.2000
+decay=6: n= 71 mean=-0.1601 med=-0.1300
+universe=TOP1000: n= 77 mean=-0.1600 med=-0.1300
+universe=TOP3000: n=  1 mean=-0.3400 med=-0.3400
+
+-- Sh>=1.58: n=13 gap mean=-0.1608 med=-0.1400 --
+-- 特征 ON/OFF --
+ts_backfill    ON : n=  6 mean=-0.1667 med=-0.1400 | OFF: n=  7 mean=-0.1557 med=-0.1400 | diff=-0.0110
+-- 字段族 --
+excursion_stddev   n= 12 mean=-0.1625 med=-0.1400
+vwap_close         n= 13 mean=-0.1608 med=-0.1400
+-- settings --
+neutralization=INDUSTRY: n= 12 mean=-0.1525 med=-0.1400
+neutralization=STATISTICAL: n=  1 mean=-0.2600 med=-0.2600
+decay=25: n=  1 mean=-0.2000 med=-0.2000
+decay=6: n= 12 mean=-0.1575 med=-0.1400
+universe=TOP1000: n= 13 mean=-0.1608 med=-0.1400
+
+-- gap>=0（CL>=Sh）的行 --
+n=158
+gap=+0.010 Sh=1.53 CL=1.54 TO=1.128 [batch_gate1_b9] trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(divide(subtract(news_eod_close, ne
+gap=+0.050 Sh=1.35 CL=1.40 TO=1.291 [batch_gate5_P_1792845413] reverse(ts_rank(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 250))
+gap=+0.010 Sh=1.33 CL=1.34 TO=1.290 [batch_gate5_P_1792845413] reverse(ts_zscore(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 250))
+gap=+0.030 Sh=1.32 CL=1.35 TO=1.291 [batch_gate5_P_1792845413] reverse(ts_rank(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 500))
+gap=+0.050 Sh=1.30 CL=1.35 TO=0.842 [batch_gate1_b10] reverse(quantile(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2)))
+gap=+0.020 Sh=1.28 CL=1.30 TO=1.288 [batch_gate5_P_1792845413] reverse(rank(ts_rank(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 250)))
+gap=+0.070 Sh=1.27 CL=1.34 TO=1.292 [batch_gate5_P_1792845413] reverse(ts_rank(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 120))
+gap=+0.010 Sh=1.25 CL=1.26 TO=1.380 [batch_gate9_S5_1792860909] reverse(rank(divide(subtract(news_eod_close, news_post_vwap), vec_avg(main_session_volume_ratio))))
+gap=+0.060 Sh=1.22 CL=1.28 TO=1.389 [batch_gate9_S5_1792860909] reverse(rank(divide(subtract(news_eod_close, news_ton_last), vec_avg(main_session_range_to_atr_ratio))))
+gap=+0.060 Sh=1.21 CL=1.27 TO=1.397 [batch_gate9_S5_1792860909] reverse(rank(divide(subtract(news_eod_close, news_ton_last), vec_avg(main_session_volume_ratio))))
+gap=+0.060 Sh=1.21 CL=1.27 TO=1.161 [batch_gate9_S6_1792862849] reverse(ts_rank(divide(subtract(news_eod_close, vec_avg(lowest_price_pre_news)), subtract(vec_avg(highest_price_pre_news), vec_avg
+gap=+0.030 Sh=1.20 CL=1.23 TO=0.688 [batch_gate1_b9] reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 3)))
+gap=+0.160 Sh=1.17 CL=1.33 TO=0.586 [batch_gate9_S2_INDUSTRY_1792856973] trade_when(greater(vec_count(high_price_excursion_stddev), 0), reverse(rank(divide(news_max_up_amt, add(news_max_up_amt, news_max_
+gap=+0.030 Sh=1.13 CL=1.16 TO=0.374 [batch_gate3_K_1792843399] reverse(rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60)))
+gap=+0.030 Sh=1.13 CL=1.16 TO=1.187 [batch_gate3_L_1792843424] reverse(divide(vec_avg(high_price_excursion_stddev), add(vec_avg(high_price_excursion_stddev), vec_avg(low_price_excursion_stddev)

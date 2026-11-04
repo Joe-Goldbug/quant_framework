@@ -1,0 +1,67 @@
+{
+  "wave": 11,
+  "seed_id": "GATE1_WAVE11",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "Margin attack on locked shell using valid operators only: decay-smoothed timing + 3rd field denominator gate (not multiply) + volume-ratio proxy for conviction. All @SLOW, decay=4. Core shell: group_rank(ts_arg_max(CORE,5), subindustry) preserved.",
+  "items": [
+    {
+      "id": 1,
+      "type": "w11_decay",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_decay_linear(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),5),10), subindustry)",
+      "optimize_reason": "W11-1: decay-10 on arg_max timing — smooths jumps, lowers TO, raises margin; pure 2-field core (txn 20d-60d)"
+    },
+    {
+      "id": 2,
+      "type": "w11_decay",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_decay_linear(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),5),5), subindustry)",
+      "optimize_reason": "W11-2: decay-5 lighter smoothing"
+    },
+    {
+      "id": 3,
+      "type": "w11_gate_breadth",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),add(vec_avg(buy_sell_tx_count_ratio_all_60d_filled),1)),5), subindustry)",
+      "optimize_reason": "W11-3: txn momentum / (all_count_breadth+1) — denominator gate: breadth high = more conviction, scales momentum up; 3 fields, no multiply"
+    },
+    {
+      "id": 4,
+      "type": "w11_gate_value",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),add(vec_avg(buy_sell_ratio_all_60d_filled),1)),5), subindustry)",
+      "optimize_reason": "W11-4: txn momentum / (all_value_60d+1) — value breadth as conviction denominator; orthogonal family gate"
+    },
+    {
+      "id": 5,
+      "type": "w11_vol_proxy",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),add(vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled),1)),5), subindustry)",
+      "optimize_reason": "W11-5: txn momentum / (top20_volume_ratio_10d+1) — volume ratio as activity/conviction proxy (coverage 0.88); 3 fields"
+    },
+    {
+      "id": 6,
+      "type": "w11_vol_proxy",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),add(vec_avg(top20_buy_to_sell_volume_ratio_lookback_250),1)),5), subindustry)",
+      "optimize_reason": "W11-6: txn momentum / (top20_volume_ratio_250d+1) — long-window volume proxy for regime"
+    },
+    {
+      "id": 7,
+      "type": "w11_baseline",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),5), subindustry)",
+      "optimize_reason": "W11-7: baseline reproduce txn 20d-60d @SLOW (sanity 0.92/1.06)"
+    },
+    {
+      "id": 8,
+      "type": "w11_decay_val",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_decay_linear(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),5),10), subindustry)",
+      "optimize_reason": "W11-8: value top5 20d-60d + decay-10 — test decay smoothing on value family"
+    }
+  ]
+}

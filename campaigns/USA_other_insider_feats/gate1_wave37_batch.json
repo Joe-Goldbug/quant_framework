@@ -1,0 +1,20 @@
+{
+  "wave": 37,
+  "seed_id": "GATE1_WAVE37",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "0mYXpWkK (dr26_d8, PC 0.6892+Mgn 10.23 双达标) / ZYQbj3jZ (量比信念×笔数比确认, CLUSTER 0.83, PC 0.8035)",
+  "hypothesis": "CLUSTER-PC 对偶性发现：字段拥挤度与 CLUSTER_TEST 正相关（量比腿 0.82~1.04）而与 PC 负相关（笔数比腿 0.13~0.68）。混合腿假设：量比信念腿供 CLUSTER+Sharpe 引擎（ZYQbj3jZ Sh 1.30），笔数比确认腿+双层秩供 PC 减压，窗 26/33 插值带供 Margin。若联合体 CLUSTER>0.8 且 PC<0.70 同时成立，则打破对偶约束。",
+  "items": [
+    {"id": "w37_union_w26", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),26), industry), subindustry)", "optimize_reason": "联合体主槽：量比信念（CLUSTER 0.82/Sharpe 引擎）× 笔数比确认（PC 冷源）× 双层秩（PC 0.82→0.57 的杠杆）× 窗26（Margin 插值带）。对偶约束的正面突破尝试。8算子/3字段。"},
+    {"id": "w37_union_w33", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33), industry), subindustry)", "optimize_reason": "联合体窗33：ZYQbj3jZ 的 Sharpe 1.30 引擎窗 × 双层秩。PC 风险高于 w26 但 Sharpe 上限更高。8算子/3字段。"},
+    {"id": "w37_union_w26_ctr5", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),26), industry), subindustry)", "optimize_reason": "确认腿换 top5 笔数比（双冷源）：量比信念 × 笔数比确认的极冷组合，PC 最低路径。8算子/3字段。"},
+    {"id": "w37_union_w26_vecmax", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_max(buy_sell_ratio_top5_20d_filled),vec_max(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),26), industry), subindustry)", "optimize_reason": "联合体 × vec_max 信念腿（Fitness 杠杆在量比腿上的回归测试——LLMNAXG9 的 0.82 就是量比腿 vec_max）。8算子/3字段。"},
+    {"id": "w37_dr27_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),27), industry), subindustry)", "optimize_reason": "插值带 27：dr26(PC 0.6892✓) 与 dr29(0.7084✗) 之间的 Margin 榨取，decay8。8算子/3字段。"},
+    {"id": "w37_dr28_d8", "neutralization": "INDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),28), industry), subindustry)", "optimize_reason": "插值带 28：PC 临界线的最后探针，Margin 预期 ~10.8。8算子/3字段。"},
+    {"id": "w37_xar_decay8", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "xAr3wXZb（综合最优双达标：Sh 1.12/2Y 0.97/Fit 0.60/PC 0.6316/Mgn 10.28）@decay8：Mgn 10.28→11.3 预期，PC/2Y 稳定性验证。6算子/3字段。"},
+    {"id": "w37_zyq_decay8", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),33), subindustry)", "optimize_reason": "ZYQbj3jZ（Sh 1.30/Mgn 17.43/CLUSTER 0.83/PC 0.8035）@decay8：PC 0.8035 是否随 decay 回落的 cheap probe——若回落至 <0.70 则直接解锁高 Sharpe 区。6算子/3字段。"}
+  ]
+}

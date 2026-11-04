@@ -1,0 +1,32 @@
+"""
+Gate 1 多Agent扫描探针 —— BATCH08
+经济学假设：
+  A. 新闻情绪【负面冲击→均值回归】(negative_score_maximum_value)
+  B. 股息率/机构持仓稳定性 是异质性调节器 (oth424_divyld)
+方向锁定：
+  - 母本 mLo5eZW5 (Sh1.54/Fit0.76/EMEA-0.03/ProdCorr0.6945)
+  - 目标: 在保持高Sharpe前提下, ①降低ProdCorr至<0.65 ②抬升EMEA ③Fit≥1.0
+用场:
+  2字段(negative_score_maximum_value + oth424_divyld) ≤ 8 op, COUNTRY中性化, 250日均值
+"""
+exprs = [
+  # slot0: 母本骨架基线 (复现1.54的锚)
+  "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+  # slot1: ts_zscore归一 —— 消除个股绝对情绪水平差异, 抗ProdCorr
+  "group_rank(ts_zscore(ts_mean(negative_score_maximum_value, 250), 250), industry)",
+  # slot2: 股息率正交剔除 (提纯pure新闻情绪反转)
+  "group_rank(subtract(ts_mean(negative_score_maximum_value, 250), ts_mean(oth424_divyld, 250)), industry)",
+  # slot3: 股息率×情绪交互 (只在高息股放大反转)
+  "group_rank(multiply(ts_mean(negative_score_maximum_value, 250), ts_mean(oth424_divyld, 250)), industry)",
+  # slot4: 双通道 filter=true 叠加 (经济学: 独立截面秩标准化后无损叠加)
+  "group_rank(add(ts_mean(negative_score_maximum_value, 250), filter=true, ts_mean(oth424_divyld, 250)), industry)",
+  # slot5: 仅保留负面(>0)部分均值 (突发危机后的急跌反弹)
+  "group_rank(ts_mean(max(negative_score_maximum_value, 0), 250), industry)",
+  # slot6: 负面覆盖率(事件广度)替代深度
+  "group_rank(ts_mean(negative_coverage_pct, 250), industry)",
+  # slot7: 时序分位归一 (过去500日内的自身相对位置)
+  "group_rank(ts_rank(ts_mean(negative_score_maximum_value, 250), 500), industry)",
+]
+print("BATCH08 candidates:", len(exprs))
+for i,e in enumerate(exprs):
+    print(f"  [{i}] {e}")

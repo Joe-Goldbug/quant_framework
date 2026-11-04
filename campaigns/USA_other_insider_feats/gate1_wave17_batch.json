@@ -1,0 +1,67 @@
+{
+  "wave": 17,
+  "seed_id": "GATE1_WAVE17",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "Best base: value_champ(60d-250d) × volume @ INDUSTRY with arg_max(8) → Sh 1.02. Test: 1) Different timing operators (ts_zscore, ts_delta, ts_rank, ts_mean) at INDUSTRY on the resonance core, 2) Resonance at SLOW (multiply error was expression-specific; subtract-only worked at SLOW in Wave 4bisect), 3) Best single-signal at SLOW decay=0 (original champion conditions).",
+  "items": [
+    {
+      "id": 1,
+      "type": "w17_tszscore",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_zscore(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W17-1: ts_zscore(5) on resonance core @ INDUSTRY — z-score timing may stabilize IC"
+    },
+    {
+      "id": 2,
+      "type": "w17_tsdelta",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_delta(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W17-2: ts_delta(5) on resonance core @ INDUSTRY — momentum-of-momentum timing"
+    },
+    {
+      "id": 3,
+      "type": "w17_tsrank",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_rank(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "W17-3: ts_rank(10) on resonance core @ INDUSTRY — percentile timing"
+    },
+    {
+      "id": 4,
+      "type": "w17_tsmean",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "W17-4: ts_mean(10) on resonance core @ INDUSTRY — longer smoothing"
+    },
+    {
+      "id": 5,
+      "type": "w17_slow_resonance",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W17-5: resonance @ SLOW — test if multiply works at SLOW now"
+    },
+    {
+      "id": 6,
+      "type": "w17_slow_champ",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "W17-6: champion pure @ SLOW — reproduce 0.88 baseline"
+    },
+    {
+      "id": 7,
+      "type": "w17_industry_baseline",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "W17-7: reproduce best (Sh 1.02, Fit 0.78) with arg_max(8) @ INDUSTRY"
+    },
+    {
+      "id": 8,
+      "type": "w17_subindustry",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "W17-8: resonance @ SUBINDUSTRY with arg_max(10) — finer neutral may preserve IC, avoids fingerprint collision"
+    }
+  ]
+}

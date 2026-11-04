@@ -1,0 +1,110 @@
+# Task A 计算 (master=440 行)
+有 sh 的行: 440
+[Law1 校验] Fit=Sh*sqrt(|Ret|/max(TO,0.11)): n=440, mean|err|=0.0029, max=0.0246
+[Law2] Sh^2*(Ret/TO): n=440, mean=0.0563, median=0.0444, max=0.2117, p95=0.1636, >0.30 的行数=0
+[Law4] CLUSTER_TEST 数值未在主集存储（仅 warn 名），从原始 result 文件单独抽取见下
+[Law4] CL≈Sh-x: n=450, mean diff=0.0469, median=0.0500, max CL value=1.560
+[Law5] MT 警告与 hard fail 同现: 0/423
+
+## A1 按 src 分组前沿 (每批取 Sh 最大行)
+gate1      n= 8 bestSh=  1.57 TO= 112.7% Fit= 0.40 Ret= 0.0735 Y2= 2.08 A1QplYkX
+gate1      n= 8 bestSh=  1.43 TO=  84.0% Fit= 0.40 Ret= 0.0666 Y2= 1.41 QPYxb9vp
+gate1      n= 7 bestSh=  1.38 TO= 129.9% Fit= 0.31 Ret= 0.0660 Y2= 1.69 LL52vo1a
+gate1      n= 7 bestSh=  1.30 TO=  84.2% Fit= 0.35 Ret= 0.0624 Y2= 1.18 j2epA53o
+gate1      n= 7 bestSh=  0.94 TO= 130.9% Fit= 0.20 Ret= 0.0592 Y2= 0.05 e76WYY0l
+gate1      n= 7 bestSh=  0.74 TO= 127.2% Fit= 0.14 Ret= 0.0426 Y2= 1.51 zqrLVaRV
+gate2      n= 8 bestSh=  1.13 TO= 127.2% Fit= 0.27 Ret= 0.0746 Y2= 1.13 A1Q5jJJw
+gate2      n= 7 bestSh=  1.10 TO=  53.0% Fit= 0.30 Ret= 0.0398 Y2= 0.87 LL5wVxv6
+gate2      n= 8 bestSh=  1.10 TO= 121.1% Fit= 0.25 Ret= 0.0603 Y2= 1.31 QPYAZb2K
+gate3      n= 8 bestSh=  1.37 TO= 129.9% Fit= 0.31 Ret= 0.0657 Y2= 1.68 npAXmlmq
+gate3      n= 7 bestSh=  1.17 TO=  37.8% Fit= 0.37 Ret= 0.0370 Y2= 0.68 YPxOGboo
+gate3      n= 8 bestSh=  1.13 TO= 118.7% Fit= 0.23 Ret= 0.0480 Y2= 1.86 GrgNp2J3
+gate3      n= 8 bestSh=  0.22 TO=   2.2% Fit= 0.20 Ret= 0.0984 Y2= 0.07 e76Po6eM
+gate4      n= 8 bestSh=  1.61 TO= 120.1% Fit= 0.41 Ret= 0.0770 Y2= 2.09 d5K6wxlx
+gate4      n= 8 bestSh=  1.29 TO= 120.7% Fit= 0.28 Ret= 0.0554 Y2= 2.16 3qjOW9A0
+gate4      n= 8 bestSh=  1.15 TO=  37.8% Fit= 0.36 Ret= 0.0365 Y2= 0.67 leMYZQJx
+gate5      n= 8 bestSh=  1.63 TO= 116.9% Fit= 0.31 Ret= 0.0426 Y2= 0.58 N1eGk79E
+gate5      n= 8 bestSh=  1.61 TO= 120.1% Fit= 0.41 Ret= 0.0770 Y2= 2.09 9qE3g3WV
+gate5      n= 8 bestSh=  1.57 TO= 118.1% Fit= 0.39 Ret= 0.0736 Y2= 2.16 YPxOX1QA
+gate6      n= 8 bestSh=  1.32 TO= 140.1% Fit= 0.30 Ret= 0.0747 Y2= 1.08 pwvkorJv
+gate6      n= 8 bestSh=  1.09 TO= 118.5% Fit= 0.21 Ret= 0.0455 Y2= 1.87 akV8MAO5
+gate6      n= 8 bestSh=  0.10 TO= 138.6% Fit= 0.01 Ret= 0.0071 Y2= 0.03 QPYAqrkr
+gate7      n= 8 bestSh=  1.56 TO= 123.0% Fit= 0.35 Ret= 0.0626 Y2= 1.30 2rjxpVxJ
+gate7      n= 8 bestSh=  1.19 TO=  37.5% Fit= 0.38 Ret= 0.0374 Y2= 0.79 O0JjGzmY
+gate7      n= 8 bestSh=  0.81 TO=  35.5% Fit= 0.21 Ret= 0.0247 Y2= 0.02 bl8gjGwR
+gate8      n= 8 bestSh=  1.57 TO= 125.7% Fit= 0.36 Ret= 0.0644 Y2= 1.35 O0Jj8dwJ
+gate8      n= 8 bestSh=  1.45 TO= 118.8% Fit= 0.38 Ret= 0.0809 Y2= 2.24 bl8gOK7q
+gate8      n= 8 bestSh=  1.11 TO=  76.9% Fit= 0.26 Ret= 0.0434 Y2= 1.96 d5K61Y8j
+gate9      n= 8 bestSh=  1.58 TO= 127.6% Fit= 0.36 Ret= 0.0678 Y2= 1.27 3qjOGPzz
+gate9      n= 8 bestSh=  1.46 TO= 119.7% Fit= 0.38 Ret= 0.0814 Y2= 2.24 j2eJOrxE
+gate9      n= 8 bestSh=  1.44 TO= 126.8% Fit= 0.34 Ret= 0.0720 Y2= 1.62 KPmpz7Aj
+gate9      n= 8 bestSh=  1.42 TO= 124.4% Fit= 0.36 Ret= 0.0794 Y2= 1.49 2rjxYldb
+gate9      n= 8 bestSh=  1.28 TO= 112.8% Fit= 0.28 Ret= 0.0558 Y2= 1.60 A1Q55zpW
+gate9      n= 8 bestSh= -0.25 TO=  21.4% Fit=-0.05 Ret=-0.0088 Y2= 0.69 mLYNagGE
+w10a       n= 8 bestSh=  1.59 TO= 126.5% Fit= 0.37 Ret= 0.0690 Y2= 0.85 O0Jjg8PY
+w10b       n= 6 bestSh=  0.48 TO=   8.8% Fit= 0.18 Ret= 0.0168 Y2= 0.79 wp9AvEw5
+w10c       n= 8 bestSh=  0.98 TO=  52.0% Fit= 0.25 Ret= 0.0328 Y2= 0.50 GrgNjnA0
+w10d       n= 8 bestSh=  1.65 TO= 119.8% Fit= 0.42 Ret= 0.0786 Y2= 2.10 leMYnJZn
+w10e       n= 7 bestSh=  1.62 TO= 117.8% Fit= 0.41 Ret= 0.0767 Y2= 2.11 3qjONb3O
+w10f       n= 8 bestSh=  1.49 TO= 141.0% Fit= 0.30 Ret= 0.0579 Y2= 0.93 mLYNvme9
+w10g       n= 8 bestSh=  1.51 TO= 123.1% Fit= 0.35 Ret= 0.0672 Y2= 1.79 MP0nJ9Xo
+w10h       n= 8 bestSh=  1.59 TO= 114.6% Fit= 0.41 Ret= 0.0752 Y2= 2.03 mLYNEWjW
+w10i       n= 8 bestSh=  1.51 TO= 115.0% Fit= 0.38 Ret= 0.0717 Y2= 2.07 bl81YR2R
+w11a       n= 8 bestSh=  0.51 TO=  13.2% Fit= 0.24 Ret= 0.0283 Y2= 0.27 0mjVaJ61
+w11b       n= 2 bestSh=  1.56 TO= 115.1% Fit= 0.39 Ret= 0.0737 Y2= 2.01 RRAOON51
+w11b       n= 7 bestSh=  1.49 TO=  83.7% Fit= 0.43 Ret= 0.0693 Y2= 1.53 wp9ddbAY
+w11b       n= 8 bestSh=  1.39 TO=  76.2% Fit= 0.40 Ret= 0.0633 Y2= 1.38 rKdqxO0o
+w11b       n= 8 bestSh=  1.25 TO= 112.7% Fit= 0.35 Ret= 0.0859 Y2= 1.55 gJWll53O
+w11c       n= 8 bestSh=  0.49 TO=   9.0% Fit= 0.18 Ret= 0.0173 Y2= 0.83 leMmLddA
+w11d       n= 8 bestSh=  1.56 TO= 119.8% Fit= 0.41 Ret= 0.0847 Y2= 2.23 KPm1Kz8k
+w11e       n= 8 bestSh=  0.76 TO=  69.1% Fit= 0.18 Ret= 0.0379 Y2= 1.06 gJW2JojM
+w11f       n= 8 bestSh=  1.56 TO= 119.8% Fit= 0.41 Ret= 0.0839 Y2= 2.16 mLYv9WvE
+w11g       n= 8 bestSh=  1.14 TO= 123.7% Fit= 0.29 Ret= 0.0825 Y2= 1.80 9qEngYZq
+w11h       n= 8 bestSh=  1.55 TO= 125.4% Fit= 0.35 Ret= 0.0648 Y2= 1.27 xA1Z9zab
+w12        n= 8 bestSh=  1.63 TO= 115.9% Fit= 0.42 Ret= 0.0756 Y2= 2.02 9qEeNN3K
+w13        n= 8 bestSh=  1.69 TO= 125.3% Fit= 0.42 Ret= 0.0777 Y2= 2.02 d5KG231g
+w14        n= 8 bestSh=  1.16 TO= 110.8% Fit= 0.27 Ret= 0.0613 Y2= 1.97 qMER963j
+
+## A2 Sh^2*(Ret/TO) 分布
+n=440 mean=0.0563 median=0.0444 min=-0.2012 p90=0.1439 p95=0.1636 p99=0.1812 max=0.2117
+top8: 0.1771, 0.1785, 0.1788, 0.1812, 0.1839, 0.1867, 0.1902, 0.2117
+Fit: max=0.440 p95=0.400 median=0.210
+
+## A3 Fit>=1.0 数学要求 vs 实际
+若守恒 c=0.16 则 Fit 上限=sqrt(0.16)=0.400; 观测 max c=0.2117 => Fit 上限=0.460
+Fit>=1.0 需要 c>=1.0，即守恒乘积提升 4.72x (相对 max) 或 6.25x (相对典型 0.16)
+  TO=70% 时 Fit=1.0 需 Ret>=0.2804 (Sh=1.58); 全场 Ret 最大值=0.1030
+  TO=70% 时 Fit=1.0 需 Ret>=0.2571 (Sh=1.65); 全场 Ret 最大值=0.1030
+  TO=70% 时 Fit=1.0 需 Ret>=0.2451 (Sh=1.69); 全场 Ret 最大值=0.1030
+Ret 分布: n=440 median=0.0361 p95=0.0825 max=0.1030
+TO<=25% 区: n=80, max Ret=0.0984, max Sh=0.89
+  TO<=30%: n=90, maxRet=0.0984, maxSh=0.89
+  TO<=50%: n=172, maxRet=0.0984, maxSh=1.19
+  TO<=70%: n=201, maxRet=0.0984, maxSh=1.20
+
+## A4 无 fail 无 warn 行
+数量: 0
+
+仅 fail=[] (允许 warn): 0 行
+
+## 全局 Top10 Sh
+  Sh= 1.69 Fit= 0.42 TO=125.3% Ret=0.0777 Y2= 2.02 fails=3 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] d5KG231g
+  Sh= 1.65 Fit= 0.42 TO=119.8% Ret=0.0786 Y2= 2.10 fails=3 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] leMYnJZn
+  Sh= 1.63 Fit= 0.31 TO=116.9% Ret=0.0426 Y2= 0.58 fails=4 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] N1eGk79E
+  Sh= 1.63 Fit= 0.42 TO=115.9% Ret=0.0756 Y2= 2.02 fails=2 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] 9qEeNN3K
+  Sh= 1.62 Fit= 0.41 TO=117.8% Ret=0.0767 Y2= 2.11 fails=3 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] 3qjONb3O
+  Sh= 1.61 Fit= 0.41 TO=120.1% Ret=0.0770 Y2= 2.09 fails=3 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] d5K6wxlx
+  Sh= 1.61 Fit= 0.41 TO=120.1% Ret=0.0770 Y2= 2.09 fails=3 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] 9qE3g3WV
+  Sh= 1.61 Fit= 0.41 TO=120.1% Ret=0.0770 Y2= 2.09 fails=3 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] xA1oXobW
+  Sh= 1.59 Fit= 0.37 TO=126.5% Ret=0.0690 Y2= 0.85 fails=4 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] O0Jjg8PY
+  Sh= 1.59 Fit= 0.41 TO=114.6% Ret=0.0752 Y2= 2.03 fails=2 warns=['CLUSTER_TEST', 'MATCHES_THEMES'] mLYNEWjW
+
+## A1b (Sh,TO) 阶梯前沿 (按 TO 分桶取 max Sh)
+TO[0.00,0.10): n= 35 maxSh= 0.78 (Fit=0.36, Ret=0.0263, Y2=1.22) 88vw5eJm
+TO[0.10,0.25): n= 45 maxSh= 0.89 (Fit=0.37, Ret=0.0382, Y2=0.87) d5KMbRY2
+TO[0.25,0.38): n= 36 maxSh= 1.19 (Fit=0.38, Ret=0.0374, Y2=0.79) O0JjGzmY
+TO[0.38,0.50): n= 55 maxSh= 1.17 (Fit=0.37, Ret=0.0370, Y2=0.68) YPxOGboo
+TO[0.50,0.70): n= 30 maxSh= 1.20 (Fit=0.33, Ret=0.0532, Y2=1.16) MP0E7qxL
+TO[0.70,0.90): n= 30 maxSh= 1.49 (Fit=0.43, Ret=0.0693, Y2=1.53) wp9ddbAY
+TO[0.90,1.30): n=167 maxSh= 1.69 (Fit=0.42, Ret=0.0777, Y2=2.02) d5KG231g
+TO[1.30,99.00): n= 42 maxSh= 1.49 (Fit=0.30, Ret=0.0579, Y2=0.93) mLYNvme9

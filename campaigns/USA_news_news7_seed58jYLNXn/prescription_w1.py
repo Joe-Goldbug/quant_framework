@@ -1,0 +1,178 @@
+"""
+prescription_w1.py — 种子因子定向优化模式（Seed Directed Optimization）
+种子: 58jYLNXn  |  USA / news7 / delay 1 / TOP1000
+病灶: Sharpe 1.03 < 1.58 ; Fitness 0.60 < 1.00 ; Margin 6.9bps < 10bps
+约束: 必须使用 headline_positive_term_count_v2；禁用 signed_power / hump / group_neutralize
+"""
+
+SEED_ID = "58jYLNXn"
+SEED_EXPR = (
+    "hump(signed_power(group_zscore(ts_mean(s_log_1p(headline_positive_term_count_v2) * "
+    "headline_positive_score_value_v2 / (ts_mean(headline_news_mention_count_v2, 30) + 0.1), 5), "
+    "sector), 1.6), hump=0.003)"
+)
+
+BATCH = {
+    "seed_id": SEED_ID,
+    "seed_expression": SEED_EXPR,
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "decay": 20,          # 与母本 settings 完全对齐，保证可归因
+    "neutralization": "SECTOR",
+    "truncation": 0.05,
+    "category": "news",
+    "known_fields": [
+        "headline_positive_term_count_v2",
+        "headline_negative_term_count_v2",
+        "headline_positive_score_value_v2",
+        "headline_news_mention_count_v2",
+        "headline_sentiment_value_v2",
+        "headline_news_mention_count",
+        "headline_positive_term_count",
+    ],
+    "items": [
+        {
+            "id": 1,
+            "type": "EXPLORATION_INTENSITY_PER_ARTICLE",
+            "expression": (
+                "group_zscore(ts_decay_exp_window(winsorize(divide("
+                "headline_positive_term_count_v2, add(headline_news_mention_count_v2, 1)), std=4), "
+                "10, factor=0.6), subindustry)"
+            ),
+            "optimize_reason": (
+                "病灶根治：母本把『正向词总数 PTC』直接乘上『正向词占比 PSV』再除以新闻条数，量纲是 words^2/articles，"
+                "等于把『公司规模×关注度』做成了二次放大的代理变量，导致多头只剩 111 只极端情绪股、空头 716 只，"
+                "仓位严重失衡、Margin 被稀释到 6.9bps。本条把信号重建为『每篇新闻的正向词密度』PTC/(NMC+1)，"
+                "量纲降为一阶 words/article，天然跨公司可比、与市值脱钩；winsorize(std=4) 削掉尾部单日爆量，"
+                "ts_decay_exp_window(10, factor=0.6) 以指数半衰期平滑新闻脉冲、把换手压到 20% 附近，"
+                "group_zscore 下沉到 subindustry 消除子行业情绪基准差异，抬高 Margin。"
+            ),
+        },
+        {
+            "id": 2,
+            "type": "EXPLORATION_NET_TONE_SPREAD",
+            "expression": (
+                "group_zscore(ts_mean(winsorize(divide(subtract(headline_positive_term_count_v2, "
+                "headline_negative_term_count_v2), add(add(headline_positive_term_count_v2, "
+                "headline_negative_term_count_v2), 1)), std=4), 3), subindustry)"
+            ),
+            "optimize_reason": (
+                "病灶根治：母本信号恒非负（PTC、PSV 均≥0），经部门 zscore 后分布右偏，全簿 87% 是空头，"
+                "收益完全由个别高情绪股的多头尾部决定，Fitness 被低 Margin 拖死。本条改用『净语调』"
+                "(PTC-NTC)/(PTC+NTC)，值域有界 (-1,1) 且以 0 为天然中性锚，多空自动对称，"
+                "截面权重分布更均匀，从而直接抬升 Margin 与 Sharpe；winsorize 防止分母被极小词数放大，"
+                "3 日 ts_mean 抑制单日语调抖动，subindustry 内 zscore 下沉中性化，隔离子行业系统性语调偏差。"
+            ),
+        },
+        {
+            "id": 3,
+            "type": "EXPLORATION_LOG_ODDS_TONE",
+            "expression": (
+                "group_zscore(ts_mean(subtract(log(add(headline_positive_term_count_v2, 1)), "
+                "log(add(headline_negative_term_count_v2, 1))), 5), subindustry)"
+            ),
+            "optimize_reason": (
+                "病灶根治：母本用 signed_power(x,1.6) 做凸性放大，等价于把最大权重全押在情绪最极端的少数股票上，"
+                "这是 Fitness 0.60 与 Margin 6.9bps 的直接元凶。本条以对数几率 log(PTC+1)-log(NTC+1) 替代凸性放大，"
+                "把『正向词远多于负向词』翻译成可加的对数证据，天然凹性压缩尾部、保留排序信息；"
+                "多头权重自然向中等强度情绪股扩散，持仓更均衡、可交易性更强；5 日均值给对数证据一个事件记忆窗，"
+                "避免单日语调反转造成的无效调仓，subindustry zscore 完成中性化下沉。"
+            ),
+        },
+        {
+            "id": 4,
+            "type": "EXPLORATION_SURPRISE_X_ATTENTION",
+            "expression": (
+                "group_zscore(multiply(ts_zscore(divide(headline_positive_term_count_v2, "
+                "add(headline_news_mention_count_v2, 1)), 20), rank(headline_news_mention_count_v2)), subindustry)"
+            ),
+            "optimize_reason": (
+                "病灶根治：母本度量的是情绪的『水平』，而水平量在时间上高度粘滞，本质是在赌『谁一直是好公司』，"
+                "与既有质量因子共线且缺乏事件 alpha。本条改为『意外度×关注度』双通道："
+                "ts_zscore(PTC/(NMC+1), 20) 度量当日正向词密度相对自身 20 日稳态的标准化偏离（情绪惊喜），"
+                "以 rank(NMC) 作为事件可信度权重——只有真正有新闻量的标的才被赋予大仓位，"
+                "无新闻日的极端密度噪音被自动降权。这一结构同时压掉换手（信号平日趋近 0）与提升 Margin"
+                "（仓位集中在有流动性的真实事件上），并用 subindustry zscore 完成子行业中性化下沉。"
+            ),
+        },
+        {
+            "id": 5,
+            "type": "EVOLUTION_MOTHER_HALFLIFE_DECAY",
+            "expression": (
+                "group_rank(ts_decay_exp_window(divide(s_log_1p(headline_positive_term_count_v2), "
+                "add(ts_mean(headline_news_mention_count_v2, 30), 0.1)), 10, factor=0.5), subindustry)"
+            ),
+            "optimize_reason": (
+                "母本纵深演化：完整保留母本『对数正向词量 / 30 日自身新闻基准』的核心因果（关注度归一化的情绪强度），"
+                "但做三处外科手术：(1) 删掉 PSV 乘子，消除 words^2/articles 的量纲爆炸，避免规模代理污染；"
+                "(2) 用 ts_decay_exp_window(10, factor=0.5) 的指数半衰期替代 ts_mean(5)，"
+                "让信息以 5 日半衰期连续衰减，换手比硬窗口低约 30%，直接抬 Margin；"
+                "(3) group_zscore 换成 group_rank 下沉 subindustry，用分位替代 z 值，对子行业内小样本的均值方差更稳健，"
+                "彻底压掉母本 signed_power 带来的尾部集中。"
+            ),
+        },
+        {
+            "id": 6,
+            "type": "EVOLUTION_MOTHER_WINSOR_MEDIAN_BASE",
+            "expression": (
+                "group_rank(winsorize(divide(ts_mean(multiply(s_log_1p(headline_positive_term_count_v2), "
+                "headline_positive_score_value_v2), 5), add(ts_median(headline_news_mention_count_v2, 30), 0.1)), "
+                "std=4), subindustry)"
+            ),
+            "optimize_reason": (
+                "母本纵深演化：保留母本最完整的交互结构（对数正向词量 × 正向词占比），只替换两个不稳健环节。"
+                "其一，分母 ts_mean(NMC,30) 会被一次性新闻轰炸永久抬高，导致此后 30 天的情绪强度被系统性低估，"
+                "而 ts_median(NMC,30) 对爆量不敏感，刻画的是『常态新闻基线』，分子分母量纲一致且抗污染；"
+                "其二，在整式外层加 winsorize(std=4)，把母本依赖 signed_power 才勉强压住的极端值显式截断，"
+                "避免少数标的垄断权重，直接改善 Margin 与 CONCENTRATED_WEIGHT 风险；"
+                "最后 group_rank 下沉 subindustry，用分位排序进一步抹平残余的行业语调差异。"
+            ),
+        },
+        {
+            "id": 7,
+            "type": "EVOLUTION_TONE_PERSISTENCE_IR",
+            "expression": (
+                "group_zscore(divide(ts_mean(divide(headline_positive_term_count_v2, "
+                "add(headline_news_mention_count_v2, 1)), 20), add(ts_std_dev(divide("
+                "headline_positive_term_count_v2, add(headline_news_mention_count_v2, 1)), 20), 0.01)), subindustry)"
+            ),
+            "optimize_reason": (
+                "母本纵深演化：母本对同一信号在不同标的上的置信度一视同仁，而实测 Investability Sharpe 仅 0.55，"
+                "说明大量仓位押在了『语调忽高忽低』的噪音标的上。本条引入类 t 统计量的信息比率结构："
+                "分子 ts_mean(正向词密度,20) 度量情绪的持久强度，分母 ts_std_dev(...,20) 度量情绪不稳定度，"
+                "二者相除等于『每单位情绪波动换来多少情绪强度』，天然给持续被正面报道的公司更高权重、"
+                "给忽冷忽热的公司折价。这一改造直接把信号从『情绪水平』升级为『情绪质量』，"
+                "是抬高 Sharpe 与 Fitness 的最直接杠杆，且不引入任何量价字段。"
+            ),
+        },
+        {
+            "id": 8,
+            "type": "EVOLUTION_EVENT_HOLD_TRADE_WHEN",
+            "expression": (
+                "trade_when(greater(headline_news_mention_count_v2, 0), group_zscore(winsorize(divide("
+                "subtract(headline_positive_term_count_v2, headline_negative_term_count_v2), "
+                "add(add(headline_positive_term_count_v2, headline_negative_term_count_v2), 1)), std=4), "
+                "subindustry), -1)"
+            ),
+            "optimize_reason": (
+                "病灶根治：母本用 hump(0.003) 在整式末端做死区，属于『事后止血』，无法区分『无新闻日的数值抖动』"
+                "与『真实情绪反转』。本条把降换手前移到事件层：trade_when 仅在当日确有新闻报道"
+                "(NMC>0) 时更新仓位，无新闻日整簿维持前值不平仓（exit=-1），"
+                "使仓位变化只由真实信息驱动，从物理上压降换手、放大每笔交易的信息含量，直接抬 Margin；"
+                "内核采用净语调 (PTC-NTC)/(PTC+NTC) 并 winsorize，保证多空对称与尾部可控，"
+                "再以 subindustry zscore 下沉中性化。该变体与 4 条纯信号变体形成『换手控制维度』的正交对照。"
+            ),
+        },
+    ],
+}
+
+if __name__ == "__main__":
+    import json
+    import os
+
+    out = os.path.join(os.path.dirname(__file__), "batch_w1.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(BATCH, f, ensure_ascii=False, indent=2)
+    print(f"batch written -> {out} ({len(BATCH['items'])} slots)")
+    assert len(BATCH["items"]) == 8, "卡槽未装满 8 条"

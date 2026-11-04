@@ -1,0 +1,16 @@
+{
+  "wave": 45,
+  "theme": "ns_neg_calm(leAvoO5N, Sh1.18/CLST0.73/PC0.7204) PC剃刀轮: 双层秩壳/窗口10-15-25/幂次1.5/新闻腿平滑谱",
+  "trigger": "Wave44: ns_neg_calm全场最佳但PC超门0.0204; 需在保CLST/Fit前提下剃PC",
+  "base_settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025},
+  "expressions": [
+    {"tag": "nc_dual", "fields": 3, "note": "双层秩壳+尾部幂次(历史最强去相关器移植)", "expr": "signed_power(subtract(group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 20), industry), subindustry), 0.5), 2)"},
+    {"tag": "nc_dual_nosp", "fields": 3, "note": "双层秩壳无幂次(隔离)", "expr": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 20), industry), subindustry)"},
+    {"tag": "nc_w15", "fields": 3, "note": "乘积窗15", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 15), subindustry), 0.5), 2)"},
+    {"tag": "nc_w10", "fields": 3, "note": "乘积窗10", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 10), subindustry), 0.5), 2)"},
+    {"tag": "nc_w25", "fields": 3, "note": "乘积窗25", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 25), subindustry), 0.5), 2)"},
+    {"tag": "nc_p15", "fields": 3, "note": "幂次1.5降PC", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 20), subindustry), 0.5), 1.5)"},
+    {"tag": "nc_nleg60", "fields": 3, "note": "新闻腿平滑60(长基线)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 60))), 20), subindustry), 0.5), 2)"},
+    {"tag": "nc_nleg10", "fields": 3, "note": "新闻腿平滑10(提鲜)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 10))), 20), subindustry), 0.5), 2)"}
+  ]
+}

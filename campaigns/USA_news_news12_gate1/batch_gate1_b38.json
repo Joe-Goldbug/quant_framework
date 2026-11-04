@@ -1,0 +1,65 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 16,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_relevance_score_2",
+    "prob_rank_bin1_10d_img_news"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_WINSOR20_SMOOTH7",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2), 3), 7), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Dual 2-sigma winsorization with 7-day linear decay on cubic sentiment."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_WINSOR25_SMOOTH7",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Dual 2.5-sigma winsorization with 7-day linear decay on cubic sentiment."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_WINSOR25_DUAL_CUBIC",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 8), multiply(power(winsorize(prob_rank_bin1_10d_img_news, std=2.5), 3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Dual cubic power on 2.5-sigma winsorized sentiment and forecast."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_WINSOR25_SMOOTH9",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 9), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Dual 2.5-sigma winsorization with 9-day linear decay."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_WINSOR25_SMOOTH10",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 10), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Dual 2.5-sigma winsorization with 10-day linear decay."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_DUAL_SMOOTH_WINSOR25",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), multiply(ts_decay_linear(winsorize(prob_rank_bin1_10d_img_news, std=2.5), 5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Dual time-series smoothing on both sentiment (7d) and DL forecast (5d)."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_EXP_SMOOTH_WINSOR25",
+      "expression": "group_rank(multiply(ts_decay_exp_window(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 8, factor=0.7), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Exponential window smoothing (factor=0.7) on cubic sentiment."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_LOGREL_WINSOR25_SMOOTH7",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), log(add(news_relevance_score_2, 1)))), subindustry)",
+      "optimize_reason": "Logarithmic relevance with 7-day smoothed 2.5-sigma winsorized cubic sentiment."
+    }
+  ]
+}

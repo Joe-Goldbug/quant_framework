@@ -1,0 +1,79 @@
+{
+  "locations": [
+    "https://api.worldquantbrain.com/simulations/kwQST8Xv4Yfakol5rO8nyN",
+    "https://api.worldquantbrain.com/simulations/4mTNwY93t4VKbNYzZnOWmGM",
+    "https://api.worldquantbrain.com/simulations/1z1lY4auY4Vfb3UhEA0CGOY",
+    "https://api.worldquantbrain.com/simulations/A7i0G7894m8a8VfQedHSqr",
+    "https://api.worldquantbrain.com/simulations/3p01K98Tt4r28MYqBAzSd1X",
+    "https://api.worldquantbrain.com/simulations/2mTHkU8Ry4teb6jGefJKd9B",
+    "https://api.worldquantbrain.com/simulations/3TejVv8se4LKcEzwNirAFhW",
+    null
+  ],
+  "submitted_at": 1793094595,
+  "items": [
+    {
+      "id": 1,
+      "type": "B86_S1_SPLIT_IN6_OUT6_PWR45_D12",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 6), subindustry), 0.5), 6)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 9 ops: Balanced 6d/6d inner-outer split on wpQKJ1K5 (power 4.5). Inner 6d stabilizes news cross-section; outer 6d compresses turnover, halving cumulative lag."
+    },
+    {
+      "id": 2,
+      "type": "B86_S2_SPLIT_IN7_OUT5_PWR3_D14",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 7), subindustry), 0.5), 3), 5)",
+      "decay": 14,
+      "truncation": 0.03,
+      "optimize_reason": "Slot 2: 10 ops: 7d/5d split + outer Power 3 tail expansion. Expands Returns to >= 4.5% while holding Turnover near 12.5% boundary."
+    },
+    {
+      "id": 3,
+      "type": "B86_S3_WPQ_HUMP015_D12",
+      "expression": "hump(ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10), hump=0.015)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 9 ops: Deadband hump=0.015 directly on 0-FAIL champion wpQKJ1K5. Rank-centered output has std=0.28; deadband 0.015 freezes minor rebalancing jitter to push Turnover < 12.5%."
+    },
+    {
+      "id": 4,
+      "type": "B86_S4_WPQ_HUMP025_D12",
+      "expression": "hump(ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10), hump=0.025)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 9 ops: Stronger deadband hump=0.025 on wpQKJ1K5. Targets Turnover ~11.5% and tests if Sharpe expands toward >= 1.58."
+    },
+    {
+      "id": 5,
+      "type": "B86_S5_SYNTH_IN6_HUMP02_OUT4_D12",
+      "expression": "ts_decay_linear(hump(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 6), subindustry), 0.5), hump=0.02), 4)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Multi-tier synthesis: inner 6d memory + deadband 0.02 + outer 4d micro-decay. Blends continuous trend capture with zero-turnover deadband."
+    },
+    {
+      "id": 6,
+      "type": "B86_S6_XAR_REDUCED_LAG_OUT5_PWR3_D15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), 5)",
+      "decay": 15,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 6: 10 ops: Reduced-lag version of xArOYGYp (outer decay 8d -> 5d, power 5 -> 3). Cuts 3 days of phase lag to unlock Sharpe >= 1.58."
+    },
+    {
+      "id": 7,
+      "type": "B86_S7_A1V_PWR5_HUMP0005_D22",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005)",
+      "decay": 22,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 7: 10 ops: Simulation Decay 22 on Sharpe 1.58 champion A1VjA6Ed. Preserves exact 1.58 Sharpe and 4.51% returns while dampening portfolio rebalancing turnover toward 14.5%."
+    },
+    {
+      "id": 8,
+      "type": "B86_S8_A1V_PWR5_HUMP0005_D25",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005)",
+      "decay": 25,
+      "truncation": 0.035,
+      "optimize_reason": "Slot 8: 10 ops: Simulation Decay 25 on A1VjA6Ed. Maximum engine-level turnover suppression (targeting TO <= 13.0%) to push Fitness >= 1.00."
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "decision_checkpoint": "2026-10-28-t23",
+  "checkpoint_owner": "Buffy",
+  "checkpoint_summary": "研究者自检 — 将 mLoMq1jx 认定为垃圾信号后，关闭该信号骨架的续申报，转向可用信号真相的调查",
+  "rationale": "两个硬事实推翻了当前建设方向。第一，跨季度残差构造的命运从一开始就依赖季报窗口：核心字段集中在 q2y 层级的报告现金流更新，数据在时序上存在明显的财报识别窗口覆盖空洞。第二，你观察到的稳健性证据与我保存的回填测试完全一致：由 ts_delta 提取“变化”的信号，换月窗口扩展到 252 日时依然留下微弱边际（slot Q2/Q3 长窗版本 Sharpe 0.69→0.42→0.08，没有出现状态好转的迹象）。更重要的是，回测诊断项（two-year sharpe、2Y test-period return buckets、origin distribution）不再奖励该信号，而同期其它信号家族反而在同样的两个季度窗口中取得了比较一致的IS/OS磨合。因此我不再把 mLoMq1jx 视为候选，而是把它作为该数据集的一个负面案例。",
+  "about_the_candidate": {
+    "alpha_id": "mLoMq1jx",
+    "expression": "group_zscore(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), std=3), industry)",
+    "why_now_considered_junk": [
+      "最新更新浓度集中在财报横扫窗口，因而信号密度取决于季度报表时间轴；该轴之外的平稳时期缺少推动 P&L 曲线向上所需的定时曝光。",
+      "跨 7 年范围看，P&L 的方差几乎全部来自季报脉冲，与其它年代区段相比没有持续的正均值贡献；在掉队段中信号并不稳定。",
+      "你指出的‘至少七年没信号’与该字段家族的数据分布相符：信号的有效性集中在两个季度那几周内，而不是连续七年提供稳定贡献。",
+      "winsorize 和 industry zscore 改变不了信号的根本定时属性；测试槽位已经证实，把差分改为排名或做组内序数转化，并不能延长信号寿命。"
+    ]
+  },
+  "signal_truth_tests_executed_vs_pending": {
+    "executed": [
+      {
+        "test": "窗口寿命伸缩实验（60d vs 252d vs annual vs rolling mean）",
+        "location": "Q2/Q3/Q7 批次",
+        "readout": "窗口越长，IS Sharpe 从 1.15（60d）向下掉到 0.69 → 0.42 → 0.08 → 负数，没有信号寿命延展的证据。"
+      },
+      {
+        "test": "排名/序数化补救实验（subtract(group_rank(…), 0.5) 与 group_zscore(group_rank(…))）",
+        "location": "Q7 批次",
+        "readout": "浓度警告确实消失了，但信号本身掉为负 Sharpe（-0.30 附近），说明原信号的经济内容并不在顺序位，而在命名实体的变化量级上。"
+      },
+      {
+        "test": "分布压缩测试（s_log_1p, winsorize 插入点, ts_quantile, ts_median, ts_zscore-self）",
+        "location": "Q4/Q6",
+        "readout": "对数、先 winsorize、分位、中位数、自身时序标准化这些分布变换中，没有任何一个能把 Sharpe 推至 1.58 以上；但部分版本能勉强降低浓度警告，代价是边际进一步下降。"
+      },
+      {
+        "test": "scale 分母彻底替换实验（股本均值替代同期股本，现金流/注意力，现金流/自身滞后均值，营业现金流差分等）",
+        "location": "Q3 批次",
+        "readout": "其他 scale 选择退化为 Sharpe 0.20～0.40 区间，且大多伴随两年枯竭或子宇宙负贡献；当前的 scale 是这个方向上相对最强的，但不是好到可以忽略寿命问题的程度。"
+      }
+    ],
+    "pending_for_confirming_signal_truth": [
+      {
+        "test": "分年份 P&L 检验：把手段 IS/OS 曲线裁成每年度区段，确认哪些年份有正贡献、哪些没有。",
+        "reason": "用来把你提出的‘七年没信号’这个主张转化为可以复查的年度表格，而不是只凭感觉。",
+        "blocker": "目前只保存了每条 alpha 的汇总指标（Sharpe / Fitness / turnover / margin / sub-universe / 2Y / fails / warnings）。年度一致性需要 alpha_id 对应的 yearly stats 或 P&L 桶数据，而本地仓没有这些 API 调用的结果。"
+      },
+      {
+        "test": "真实信号密度检验：确认该构造在财报窗口之外的平时段里是否真的只有趋近于零的 t-stat / 分位收益。",
+        "reason": "验证垃圾归类是否由季节性窗口导致、而非构造内部的伪因果。",
+        "blocker": "需要按月/按季度切片的损益分布或日频聚合结果，无法仅从 summary JSON 还原。"
+      },
+      {
+        "test": "其它个数较少的替代字段家族对比实验：在同一数据集内确认是否存在更新节奏更平滑、能在非报表窗口也提供收益的字段。",
+        "reason": "如果此数据集家族整体都高度依赖报表更新节奏，垃圾结论就是对数据集的结论，而不仅是对一条 alpha 的结论。",
+        "blocker": "需要其它字段的真实IS/OS数据；本地已有知识库里有新闻/价格等其它数据集的字段画像，但并没有绑定到 fundamental69 真实结果。"
+      }
+    ]
+  },
+  "revised_working_hypothesis": "fundamental69 家族里当前可获得的强信号构造大概率是报表窗口驱动型的短命信号，难以靠运算子技巧拉长寿命。继续沿着本骨架做数学变形很可能只会消耗试错次数；应该优先测试‘寿命本身’是否可改善，而不是测试‘同一骨架的更多变形’。",
+  "next_allowed_steps": [
+    "停止向 mLoMq1jx 骨架追加变形批次。",
+    "从 BRAIN 侧拉取候选 alpha 的年度统计或 P&L 桶，核实年度区段真实分布，确认是否为窗口驱动型短命信号。",
+    "重新评估 fundamental69 内部是否有其它更新节奏更平滑的字段可用；若没有，则该数据集可能是当前不具备长期信号开发条件的家族。",
+    "若确实确认无长期信号，则不再强求该数据集长期稳定 alpha，把结论写进 campaign 记录里。"
+  ]
+}

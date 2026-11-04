@@ -1,0 +1,238 @@
+{
+  "seed_id": "SEED_Q3_ANOMALY",
+  "seed_expression": "divide(subtract(fnd69_q2yfcnao, ts_mean(fnd69_q2yfcnao, 60)), fnd69_ta)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "PARENT_BACKFILL_NORMALIZATION",
+      "expression": "group_rank(divide(ts_backfill(fnd69_q2yfcnao, 60), ts_backfill(fnd69_ta, 60)), subindustry)",
+      "optimize_reason": "本槽是母本的稳健性锚点，不改变量定义，只把季度经营现金流与总资产都用60日内最近有效值回填，再转为子行业内强弱排序。季度字段覆盖约39%至43%，若直接将缺失值或更新空档参与排序，样本会被截面缺失和报告时点改变；回填是为保持同一财务披露信息在两次报告间一致，并非制造新观测。资产归一化控制企业规模，组内排序则降低行业现金流结构差异。回填可能延长陈旧数据存活，故本槽专门检验覆盖改善是否以信息滞后为代价。仅含本数据集字段，且不预设收益方向；这是母本处理方式对照，非参数网格搜索。",
+      "counterparty": "按原始金额跨公司比较、忽视规模和季度缺失结构的投资者",
+      "economic_mechanism": "子行业内回填后的资产归一化经营现金流比较，检验规模控制与报告间数据连续性的价值。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "5796e04edf525632804fd4f7c241a1655e59f037962d68beef16a7b8e68ae302",
+        "reviewed_expr": "group_rank(divide(ts_backfill(fnd69_q2yfcnao, 60), ts_backfill(fnd69_ta, 60)), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "PARENT_OUTER_TIME_SMOOTHING",
+      "expression": "group_rank(ts_decay_linear(divide(subtract(fnd69_q2yfcnao, ts_mean(fnd69_q2yfcnao, 60)), fnd69_ta), 20), subindustry)",
+      "optimize_reason": "本槽保留母本的核心经济量，即经营现金流相对自身60日均值的偏离除以总资产，仅在信号形成后统一施加20日线性衰减，再在子行业排序。这样的拓扑使均值基线、分子创新和规模调整先组成一个完整信号，随后由最外层滤波统一处理，避免只平滑其中一个分支而让残余分支造成高频变化。其经济动机是季度披露信息会被市场分阶段吸收，短暂报价噪声不应改变长期基本面判断。季度数据日频重复也可能令衰减增加迟滞而非提升信息，因此需要模拟检验收益、换手及多空覆盖。无外部价格字段，也未微调窗口。",
+      "counterparty": "对单日信息反应过度、无法区分持续基本面信号和短期噪声的交易者",
+      "economic_mechanism": "市场对季度现金流创新的吸收可能跨日展开，完整信号外层平滑以减少噪声造成的持仓跳变。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "15c9c1b50770ef7a7eb28d5afd6730fb4ba8ce1efa71a5be97e3846a10037214",
+        "reviewed_expr": "group_rank(ts_decay_linear(divide(subtract(fnd69_q2yfcnao, ts_mean(fnd69_q2yfcnao, 60)), fnd69_ta), 20), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "PARENT_CROSS_SECTIONAL_STANDARDIZATION",
+      "expression": "group_zscore(divide(subtract(fnd69_q2yfcnao, ts_mean(fnd69_q2yfcnao, 20)), fnd69_ta), subindustry)",
+      "optimize_reason": "本槽将母本的60日自历史基线替换为20日基线，并以子行业组内Z分数表达偏离程度，目的是检验同一季度披露平台上近期现金流创新的相对显著性，而不是让跨行业分布尺度主导权重。20日是允许的标准日历窗口，但这里不是从多个窗口网格中挑最好值；它代表短于季度的信息消化尺度，并与母本60日基线构成预先定义的期限机制对照。组内标准化可保留正负方向且不乘两个有符号变量。需警惕报告间恒定取值导致标准差为零、缺失集中或短窗无法代表季度预期；这些必须由回测和原始数据诊断验证，不能凭概念保证有效。",
+      "counterparty": "以绝对现金流水平或全市场尺度做判断、忽略同业基线的投资者",
+      "economic_mechanism": "同业横截面标准化的现金流偏离刻画相对意外程度，测试行业内信息处理是否较慢。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "50b07d627b96a6f93a53e4535d7da00b8c1c48d8130dd22b97127ef69990680b",
+        "reviewed_expr": "group_zscore(divide(subtract(fnd69_q2yfcnao, ts_mean(fnd69_q2yfcnao, 20)), fnd69_ta), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "PARENT_AVERAGE_DIFFERENCE",
+      "expression": "group_rank(divide(ts_av_diff(fnd69_q2yfcnao, 60), fnd69_ta), subindustry)",
+      "optimize_reason": "本槽用ts_av_diff直接形成现金流相对60日均值的偏差，再除以总资产并做子行业排序，保留母本的同一预期差思想，同时减少显式subtract加ts_mean的结构节点。该变体检验简洁算子是否能忠实编码相同的去基线过程，并减少表达式复杂度；经济假设仍是市场可能依据现金流绝对值而低估相对公司历史基线的改善或恶化。ts_av_diff忽略均值计算中的NaN，和原式缺失处理不一定完全等价，因此它同时检验稀疏报告覆盖对信号的影响。窗口使用标准60日，无外部量价数据，不应把减少算子数误称为提高预测力，结论只由模拟决定。",
+      "counterparty": "只对披露现金流水平作反应、忽视相对企业自身基准变化的投资者",
+      "economic_mechanism": "以平均差分算子表示现金流创新并按资产规模控制，检验简化变换与缺失处理的影响。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "c59517ef19a83b3e477b5a86fe11114b84088df852c0d7755c6b7ba786386dc3",
+        "reviewed_expr": "group_rank(divide(ts_av_diff(fnd69_q2yfcnao, 60), fnd69_ta), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "EXPLORATION_NET_DEBT_FLOW",
+      "expression": "group_zscore(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), subindustry)",
+      "optimize_reason": "本槽切换至融资结构而非经营现金流母本，使用长期债务发行减债务减少的净流量，并以总资产归一化、在子行业内标准化。数学上先做同量纲流量相减再除以规模，没有对两条可能有符号的序列做乘法，避免双负变正的伪方向。经济问题是新增长期融资与偿还旧债分别传递资金需求和去杠杆信息，投资者可能只关注其中一个报道项目，忽略净融资姿态。债务减少字段的符号编码尚未核实，若字段值不代表正向偿还金额，净流解释可能倒置；而覆盖率约39%，缺失选择偏差也不可忽略。该探索测试结构机制，不是声称任何符号具有固定收益。",
+      "counterparty": "仅跟踪新增融资或仅跟踪债务偿还、忽视两者净融资含义的参与者",
+      "economic_mechanism": "同业比较资产归一化的净长期债务流，测试融资和去杠杆信息是否存在延迟定价。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_dltry2q",
+          "fnd69_q2ysitld",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "712e106b84caf062ab71a5040c2894d999e8de3af09226372be74fcdaf677d3e",
+        "reviewed_expr": "group_zscore(divide(subtract(fnd69_q2ysitld, fnd69_dltry2q), fnd69_ta), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "EXPLORATION_DIVIDEND_CHANGE",
+      "expression": "group_rank(ts_delta(divide(fnd69_q2yvd, fnd69_ta), 20), subindustry)",
+      "optimize_reason": "本槽从现金流创新切换为现金股利相对资产的比例变化，以20日差分表达资本回报强度的调整，而非使用股利原始金额。资产归一化降低规模效应，子行业排序控制不同产业成熟度和资本分配惯例，避免跨行业横比造成伪信号。潜在机制是投资者可能将稳定派息视作既有事实，而对股利承诺变化更新缓慢；对手盘可来自机械追踪股息率或忽视公司资产基数的交易。字段覆盖约40%，报告稀疏、缺值及股利周期可能使差分大面积为零或陈旧，因此多空持仓对称性与事件覆盖必须回测核验。本式没有用跨字段乘积，也未使用外部价格。",
+      "counterparty": "机械追逐股息水平、却未及时更新资产尺度和派息变化信息的投资者",
+      "economic_mechanism": "资产尺度控制后的现金股利变化反映资本回报政策的增量调整，检验其是否被市场迟缓吸收。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_q2yvd",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "718702ef098422a076b0c957095d311160d2142bf5add62b1fe421327e0c789a",
+        "reviewed_expr": "group_rank(ts_delta(divide(fnd69_q2yvd, fnd69_ta), 20), subindustry)"
+      }
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "EXPLORATION_EQUITY_FINANCING_BALANCE",
+      "expression": "group_rank(divide(subtract(fnd69_q2ycktsrp, fnd69_q2yktss), fnd69_ta), industry)",
+      "optimize_reason": "本槽检验股票融资两类相反方向活动的结构差：公司购买普通及优先股与出售普通及优先股之差，再按总资产归一化并按行业比较。其机制不是单纯把发行解释为利空或回购解释为利好，而是融资/资本回收净姿态相对企业规模可能揭示管理层资本配置，且披露项目可能被投资者分开处理。两字段描述交易流且各自约39%覆盖；字段符号约定、报告时点和零值密度均未实测，若两个字段定义并不对称，差值将失去经济解释。仅使用一阶差分与比率，避免有符号乘法及外部PV字段，收益方向留待验证。",
+      "counterparty": "把股票发行和回购孤立解读、未按公司规模合并评估资本配置的投资者",
+      "economic_mechanism": "以净股票融资相对资产衡量资本配置方向，测试市场是否忽略发行与回购之间的结构平衡。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 3,
+        "used_fields": [
+          "fnd69_q2ycktsrp",
+          "fnd69_q2yktss",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "32a00197c762582f5c1c1103fc64d6f0084036a03632da80d32d90f13eadf86d",
+        "reviewed_expr": "group_rank(divide(subtract(fnd69_q2ycktsrp, fnd69_q2yktss), fnd69_ta), industry)"
+      }
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "EXPLORATION_CASHFLOW_CAPEX_SYNCHRONY",
+      "expression": "group_rank(ts_corr(divide(fnd69_q2yfcnao, fnd69_ta), divide(fnd69_capxy2q, fnd69_ta), 60), subindustry)",
+      "optimize_reason": "本槽使用60日滚动相关度考察资产归一化经营现金流与资本开支是否同步，而不是仅以现金流高低排序。正相关可能代表内部资金为投资提供支撑，低相关则可能意味着依赖外部融资或资本开支与营运现金生成错配；方向和因果都不预设。分子先各自除以同一类资产规模，随后由时序相关算子衡量协同变化，两条有符号序列没有直接相乘，因而避免负负得正误读。对手盘是只分别观察经营和投资项目的简化分析流程。该数据每季更新，60日序列可能近似常数并使相关估计不稳定，覆盖和有效样本数需优先检查。",
+      "counterparty": "分别解读经营与投资报表、忽略二者时序协同性的基本面交易者",
+      "economic_mechanism": "现金生成与资本开支的时序协同可能揭示投资资金来源和配置质量，测试信息是否被分割处理。",
+      "technical_audit": {
+        "passed": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao",
+          "fnd69_ta"
+        ]
+      },
+      "red_team_audit": {
+        "verdict": "PASS",
+        "checks": {
+          "domain_alignment_check": true,
+          "hypothesis_to_ast_fidelity": true,
+          "parsimony_check": true
+        },
+        "issues": [],
+        "signature": "97bb1e7ab9bc11f5e29dd014b895ad7508e709a5765f8886aa1db667c4fe50d0",
+        "reviewed_expr": "group_rank(ts_corr(divide(fnd69_q2yfcnao, fnd69_ta), divide(fnd69_capxy2q, fnd69_ta), 60), subindustry)"
+      }
+    }
+  ]
+}

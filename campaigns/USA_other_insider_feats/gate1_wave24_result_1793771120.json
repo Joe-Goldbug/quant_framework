@@ -1,0 +1,23 @@
+{
+  "wave": 24,
+  "seed_id": "GATE1_WAVE24",
+  "purpose": "blind-spot 3 / 铁律2: quarterly-aligned windows d=33/66/132",
+  "fetched_at": "2026-11-04T14:06:00Z",
+  "location": "https://api.worldquantbrain.com/simulations/43PNiB54Q4Tk9HKfoaVDlR2",
+  "settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "decay": 4, "truncation": 0.025, "neutralization": "INDUSTRY", "nan_handling": "ON", "pasteurization": "ON"},
+  "alpha_results": [
+    {"id": "GrWbEdAO", "slot": "rank + ts_mean(66)", "metrics": {"sharpe": 1.11, "fitness": 0.58, "turnover": 0.0379, "returns": 0.0343, "drawdown": 0.0461, "margin": 0.001814, "two_year_sharpe": 0.61, "sub_universe_sharpe": 1.14}, "cluster_test": 0.71},
+    {"id": "9qxjgVLq", "slot": "rank + ts_mean(132)", "metrics": {"sharpe": 1.28, "fitness": 0.72, "turnover": 0.0299, "returns": 0.0392, "drawdown": 0.0429, "margin": 0.002629, "two_year_sharpe": 0.7, "sub_universe_sharpe": 0.92}, "cluster_test": 0.77},
+    {"id": "6XdjgrvP", "slot": "rank + ts_decay_linear(66)", "metrics": {"sharpe": 1.17, "fitness": 0.62, "turnover": 0.0401, "returns": 0.0354, "drawdown": 0.0381, "margin": 0.001768, "two_year_sharpe": 0.72, "sub_universe_sharpe": 1.17}, "cluster_test": 0.69},
+    {"id": "npvdwKMd", "slot": "rank + ts_decay_linear(132)", "metrics": {"sharpe": 1.22, "fitness": 0.67, "turnover": 0.0334, "returns": 0.0372, "drawdown": 0.0409, "margin": 0.002229, "two_year_sharpe": 0.67, "sub_universe_sharpe": 0.97}, "cluster_test": 0.73},
+    {"id": "vR1rak3b", "slot": "neutralize + ts_mean(66)", "metrics": {"sharpe": 0.68, "fitness": 0.26, "turnover": 0.0385, "returns": 0.0188, "drawdown": 0.0407, "margin": 0.000979, "two_year_sharpe": 0.76, "sub_universe_sharpe": 0.97}, "cluster_test": 0.42},
+    {"id": "O0ANKraq", "slot": "neutralize + ts_mean(132)", "metrics": {"sharpe": 0.82, "fitness": 0.36, "turnover": 0.0295, "returns": 0.0246, "drawdown": 0.0607, "margin": 0.001666, "two_year_sharpe": 0.43, "sub_universe_sharpe": 0.68}, "cluster_test": 0.18},
+    {"id": "WjObKP8P", "slot": "rank + ts_mean(33)", "metrics": {"sharpe": 1.32, "fitness": 0.77, "turnover": 0.0477, "returns": 0.042, "drawdown": 0.0436, "margin": 0.001759, "two_year_sharpe": 1.13, "sub_universe_sharpe": 1.27}, "cluster_test": 0.75},
+    {"id": "bl6b7REm", "slot": "rank + ts_mean(66) on 60d-250d value pair", "metrics": {"sharpe": 0.79, "fitness": 0.37, "turnover": 0.0299, "returns": 0.0273, "drawdown": 0.0813, "margin": 0.001827, "two_year_sharpe": -0.43, "sub_universe_sharpe": 0.67}, "cluster_test": 0.64}
+  ],
+  "wave24_verdict": {
+    "acceptance_test": "季报窗是否使年分布更均匀 / 抬 Margin 且不毁 2Y",
+    "result": "MARGIN BREAKTHROUGH, 2Y SACRIFICED — d=132 把 Margin 推到 26.29 bps（父本 14.66，+79%），换手降到 2.99%，CLUSTER 0.82 -> 0.77；但 2Y 从 1.60 掉到 0.67~0.72。d=33 是新的 Sharpe 高点 1.32 / Fit 0.77 / Margin 17.59 / 2Y 1.13 / CLUSTER 0.75。",
+    "finding": "窗口轴存在清晰的 Margin–2Y 交换面：平滑窗越长 Margin 越高、2Y 越低。66/132 成对同向（M 18.1/26.3），说明不是单窗尖峰。此轴可独立用于抬 Margin/Fitness，但不能与 2Y 同时兼顾。"
+  }
+}

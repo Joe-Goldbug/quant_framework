@@ -1,0 +1,66 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 35,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_relevance_score_2",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_CENTERED_CUBIC_D35",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 3)",
+      "optimize_reason": "Centered rank cubic power: (rank - 0.5)^3. Compresses middle 60% noise stocks to zero weight, concentrating portfolio on extreme high-conviction tails to double returns."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_CENTERED_POWER5_D35",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "Centered rank quintic power: (rank - 0.5)^5. Stronger tail concentration to eliminate middle noise, elevating Fitness >= 1.0."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_CUBIC_SMOOTH20_D35",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 20), subindustry)",
+      "optimize_reason": "20-day linear smoothing on ensemble product under decay 35. Targets turnover < 10% to push Margin >= 15 bps."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_CENTERED_CUBIC_20D",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_20d_img_news, std=3)), sqrt(news_relevance_score_2)), 15), subindustry), 0.5), 3)",
+      "optimize_reason": "Centered rank cubic power on 20-day horizon forward DL forecast with 15-day smoothing."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_SMOOTH15_D35",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 15), subindustry)",
+      "optimize_reason": "15-day linear smoothing under decay 35 for turnover < 11%."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_CENTERED_CUBIC_DECAY35",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 3)",
+      "optimize_reason": "Centered rank cubic under decay 35 for combined return enhancement and turnover suppression."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_DUAL_CUBIC_CENTERED",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), power(winsorize(prob_rank_bin1_10d_img_news, std=3), 3)), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 3)",
+      "optimize_reason": "Dual cubic interaction centered rank cubic power under decay 35."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_CENTERED_CUBIC_LOGREL",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), log(add(news_relevance_score_2, 1))), 10), subindustry), 0.5), 3)",
+      "optimize_reason": "Centered rank cubic with log relevance utility under decay 35."
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "wave": "10",
+  "seed_id": "GATE1_WAVE10",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "items": [
+    {
+      "id": 1,
+      "type": "w10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),5), subindustry)",
+      "optimize_reason": "W10-1: top5价值 20d-60d动量@SLOW (短窗,匹配txn甜区)"
+    },
+    {
+      "id": 2,
+      "type": "w10",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),8), subindustry)",
+      "optimize_reason": "W10-2: top5价值 20d-60d@CROWDING对照"
+    },
+    {
+      "id": 3,
+      "type": "w10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top20_20d_filled_2),vec_avg(buy_sell_ratio_top20_60d_filled)),5), subindustry)",
+      "optimize_reason": "W10-3: top20价值 20d-60d动量@SLOW"
+    },
+    {
+      "id": 4,
+      "type": "w10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_all_20d_filled),vec_avg(buy_sell_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W10-4: all价值 20d-60d动量@SLOW"
+    },
+    {
+      "id": 5,
+      "type": "w10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),5), subindustry)",
+      "optimize_reason": "W10-5: 复现txn动量@SLOW (0.92 sanity)"
+    },
+    {
+      "id": 6,
+      "type": "w10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),3), subindustry)",
+      "optimize_reason": "W10-6: top5价值20d-60d ts_arg_max(3)@SLOW"
+    },
+    {
+      "id": 7,
+      "type": "w10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "W10-7: 复现冠军top5价值60d-250d@SLOW (0.88 sanity)"
+    },
+    {
+      "id": 8,
+      "type": "w10",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),10), subindustry)",
+      "optimize_reason": "W10-8: top5价值20d-60d@CROWDING (w10)"
+    }
+  ]
+}

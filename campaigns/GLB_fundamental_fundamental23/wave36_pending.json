@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "region": "GLB",
+    "universe": "MINVOL10M",
+    "delay": 1,
+    "decay": 0,
+    "neutralization": "COUNTRY",
+    "truncation": 0.025
+  },
+  "items": [
+    {
+      "tag": "W36_1_zscore",
+      "expression": "group_zscore(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 126)), industry)"
+    },
+    {
+      "tag": "W36_2_hump",
+      "expression": "hump(group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 126)), industry), 0.01)"
+    },
+    {
+      "tag": "W36_3_neutralize",
+      "expression": "group_neutralize(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 252), ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 126)), industry)"
+    },
+    {
+      "tag": "W36_4_sector189",
+      "expression": "group_rank(add(ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 189), ts_delta(divide(add(fnd23_intfvalld1_ipos, fnd23_ofc), fnd23_intfvalld1_letq), 126)), sector)"
+    }
+  ]
+}

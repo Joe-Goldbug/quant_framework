@@ -1,0 +1,58 @@
+{
+  "step1": {
+    "should_prune": false,
+    "max_abs_sharpe": 1.09,
+    "qualified_count": 2,
+    "qualified_seeds": [
+      {
+        "expression": "group_zscore(ts_decay_linear(divide(divide(subtract(news_eod_close, news_ton_last), news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20), subindustry)",
+        "sharpe": -1.09,
+        "metrics": {
+          "sharpe": -1.09,
+          "fitness": -0.27,
+          "turnover": 0.8688,
+          "returns": -0.052,
+          "drawdown": 0.5391,
+          "margin": -0.00012,
+          "longCount": 269,
+          "shortCount": 277,
+          "pnl": -5188078,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": -0.64,
+          "two_year_sharpe": -1.77,
+          "investability_sharpe": -0.71,
+          "investability_fitness": -0.18,
+          "risk_neutralized_sharpe": -1.32
+        },
+        "status": "STEP1_PASSED"
+      },
+      {
+        "expression": "group_zscore(reverse(ts_decay_linear(divide(divide(subtract(news_eod_close, news_ton_last), news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20)), subindustry)",
+        "sharpe": 1.09,
+        "metrics": {
+          "sharpe": 1.09,
+          "fitness": 0.27,
+          "turnover": 0.8688,
+          "returns": 0.052,
+          "drawdown": 0.1167,
+          "margin": 0.00012,
+          "longCount": 277,
+          "shortCount": 269,
+          "pnl": 5188078,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": 0.64,
+          "two_year_sharpe": 1.77,
+          "investability_sharpe": 0.71,
+          "investability_fitness": 0.18,
+          "risk_neutralized_sharpe": 1.32
+        },
+        "status": "STEP1_PASSED"
+      }
+    ],
+    "message": "【Step 1 通过】捕获 2 条达标种子 (最高 |Sharpe| = 1.09)"
+  },
+  "step2_passed": [],
+  "final_passed": []
+}

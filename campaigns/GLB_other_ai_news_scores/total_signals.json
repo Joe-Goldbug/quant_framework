@@ -1,0 +1,665 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL1M",
+  "category": "other",
+  "dataset_id": "ai_news_scores",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "尾部事件强度结构：极端单点事件与中枢基调的背离",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子主锚 negative_score_minimum_value_2（COLD, alpha_count=3）是当日「最轻的那条负面新闻」的强度，量纲为 [0,1] 的归一化概率，它是负面分布的下界，刻画坏消息的底线严重度。分母归一锚 negative_score_maximum_value（HOT, alpha_count=16）是当日「最坏的那条负面新闻」的强度，同为 [0,1]，是负面分布的上界，代表该股负面曝光的极值规模。两者相除得到无量纲的「底线/最坏」相对分层度，取值天然落在 [0,1]，既完成了规模剥离，又因为上下界同属一条分布而自动消除了新闻条数与绝对情绪水平的影响。分母加 1 保证除零安全并保持截面单调。",
+      "economic_mechanism": "底层异动：某只股票的负面新闻在严重程度上高度同质——不存在「虚惊一场」的轻微报道，每一条坏消息都接近最坏的那一条，表现为最小值相对最大值偏高。市场对连续负面存在适应效应：同类坏消息反复出现后，边际价格冲击递减，交易者对「又一次坏消息」反应钝化。但分层度缺失意味着不存在可供适应的轻微端，恶化是系统性的而非偶发的，钝化本身就是定价错误。随着制度性后果（契约条款、评级行动、监管流程）逐步落地，价格向下修正。底线/最坏比越高，被钝化掩盖的系统性恶化越严重，未来收益越低。",
+      "expected_polarity": -1,
+      "expression": "divide(negative_score_minimum_value_2, add(negative_score_maximum_value, 1))",
+      "fields_used": [
+        "negative_score_maximum_value",
+        "negative_score_minimum_value_2"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "negative_score_minimum_value_2",
+        "normalizer": "negative_score_maximum_value",
+        "main_anchor_alpha_pct": 0.2381,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.381,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "尾部事件强度结构：极端单点事件与中枢基调的背离",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "三个字段全部是 [0,1] 的负面情绪强度，但分属分布的不同位置：negative_score_maximum_value（HOT）是右尾端点，negative_score_median_value_3（COLD, alpha_count=4）是中位事件即典型事件，二者相减得到「右尾厚度」——一个纯强度差，量纲仍是 [0,1]，但语义已从「水平」转为「分布形状」。negative_score_average_value（HOT, alpha_count=153）作为分母承担内生规模归一：它度量该股当日的整体负面曝光强度，用它把右尾厚度转成相对量，避免高曝光股票机械性拥有更厚的尾部。",
+      "economic_mechanism": "底层异动：负面新闻的严重程度出现两极分化——既有轻微的例行负面（中位低），也有重大恶性事件（最大高），二者之差即右尾厚度。此时中枢基调（均值）被大量轻微负面拉低，呈现「看起来没那么糟」的假象。市场按均值定价，因此系统性低估了尾部事件的实际杀伤力；而尾部事件恰恰是触发评级下调、契约违约条款、监管问询的那一类。随着事件后果落地，价格向下修正。右尾越厚，被掩盖的尾部风险越大，未来收益越低。",
+      "expected_polarity": -1,
+      "expression": "divide(subtract(negative_score_maximum_value, negative_score_median_value_3), add(negative_score_average_value, 1))",
+      "fields_used": [
+        "negative_score_maximum_value",
+        "negative_score_median_value_3",
+        "negative_score_average_value"
+      ],
+      "times": 1,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "negative_score_median_value_3",
+        "normalizer": "negative_score_maximum_value",
+        "main_anchor_alpha_pct": 0.3714,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.314,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "尾部事件强度结构：极端单点事件与中枢基调的背离",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "positive_score_maximum_value_3（COLD, alpha_count=1）为正向分布右尾端点，positive_score_median_value_3（COLD, alpha_count=3）为典型事件强度，二者之差是「正向右尾厚度」，量纲 [0,1]。positive_score_average_value（HOT, alpha_count=37）为当日正向曝光总量，作分母完成规模归一。此处刻意选用两个 COLD 字段构成分子：正向尾部结构是本数据集拥挤度最低的细分维度之一，而分母保留 HOT 字段以确保信号锚定在已被验证有效的情绪基准上，形成冷热非对称。",
+      "economic_mechanism": "底层异动：某股票当日出现一条极强的正面事件（大额订单、关键审批通过、评级上调），但当日整体正向基调并不高——因为其余新闻平淡。此时正向右尾极厚而中枢偏低。市场以平均乐观度定价，会显著低估单点强催化的价值：大额订单的收入确认、审批通过带来的产能释放都是阶跃式的，而均值口径把它摊薄成了「略微正面的一天」。卖方覆盖启动与被动资金纳入通常滞后于事件本身，形成可交易的漂移窗口。正向右尾越厚，未被定价的阶跃式利好越大，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(positive_score_maximum_value_3, positive_score_median_value_3), add(positive_score_average_value, 1))",
+      "fields_used": [
+        "positive_score_maximum_value_3",
+        "positive_score_average_value",
+        "positive_score_median_value_3"
+      ],
+      "times": 1,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_maximum_value_3",
+        "normalizer": "positive_score_average_value",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "尾部事件强度结构：极端单点事件与中枢基调的背离",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子 positive_score_maximum_value_4（COLD, alpha_count=1）是当日最强正面事件的强度，量纲 [0,1]。分母由 positive_score_average_value（HOT, 37）与 negative_score_average_value（HOT, 153）相加构成——两者同为 [0,1] 情绪强度、可直接相加，其和是「当日方向性情绪总强度」，即全部有方向报道的注意力总量。相除得到「乐观峰值在全部方向性情绪中的占比」，是一个自归一化的纯度指标：它同时剥离了新闻总量规模与该股被报道的绝对热度。",
+      "economic_mechanism": "底层异动：某股票当日被大量负面叙事占据（negative 均值高），但同时也存在一条极强的正面事件（positive 最大值高）。此时方向性情绪总量很大，而乐观峰值在其中占比虽小却绝对强度极高。市场注意力是稀缺的：当负面叙事在数量上压倒性占优时，交易者与媒体的注意力被负面故事吸走，那条孤立的强利好被系统性忽视——这是注意力约束下的典型定价偏误，而非信息缺失。随着负面叙事衰减、利好事件的实体后果（订单交付、产能投放）显现，价格向上修正。乐观峰值在方向性情绪中的纯度越高，被注意力错杀的程度越大，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "divide(positive_score_maximum_value_4, add(positive_score_average_value, negative_score_average_value))",
+      "fields_used": [
+        "positive_score_average_value",
+        "positive_score_maximum_value_4",
+        "negative_score_average_value"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_maximum_value_4",
+        "normalizer": "positive_score_average_value",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "跨事件叙事分歧：同日多空解读冲突强度",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子 negative_score_standard_deviation_2（COLD, alpha_count=4）是当日负面事件打分的离散度，量纲 [0,1]，度量「坏消息彼此有多不一致」。分母 negative_score_average_value_4（HOT, alpha_count=25）是同一序列变体的平均负面基调，量纲 [0,1]，作为该股负面曝光的规模基准。两者相除得到无量纲的「相对分歧度」（负面情绪的变异系数代理），剥离了「新闻条数多则离散天然大」的机械效应——这正是简单使用标准差会踩的坑。",
+      "economic_mechanism": "底层异动：同日负面新闻的严重程度参差不齐——既有轻微的口碑抱怨，也有实质性的合同违约披露，离散度因此抬升。这种「叙事内部冲突」使市场无法就坏消息的严重性达成共识：看多方引用轻微事件，看空方引用恶性事件，双方都无法说服对方，成交量放大而价格粘滞。定价不充分意味着坏消息的真实权重被低估（因为多数事件在计数上偏向轻微端），随着恶性事件的法律与商业后果逐步确证，价格向下突破。相对分歧度越高，被延迟定价的负面信息越多，未来收益越低。",
+      "expected_polarity": -1,
+      "expression": "divide(negative_score_standard_deviation_2, add(negative_score_average_value_4, 1))",
+      "fields_used": [
+        "negative_score_average_value_4",
+        "negative_score_standard_deviation_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "negative_score_standard_deviation_2",
+        "normalizer": "negative_score_average_value_4",
+        "main_anchor_alpha_pct": 0.3714,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.7,
+        "pairing_score": 1.314,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "跨事件叙事分歧：同日多空解读冲突强度",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子 negative_sentiment_dispersion_2（COLD, alpha_count=2）是负向叙事分歧度，量纲 [0,1]。分母为 negative_score_standard_deviation 与 positive_score_standard_deviation 之和——两个同为 [0,1] 的离散度可直接相加，构成「当日双向叙事冲突总量」，作为内生规模锚。相除得到「负面分歧在全部叙事冲突中的占比」，是一个纯粹的结构占比，天然无量纲且不随新闻条数漂移。",
+      "economic_mechanism": "底层异动：当日新闻流中，正面与负面各自的解读分歧程度并不对称。若冲突集中在负面一侧（负面分歧占比高），而正面一侧高度一致，说明市场对「坏消息到底多坏」仍在激烈争论，而对「好消息有多好」已有共识。这种不对称意味着负面信息尚未完成定价——因为定价需要共识，而共识正在负面侧形成中。反之若正面分歧占优，则是利好尚未被充分认可的形态。因此负面分歧占比越高，未来收益越低。该结构剥离了新闻总量，只保留冲突的方向性配置，与任何情绪水平因子正交。",
+      "expected_polarity": -1,
+      "expression": "divide(negative_sentiment_dispersion_2, add(negative_score_standard_deviation, positive_score_standard_deviation))",
+      "fields_used": [
+        "negative_sentiment_dispersion_2",
+        "negative_score_standard_deviation",
+        "positive_score_standard_deviation"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "negative_sentiment_dispersion_2",
+        "normalizer": "negative_score_standard_deviation",
+        "main_anchor_alpha_pct": 0.1143,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.443,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "跨事件叙事分歧：同日多空解读冲突强度",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "positive_score_standard_deviation_2（COLD, alpha_count=4）与 negative_score_standard_deviation_2（COLD, alpha_count=4）同为 [0,1] 离散度，二者相乘得到「双向分歧共存度」——只有在好消息与坏消息同时存在且各自分歧时该乘积才显著，是一个纯粹的交互项，量纲仍为 [0,1]。neutral_score_average_value_5（HOT, alpha_count=10）是当日非方向性注意力基数，量纲 [0,1]，用于放大「被悲观注意力掩盖」的那部分分歧。以正向分歧减去该交互项，得到「经悲观注意力调整后的净正向分歧」。",
+      "economic_mechanism": "底层异动：某股票的好消息侧出现高度分歧（同一利好被部分解读为实质性、部分解读为一次性），同时坏消息侧也存在分歧并被庞大的中性/悲观报道基数放大。市场在处理这类「双向模糊」时，倾向于用负面框架做保守定价——悲观叙事天然具有更高的注意力权重（损失厌恶与媒体负面偏好）。结果是正向分歧所隐含的「利好尚未形成共识」这一信息被压制。当双向分歧共存度高而正向分歧仍能穿透时，说明利好的重估压力足够强。净正向分歧越高，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "subtract(positive_score_standard_deviation_2, multiply(negative_score_standard_deviation_2, neutral_score_average_value_5))",
+      "fields_used": [
+        "positive_score_standard_deviation_2",
+        "neutral_score_average_value_5",
+        "negative_score_standard_deviation_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_standard_deviation_2",
+        "normalizer": "neutral_score_average_value_5",
+        "main_anchor_alpha_pct": 0.3714,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.314,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "跨事件叙事分歧：同日多空解读冲突强度",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为 positive_score_standard_deviation_2（COLD, alpha_count=4）减去 negative_score_standard_deviation（WARM, alpha_count=7），两者同为 [0,1] 离散度，相减得到 [-1,1] 的「分歧方向净差」，符号本身携带多空信息。分母 add(neutral_score_average_value, 1) 中 neutral_score_average_value（HOT, alpha_count=153 级别的注意力基数，此处取主序列，alpha_count=6）是 [0,1] 的非方向性注意力规模，加 1 保证分母恒为正且不改变截面单调性。此处刻意采用乘法而非除法：让「分歧净差」被注意力基数线性放大，避免除法在分母接近 0 时把噪声拉爆，同时保留分歧方向的符号。",
+      "economic_mechanism": "底层异动：当日正向叙事的解读分歧超过负向叙事，且该股票正处于高注意力状态（中性报道基数大，意味着媒体覆盖密集、信息流量充沛）。在高注意力环境下，正向分歧意味着利好的多种解读路径正在被市场反复讨论——讨论密度本身就是重估的前兆，因为高关注度资产的定价修正速度远快于低关注度资产（Merton 关注度假说）。低注意力环境下同样的分歧则容易被永久忽视。因此「正向分歧净差 × 注意力强度」越高，利好被重新定价的概率与幅度越大，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "multiply(subtract(positive_score_standard_deviation_2, negative_score_standard_deviation), add(neutral_score_average_value, 1))",
+      "fields_used": [
+        "positive_score_standard_deviation_2",
+        "negative_score_standard_deviation",
+        "neutral_score_average_value"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_standard_deviation_2",
+        "normalizer": "negative_score_standard_deviation",
+        "main_anchor_alpha_pct": 0.3714,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.314,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "估计精度与有效事件数：置信带宽度的信噪比含义",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为 neutral_score_confidence_upper_bound_2（COLD, alpha_count=1）减去 neutral_score_confidence_lower_bound_2（COLD, alpha_count=1），两者是同一评分分布的 95% 置信上界与下界，量纲同为 [0,1]，相减得到「置信带宽度」——纯统计精度量，不含任何情绪方向信息。分母 neutral_score_average_value（WARM, alpha_count=6）是中性评分中枢，量纲 [0,1]，用于把绝对带宽转成相对带宽（变异系数代理）。带宽与中枢之比因此是一个完全无量纲的「相对估计误差」。",
+      "economic_mechanism": "底层异动：置信带宽度近似等于事件打分方差除以有效事件数的平方根。带宽宽意味着当日支撑该股中性评分的独立事件极少、或事件彼此矛盾，评分是典型的小样本估计。市场却按点估计（平均分）交易，完全不区分「这条评分背后有五十条新闻还是一条新闻」。小样本评分具有两个可交易的后果：其一，它更容易被少数后续事件推翻，形成均值回归；其二，围绕小样本评分的交易本身会放大波动，抬高风险溢价。因此相对估计误差越高，该股在随后一日的风险调整收益越低。该维度与情绪水平天然正交，是纯粹的数据质量信号。",
+      "expected_polarity": -1,
+      "expression": "divide(subtract(neutral_score_confidence_upper_bound_2, neutral_score_confidence_lower_bound_2), neutral_score_average_value)",
+      "fields_used": [
+        "neutral_score_confidence_lower_bound_2",
+        "neutral_score_confidence_upper_bound_2",
+        "neutral_score_average_value"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "neutral_score_confidence_lower_bound_2",
+        "normalizer": "neutral_score_confidence_upper_bound_2",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "估计精度与有效事件数：置信带宽度的信噪比含义",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为两个正向置信界之比：positive_score_confidence_upper_bound_3（COLD, alpha_count=2）除以 positive_score_confidence_lower_bound_2（COLD, alpha_count=1）。二者同为 [0,1] 概率尺度，相除得到无量纲的「上行弹性倍数」——上界相对下界能拉开多远，即正面信息在最乐观解读下的相对强度。分母侧的 positive_score_average_value（HOT, alpha_count=37）以减法出现，代表已被市场充分定价的正向中枢水平。比值减去中枢，得到「超出已定价水平的正向凸性」。",
+      "economic_mechanism": "底层异动：某股票的正向评分分布呈现明显的右偏——置信上界远高于下界，而上界/下界倍数高企的同时，平均正向基调却停留在温和水平。这说明市场只对「温和正面」这一定价中枢付了钱，而没有为「正面情景的上限」支付任何溢价。对于经营杠杆高、事件驱动特征强的公司，上行是凸性的：一条关键审批或大额订单落地会把盈利预测阶跃式上修。市场对这类凸性系统性定价不足（因为凸性难以用线性因子表达）。上行弹性倍数超出已定价中枢越多，未被定价的凸性越大，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(positive_score_confidence_upper_bound_3, positive_score_confidence_lower_bound_2), positive_score_average_value)",
+      "fields_used": [
+        "positive_score_confidence_lower_bound_2",
+        "positive_score_average_value",
+        "positive_score_confidence_upper_bound_3"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_confidence_lower_bound_2",
+        "normalizer": "positive_score_average_value",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "估计精度与有效事件数：置信带宽度的信噪比含义",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为正向置信带两端之和：positive_score_confidence_upper_bound_2（COLD, alpha_count=4）加 positive_score_confidence_lower_bound_3（COLD, alpha_count=3）。两者同为 [0,1] 概率，相加等于「带宽 + 2×中枢」，即正向信息张力的完整跨度，量纲仍为 [0,1] 的有界量。分母侧以减法出现 neutral_score_average_value（WARM, alpha_count=6），代表非方向性注意力基数。相减即从正向张力中剥离「只是报道多」的规模成分，留下纯粹的净张力。",
+      "economic_mechanism": "底层异动：一只股票的正面信息张力（置信带两端之和）很高，但它同时被大量中性、例行性的披露包围——中性注意力基数大，说明媒体覆盖主要来自程序性公告而非实质性事件。此时表面上的高正向张力有相当部分是「报道密度」制造的，必须剥离。剥离后仍显著为正的部分，才代表真实的、由实质事件支撑的乐观张力。市场容易把高报道密度误读为高信息含量，从而对前者过度反应、对后者反应不足。净正向张力越高，真实利好被低估的程度越大，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "subtract(add(positive_score_confidence_upper_bound_2, positive_score_confidence_lower_bound_3), neutral_score_average_value)",
+      "fields_used": [
+        "positive_score_confidence_upper_bound_2",
+        "neutral_score_average_value",
+        "positive_score_confidence_lower_bound_3"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_confidence_upper_bound_2",
+        "normalizer": "neutral_score_average_value",
+        "main_anchor_alpha_pct": 0.3714,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.314,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "估计精度与有效事件数：置信带宽度的信噪比含义",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "positive_score_confidence_lower_bound_3（COLD, alpha_count=3）是正向评分的 95% 置信下界，量纲 [0,1]，含义是「即使按最保守的估计，正面情绪仍有这么强」——一个稳健性下界。negative_score_confidence_upper_bound_3（HOT, alpha_count=35）是负向评分的置信上界，代表悲观情景的最坏情形。neutral_score_average_value_5（HOT, alpha_count=10）为非方向性注意力基数。以负向上界乘注意力基数，得到「被报道密度放大的悲观情景」，再从正向稳健下界中减去，得到剔除悲观虚增后的净稳健乐观度。",
+      "economic_mechanism": "底层异动：某股票的正向评分具有坚实的下界（多条一致事件支撑，最保守估计仍为正），而负向评分的上界虽然很高，却建立在庞大的中性/例行报道基数之上——即悲观情景的「最坏情形」被报道密度人为放大，缺乏实质事件支撑。市场在做风险定价时对负向尾部给予极高权重（损失厌恶），会把这种虚增的悲观情景当真，从而过度折价。当正向稳健下界能够穿透被放大的悲观上界时，说明该股被系统性错杀。净稳健乐观度越高，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "subtract(positive_score_confidence_lower_bound_3, multiply(negative_score_confidence_upper_bound_3, neutral_score_average_value_5))",
+      "fields_used": [
+        "neutral_score_average_value_5",
+        "negative_score_confidence_upper_bound_3",
+        "positive_score_confidence_lower_bound_3"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_confidence_lower_bound_3",
+        "normalizer": "neutral_score_average_value_5",
+        "main_anchor_alpha_pct": 0.2381,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.381,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "跨序列变体共识背离：多模型多新闻源的判定分歧",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为两个平行序列变体的正向均值之差：positive_score_average_value_5（COLD, alpha_count=1，prv25 同日偏移变体）减去 positive_score_average_value_2（HOT, alpha_count=45，prv2 延迟一日变体）。二者是同一事件流在不同模型版本与信息到达时点下的独立打分，量纲同为 [0,1]，相减得到「变体间乐观判定差」，符号携带加速/减速信息。分母 positive_score_average_value（HOT, alpha_count=153）是主序列正向基调，量纲 [0,1]，完成规模归一，使差分不随该股绝对情绪水平漂移。",
+      "economic_mechanism": "底层异动：同一批新闻被两个独立评分器打分，快变体（同日偏移）给出的乐观度高于慢变体（延迟一日），说明正面信息正在加速进入评分体系——新的、更乐观的解读刚刚被纳入，而慢变体尚未反映。这种「评分器间的时点差」是信息扩散速度的直接显影。市场以单一评分序列定价，无法感知扩散速度；当加速发生时，价格修正滞后于信息扩散。变体差除以主序列基调后越高，说明乐观重估的相对幅度越大，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(positive_score_average_value_5, positive_score_average_value_2), add(positive_score_average_value, 1))",
+      "fields_used": [
+        "positive_score_average_value",
+        "positive_score_average_value_5",
+        "positive_score_average_value_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_average_value_5",
+        "normalizer": "positive_score_average_value",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "跨序列变体共识背离：多模型多新闻源的判定分歧",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为负向中位情绪在两个变体间的比值：negative_score_median_value_5（COLD, alpha_count=3）除以 negative_score_median_value_3（COLD, alpha_count=4）。中位数刻画「典型负面事件」而非被极端值污染的均值，两者同为 [0,1]，相除得到无量纲的「悲观加速倍数」。分母侧以减法出现 negative_score_average_value（HOT, alpha_count=153），代表已被充分定价的平均悲观存量。倍数减存量，得到剔除存量后的净悲观加速。",
+      "economic_mechanism": "底层异动：两个独立评分器对「典型负面事件有多严重」的判断出现分化，快变体显著高于慢变体——说明悲观解读正在加速形成，新的负面框架刚刚被采纳。中位数口径刻意排除了单条极端事件的干扰，捕捉的是「悲观基调整体抬升」这一更持久的变化。市场以均值定价且高度依赖历史存量，对基调的边际抬升反应迟缓。当悲观加速倍数超出已被定价的存量基调时，说明边际恶化尚未反映在价格中，未来收益越低。",
+      "expected_polarity": -1,
+      "expression": "subtract(divide(negative_score_median_value_5, negative_score_median_value_3), negative_score_average_value)",
+      "fields_used": [
+        "negative_score_median_value_5",
+        "negative_score_median_value_3",
+        "negative_score_average_value"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "negative_score_median_value_5",
+        "normalizer": "negative_score_median_value_3",
+        "main_anchor_alpha_pct": 0.2381,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.7,
+        "pairing_score": 1.381,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "跨序列变体共识背离：多模型多新闻源的判定分歧",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "neutral_score_median_value_3（COLD, alpha_count=1）与 neutral_score_median_value_2（COLD, alpha_count=3）是同一事件流在两个序列变体下的中性中位强度，量纲同为 [0,1]。二者相减是纯粹的「变体间中性判定差」：若快变体把更多新闻重新归类为中性，差值转正。该差分天然无量纲、无规模偏倚——因为中性占比本身已是比例量，不需要再引入分母，强行加分母反而会引入除零与符号反转风险。这是本批唯一一个不加分母的纯变体差分，其正交性来自「中性判定」这一维度与任何方向性情绪水平无关。",
+      "economic_mechanism": "底层异动：评分器把越来越多的新闻从「有方向」重新归类为「中性」——即信息的可解释性下降，事件流趋于例行化、程序化。中性判定上升意味着催化剂消退：没有订单、没有审批、没有评级变动，只有公告与披露。市场对催化剂消退的定价是缓慢的，因为缺乏可锚定的事件；但缺乏催化剂本身会降低该股的边际买盘（事件驱动资金撤离），并使波动率溢价回落。两个变体一致确认中性判定上升时，这一信号最为可靠。中性判定差越高，未来收益越低。",
+      "expected_polarity": -1,
+      "expression": "subtract(neutral_score_median_value_3, neutral_score_median_value_2)",
+      "fields_used": [
+        "neutral_score_median_value_3",
+        "neutral_score_median_value_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "neutral_score_median_value_3",
+        "normalizer": "neutral_score_median_value_2",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "跨序列变体共识背离：多模型多新闻源的判定分歧",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子 negative_score_minimum_value_2（COLD, alpha_count=3）是当日「最轻的那条负面新闻」的强度，量纲 [0,1]——它是负面分布的下界，刻画坏消息的「底线严重度」。分母由 negative_score_average_value_5 与 negative_score_average_value_2 两个变体的平均负向基调相加构成，同为 [0,1]，其和代表跨变体确认的负面曝光总量。相除得到「底线/总量」比，是一个无量纲的均匀度指标：比值接近 1 意味着连最轻的负面都很重，负面叙事没有任何缓冲。",
+      "economic_mechanism": "底层异动：负面新闻的严重程度高度均匀——不存在「虚惊一场」的轻微事件，每一条坏消息都是实质性的。这种「无缓冲的悲观」在统计上表现为最小值相对总量偏高。市场在处理连续负面时存在适应效应（habituation）：坏消息反复出现后，边际冲击递减，价格反应钝化。但均匀分布的负面意味着不存在可供「适应」的轻微端，恶化是系统性的而非偶发的，因此钝化本身即是定价错误。底线/总量比越高，被钝化掩盖的系统性恶化越严重，未来收益越低。",
+      "expected_polarity": -1,
+      "expression": "divide(negative_score_minimum_value_2, add(negative_score_average_value_5, negative_score_average_value_2))",
+      "fields_used": [
+        "negative_score_average_value_5",
+        "negative_score_average_value_2",
+        "negative_score_minimum_value_2"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "negative_score_minimum_value_2",
+        "normalizer": "negative_score_average_value_5",
+        "main_anchor_alpha_pct": 0.2381,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.381,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "方向性注意力纯度：情绪强度对非方向性报道基数的归一",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为正向中位情绪在两个变体间的差：positive_score_median_value（COLD 邻近档, alpha_count=4）减去 positive_score_median_value_3（COLD, alpha_count=3）。中位数排除极端值污染，二者同为 [0,1]，相减得到「典型乐观事件的变体间加速差」。分母 positive_score_average_value（HOT, alpha_count=37）是主序列正向基调，量纲 [0,1]，用于把加速差转成相对于该股乐观水平的比例，消除绝对情绪水平的截面差异。",
+      "economic_mechanism": "底层异动：两个评分器对「典型正面事件有多正面」的判断出现分化，快变体更高——说明乐观框架正在被重新采纳，而非仅仅由一条极端新闻推动。中位数口径确保这是基调层面的变化。当这种基调层面的乐观加速相对于该股既有乐观水平仍然显著时，说明重估幅度足够大，尚未被价格吸收。市场对基调变化（相对于单点事件）反应尤其迟缓，因为基调变化没有明确的「公告时点」可供交易。典型乐观加速差越高，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(positive_score_median_value, positive_score_median_value_3), positive_score_average_value)",
+      "fields_used": [
+        "positive_score_average_value",
+        "positive_score_median_value_3",
+        "positive_score_median_value"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_median_value_3",
+        "normalizer": "positive_score_average_value",
+        "main_anchor_alpha_pct": 0.2381,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.381,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "方向性注意力纯度：情绪强度对非方向性报道基数的归一",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为同一序列变体内的多空力量比：positive_score_average_value_5（COLD, alpha_count=1）除以 negative_score_average_value_5（HOT, alpha_count=22）。两者在同一变体内、同一量纲 [0,1]、同一新闻源，因此比值是干净的无量纲多空倾斜度，不含跨变体的口径噪声。分母侧以减法出现 neutral_score_average_value（WARM, alpha_count=6），代表非方向性注意力基数。相减即从多空倾斜中剥离「只是新闻多」的规模成分。",
+      "economic_mechanism": "底层异动：同一新闻源下，正面情绪强度相对负面情绪强度占据优势，且这一优势并非来自报道总量膨胀——中性注意力基数不高，说明新闻流以有方向事件为主。此时多空倾斜是「实质性」的而非「统计性」的。市场对实质性多空倾斜的定价存在滞后，因为多数情绪因子以单极性构建（只看 positive 或只看 negative），无法表达二者的相对力量。净多空倾斜越高，被低估的乐观力量越强，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(positive_score_average_value_5, negative_score_average_value_5), neutral_score_average_value)",
+      "fields_used": [
+        "negative_score_average_value_5",
+        "positive_score_average_value_5",
+        "neutral_score_average_value"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_average_value_5",
+        "normalizer": "negative_score_average_value_5",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "方向性注意力纯度：情绪强度对非方向性报道基数的归一",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为正向分布两端之和：positive_score_maximum_value_2（COLD, alpha_count=1）加 positive_score_minimum_value_2（COLD, alpha_count=2）。最大值与最小值同为 [0,1]，相加等于「正向跨度 + 2×中枢」，刻画正面信息的完整张力范围，是一个有界且单调的凸性代理。分母侧以减法出现 neutral_score_average_value（WARM, alpha_count=6），即非方向性注意力基数，用于剥离报道密度造成的虚增。",
+      "economic_mechanism": "底层异动：正向评分在当日同时触及高位与低位——最强的一条正面新闻极强，而最弱的一条也仍具正面色彩，说明正面信息具有宽跨度而非单点脉冲。宽跨度的正面信息对应「多点开花」的经营状态：多个业务线同时出现利好，而非单一事件驱动。市场对多点利好的定价效率低于单点利好，因为缺乏一个集中的叙事焦点供交易者锚定。当宽跨度在剥离中性注意力基数后仍然显著时，说明乐观是结构性的而非报道密度制造的。净正向跨度越高，未来收益越高。",
+      "expected_polarity": 1,
+      "expression": "subtract(add(positive_score_maximum_value_2, positive_score_minimum_value_2), neutral_score_average_value)",
+      "fields_used": [
+        "positive_score_minimum_value_2",
+        "positive_score_maximum_value_2",
+        "neutral_score_average_value"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "positive_score_minimum_value_2",
+        "normalizer": "positive_score_maximum_value_2",
+        "main_anchor_alpha_pct": 0.1143,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.443,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "方向性注意力纯度：情绪强度对非方向性报道基数的归一",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子 neutral_score_maximum_value_2（COLD, alpha_count=3）是当日被判定为「完全中性」的最强那条新闻的置信度，量纲 [0,1]——它代表新闻流中确定性最高的非信息事件（例行公告、程序性披露）。分母 negative_score_average_value（HOT, alpha_count=153）是平均负面基调，量纲 [0,1]，代表已被充分定价的悲观存量。分母加 1 保证有界与除零安全。相除得到「确定性非信息事件相对悲观存量的强度」，是一个反向的信息密度指标。",
+      "economic_mechanism": "底层异动：当日出现一条被高度确信判定为中性的重要新闻（高置信度的例行披露），同时平均负面基调并不低。这意味着该股的新闻流被程序性披露占据主导，真实信息密度稀薄——市场看到的「负面」多来自披露义务而非经营恶化。信息密度稀薄会同时压低波动率与事件驱动资金的参与度，使价格在随后数日缺乏向上重估的燃料。确定性非信息事件相对悲观存量越强，信息真空越明显，未来收益越低。该结构完全建立在「非方向性」维度上，与任何情绪水平因子正交。",
+      "expected_polarity": -1,
+      "expression": "divide(neutral_score_maximum_value_2, add(negative_score_average_value, 1))",
+      "fields_used": [
+        "neutral_score_maximum_value_2",
+        "negative_score_average_value"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "neutral_score_maximum_value_2",
+        "normalizer": "negative_score_average_value",
+        "main_anchor_alpha_pct": 0.2381,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.705,
+        "pairing_score": 1.381,
+        "issues": []
+      }
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "该数据集由 RavenPack 新闻/新闻稿/监管披露事件流经 transformer NLP 逐条打分后，按「股票-日」聚合而成。每一条新闻被映射为三个互斥极性的置信度（positive / negative / neutral），取值域 [0,1]；同一股票-日的全部事件再被压缩成 7 个统计量：均值、中位、最大、最小、标准差、95% 置信下界、95% 置信上界。数据集中不含任何「报道条数」「事件计数」这类显式总量字段，因此有效事件数只能通过置信带宽度（upper−lower）与离散度间接反推。5 个序列变体（prv22/prv23/prv24/prv25 及不同新闻源区域侧重与 D0/D1 偏移）对同一事件流给出平行打分，构成天然的「多评分器」结构。全平台 705 个已发布 alpha 高度集中于 negative_score_average_value（alpha_count=153）等一阶矩字段，而刻画事件分布形态的二阶/极值/区间统计量 alpha_count 仅 1~4，处于 COLD 档。这意味着市场（及绝大多数研究员）只交易「今天新闻平均有多好/多坏」，却系统性忽略了「这个平均值是由几条事件、以何种分布形态支撑的」。本战役的全部经济学价值，正来自于一阶矩与高阶矩之间的定价落差。",
+    "economic_clusters": [
+      {
+        "cluster_name": "尾部事件强度结构：极端单点事件与中枢基调的背离",
+        "fields": [
+          "negative_score_maximum_value_4",
+          "negative_score_maximum_value",
+          "negative_score_median_value_3",
+          "positive_score_maximum_value_3",
+          "positive_score_maximum_value_4",
+          "positive_score_median_value_3",
+          "negative_score_average_value",
+          "positive_score_average_value"
+        ],
+        "cluster_logic": "最大值刻画「当日最极端的一条事件」，中位数/均值刻画「中枢基调」。二者之比是分布的峰度/右尾厚度代理：平均基调平淡却出现极端单点事件，说明信息以「孤立冲击」而非「连续叙事」的形式到达。市场对缺乏叙事连续性的孤立冲击存在系统性折价（将其当作一次性噪音），因此尾部/中枢的背离蕴含未被定价的信息。用平均基调作分母同时完成无量纲化与规模剥离。"
+      },
+      {
+        "cluster_name": "跨事件叙事分歧：同日多空解读冲突强度",
+        "fields": [
+          "negative_score_standard_deviation_2",
+          "negative_sentiment_dispersion_2",
+          "positive_score_standard_deviation_2",
+          "negative_score_standard_deviation",
+          "positive_score_standard_deviation",
+          "negative_score_average_value_4",
+          "neutral_score_average_value_5"
+        ],
+        "cluster_logic": "标准差度量同一股票-日内多条新闻被打分的离散程度，即「叙事是否统一」。高离散意味着同日既有轻微抱怨也有重大诉讼，市场对「坏消息到底多坏」无法形成共识，定价必然不充分。分歧度本身是无量纲的，但需要以同极性的平均基调或跨极性的分歧总量作分母，才能剥离「新闻条数多导致离散天然变大」的机械效应。"
+      },
+      {
+        "cluster_name": "估计精度与有效事件数：置信带宽度的信噪比含义",
+        "fields": [
+          "neutral_score_confidence_upper_bound_2",
+          "neutral_score_confidence_lower_bound_2",
+          "positive_score_confidence_upper_bound_3",
+          "positive_score_confidence_lower_bound_2",
+          "positive_score_confidence_upper_bound_2",
+          "positive_score_confidence_lower_bound_3",
+          "negative_score_confidence_upper_bound_3",
+          "negative_score_confidence_lower_bound_2",
+          "neutral_score_average_value"
+        ],
+        "cluster_logic": "95% 置信带宽度 ≈ 事件打分方差 / sqrt(有效事件数)。带宽窄说明当日有大量独立且一致的事件支撑该评分，信号稳健；带宽宽说明评分建立在极少数、彼此矛盾的样本上，是小样本噪声。市场却按点估计（平均分）交易，完全不区分「这条评分背后有 50 条新闻还是 1 条新闻」。带宽因此是一个纯数据质量维度，与任何情绪水平因子天然正交。以中性/方向性平均基调作分母，把带宽转成相对估计误差（变异系数代理）。"
+      },
+      {
+        "cluster_name": "跨序列变体共识背离：多模型多新闻源的判定分歧",
+        "fields": [
+          "positive_score_average_value_5",
+          "positive_score_average_value_2",
+          "negative_score_median_value_5",
+          "negative_score_median_value_3",
+          "neutral_score_median_value_3",
+          "neutral_score_median_value_2",
+          "positive_score_median_value",
+          "positive_score_average_value",
+          "negative_score_average_value"
+        ],
+        "cluster_logic": "同一事件流被 5 个平行序列变体（不同模型版本 prv22-25、不同新闻源区域侧重、D0/D1 偏移）独立打分。变体间的分歧不是噪声，而是「评分器覆盖差异 + 信息到达时点差异」的联合显影：快变体高于慢变体 = 信息正在加速进入；两变体同时高 = 已形成共识（已被定价）。因此变体差本身就是一个「共识形成速度」的度量，且与任何单变体水平因子正交。差分后再除以主序列均值完成规模归一。"
+      },
+      {
+        "cluster_name": "方向性注意力纯度：情绪强度对非方向性报道基数的归一",
+        "fields": [
+          "positive_score_average_value_5",
+          "negative_score_average_value_5",
+          "neutral_score_average_value",
+          "neutral_score_maximum_value_2",
+          "positive_score_maximum_value_2",
+          "positive_score_minimum_value_2",
+          "negative_score_minimum_value_2",
+          "negative_score_average_value_2"
+        ],
+        "cluster_logic": "中性情绪占比近似「非方向性注意力基数」——中性事件在新闻流中天然占多数，因此中性均值越高，说明当日报道以例行公告/程序性披露为主，信息密度低。同样一条负面新闻，出现在「1 条新闻中的 1 条」与「50 条新闻中的 1 条」，其信息含量完全不同。将方向性情绪强度除以中性注意力基数（或从中减去），可把「情绪有多强」转换为「情绪相对于注意力规模有多纯」，这是本数据集唯一可行的内生规模归一方式。"
+      }
+    ]
+  },
+  "crowding_profile": {
+    "field_total": 105,
+    "alpha_count_known": 105,
+    "tier_counts": {
+      "COLD": 54,
+      "WARM": 26,
+      "HOT": 25,
+      "UNKNOWN": 0
+    }
+  },
+  "pairing_candidates": [
+    {
+      "main_anchor": "neutral_score_maximum_value_4",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "negative_score_average_value",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.9905
+    },
+    {
+      "main_anchor": "neutral_score_median_value_3",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "negative_score_average_value_2",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.981
+    },
+    {
+      "main_anchor": "neutral_score_standard_deviation_3",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "positive_score_average_value",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.9714
+    },
+    {
+      "main_anchor": "positive_score_maximum_value_3",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "negative_score_confidence_lower_bound_2",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.9429
+    },
+    {
+      "main_anchor": "positive_score_maximum_value_4",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "negative_score_average_value_5",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.9238
+    },
+    {
+      "main_anchor": "positive_score_minimum_value_3",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "negative_score_maximum_value",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.8952
+    },
+    {
+      "main_anchor": "neutral_score_average_value_2",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.705,
+      "normalizer": "negative_score_average_value",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.9905
+    },
+    {
+      "main_anchor": "neutral_score_confidence_lower_bound_2",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.705,
+      "normalizer": "negative_score_average_value_2",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.981
+    }
+  ]
+}

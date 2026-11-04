@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/4nGEX8dBt4LIbQlAQdKk1nr",
+  "submitted_at": 1792987528,
+  "items": [
+    {
+      "id": 1,
+      "type": "CHAMPION_DEV6_D25",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), sector)",
+      "optimize_reason": "Direct vROQVzlA skeleton (0 fail, 0 warn, Sh 1.86, Fit 1.09) tested with decay 25. Targets Turnover <= 14%, lifting Margin to >= 10 bps."
+    },
+    {
+      "id": 2,
+      "type": "CHAMPION_DEV5_D25",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 5)), sector)",
+      "optimize_reason": "5-day norm baseline. Corresponds to bl8Wd2Nq family (Sharpe 2.05). Tests decay 25 responsiveness."
+    },
+    {
+      "id": 3,
+      "type": "CHAMPION_DEV7_D25",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 7)), sector)",
+      "optimize_reason": "7-day baseline for smoother expectation gap. Targets Turnover <= 13%, Margin >= 11 bps."
+    },
+    {
+      "id": 4,
+      "type": "GAP_DEC3_D25",
+      "expression": "group_rank(ts_decay_linear(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), 3), sector)",
+      "optimize_reason": "Combines in-formula linear decay (3d) with platform decay 25. Targets Turnover <= 10.0%, unlocking Margin >= 15.0 bps and Fitness >= 1.25."
+    },
+    {
+      "id": 5,
+      "type": "GAP_DEC4_D25",
+      "expression": "group_rank(ts_decay_linear(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), 4), sector)",
+      "optimize_reason": "4-day in-formula linear decay. Targets Turnover <= 8.5%, expanding Margin >= 17.5 bps and Fitness >= 1.35."
+    },
+    {
+      "id": 6,
+      "type": "GAP_DEADBAND_D25",
+      "expression": "group_rank(if_else(greater(abs(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6))), 0.02), subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), NaN), sector)",
+      "optimize_reason": "2% expectation gap conviction filter. Takes positions only on significant dislocations > 2%, suppressing Turnover to <= 9%, Margin >= 16.5 bps."
+    },
+    {
+      "id": 7,
+      "type": "GAP_WINSORIZE_D25",
+      "expression": "group_rank(winsorize(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), std=3), sector)",
+      "optimize_reason": "Winsorizes extreme price target revisions to protect against single-analyst errata. Smooths portfolio weights, targeting 0 warn, Margin >= 11 bps."
+    },
+    {
+      "id": 8,
+      "type": "GAP_SUBIND_D25",
+      "expression": "group_rank(subtract(divide(max_bias_adjusted_price_target, close), ts_mean(divide(max_bias_adjusted_price_target, close), 6)), subindustry)",
+      "optimize_reason": "Granular subindustry rank to eliminate niche industry valuation drift. Tests whether subindustry grouping reduces idiosyncratic turnover."
+    }
+  ]
+}

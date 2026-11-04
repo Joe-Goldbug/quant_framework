@@ -1,0 +1,20 @@
+{
+  "wave": 31,
+  "seed_id": "GATE1_WAVE31",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "npvdZONq (w30_belief_x_txncountratio, Sh 1.28 / Mgn 14.79 / PC 0.7992)",
+  "hypothesis": "Wave30 判定确认腿换口径不动 PC（0.8178→0.7992），拥挤内容在信念腿（buy_sell_ratio_top5 量比期限结构）。本轮把信念腿整体换成笔数比统计源（buy_sell_tx_count_ratio，ac=0）：all 队列（覆盖最高、与 top5 量比统计源最远）与 top20 队列两个变体，配 txn60/笔数比确认腿，并用窗口 33/132 抬 Margin 逼近 15。判据：Margin≥15 且 PC<0.70 双达标。",
+  "items": [
+    {"id": "w31_ctr33", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),33), subindustry)", "optimize_reason": "npvdZONq 的窗口抬 Margin 版：确认腿笔数比不变，平滑窗 20→33（Wave24 证 33 窗 Margin 17.59/2Y 1.13 的均衡点）。6 算子。"},
+    {"id": "w31_ctr132", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),132), subindustry)", "optimize_reason": "同上 132 窗（Wave24 证 Margin 26.29bps 的长窗极），目标 Margin 远超 15。6 算子。"},
+    {"id": "w31_all_belief_txn60", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "信念腿换统计源主槽：全体内部人笔数比期限结构（20d−60d，ac=0, cov 0.8833）× txn60 确认。统计源从『量比』整体切到『笔数比』，是信念腿冷门化的最大跨度。6 算子。"},
+    {"id": "w31_all_belief_txn60_33", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33), subindustry)", "optimize_reason": "主槽的 33 窗 Margin 版（与前槽构成平滑窗 20/33 成对）。"},
+    {"id": "w31_top20_belief_txn60", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_top20_20d),vec_avg(buy_sell_tx_count_ratio_top20_60d)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "信念腿 top20 队列笔数比（未 fill 原生字段，cov 0.6602/0.7339）：队列收窄与统计源切换的交叉探针。6 算子。"},
+    {"id": "w31_all_belief_x_ctr5", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),20), subindustry)", "optimize_reason": "全冷门组合：笔数比信念腿 × top5 笔数比确认腿，两条腿都 ac=0，统计源与生产池量比类因子距离最远。6 算子。"},
+    {"id": "w31_all_belief_solo", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),20), subindustry)", "optimize_reason": "纯信念腿裸信号（5 算子）：分离『笔数比期限结构』自身的强度与 PC 贡献，作为全冷门组合的机理解剖槽。"},
+    {"id": "w31_ctr10", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),10), subindustry)", "optimize_reason": "npvdZONq 的 10 窗成对（10/20/33/132 四点窗谱），完成参数高原验证。6 算子。"}
+  ]
+}

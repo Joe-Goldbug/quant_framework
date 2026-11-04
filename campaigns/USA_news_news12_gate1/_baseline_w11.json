@@ -1,0 +1,1760 @@
+[
+ {
+  "expr": "rank(add(ts_zscore(ts_backfill(vec_avg(nws12_mainz_epsactual), 250), 63), ts_zscore(ts_backfill(vec_avg(actual_earnings_per_share_value), 250), 63)))",
+  "aid": "akV0gpz6",
+  "sh": 0.21,
+  "fit": 0.05,
+  "to": 0.0841,
+  "ret": 0.0067,
+  "y2": 1.17,
+  "sub": 0.17,
+  "rn": -0.31,
+  "lc": 439,
+  "sc": 435,
+  "dd": 0.114,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11a_1792941539_result.json"
+ },
+ {
+  "expr": "rank(divide(ts_zscore(ts_backfill(vec_avg(nws12_mainz_epsactual), 250), 63), add(vec_count(high_price_excursion_stddev), 1)))",
+  "aid": "O0JL23zb",
+  "sh": 0.0,
+  "fit": 0.0,
+  "to": 0.7796,
+  "ret": 0.0001,
+  "y2": 0.77,
+  "sub": -0.07,
+  "rn": -0.46,
+  "lc": 272,
+  "sc": 262,
+  "dd": 0.1528,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11a_1792941539_result.json"
+ },
+ {
+  "expr": "rank(multiply(ts_zscore(ts_backfill(vec_avg(nws12_mainz_epsactual), 250), 63), subtract(1, rank(ts_mean(vec_avg(high_price_excursion_stddev), 5)))))",
+  "aid": "9qEe2nMx",
+  "sh": 0.33,
+  "fit": 0.07,
+  "to": 0.2101,
+  "ret": 0.0106,
+  "y2": 0.75,
+  "sub": 0.28,
+  "rn": -0.36,
+  "lc": 401,
+  "sc": 393,
+  "dd": 0.0782,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11a_1792941539_result.json"
+ },
+ {
+  "expr": "rank(ts_zscore(subtract(ts_backfill(vec_avg(nws12_prez_epsactual), 250), ts_backfill(vec_avg(nws12_mainz_epsactual), 250)), 63))",
+  "aid": "e76YWjvl",
+  "sh": -0.35,
+  "fit": -0.12,
+  "to": 0.1067,
+  "ret": -0.0153,
+  "y2": -0.27,
+  "sub": -0.07,
+  "rn": -0.11,
+  "lc": 372,
+  "sc": 366,
+  "dd": 0.2424,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "CONCENTRATED_WEIGHT",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11a_1792941539_result.json"
+ },
+ {
+  "expr": "rank(subtract(rank(subtract(news_eps_actual, ts_mean(news_eps_actual, 60))), rank(subtract(news_short_interest, ts_mean(news_short_interest, 60)))))",
+  "aid": "zqrxLV0O",
+  "sh": 0.44,
+  "fit": 0.13,
+  "to": 1.0036,
+  "ret": 0.0933,
+  "y2": 0.07,
+  "sub": 0.51,
+  "rn": 0.4,
+  "lc": 7,
+  "sc": 7,
+  "dd": 0.3985,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "CONCENTRATED_WEIGHT",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11a_1792941539_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), trade_when(greater(rank(news_pe_ratio), 0.88), reverse(rank(divide(news_indx_perf, add(vec_count(high_price_excursion_stddev), 1)))), 0), 0)",
+  "aid": "9qEe2nmx",
+  "sh": 0.26,
+  "fit": 0.08,
+  "to": 0.1247,
+  "ret": 0.011,
+  "y2": -1.15,
+  "sub": 0.45,
+  "rn": 0.58,
+  "lc": 221,
+  "sc": 212,
+  "dd": 0.1394,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11a_1792941539_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), trade_when(greater(rank(news_short_interest), 0.88), reverse(rank(divide(news_indx_perf, add(vec_count(high_price_excursion_stddev), 1)))), 0), 0)",
+  "aid": "0mjVaJ61",
+  "sh": 0.51,
+  "fit": 0.24,
+  "to": 0.1316,
+  "ret": 0.0283,
+  "y2": 0.27,
+  "sub": 0.02,
+  "rn": 0.38,
+  "lc": 135,
+  "sc": 141,
+  "dd": 0.1316,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11a_1792941539_result.json"
+ },
+ {
+  "expr": "rank(subtract(rank(ts_delta(news_eps_actual, 60)), rank(ts_delta(news_short_interest, 20))))",
+  "aid": "78o52plx",
+  "sh": -0.61,
+  "fit": -0.38,
+  "to": 0.0895,
+  "ret": -0.0484,
+  "y2": -0.84,
+  "sub": -0.4,
+  "rn": -0.45,
+  "lc": 0,
+  "sc": 0,
+  "dd": 0.3387,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "CONCENTRATED_WEIGHT",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11a_1792941539_result.json"
+ },
+ {
+  "expr": "reverse(rank(ts_decay_exp_window(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 10, factor=0.9)))",
+  "aid": "QPYxxnW5",
+  "sh": 0.97,
+  "fit": 0.28,
+  "to": 0.5,
+  "ret": 0.0405,
+  "y2": 1.0,
+  "sub": 0.85,
+  "rn": 1.29,
+  "lc": 516,
+  "sc": 515,
+  "dd": 0.0726,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_SMOKE_1792943312_result.json"
+ },
+ {
+  "expr": "reverse(rank(divide(winsorize(subtract(news_eod_close, news_ton_last), std=3), add(vec_count(high_price_excursion_stddev), 1))))",
+  "aid": "RRAOON51",
+  "sh": 1.56,
+  "fit": 0.39,
+  "to": 1.151,
+  "ret": 0.0737,
+  "y2": 2.01,
+  "sub": 1.29,
+  "rn": 1.81,
+  "lc": 312,
+  "sc": 307,
+  "dd": 0.0576,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_SMOKE_1792943312_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "RRAOO6vg",
+  "sh": 1.47,
+  "fit": 0.42,
+  "to": 0.8371,
+  "ret": 0.0681,
+  "y2": 1.49,
+  "sub": 1.41,
+  "rn": 1.95,
+  "lc": 383,
+  "sc": 377,
+  "dd": 0.0524,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W1_1792943501_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 3))), 0)",
+  "aid": "3qjKKVOZ",
+  "sh": 0.87,
+  "fit": 0.25,
+  "to": 0.4056,
+  "ret": 0.0336,
+  "y2": 0.52,
+  "sub": 0.94,
+  "rn": 1.14,
+  "lc": 514,
+  "sc": 511,
+  "dd": 0.0866,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W1_1792943501_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "WjLZZeRd",
+  "sh": 0.9,
+  "fit": 0.26,
+  "to": 0.4055,
+  "ret": 0.0345,
+  "y2": 0.59,
+  "sub": 0.91,
+  "rn": 1.18,
+  "lc": 513,
+  "sc": 510,
+  "dd": 0.0843,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W1_1792943501_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_exp_window(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20, factor=0.9))), 0)",
+  "aid": "MP0EE3nk",
+  "sh": 1.06,
+  "fit": 0.33,
+  "to": 0.4601,
+  "ret": 0.0433,
+  "y2": 1.02,
+  "sub": 0.93,
+  "rn": 1.44,
+  "lc": 510,
+  "sc": 517,
+  "dd": 0.064,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W1_1792943501_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "wp9ddbAY",
+  "sh": 1.49,
+  "fit": 0.43,
+  "to": 0.8366,
+  "ret": 0.0693,
+  "y2": 1.53,
+  "sub": 1.42,
+  "rn": 1.98,
+  "lc": 383,
+  "sc": 377,
+  "dd": 0.0516,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W1_1792943501_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(subtract(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), ts_mean(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20)))), 0)",
+  "aid": "2rjggmx5",
+  "sh": 1.37,
+  "fit": 0.32,
+  "to": 1.0589,
+  "ret": 0.0571,
+  "y2": 2.37,
+  "sub": 1.54,
+  "rn": 1.52,
+  "lc": 308,
+  "sc": 311,
+  "dd": 0.0538,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W1_1792943501_result.json"
+ },
+ {
+  "expr": "reverse(rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap)))",
+  "aid": "zqrxxbEG",
+  "sh": 1.44,
+  "fit": 0.4,
+  "to": 1.2051,
+  "ret": 0.0907,
+  "y2": 1.64,
+  "sub": 0.94,
+  "rn": 1.98,
+  "lc": 289,
+  "sc": 289,
+  "dd": 0.0639,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W1_1792943501_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(ts_sum(subtract(news_eod_close, news_ton_last), 20), ts_sum(abs(subtract(news_eod_close, news_ton_last)), 20)))), 0)",
+  "aid": "RRAOO6og",
+  "sh": 0.01,
+  "fit": 0.0,
+  "to": 0.1382,
+  "ret": 0.0004,
+  "y2": -0.47,
+  "sub": -0.22,
+  "rn": -0.15,
+  "lc": 513,
+  "sc": 513,
+  "dd": 0.1406,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W1_1792943501_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "58jmm1aX",
+  "sh": 1.14,
+  "fit": 0.35,
+  "to": 0.8164,
+  "ret": 0.0783,
+  "y2": 1.51,
+  "sub": 1.15,
+  "rn": 2.07,
+  "lc": 388,
+  "sc": 380,
+  "dd": 0.0867,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "MARKET",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W2_1792943632_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 3))), 0)",
+  "aid": "2rjggxvZ",
+  "sh": 0.75,
+  "fit": 0.24,
+  "to": 0.4002,
+  "ret": 0.0423,
+  "y2": 0.74,
+  "sub": 0.84,
+  "rn": 1.3,
+  "lc": 518,
+  "sc": 513,
+  "dd": 0.0993,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "MARKET",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W2_1792943632_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "d5KMM6nj",
+  "sh": 0.74,
+  "fit": 0.24,
+  "to": 0.3997,
+  "ret": 0.0414,
+  "y2": 0.8,
+  "sub": 0.78,
+  "rn": 1.34,
+  "lc": 518,
+  "sc": 513,
+  "dd": 0.1037,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "MARKET",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W2_1792943632_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_exp_window(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20, factor=0.9))), 0)",
+  "aid": "6XAWWQRL",
+  "sh": 0.82,
+  "fit": 0.27,
+  "to": 0.4515,
+  "ret": 0.0504,
+  "y2": 1.03,
+  "sub": 0.79,
+  "rn": 1.62,
+  "lc": 513,
+  "sc": 521,
+  "dd": 0.0929,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "MARKET",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W2_1792943632_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "Grg22Nk0",
+  "sh": 1.15,
+  "fit": 0.36,
+  "to": 0.8159,
+  "ret": 0.0792,
+  "y2": 1.55,
+  "sub": 1.16,
+  "rn": 2.1,
+  "lc": 388,
+  "sc": 380,
+  "dd": 0.085,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "MARKET",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W2_1792943632_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(subtract(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), ts_mean(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20)))), 0)",
+  "aid": "omobbXVl",
+  "sh": 1.14,
+  "fit": 0.29,
+  "to": 1.0321,
+  "ret": 0.065,
+  "y2": 1.71,
+  "sub": 1.33,
+  "rn": 1.65,
+  "lc": 312,
+  "sc": 316,
+  "dd": 0.0946,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "MARKET",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W2_1792943632_result.json"
+ },
+ {
+  "expr": "reverse(rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap)))",
+  "aid": "E5VjjMkL",
+  "sh": 1.1,
+  "fit": 0.32,
+  "to": 1.1855,
+  "ret": 0.1007,
+  "y2": 1.27,
+  "sub": 0.78,
+  "rn": 1.94,
+  "lc": 293,
+  "sc": 294,
+  "dd": 0.0849,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "MARKET",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W2_1792943632_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0)",
+  "aid": "gJWll53O",
+  "sh": 1.25,
+  "fit": 0.35,
+  "to": 1.1272,
+  "ret": 0.0859,
+  "y2": 1.55,
+  "sub": 1.2,
+  "rn": 1.91,
+  "lc": 318,
+  "sc": 310,
+  "dd": 0.1002,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "MARKET",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W2_1792943632_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "xA1LZ3vq",
+  "sh": 1.35,
+  "fit": 0.38,
+  "to": 0.7624,
+  "ret": 0.0618,
+  "y2": 1.32,
+  "sub": 1.15,
+  "rn": 1.75,
+  "lc": 384,
+  "sc": 375,
+  "dd": 0.0591,
+  "decay": 20,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W3_1792943765_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 3))), 0)",
+  "aid": "P0MRV25w",
+  "sh": 0.4,
+  "fit": 0.11,
+  "to": 0.2334,
+  "ret": 0.017,
+  "y2": -0.44,
+  "sub": 0.43,
+  "rn": 0.57,
+  "lc": 517,
+  "sc": 508,
+  "dd": 0.1142,
+  "decay": 20,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W3_1792943765_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "pwv2LRav",
+  "sh": 0.41,
+  "fit": 0.11,
+  "to": 0.2354,
+  "ret": 0.0173,
+  "y2": -0.4,
+  "sub": 0.33,
+  "rn": 0.6,
+  "lc": 516,
+  "sc": 507,
+  "dd": 0.1158,
+  "decay": 20,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W3_1792943765_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_exp_window(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20, factor=0.9))), 0)",
+  "aid": "RRAOgb5j",
+  "sh": 0.55,
+  "fit": 0.17,
+  "to": 0.2647,
+  "ret": 0.0245,
+  "y2": 0.01,
+  "sub": 0.42,
+  "rn": 0.82,
+  "lc": 514,
+  "sc": 514,
+  "dd": 0.0947,
+  "decay": 20,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W3_1792943765_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+  "aid": "rKdqxO0o",
+  "sh": 1.39,
+  "fit": 0.4,
+  "to": 0.7618,
+  "ret": 0.0633,
+  "y2": 1.38,
+  "sub": 1.16,
+  "rn": 1.78,
+  "lc": 384,
+  "sc": 375,
+  "dd": 0.0593,
+  "decay": 20,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W3_1792943765_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(subtract(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), ts_mean(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20)))), 0)",
+  "aid": "MP0Eragz",
+  "sh": 1.3,
+  "fit": 0.29,
+  "to": 1.0265,
+  "ret": 0.0521,
+  "y2": 2.4,
+  "sub": 1.42,
+  "rn": 1.49,
+  "lc": 309,
+  "sc": 310,
+  "dd": 0.0575,
+  "decay": 20,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W3_1792943765_result.json"
+ },
+ {
+  "expr": "reverse(rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap)))",
+  "aid": "vROEQrZa",
+  "sh": 1.32,
+  "fit": 0.34,
+  "to": 1.1815,
+  "ret": 0.0783,
+  "y2": 1.46,
+  "sub": 0.73,
+  "rn": 1.84,
+  "lc": 289,
+  "sc": 289,
+  "dd": 0.0582,
+  "decay": 20,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W3_1792943765_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(ts_sum(subtract(news_eod_close, news_ton_last), 20), ts_sum(abs(subtract(news_eod_close, news_ton_last)), 20)))), 0)",
+  "aid": "P0MRV2xM",
+  "sh": -0.05,
+  "fit": -0.01,
+  "to": 0.0967,
+  "ret": -0.0023,
+  "y2": -0.59,
+  "sub": -0.16,
+  "rn": -0.15,
+  "lc": 513,
+  "sc": 513,
+  "dd": 0.1662,
+  "decay": 20,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11b_W3_1792943765_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(divide(ts_sum(news_max_up_amt, 40), add(ts_sum(news_max_up_amt, 40), ts_sum(news_max_dn_amt, 40))), 250))",
+  "aid": "bl8wYXGR",
+  "sh": 0.24,
+  "fit": 0.06,
+  "to": 0.1057,
+  "ret": 0.0087,
+  "y2": 0.16,
+  "sub": 0.27,
+  "rn": 0.29,
+  "lc": 515,
+  "sc": 513,
+  "dd": 0.0603,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11c_1792944785_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(divide(ts_sum(news_max_up_amt, 120), add(ts_sum(news_max_up_amt, 120), ts_sum(news_max_dn_amt, 120))), 250))",
+  "aid": "xA1oEdwW",
+  "sh": 0.42,
+  "fit": 0.14,
+  "to": 0.0702,
+  "ret": 0.0142,
+  "y2": 0.97,
+  "sub": 0.41,
+  "rn": 0.41,
+  "lc": 517,
+  "sc": 512,
+  "dd": 0.0634,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11c_1792944785_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(divide(ts_sum(news_max_up_ret, 60), add(ts_sum(news_max_up_ret, 60), ts_sum(news_max_dn_ret, 60))), 250))",
+  "aid": "LL5w2dqL",
+  "sh": 0.48,
+  "fit": 0.17,
+  "to": 0.0882,
+  "ret": 0.0166,
+  "y2": 1.09,
+  "sub": 0.42,
+  "rn": 0.67,
+  "lc": 516,
+  "sc": 512,
+  "dd": 0.0559,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11c_1792944785_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(divide(divide(ts_sum(news_max_up_amt, 60), add(ts_sum(news_max_up_amt, 60), ts_sum(news_max_dn_amt, 60))), add(add(ts_sum(news_max_up_amt, 60), ts_sum(news_max_dn_amt, 60)), ts_mean(news_atr14, 60))), 250))",
+  "aid": "QPY81MZw",
+  "sh": -0.01,
+  "fit": -0.0,
+  "to": 0.0782,
+  "ret": -0.001,
+  "y2": -0.34,
+  "sub": -0.04,
+  "rn": 0.39,
+  "lc": 535,
+  "sc": 490,
+  "dd": 0.1983,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "UNITS",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11c_1792944785_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(winsorize(divide(ts_sum(news_max_up_amt, 60), add(ts_sum(news_max_up_amt, 60), ts_sum(news_max_dn_amt, 60))), std=3), 250))",
+  "aid": "3qjNMww6",
+  "sh": 0.37,
+  "fit": 0.12,
+  "to": 0.0946,
+  "ret": 0.0129,
+  "y2": 0.55,
+  "sub": 0.31,
+  "rn": 0.55,
+  "lc": 516,
+  "sc": 512,
+  "dd": 0.0521,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11c_1792944785_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(multiply(sign(divide(ts_sum(news_max_up_amt, 20), add(ts_sum(news_max_up_amt, 20), ts_sum(news_max_dn_amt, 20)))), divide(ts_sum(news_max_up_amt, 60), add(ts_sum(news_max_up_amt, 60), ts_sum(news_max_dn_amt, 60)))), 250))",
+  "aid": "leMmLddA",
+  "sh": 0.49,
+  "fit": 0.18,
+  "to": 0.0901,
+  "ret": 0.0173,
+  "y2": 0.83,
+  "sub": 0.45,
+  "rn": 0.63,
+  "lc": 514,
+  "sc": 510,
+  "dd": 0.0537,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11c_1792944785_result.json"
+ },
+ {
+  "expr": "reverse(group_zscore(divide(ts_sum(news_max_up_amt, 60), add(ts_sum(news_max_up_amt, 60), ts_sum(news_max_dn_amt, 60))), industry))",
+  "aid": "qMERK882",
+  "sh": 0.11,
+  "fit": 0.02,
+  "to": 0.0819,
+  "ret": 0.0045,
+  "y2": 0.78,
+  "sub": 0.08,
+  "rn": 0.31,
+  "lc": 518,
+  "sc": 511,
+  "dd": 0.1204,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11c_1792944785_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(ts_rank(divide(ts_sum(news_max_up_amt, 60), add(ts_sum(news_max_up_amt, 60), ts_sum(news_max_dn_amt, 60))), 250)), 0)",
+  "aid": "pwvkLXzo",
+  "sh": 0.47,
+  "fit": 0.17,
+  "to": 0.0865,
+  "ret": 0.0166,
+  "y2": 0.94,
+  "sub": 0.42,
+  "rn": 0.6,
+  "lc": 516,
+  "sc": 512,
+  "dd": 0.0542,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11c_1792944785_result.json"
+ },
+ {
+  "expr": "reverse(rank(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 2)))",
+  "aid": "WjLZbE7N",
+  "sh": 1.27,
+  "fit": 0.38,
+  "to": 0.8609,
+  "ret": 0.0768,
+  "y2": 1.15,
+  "sub": 0.88,
+  "rn": 1.94,
+  "lc": 368,
+  "sc": 368,
+  "dd": 0.0786,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11d_1792945157_result.json"
+ },
+ {
+  "expr": "reverse(rank(subtract(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), ts_mean(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 20))))",
+  "aid": "E5VdZzbL",
+  "sh": 1.3,
+  "fit": 0.33,
+  "to": 1.1734,
+  "ret": 0.0777,
+  "y2": 1.83,
+  "sub": 1.11,
+  "rn": 1.7,
+  "lc": 290,
+  "sc": 288,
+  "dd": 0.0757,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11d_1792945157_result.json"
+ },
+ {
+  "expr": "reverse(rank(divide(winsorize(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), std=2), news_eod_vwap)))",
+  "aid": "xA1ZKGzg",
+  "sh": 1.45,
+  "fit": 0.4,
+  "to": 1.2055,
+  "ret": 0.0909,
+  "y2": 1.66,
+  "sub": 0.95,
+  "rn": 1.99,
+  "lc": 289,
+  "sc": 289,
+  "dd": 0.0633,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11d_1792945157_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 250))",
+  "aid": "KPm1Kz8k",
+  "sh": 1.56,
+  "fit": 0.41,
+  "to": 1.1976,
+  "ret": 0.0847,
+  "y2": 2.23,
+  "sub": 1.07,
+  "rn": 2.0,
+  "lc": 289,
+  "sc": 289,
+  "dd": 0.0567,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11d_1792945157_result.json"
+ },
+ {
+  "expr": "reverse(group_rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), industry))",
+  "aid": "YPxejzkM",
+  "sh": 0.61,
+  "fit": 0.14,
+  "to": 0.5116,
+  "ret": 0.0286,
+  "y2": 1.28,
+  "sub": 0.42,
+  "rn": 1.29,
+  "lc": 541,
+  "sc": 489,
+  "dd": 0.1132,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11d_1792945157_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(divide(ts_sum(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), 60), ts_sum(abs(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap))), 60)), 250))",
+  "aid": "GrgRqz8x",
+  "sh": 0.14,
+  "fit": 0.03,
+  "to": 0.0896,
+  "ret": 0.0057,
+  "y2": 0.86,
+  "sub": -0.11,
+  "rn": 0.27,
+  "lc": 518,
+  "sc": 511,
+  "dd": 0.0957,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11d_1792945157_result.json"
+ },
+ {
+  "expr": "reverse(rank(ts_backfill(divide(winsorize(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), std=2), news_eod_vwap), 2)))",
+  "aid": "mLYvP7zE",
+  "sh": 1.29,
+  "fit": 0.39,
+  "to": 0.8603,
+  "ret": 0.0785,
+  "y2": 1.21,
+  "sub": 0.9,
+  "rn": 1.99,
+  "lc": 367,
+  "sc": 368,
+  "dd": 0.0778,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11d_1792945157_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(nws12_mainz_tonlast)), 3), ts_backfill(reverse(rank(divide(subtract(vec_avg(nws12_mainz_tonlast), vec_avg(nws12_mainz_tonlow)), add(subtract(vec_avg(nws12_mainz_tonhigh), vec_avg(nws12_mainz_tonlow)), vec_avg(nws12_mainz_tonlast))))), 3), 0)",
+  "aid": "j2e72d6k",
+  "sh": -0.06,
+  "fit": -0.0,
+  "to": 0.6009,
+  "ret": -0.0028,
+  "y2": 0.0,
+  "sub": -0.14,
+  "rn": 0.03,
+  "lc": 426,
+  "sc": 373,
+  "dd": 0.1808,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11e_1792945446_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(nws12_mainz_tonlast)), 3), ts_backfill(reverse(rank(divide(subtract(vec_avg(nws12_mainz_tonlast), vec_avg(nws12_mainz_prevclose)), add(vec_avg(nws12_mainz_41rta), 0.01)))), 3), 0)",
+  "aid": "gJW2JojM",
+  "sh": 0.76,
+  "fit": 0.18,
+  "to": 0.6909,
+  "ret": 0.0379,
+  "y2": 1.06,
+  "sub": 0.67,
+  "rn": 0.26,
+  "lc": 397,
+  "sc": 395,
+  "dd": 0.0625,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "CONCENTRATED_WEIGHT",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11e_1792945446_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(nws12_afterhsz_eodclose)), 3), ts_backfill(rank(divide(subtract(vec_avg(nws12_afterhsz_eodclose), vec_avg(nws12_afterhsz_dayopen)), add(vec_avg(nws12_afterhsz_41rta), 0.01))), 3), 0)",
+  "aid": "qMERMmWK",
+  "sh": -0.29,
+  "fit": -0.04,
+  "to": 0.671,
+  "ret": -0.0127,
+  "y2": 0.57,
+  "sub": -0.01,
+  "rn": -0.42,
+  "lc": 243,
+  "sc": 257,
+  "dd": 0.2337,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11e_1792945446_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(nws12_mainz_opengap)), 3), ts_backfill(multiply(reverse(rank(vec_avg(nws12_mainz_opengap))), reverse(rank(vec_avg(nws12_mainz_mktcap)))), 3), 0)",
+  "aid": "RRAgRkV1",
+  "sh": -0.11,
+  "fit": -0.02,
+  "to": 0.4342,
+  "ret": -0.0113,
+  "y2": 0.35,
+  "sub": -0.16,
+  "rn": -0.19,
+  "lc": 348,
+  "sc": 418,
+  "dd": 0.5917,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "CONCENTRATED_WEIGHT",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11e_1792945446_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(total_tick_count)), 3), ts_backfill(reverse(rank(divide(vec_avg(total_tick_count), add(vec_avg(thirty_day_moving_average_volume), 1)))), 3), 0)",
+  "aid": "WjL5jWPx",
+  "sh": 0.02,
+  "fit": 0.0,
+  "to": 0.5564,
+  "ret": 0.0013,
+  "y2": 0.15,
+  "sub": 0.09,
+  "rn": 0.19,
+  "lc": 311,
+  "sc": 321,
+  "dd": 0.3009,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "CONCENTRATED_WEIGHT",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "UNITS",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11e_1792945446_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(nws12_mainz_mktcap)), 3), ts_backfill(reverse(rank(divide(multiply(vec_avg(nws12_mainz_mov_vol), vec_avg(nws12_mainz_prevclose)), add(vec_avg(nws12_mainz_mktcap), 1)))), 3), 0)",
+  "aid": "bl8wlWbp",
+  "sh": 0.12,
+  "fit": 0.03,
+  "to": 0.2517,
+  "ret": 0.0146,
+  "y2": 0.5,
+  "sub": 0.08,
+  "rn": -0.03,
+  "lc": 371,
+  "sc": 390,
+  "dd": 0.5044,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "CONCENTRATED_WEIGHT",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "UNITS",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11e_1792945446_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(nws12_mainz_prev_vol)), 3), ts_backfill(multiply(sign(vec_avg(nws12_mainz_opengap)), rank(divide(vec_avg(nws12_mainz_prev_vol), add(vec_avg(nws12_mainz_mov_vol), 1)))), 3), 0)",
+  "aid": "KPm1PwNz",
+  "sh": -0.08,
+  "fit": -0.01,
+  "to": 0.6968,
+  "ret": -0.0032,
+  "y2": -0.05,
+  "sub": -0.21,
+  "rn": -0.03,
+  "lc": 397,
+  "sc": 396,
+  "dd": 0.1887,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "CONCENTRATED_WEIGHT",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "UNITS",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11e_1792945446_result.json"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(nws12_mainz_tonlast)), 3), ts_backfill(reverse(ts_rank(divide(subtract(vec_avg(nws12_mainz_tonlast), vec_avg(nws12_mainz_tonlow)), add(subtract(vec_avg(nws12_mainz_tonhigh), vec_avg(nws12_mainz_tonlow)), vec_avg(nws12_mainz_tonlast))), 250)), 3), 0)",
+  "aid": "9qEnqAWV",
+  "sh": 0.01,
+  "fit": 0.0,
+  "to": 0.6556,
+  "ret": 0.0005,
+  "y2": -0.03,
+  "sub": -0.09,
+  "rn": 0.12,
+  "lc": 444,
+  "sc": 357,
+  "dd": 0.1437,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "warns": [
+   "CLUSTER_TEST",
+   "MATCHES_THEMES"
+  ],
+  "file": "batch_w11e_1792945446_result.json"
+ },
+ {
+  "expr": "reverse(ts_rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 120))",
+  "aid": "mLYv9WvE",
+  "sh": 1.56,
+  "fit": 0.41,
+  "to": 1.1983,
+  "ret": 0.0839,
+  "y2": 2.16,
+  "sub": 1.07,
+  "rn": 1.92,
+  "lc": 289,
+  "sc": 289,
+  "dd": 0.0517,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "src": "w11f槽1"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(news_ton_last), 2), reverse(ts_rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 250)), 0)",
+  "aid": "WjL582vG",
+  "sh": 1.56,
+  "fit": 0.41,
+  "to": 1.1975,
+  "ret": 0.0847,
+  "y2": 2.23,
+  "sub": 1.07,
+  "rn": 2.0,
+  "lc": 289,
+  "sc": 289,
+  "dd": 0.0566,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "src": "w11f槽2"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(group_rank(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)), 2), industry)), 0)",
+  "aid": "wp9rgk02",
+  "sh": 0.64,
+  "fit": 0.15,
+  "to": 0.4897,
+  "ret": 0.0256,
+  "y2": 1.25,
+  "sub": 0.79,
+  "rn": 1.21,
+  "lc": 500,
+  "sc": 528,
+  "dd": 0.1101,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "src": "w11f槽3"
+ },
+ {
+  "expr": "reverse(ts_rank(divide(subtract(news_eod_close, news_eod_vwap), news_eod_vwap), 250))",
+  "aid": "vROQg7Kw",
+  "sh": 1.54,
+  "fit": 0.37,
+  "to": 1.2039,
+  "ret": 0.0691,
+  "y2": 1.73,
+  "sub": 1.0,
+  "rn": 1.91,
+  "lc": 289,
+  "sc": 289,
+  "dd": 0.0634,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER"
+  ],
+  "src": "w11f槽4"
+ },
+ {
+  "expr": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(ts_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 20), 40)), 0)",
+  "aid": "d5KGLJ2E",
+  "sh": 1.01,
+  "fit": 0.29,
+  "to": 0.3708,
+  "ret": 0.0311,
+  "y2": 1.0,
+  "sub": 0.69,
+  "rn": 1.22,
+  "lc": 511,
+  "sc": 512,
+  "dd": 0.0573,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [],
+  "src": "w11f槽5"
+ },
+ {
+  "expr": "trade_when(less(rank(news_pe_ratio), 0.5), reverse(ts_rank(divide(subtract(news_eod_close, news_eod_vwap), news_eod_vwap), 250)), 0)",
+  "aid": "3qjNLmMX",
+  "sh": 0.48,
+  "fit": 0.12,
+  "to": 0.2569,
+  "ret": 0.0153,
+  "y2": 0.31,
+  "sub": 0.39,
+  "rn": 0.44,
+  "lc": 365,
+  "sc": 367,
+  "dd": 0.0605,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "src": "w11f槽6"
+ },
+ {
+  "expr": "trade_when(less(rank(news_short_interest), 0.5), reverse(ts_rank(divide(subtract(news_eod_close, news_eod_vwap), news_eod_vwap), 250)), 0)",
+  "aid": "WjL58rEo",
+  "sh": 0.28,
+  "fit": 0.06,
+  "to": 0.1856,
+  "ret": 0.0072,
+  "y2": 0.4,
+  "sub": 0.56,
+  "rn": 0.45,
+  "lc": 349,
+  "sc": 344,
+  "dd": 0.0638,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "LOW_2Y_SHARPE"
+  ],
+  "src": "w11f槽7"
+ },
+ {
+  "expr": "reverse(rank(multiply(news_pe_ratio, news_short_interest)))",
+  "aid": "kqJAlpxz",
+  "sh": -0.27,
+  "fit": -0.05,
+  "to": 0.7314,
+  "ret": -0.0219,
+  "y2": -0.84,
+  "sub": -0.37,
+  "rn": 0.05,
+  "lc": 187,
+  "sc": 183,
+  "dd": 0.3556,
+  "decay": 6,
+  "uni": "TOP1000",
+  "neut": "INDUSTRY",
+  "fails": [
+   "LOW_SHARPE",
+   "LOW_FITNESS",
+   "HIGH_TURNOVER",
+   "CONCENTRATED_WEIGHT",
+   "LOW_SUB_UNIVERSE_SHARPE",
+   "LOW_2Y_SHARPE"
+  ],
+  "src": "w11f槽8"
+ }
+]

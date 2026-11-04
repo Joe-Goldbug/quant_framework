@@ -1,0 +1,72 @@
+{
+  "wave": 20,
+  "seed_id": "GATE1_WAVE20",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "Vkxa9r0w (from j2Y32V9j lineage)",
+  "hypothesis": "func2 deep-water on new mother Vkxa9r0w (20d-60d value spread x volume_10 @ ts_mean(10) + group_rank @ INDUSTRY; Sh 1.02 / 2Y 0.99 / Fit 0.70 / TO 7.5% / Mgn 15.8bps): 1) paired-horizon ts_mean 10/20; 2) timing-operator pair ts_mean vs ts_arg_max on 20d-60d; 3) CLUSTER-targeting cold-field ladder with REAL fields (hallucinated top20_buy_to_sell_volume_ratio_lookback_20/60_filled replaced by semantic-equivalent top20_buy_to_sell_txn_ratio_lookback_20/60_filled, all alpha_count=0); 4) MATCHES_THEMES facet break via vec_avg -> vec_last/vec_max. All variants keep operator count = 6, group_rank shell mandatory (Wave19 verdict).",
+  "items": [
+    {
+      "id": "w20_champ_repro",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "新母本 Vkxa9r0w 复现锚（wave18 item1 同式重跑），作为本波全部对照的基线。"
+    },
+    {
+      "id": "w20_tsmean20",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),20), subindustry)",
+      "optimize_reason": "双窗口成对验证：ts_mean 10 -> 2N=20，检验平滑窗口参数高原；与母本构成 10/20 对。"
+    },
+    {
+      "id": "w20_argmax10_2060",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "timing 算子对照：母本家族最强算子 ts_arg_max(10) 放到 20d-60d 窗口上，与 ts_mean(10) 成对（arg_max 曾在 60d-250d 上 2Y 仅 0.68，验证窗口旋转是否同样修复 arg_max 的 2Y）。"
+    },
+    {
+      "id": "w20_argmax8_2060",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "arg_max 窗口 8 在 20d-60d 上：与已验证高原 5/8 对齐，构成 (8,10) 近邻探针。"
+    },
+    {
+      "id": "w20_coldtx_tsmean",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),10), subindustry)",
+      "optimize_reason": "CLUSTER 病灶靶向冷字段阶梯 #1：buy_sell_tx_count_ratio_top5_60d_filled（alpha_count=0，笔数比口径，语义同源 top5 买卖强度）在平滑壳上替换体积通道——wave19 证明该字段在 arg_max 壳上失败，改在 ts_mean 壳上复测。"
+    },
+    {
+      "id": "w20_coldtxn20_tsmean",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),10), subindustry)",
+      "optimize_reason": "冷字段阶梯 #2：top20_buy_to_sell_txn_ratio_lookback_20_filled（alpha_count=0，cov 0.8833）——用户处方 lookback_20 的真实同义字段（txn 口径），同时 20 天窗口与主骨架 20d 信念窗口同频。"
+    },
+    {
+      "id": "w20_coldtxn60_tsmean",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),10), subindustry)",
+      "optimize_reason": "冷字段阶梯 #2b：top20_buy_to_sell_txn_ratio_lookback_60_filled，与 #2 构成 20/60 双窗成对验证（一窗达标另一窗塌陷即 SPIKE 一票否决）。"
+    },
+    {
+      "id": "w20_vecsum",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_sum(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "MATCHES_THEMES 病灶靶向：vec_avg -> vec_sum 改变向量化切面（累计强度而非均值；注：原计划的 vec_last 不在平台算子白名单，首轮整批被 CANCEL，按报错降级为白名单内 vec_sum）。"
+    },
+    {
+      "id": "w20_vecmax",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_max(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "MATCHES_THEMES 备选切面：vec_max 取向量内极值（内部人单笔最强买卖强度），语义为 conviction 峰值，与 vec_last 成对对照。"
+    },
+    {
+      "id": "w20_coldtx_argmax8",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),8), subindustry)",
+      "optimize_reason": "冷字段 × arg_max 交叉：母本家族原始 timing 壳 + 极冷笔数比字段，与 w20_coldtx_tsmean 构成平滑/timing 双壳对照。"
+    }
+  ]
+}

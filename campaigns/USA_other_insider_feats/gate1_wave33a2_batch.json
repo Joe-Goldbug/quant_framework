@@ -1,0 +1,24 @@
+{
+ "wave": "33a2",
+ "seed_id": "GATE1_WAVE33",
+ "region": "USA",
+ "universe": "TOP1000",
+ "delay": 1,
+ "category": "other",
+ "parent_alpha": "xAr3wXZb (Mgn 10.28, PC 0.6316) / P0o2abWE (2Y 1.50, PC 0.7408)",
+ "hypothesis": "全绿四缺口 (Sharpe 1.58/Fitness 1.0/2Y 1.58/CLUSTER 1.58) 各配杠杆：W1 窗33+近端确认、W2 快窗2Y引擎换低PC信念腿、W3 vec_max Fitness杠杆、W7 双平滑保2Y抬Margin、W8 signed_power凹变换、W9 量比确认Sharpe杠杆边界测试、W5 ts_rank时间均匀化攻CLUSTER、W6 vec_stddev分歧度切片攻CLUSTER+PC。设计来源：多Agent假设设计（12候选手工筛选8条）。",
+ "items": [
+  {
+   "id": "w33_w2_fast10",
+   "neutralization": "INDUSTRY",
+   "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_10_filled)),10), subindustry)",
+   "optimize_reason": "P0o2abWE的2Y引擎(窗10+lookback_10→2Y 1.50)信念腿换all笔数比：赌PC由拥挤量比腿贡献，换源后0.7408→<0.70。主攻2Y最快路径。7算子/3字段。"
+  },
+  {
+   "id": "w33_w9_vol_confirm",
+   "neutralization": "INDUSTRY",
+   "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),20), subindustry)",
+   "optimize_reason": "判决4边界测试：PC由信念腿主导的假设下，确认腿用拥挤量比供Sharpe(ZYQbj3jZ的1.30动力源)而不显著抬PC。7算子/3字段。"
+  }
+ ]
+}

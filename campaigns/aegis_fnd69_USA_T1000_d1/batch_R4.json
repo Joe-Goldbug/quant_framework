@@ -1,0 +1,265 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "fundamental69",
+  "category": "fundamental",
+  "neutralization": "NONE",
+  "decay": 0,
+  "truncation": 0.025,
+  "submission_forbidden": true,
+  "known_fields": {
+    "fnd69_capxy2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Capital Expenditures (Quarterly) 资本开支",
+      "coverage": 0.4197,
+      "alpha_count": 2
+    },
+    "fnd69_dltry2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Long-Term Debt - Reduction (Quarterly) 长期债务偿还",
+      "coverage": 0.393,
+      "alpha_count": 1
+    },
+    "fnd69_q2ycktsrp": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Purchase of Common & Preferred Stock (Quarterly) 股票回购",
+      "coverage": 0.3897,
+      "alpha_count": 3
+    },
+    "fnd69_q2yfcnao": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Operating Activities - Net Cash Flow (Quarterly) 经营性净现金流",
+      "coverage": 0.4333,
+      "alpha_count": 4
+    },
+    "fnd69_q2yktss": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Sale of Common & Preferred Stock (Quarterly) 股票增发",
+      "coverage": 0.3883,
+      "alpha_count": 4
+    },
+    "fnd69_q2ysitld": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Long-Term Debt - Issuance (Quarterly) 长期债务发行",
+      "coverage": 0.3933,
+      "alpha_count": 1
+    },
+    "fnd69_q2yvd": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Cash Dividends (Cash Flow) (Quarterly) 现金分红",
+      "coverage": 0.401,
+      "alpha_count": 1
+    },
+    "fnd69_qta": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Assets - Total (Quarterly) 总资产(密度1.0)",
+      "coverage": 1.0,
+      "alpha_count": 7
+    },
+    "fnd69_ta": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Assets - Total (Quarterly) 总资产(密度0.511)",
+      "coverage": 0.511,
+      "alpha_count": 2
+    },
+    "fnd69_rtqf": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Fiscal quarter 财季标签（平台使用度最高，alphaCount=12）",
+      "coverage": 1.0,
+      "alpha_count": 12
+    },
+    "fnd69_fiscalquarter": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Fiscal quarter 财季",
+      "coverage": 1.0,
+      "alpha_count": 5
+    }
+  },
+  "items": [
+    {
+      "expression": "group_zscore(winsorize(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), std=2.5), industry)",
+      "counterparty": "在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方",
+      "optimize_reason": "股票净发行除以总资产 = 净股权融资强度，做空净发行最高一档。本槽与 R2 槽2 仅差一层 winsorize(std=2.5)，用于裁定 zscore 是否曾被极少数微型资产公司支配。"
+    },
+    {
+      "expression": "group_zscore(winsorize(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), std=2.5), industry)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "optimize_reason": "自由现金流除以总资产 = 单位资产现金创造效率，做多高效率一档。与 R2 槽4 仅差一层 winsorize。"
+    },
+    {
+      "expression": "group_zscore(winsorize(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), std=2.5), industry)",
+      "counterparty": "为资本开支扩张故事提供增发与信贷供给的投行与银行",
+      "optimize_reason": "资本开支除以总资产 = 投资强度，做空最高一档。与 R2 槽6 仅差一层 winsorize。"
+    },
+    {
+      "expression": "group_zscore(winsorize(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), std=2.5), industry)",
+      "counterparty": "在并购扩表期有承销与佣金动机的卖方与投行",
+      "optimize_reason": "总资产同比增量除以同期均值资产 = 资产扩张率，做空扩表最快一档。与 R2 槽8 仅差一层 winsorize。"
+    },
+    {
+      "expression": "group_zscore(winsorize(reverse(divide(subtract(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), std=2.5), industry)",
+      "counterparty": "在低利率窗口过度供给的一级信用市场与追逐杠杆的逐收益套利盘",
+      "optimize_reason": "长期债务净发行除以总资产 = 净外部债权融资强度，做空净举债最高一档。补入截断后重测。"
+    },
+    {
+      "expression": "group_zscore(winsorize(divide(abs(ts_backfill(fnd69_q2yvd, 252)), fnd69_qta), std=2.5), industry)",
+      "counterparty": "偏好高留存再投资叙事的成长偏好资金",
+      "optimize_reason": "现金分红除以总资产 = 单位资产的股东现金回报强度，做多高强度一档。fnd69_q2yvd 是本数据集最冷门字段（alphaCount=1），此前从未在本战役中使用过。"
+    },
+    {
+      "expression": "group_zscore(trade_when(ts_delta(fnd69_rtqf, 1) != 0, divide(ts_backfill(fnd69_q2yfcnao, 252), fnd69_qta), 0), industry)",
+      "counterparty": "在新报表落地日反应不足的做市与被动资金",
+      "optimize_reason": "用 fnd69_rtqf 的财季标签变动检测新一期报表落地，并仅在该日建立经营现金流生产率头寸。信息刚落地时定价效率最低，随后被逐步消化。fnd69_rtqf 是本数据集平台使用度最高的字段（12 个 alpha），此前本战役从未使用。"
+    },
+    {
+      "expression": "group_zscore(winsorize(divide(subtract(ts_mean(ts_backfill(fnd69_q2yfcnao, 252), 252), abs(ts_mean(ts_backfill(fnd69_capxy2q, 252), 252))), fnd69_qta), std=2.5), industry)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "optimize_reason": "分子改为过去一年均值（TTM 平滑）而非单季快照，修掉“单季流量 / 时点存量”的周期错配，与槽 2 的单季版构成对照。"
+    }
+  ],
+  "slot_meta": [
+    {
+      "slot": 1,
+      "role": "L4_S7_NETEQUITY_WINS",
+      "lever": "L4_winsorize",
+      "expression": "group_zscore(winsorize(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), std=2.5), industry)",
+      "counterparty": "在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方",
+      "mechanism": "股票净发行除以总资产 = 净股权融资强度，做空净发行最高一档。本槽与 R2 槽2 仅差一层 winsorize(std=2.5)，用于裁定 zscore 是否曾被极少数微型资产公司支配。",
+      "extra": "R2 无截断版 Sharpe=0.30。若截断后显著改善，说明此前是尾部离群在主宰排序。",
+      "variation_source": "L4_winsorize | L4_S7_NETEQUITY_WINS",
+      "hypothesis_lines": [
+        "对手盘：在高估值窗口配合增发、赚取承销费并把供给冲击延迟转嫁的一级市场与卖方。",
+        "摩擦（诚实披露）：R2 无截断版 Sharpe=0.30。若截断后显著改善，说明此前是尾部离群在主宰排序。",
+        "变动源：L4_winsorize 是本槽唯一被改变的维度。"
+      ]
+    },
+    {
+      "slot": 2,
+      "role": "L4_S2_FCF_WINS",
+      "lever": "L4_winsorize",
+      "expression": "group_zscore(winsorize(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), std=2.5), industry)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "mechanism": "自由现金流除以总资产 = 单位资产现金创造效率，做多高效率一档。与 R2 槽4 仅差一层 winsorize。",
+      "extra": "R2 无截断版 Sharpe=0.18。",
+      "variation_source": "L4_winsorize | L4_S2_FCF_WINS",
+      "hypothesis_lines": [
+        "对手盘：按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘。",
+        "摩擦（诚实披露）：R2 无截断版 Sharpe=0.18。",
+        "变动源：L4_winsorize 是本槽唯一被改变的维度。"
+      ]
+    },
+    {
+      "slot": 3,
+      "role": "L4_S5_CAPEX_WINS",
+      "lever": "L4_winsorize",
+      "expression": "group_zscore(winsorize(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), std=2.5), industry)",
+      "counterparty": "为资本开支扩张故事提供增发与信贷供给的投行与银行",
+      "mechanism": "资本开支除以总资产 = 投资强度，做空最高一档。与 R2 槽6 仅差一层 winsorize。",
+      "extra": "R2 无截断版 Sharpe=-0.33。",
+      "variation_source": "L4_winsorize | L4_S5_CAPEX_WINS",
+      "hypothesis_lines": [
+        "对手盘：为资本开支扩张故事提供增发与信贷供给的投行与银行。",
+        "摩擦（诚实披露）：R2 无截断版 Sharpe=-0.33。",
+        "变动源：L4_winsorize 是本槽唯一被改变的维度。"
+      ]
+    },
+    {
+      "slot": 4,
+      "role": "L4_S1_ASSETGROWTH_WINS",
+      "lever": "L4_winsorize",
+      "expression": "group_zscore(winsorize(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), std=2.5), industry)",
+      "counterparty": "在并购扩表期有承销与佣金动机的卖方与投行",
+      "mechanism": "总资产同比增量除以同期均值资产 = 资产扩张率，做空扩表最快一档。与 R2 槽8 仅差一层 winsorize。",
+      "extra": "R2 无截断版 Sharpe=0.28；本槽是唯一 100% 密度字段。",
+      "variation_source": "L4_winsorize | L4_S1_ASSETGROWTH_WINS",
+      "hypothesis_lines": [
+        "对手盘：在并购扩表期有承销与佣金动机的卖方与投行。",
+        "摩擦（诚实披露）：R2 无截断版 Sharpe=0.28；本槽是唯一 100% 密度字段。",
+        "变动源：L4_winsorize 是本槽唯一被改变的维度。"
+      ]
+    },
+    {
+      "slot": 5,
+      "role": "L4_S4_NETDEBT_WINS",
+      "lever": "L4_winsorize",
+      "expression": "group_zscore(winsorize(reverse(divide(subtract(abs(ts_backfill(fnd69_q2ysitld, 252)), abs(ts_backfill(fnd69_dltry2q, 252))), fnd69_qta)), std=2.5), industry)",
+      "counterparty": "在低利率窗口过度供给的一级信用市场与追逐杠杆的逐收益套利盘",
+      "mechanism": "长期债务净发行除以总资产 = 净外部债权融资强度，做空净举债最高一档。补入截断后重测。",
+      "extra": "R1 无去中枢版曾给出表观 0.69（已证明是 beta）；本槽是它第一次以双向账面出现。",
+      "variation_source": "L4_winsorize | L4_S4_NETDEBT_WINS",
+      "hypothesis_lines": [
+        "对手盘：在低利率窗口过度供给的一级信用市场与追逐杠杆的逐收益套利盘。",
+        "摩擦（诚实披露）：R1 无去中枢版曾给出表观 0.69（已证明是 beta）；本槽是它第一次以双向账面出现。",
+        "变动源：L4_winsorize 是本槽唯一被改变的维度。"
+      ]
+    },
+    {
+      "slot": 6,
+      "role": "L5_DIVIDEND_INTENSITY",
+      "lever": "L5_new_field_q2yvd",
+      "expression": "group_zscore(winsorize(divide(abs(ts_backfill(fnd69_q2yvd, 252)), fnd69_qta), std=2.5), industry)",
+      "counterparty": "偏好高留存再投资叙事的成长偏好资金",
+      "mechanism": "现金分红除以总资产 = 单位资产的股东现金回报强度，做多高强度一档。fnd69_q2yvd 是本数据集最冷门字段（alphaCount=1），此前从未在本战役中使用过。",
+      "extra": "分红为事件性科目，密度 40.1%，已 ts_backfill 阶梯化；非派息公司读数恒为 0，会在长边形成大片并列。",
+      "variation_source": "L5_new_field_q2yvd | L5_DIVIDEND_INTENSITY",
+      "hypothesis_lines": [
+        "对手盘：偏好高留存再投资叙事的成长偏好资金。",
+        "摩擦（诚实披露）：分红为事件性科目，密度 40.1%，已 ts_backfill 阶梯化；非派息公司读数恒为 0，会在长边形成大片并列。",
+        "变动源：L5_new_field_q2yvd 是本槽唯一被改变的维度。"
+      ]
+    },
+    {
+      "slot": 7,
+      "role": "L5_RTQF_REPORT_GATE",
+      "lever": "L5_new_field_rtqf",
+      "expression": "group_zscore(trade_when(ts_delta(fnd69_rtqf, 1) != 0, divide(ts_backfill(fnd69_q2yfcnao, 252), fnd69_qta), 0), industry)",
+      "counterparty": "在新报表落地日反应不足的做市与被动资金",
+      "mechanism": "用 fnd69_rtqf 的财季标签变动检测新一期报表落地，并仅在该日建立经营现金流生产率头寸。信息刚落地时定价效率最低，随后被逐步消化。fnd69_rtqf 是本数据集平台使用度最高的字段（12 个 alpha），此前本战役从未使用。",
+      "extra": "若 ts_delta(rtqf,1) 的符号在 Q4->Q1 回绕，!= 0 仍成立；但若该字段在日频上被前向填充成常量，门控会长期关闭导致空仓。行业归一在门控之外。",
+      "variation_source": "L5_new_field_rtqf | L5_RTQF_REPORT_GATE",
+      "hypothesis_lines": [
+        "对手盘：在新报表落地日反应不足的做市与被动资金。",
+        "摩擦（诚实披露）：若 ts_delta(rtqf,1) 的符号在 Q4->Q1 回绕，!= 0 仍成立；但若该字段在日频上被前向填充成常量，门控会长期关闭导致空仓。行业归一在门控之外。",
+        "变动源：L5_new_field_rtqf 是本槽唯一被改变的维度。"
+      ]
+    },
+    {
+      "slot": 8,
+      "role": "L6_FCF_ANNUALIZED",
+      "lever": "L6_numerator_annualized",
+      "expression": "group_zscore(winsorize(divide(subtract(ts_mean(ts_backfill(fnd69_q2yfcnao, 252), 252), abs(ts_mean(ts_backfill(fnd69_capxy2q, 252), 252))), fnd69_qta), std=2.5), industry)",
+      "counterparty": "按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘",
+      "mechanism": "分子改为过去一年均值（TTM 平滑）而非单季快照，修掉“单季流量 / 时点存量”的周期错配，与槽 2 的单季版构成对照。",
+      "extra": "TTM 平滑会降低及时性，且进一步拉低换手（本批换手本就只有 3~4%）。",
+      "variation_source": "L6_numerator_annualized | L6_FCF_ANNUALIZED",
+      "hypothesis_lines": [
+        "对手盘：按营收/利润增速排序、系统忽视现金转化率的朴素成长配置盘。",
+        "摩擦（诚实披露）：TTM 平滑会降低及时性，且进一步拉低换手（本批换手本就只有 3~4%）。",
+        "变动源：L6_numerator_annualized 是本槽唯一被改变的维度。"
+      ]
+    }
+  ]
+}

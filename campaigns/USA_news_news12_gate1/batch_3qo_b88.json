@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B88_S1_KPJ_PWR3_CONVEXITY_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), industry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 10 ops: Researcher Directive Slot 1. Restores cubic signed convexity power(..., 3) between subtract and group_neutralize on KPJ36KRz to concentrate capital on extreme catalysts, pushing Returns toward >= 4.90%."
+    },
+    {
+      "id": 2,
+      "type": "B88_S2_KPJ_PWR5_CONVEXITY_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 5), industry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 10 ops: Quintic convexity power(..., 5) on KPJ36KRz. Stronger tail focus to maximize return elasticity."
+    },
+    {
+      "id": 3,
+      "type": "B88_S3_GRAND_SYNTH_IN11_PWR3_OUT8_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), industry), 8)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 11 ops: The Grand Synthesis Flagship. Fuses xArOYGYp (inner 11d decay to eliminate defensive cluster sparsity) with cubic convexity and KPJ36KRz industry neutralization. Outer 8d decay locks TO <= 12.5%."
+    },
+    {
+      "id": 4,
+      "type": "B88_S4_GRAND_SYNTH_IN11_PWR3_OUT10_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), industry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 11 ops: Grand Synthesis with outer 10d decay. Maximum turnover compression (TO ~11.5%) with full cluster robustness."
+    },
+    {
+      "id": 5,
+      "type": "B88_S5_GRAND_SYNTH_IN11_PWR5_OUT8_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), industry), 8)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 11 ops: Exact xArOYGYp (power 5, outer 8d) upgraded with KPJ36KRz group_neutralize(industry). Eliminates xArOYGYp's unhedged industry bias to vault Sharpe from 1.53 to >= 1.62."
+    },
+    {
+      "id": 6,
+      "type": "B88_S6_GRAND_SYNTH_IN11_PWR5_OUT10_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), industry), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 11 ops: Power 5 Grand Synthesis with outer 10d decay and sim decay 14. Ultimate defensive execution against turnover expansion."
+    },
+    {
+      "id": 7,
+      "type": "B88_S7_PRUNED_NEUT_THEN_PWR3_OUT8_D12",
+      "expression": "ts_decay_linear(power(group_neutralize(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), industry), 3), 8)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 10 ops: Mathematically pruned synthesis. group_neutralize de-means directly on group_rank, eliminating redundant subtract(0.5). Cubic power operates cleanly on neutralized zero-mean weights."
+    },
+    {
+      "id": 8,
+      "type": "B88_S8_PRUNED_NEUT_THEN_PWR3_OUT10_D12",
+      "expression": "ts_decay_linear(power(group_neutralize(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), industry), 3), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 10 ops: 10-day decay variant of the mathematically pruned synthesis. Streamlined 10-operator architecture targeting Fitness >= 1.00."
+    }
+  ]
+}

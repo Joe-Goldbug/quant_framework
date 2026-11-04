@@ -1,0 +1,67 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 24,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_relevance_score_2",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "prob_rank_bin1_5d_img_news"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_10D_5D_ENSEMBLE_CUBIC",
+      "expression": "group_rank(ts_decay_linear(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), add(multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), 0.6), multiply(winsorize(prob_rank_bin1_5d_img_news, std=3), 0.4))), 10), subindustry)",
+      "optimize_reason": "Multi-horizon DL ensemble (60% 10d + 40% 5d) interacted with cubic news sentiment, smoothed via 10-day linear decay."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_10D_20D_ENSEMBLE_CUBIC",
+      "expression": "group_rank(ts_decay_linear(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), add(multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), 0.6), multiply(winsorize(prob_rank_bin1_20d_img_news, std=3), 0.4))), 10), subindustry)",
+      "optimize_reason": "Multi-horizon DL ensemble (60% 10d + 40% 20d) interacted with cubic sentiment to capture medium and long-term drift."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_10D_5D_SMOOTH8",
+      "expression": "group_rank(ts_decay_linear(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), add(multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), 0.7), multiply(winsorize(prob_rank_bin1_5d_img_news, std=3), 0.3))), 8), subindustry)",
+      "optimize_reason": "Weighted 10d/5d ensemble with cubic sentiment and 8-day smoothing under decay 24."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_CUBIC_SMOOTH8_D24",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 8), subindustry)",
+      "optimize_reason": "8-day linear decay on B30 S6 winning prototype (Sharpe 1.52) under decay 24. Optimal balance between turnover and Sharpe."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_CUBIC_SMOOTH12_D24",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 12), subindustry)",
+      "optimize_reason": "12-day linear decay on winning prototype to push Fitness >= 1.0."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_TS_DECAY_SENT_PROD",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 8), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "8-day linear decay on cubic sentiment only, interacting with unsmoothed forward DL forecast and sqrt relevance."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_10D_20D_EQUAL_CUBIC",
+      "expression": "group_rank(ts_decay_linear(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), add(winsorize(prob_rank_bin1_10d_img_news, std=3), winsorize(prob_rank_bin1_20d_img_news, std=3))), 8), subindustry)",
+      "optimize_reason": "Equal-weighted 10d + 20d forecast interacted with cubic sentiment and 8-day smoothing."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_CUBIC_LOGREL_SMOOTH8",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), log(add(news_relevance_score_2, 1))), 8), subindustry)",
+      "optimize_reason": "Logarithmic relevance with cubic sentiment and 10d forecast under 8-day smoothing and decay 24."
+    }
+  ]
+}

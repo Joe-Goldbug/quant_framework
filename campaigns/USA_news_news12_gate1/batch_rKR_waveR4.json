@@ -1,0 +1,69 @@
+{
+  "seed": "rKR1qVWo",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 60,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "pv",
+  "known_fields": [
+    "median_bias_adjusted_price_target",
+    "min_bias_adjusted_price_target",
+    "close",
+    "num_upward_biasfree_price_target_revisions",
+    "num_downward_biasfree_price_target_revisions",
+    "mean_primary_sentiment_score_transfer"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "MED_W4_D60",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 4)), sector)",
+      "optimize_reason": "【decay60 × w4】decay 轴是 Margin 的主控杠杆：MED w5 的 Ret/TO 由 dec25 的 0.377 升到 dec40 的 0.446；dec40 下 w6 已到 9.0bps。本批把 decay 推到 60，沿窗口轴扫描，目标 Ret/TO≥0.5（Margin≥10bps），同时用 Fit=Sh×sqrt(Ret/max(TO,0.125)) 守住 Fit≥1.0。TO 需守住 5% 的 LOW_TURNOVER 地板。"
+    },
+    {
+      "id": 2,
+      "type": "MED_W5_D60",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 5)), sector)",
+      "optimize_reason": "【decay60 × w5】dec25 1.97 / dec40 1.87(E5V905m0) 的同一构型在 dec60 的读数，用于拟合 decay 轴的 Sharpe 衰减曲线与 Margin 增益曲线，判断两线的交叉点位置。"
+    },
+    {
+      "id": 3,
+      "type": "MED_W6_D60",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 6)), sector)",
+      "optimize_reason": "【decay60 × w6 · Margin 最高期望槽】dec40/w6 已是全族 Margin 最高点（9.0bps, TO15.4%）。dec60 若把 TO 压到 12% 附近而 Ret 守住 6.5% 以上，则 Ret/TO≥0.54、Margin≥10.8bps，一次跨过内部 10bps 铁律。"
+    },
+    {
+      "id": 4,
+      "type": "MED_W7_D60",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 7)), sector)",
+      "optimize_reason": "【decay60 × w7】窗口与 decay 双长效应的极限读数。用于确认 Ret/TO 是否随「长窗口+高 decay」单调上升，还是存在 TO 压过 12.5% 地板后 Fit 停止增益的拐点。"
+    },
+    {
+      "id": 5,
+      "type": "MED_W8_D60",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 8)), sector)",
+      "optimize_reason": "【decay60 × w8】最长窗口探针。MAX 分子在 w8 已在 dec25 下取得 CLUSTER 1.56（史上第二高），MED 分子的 w8 从未测过；本槽同时检验长窗口对 CLUSTER 罚项的影响。"
+    },
+    {
+      "id": 6,
+      "type": "MED_W6_IND_D60",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 6)), industry)",
+      "optimize_reason": "【decay60 × w6 × industry】industry 分组在 dec25 下给出更高的 Sh(2.01) 与 2Y(2.48)，在 dec40/w3 下给出 1.92。本槽把「最优分组 + Margin 最优窗口 + 最高 decay」叠加，是本批冲击双达标的最高期望槽。"
+    },
+    {
+      "id": 7,
+      "type": "MED_W6_WINS_D60",
+      "expression": "group_rank(winsorize(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 6)), std=3), sector)",
+      "optimize_reason": "【decay60 × w6 × winsorize】Wave R3 已实测 winsorize(std=3) 在本构型上是恒等包装（Slot7 与 Slot3 逐位雷同），本槽在 dec60/w6 上二次确认该性质是否随 decay 改变。若再次雷同，则 winsorize 轴正式判死。"
+    },
+    {
+      "id": 8,
+      "type": "MED_W10_D60",
+      "expression": "group_rank(subtract(divide(median_bias_adjusted_price_target, close), ts_mean(divide(median_bias_adjusted_price_target, close), 10)), sector)",
+      "optimize_reason": "【decay60 × w10 · 换手下界探针】把换手压到本族可达的最低点，用于定位 LOW_TURNOVER(5%) 地板与 Fit 地板(0.125) 之间的安全区间，并给出该族 Margin 天花板的确定读数。无论成败，本批结束后出具终局研报。"
+    }
+  ]
+}

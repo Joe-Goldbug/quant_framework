@@ -1,0 +1,36 @@
+{
+ "wave": "33b",
+ "seed_id": "GATE1_WAVE33",
+ "region": "USA",
+ "universe": "TOP1000",
+ "delay": 1,
+ "category": "other",
+ "parent_alpha": "xAr3wXZb (Mgn 10.28, PC 0.6316) / P0o2abWE (2Y 1.50, PC 0.7408)",
+ "hypothesis": "全绿四缺口 (Sharpe 1.58/Fitness 1.0/2Y 1.58/CLUSTER 1.58) 各配杠杆：W1 窗33+近端确认、W2 快窗2Y引擎换低PC信念腿、W3 vec_max Fitness杠杆、W7 双平滑保2Y抬Margin、W8 signed_power凹变换、W9 量比确认Sharpe杠杆边界测试、W5 ts_rank时间均匀化攻CLUSTER、W6 vec_stddev分歧度切片攻CLUSTER+PC。设计来源：多Agent假设设计（12候选手工筛选8条）。",
+ "items": [
+  {
+   "id": "w33_w7_dual_smooth",
+   "neutralization": "INDUSTRY",
+   "expression": "group_rank(ts_decay_exp_window(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),10), subindustry)",
+   "optimize_reason": "双平滑(等效窗~30但指数保近期权重)：比ts_mean(33)的2Y损失小、Margin抬升，信息衰减指数型的经济学假设。8算子/3字段。"
+  },
+  {
+   "id": "w33_w8_signed_power",
+   "neutralization": "INDUSTRY",
+   "expression": "group_rank(ts_mean(signed_power(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),0.5),20), subindustry)",
+   "optimize_reason": "signed_power(0.5)凹变换压交互项重尾：中段信息权重上升→Fitness/CW/CLUSTER三target，极端信念收益不成比例的经济学假设。8算子/3字段。"
+  },
+  {
+   "id": "w33_w5_tsrank",
+   "neutralization": "INDUSTRY",
+   "expression": "group_rank(ts_rank(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),66), subindustry)",
+   "optimize_reason": "ts_rank(66)时序秩均匀化攻CLUSTER：信号在自身历史上均匀化→跨簇分布更均匀，相对历史位置比绝对水平更稳定的经济学假设。7算子/3字段。"
+  },
+  {
+   "id": "w33_w6_stddev_confirm",
+   "neutralization": "INDUSTRY",
+   "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_stddev(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)",
+   "optimize_reason": "确认腿vec_avg→vec_stddev切分歧度：方向一致但强度分化时定价错误最大，与簇内共同因子暴露低→CLUSTER/PC双改善假设。7算子/3字段。"
+  }
+ ]
+}

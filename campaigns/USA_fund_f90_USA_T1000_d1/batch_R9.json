@@ -1,0 +1,169 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "fundamental90+other466",
+  "category": "fundamental",
+  "neutralization": "SUBINDUSTRY",
+  "decay": 4,
+  "truncation": 0.08,
+  "submission_forbidden": true,
+  "known_fields": {
+    "fnd90_us_game_cash_flow_coverage": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of operating cash flow to total debt, measuring how well cash flow covers debt obligations; higher is safer",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_short_term_debt": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of short-term debt to total capitalization, assets, or related base; measures reliance on short-term financing and assesses leverage/liquidity risk",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_eff_interest_rate": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "The effective average interest rate that the company pays on its outstanding debt; a higher rate signals increased financial leverage or perceived credit risk",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "oth466_cf_cash_int_pay": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Cash Interest Paid 实付现金利息",
+      "coverage": 0.95,
+      "alpha_count": 1
+    },
+    "oth466_a_tnix": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Interest And Related Expense - Total 利息及相关费用净额",
+      "coverage": 0.88,
+      "alpha_count": 2
+    },
+    "oth466_a_ttld": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Long-Term Debt - Total 长期债务总额",
+      "coverage": 0.86,
+      "alpha_count": 1
+    },
+    "oth466_cf_cash_from_oper": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Cash From Operating Activities 经营活动现金流",
+      "coverage": 1.0,
+      "alpha_count": 0
+    },
+    "oth466_rt_cf_sales_q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Cash Flow/Sales 经营现金流占销售额比",
+      "coverage": 0.98,
+      "alpha_count": 5
+    }
+  },
+  "items": [
+    {
+      "slot": 1,
+      "seed_id": "R9_S1_PARENT_WINDOW_10",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_cf_cash_int_pay, 252)), 10)",
+      "counterparty": "以年度财报节奏调仓、错失季度间融资成本更新的长期持有盘",
+      "optimize_reason": "母本三项核心指标(Sharpe 0.76 / Fitness 0.51 / Margin 24.55bps)已达全战役最优，唯一未达标的结构性缺陷是 4.6% 换手低于 5.0% 合规下限。此处仅把外层均值窗由 20 日缩到 10 日，不动任何因果腿，属针对单一病灶的最小手术而非参数搜索。"
+    },
+    {
+      "slot": 2,
+      "seed_id": "R9_S2_EIR_INSTEAD_OF_SHORTDEBT",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_eff_interest_rate), 252)), ts_zscore(oth466_cf_cash_int_pay, 252)), 20)",
+      "counterparty": "只看债务期限结构、不看债权人给出的市场化定价的信用模型",
+      "optimize_reason": "把中间腿由模型化短期债务占比换成模型化有效利率：短债占比度量到期结构，有效利率则是债权人对公司信用给出的市场化价格，信息含量更前瞻。母本已证明'模型-模型-真实'三腿结构有效，此处只升级中间腿的信息层级。"
+    },
+    {
+      "slot": 3,
+      "seed_id": "R9_S3_CROSS_SECTIONAL_LEGS",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(group_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), subindustry), group_zscore(vec_avg(fnd90_us_game_short_term_debt), subindustry)), ts_zscore(oth466_cf_cash_int_pay, 252)), 20)",
+      "counterparty": "跨行业统一比较融资成本、因而错杀资本密集行业的量化模型",
+      "optimize_reason": "把两条模型腿的时序自比标准化换成子行业内截面标准化，只保留真实付息腿为时序口径：公用事业与银行业的覆盖度、短债中枢天然不同，时序自比会把行业固有资本结构误判为公司层面的安全边际差异。真实科目则不受该口径问题影响，故保持原口径。"
+    },
+    {
+      "slot": 4,
+      "seed_id": "R9_S4_ACCRUAL_LEG_WINDOW_10",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_a_tnix, 252)), 10)",
+      "counterparty": "以年度财报节奏调仓、错失季度间融资成本更新的长期持有盘",
+      "optimize_reason": "应计利息口径三腿(R8 Slot6)在该窗下仅 0.44，明显弱于现金口径三腿的 0.76。此处施加与 Slot1 相同的换手修复，用于判定其弱势究竟来自换手结构还是来自口径本身，从而为'现金口径优于应计口径'这一结论提供对照证据。"
+    },
+    {
+      "slot": 5,
+      "seed_id": "R9_S5_ADD_REAL_CASHFLOW_LEG",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(add(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_cf_cash_int_pay, 252)), ts_zscore(oth466_rt_cf_sales_q, 252)), 20)",
+      "counterparty": "把低付息等同于安全、却不看经营造血强度的信用筛选模型",
+      "optimize_reason": "母本只扣除了融资成本，未奖励经营造血能力：一家付息低但现金流也弱的公司，其'安全'只是因为没有能力举债。此处追加经营现金流占销售额比作为正向腿，使信号同时要求负担轻且造血强，从两端夹逼真实的安全边际。"
+    },
+    {
+      "slot": 6,
+      "seed_id": "R9_S6_NET_CASH_CUSHION_PLUS_MODEL",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(add(subtract(ts_zscore(oth466_cf_cash_from_oper, 252), ts_zscore(oth466_cf_cash_int_pay, 252)), ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252)), 20)",
+      "counterparty": "分头看待现金流与模型评分、不做交叉印证的信用模型",
+      "optimize_reason": "用真实科目直接构造净现金垫(经营活动现金流减实付现金利息)，再叠加模型化覆盖度评分。相比母本以模型评分做分子，这里分子完全来自真实报表，模型只作为第二重印证，这是对账实主次关系的反向配置，可检验究竟哪一端贡献了收益。"
+    },
+    {
+      "slot": 7,
+      "seed_id": "R9_S7_RANK_TWOLEG_WINDOW_5",
+      "type": "CROSS_FINAL",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_cf_cash_int_pay, 252)), 5))",
+      "counterparty": "以年度财报节奏调仓、错失季度间融资成本更新的长期持有盘",
+      "optimize_reason": "R8 中 rank 两腿结构在窗 10 下取得 SubU 0.73 与 Margin 24.63bps，但换手 4.2% 仍不达标。此处把外层窗降到合规窗口集内最短的 5 日，检验该母本的收益能否在更高周转下维持，从而判定换手与收益的真实替换率。"
+    },
+    {
+      "slot": 8,
+      "seed_id": "R9_S8_DUAL_REAL_DEBT_LEGS",
+      "type": "CROSS_FINAL",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_ttld, 252)), ts_zscore(oth466_cf_cash_int_pay, 252)), 20)",
+      "counterparty": "只看付息不看债务存量、或只看存量不看付息的杠杆筛选模型",
+      "optimize_reason": "把中间腿换成真实长期债务余额，形成'一条模型腿 + 两条真实腿'的配比：债务存量决定到期刚性兑付规模，实付利息决定当期现金侵蚀速度，两者互补而非重复，可检验真实腿数量增加是否进一步抬升信噪比。"
+    }
+  ],
+  "slot_meta": {
+    "purpose": "R9 终局: 换手合规 / 腿口径升级 / 截面化 / 正向现金流腿"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "wave": "4b",
+  "seed_id": "GATE1_WAVE4B",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "SLOW批次重投:冠军复现+SLOW广度共振+SLOW笔数动量",
+  "items": [
+    {
+      "id": 1,
+      "type": "champion_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "W4-1 冠军精确复现(SLOW+group_rank+ts_arg_max5+非归一subtract) 确认0.88基线"
+    },
+    {
+      "id": 2,
+      "type": "champ_x_brd_top5",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)), vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),5), subindustry)",
+      "optimize_reason": "W4-2 冠军value动量 × top5笔数60d广度水平 置信加权共振(3字段) 广度放大价值信号"
+    },
+    {
+      "id": 3,
+      "type": "champ_x_brd_top20",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)), vec_avg(buy_sell_tx_count_ratio_top20_60d_filled)),5), subindustry)",
+      "optimize_reason": "W4-3 冠军value动量 × top20笔数60d广度水平 中间层级共振(3字段) 层级敏感性"
+    },
+    {
+      "id": 4,
+      "type": "value_all_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_all_60d_filled),vec_avg(buy_sell_ratio_all_250d_filled)),5), subindustry)",
+      "optimize_reason": "W4-4 all口径value动量 对照top5口径 检验集中度层级"
+    },
+    {
+      "id": 9,
+      "type": "cnt_top5_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_tx_count_ratio_top5_60d_filled),vec_avg(buy_sell_tx_count_ratio_top5_250d_filled)),5), subindustry)",
+      "optimize_reason": "W4b-9 top5笔数动量 @SLOW(对照CROWDING slot6的0.76/9.87) 检验SLOW对广度通道的增益"
+    }
+  ]
+}

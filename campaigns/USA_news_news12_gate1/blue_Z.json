@@ -1,0 +1,54 @@
+{
+  "direction": "Z",
+  "hypothesis": "关注度稀缺造成的收盘-VWAP错价仅存于新闻事件后的有限窗口：字段驱动事件门控若保边且降换手，则边缘属事件窗口现象，否则属宽横截面现象。",
+  "slots": [
+    {
+      "id": 1,
+      "type": "evt_gate_3d",
+      "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 3), reverse(rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)))), -1)",
+      "economic_story": "事件后3日窗口内，每单位关注度对应的收盘-VWAP位移越高，注意力推升的错价越未重定价，未来回落，故反向。"
+    },
+    {
+      "id": 2,
+      "type": "evt_gate_5d",
+      "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 5), reverse(rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)))), -1)",
+      "economic_story": "事件后5日窗口内，每单位关注度的收盘-VWAP位移越高，做市商与知情盘未完成的修正越多；窗口越长边缘越稀薄。"
+    },
+    {
+      "id": 3,
+      "type": "evt_gate_10d",
+      "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 10), reverse(rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)))), -1)",
+      "economic_story": "事件后10日窗口内，每单位关注度位移越高错价越未修复；若宽窗口杀边而窄窗口保边，即测得事件半衰期。"
+    },
+    {
+      "id": 4,
+      "type": "attn_drift_5d",
+      "expression": "reverse(rank(ts_delta(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 5)))",
+      "economic_story": "每单位关注度位移的5日变化即边际重定价速度：冲击后位移加速抬升，说明关注度错价正在扩大，反向持有。"
+    },
+    {
+      "id": 5,
+      "type": "ton_drift_5d",
+      "expression": "reverse(rank(ts_delta(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 5)))",
+      "economic_story": "全日口径下收盘相对新闻时价的位移每关注度的5日变化，捕捉新闻后盘中漂移加速，错价扩大则反向持有。"
+    },
+    {
+      "id": 6,
+      "type": "evt_count_ge2",
+      "expression": "trade_when(greater(vec_count(high_price_excursion_stddev), 1), reverse(rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)))), -1)",
+      "economic_story": "当日至少2个偏离事件才有可靠关注度分母：单事件日位移每关注度噪音过大，门控滤除度量不稳的样本。"
+    },
+    {
+      "id": 7,
+      "type": "evt_count_ge3",
+      "expression": "trade_when(greater(vec_count(high_price_excursion_stddev), 2), reverse(rank(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)))), -1)",
+      "economic_story": "至少3个偏离事件确认关注度稀缺真实存在：事件数不足时分母失真，门控提升信号纯度并分散集中权重。"
+    },
+    {
+      "id": 8,
+      "type": "live_evt_drift",
+      "expression": "trade_when(greater(vec_count(high_price_excursion_stddev), 0), reverse(rank(ts_delta(divide(subtract(news_eod_close, news_eod_vwap), add(vec_count(high_price_excursion_stddev), 1)), 5))), -1)",
+      "economic_story": "有活跃偏离事件当日才交易：位移每关注度的5日变化是催化剂驱动的边际冲击，无事件日属噪音故熄灭。"
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+[
+  {
+    "slot": 1,
+    "optimize_reason": "【EMEA/APAC 财报节奏失配病灶精修】欧洲/日本多为半年度披露，固定 252 日差分在两次披露间隙会产生长达半年的停滞与跳变。改为 126 日（半年）差分捕捉单次披露增量，再套 21 日指数半衰平滑 ts_decay_exp_window(factor=0.7) 抹平跨市场披露日期错位，使信号随披露节奏渐进释放而非脉冲跳跃。",
+    "expression": "group_rank(ts_decay_exp_window(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 126), 21, factor=0.7), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 2,
+    "optimize_reason": "【节奏失配 + 跨国基准漂移双病灶】用 66 日均值与 252 日均值做剪刀差 subtract(ts_mean(x,66), ts_mean(x,252))，以连续均线交叉替代点对点差分，彻底消除“财报未更新即差分=0”的空窗；横截面细化为 subindustry 并叠加 COUNTRY 中性化，剥离国家层面的会计制度与税率系统性差异。",
+    "expression": "group_rank(subtract(ts_mean(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 66), ts_mean(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252)), subindustry)",
+    "neutralization": "COUNTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 3,
+    "optimize_reason": "【自适应周期差分】单一 252 日窗口对季度披露（美/亚部分市场）与半年披露（欧）同时失配。改为 126 日与 189 日双周期差分等权相加，等效 157 日中枢但覆盖 3 个季报与 2 个半年报周期，降低对任单一披露节奏的路径依赖。",
+    "expression": "group_rank(add(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 126), ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 189)), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 4,
+    "optimize_reason": "【披露脉冲缓冲】先在 66 日尺度对原始利润率做指数半衰平滑，再取 252 日同比差分：相当于对资产收益率做“财报可用时点”的鲁棒滤波，抑制 EMEA 半年度财报集中落地造成的单日跳变，同时保留年度同比的经济学含义。",
+    "expression": "group_rank(ts_delta(ts_decay_exp_window(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 66, factor=0.8), 252), subindustry)",
+    "neutralization": "INDUSTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 5,
+    "optimize_reason": "【尺度无关的长期分位替代差分】财报节奏差异的本质是“何时更新”，而 ts_rank(x,504) 度量的是当前盈利能力在自身两年历史中的相对位置，对更新滞后完全免疫，天然抹平 EMEA/APAC 与 AMER 的披露频率差；叠加 COUNTRY 中性化消除国别会计口径漂移。",
+    "expression": "group_rank(ts_rank(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 504), subindustry)",
+    "neutralization": "COUNTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 6,
+    "optimize_reason": "【CLUSTER_TEST 极值拉扯病灶】聚类脆弱根源是少数小市值/重组公司的净利与现金流同时暴增或巨亏，把因子极值拉到极端。在差分后注入 winsorize(std=3) 做 3 倍标准差截尾，保留排序信息的同时压掉离群尾巴，改善因子在聚类内的共线性稳定性。",
+    "expression": "group_rank(winsorize(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), std=3), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 7,
+    "optimize_reason": "【凹函数极值压缩】用带符号对数 s_log_1p 对同比变动做凹变换，对大额商誉减值、一次性重组收益等极端会计事件天然降权，且单调保序不破坏经济方向，直接缓解 CLUSTER_TEST 因个别极端行业样本主导而产生的聚类共线性。",
+    "expression": "group_rank(s_log_1p(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252)), subindustry)",
+    "neutralization": "INDUSTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 8,
+    "optimize_reason": "【平方根幂次压缩】signed_power(...,0.5) 等价对变动幅度开方并保留符号，相比对数在零点附近更线性、在中段收缩更温和，可同时降低极值权重与信号衰减；相较母本的裸差分，极值贡献度下降后聚类检验的内聚性应上升。",
+    "expression": "group_rank(signed_power(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), 0.5), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 9,
+    "optimize_reason": "【截尾 + 半衰复合稳健化】先 winsorize(std=2.5) 更严格地剔除离群财报冲击，再用 10 日指数半衰把残余冲击摊平到多个交易日，避免单日换手尖峰；这是对 CLUSTER_TEST 与 Margin 双重稳健性的组合处方，算子层级控制在 4 层。",
+    "expression": "group_rank(ts_decay_exp_window(winsorize(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), std=2.5), 10, factor=0.6), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "exploit",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 10,
+    "optimize_reason": "【同源现金流科目替换】保留“净利润 + 现金创造 / 总资产同比改善”核心，把经营现金流 fnd23_ofc 换为同源口径的股权自由现金流 fnd23_efcf（coverage 85.4%，已扣资本开支，更接近股东可分配现金），剥离营运资本与利息口径噪音，考察更纯净的内生造血能力变动是否在 EMEA/APAC 更稳定。",
+    "expression": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_efcf), fnd23_tot_assets), 252), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 11,
+    "optimize_reason": "【营业口径替代】把净利换为折旧摊销前营业利润 fnd23_ebitda，与经营现金流组合成“营业盈利能力 + 现金实现”双轨，剔除各国税率与资本结构差异（欧洲高税、亚太高杠杆），理论上可修复 EMEA 子样本 Sharpe 明显偏低的国别税制噪音。",
+    "expression": "group_rank(ts_delta(divide(add(fnd23_ebitda, fnd23_ofc), fnd23_tot_assets), 252), subindustry)",
+    "neutralization": "INDUSTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 12,
+    "optimize_reason": "【资本开支后自由现金流口径】分子改为 (经营现金流 - 资本开支)，即真实可分配自由现金流，衡量“资产扩张后剩余现金”的同比改善。相较母本剔除靠资本开支堆资产规模的伪改善公司，对重资产占比高的 EMEA 工业与亚太制造业更具区分度。",
+    "expression": "group_rank(ts_delta(divide(subtract(fnd23_ofc, fnd23_capex), fnd23_tot_assets), 252), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 13,
+    "optimize_reason": "【净经营资产口径分母替换】分母从总资产改为扣除现金及等价物后的净经营资产，避免现金囤积型公司（欧洲公用事业、日本综合商社）被系统性低估回报率；同时叠加 COUNTRY 中性化，进一步吸收各国现金持有习惯差异。",
+    "expression": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), subtract(fnd23_tot_assets, fnd23_cash_n_equivalents)), 252), subindustry)",
+    "neutralization": "COUNTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 14,
+    "optimize_reason": "【流量口径转利润率改善】分母改为总营收，因子含义从资产回报率变动转为“净利率改善”，对资产周转率差异巨大的跨国样本（欧洲轻资产服务 vs 亚太重资产制造）更可比；加 1 防零营收除零，保持 4 层算子深度。",
+    "expression": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), add(fnd23_tot_revenue, 1)), 252), subindustry)",
+    "neutralization": "INDUSTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 15,
+    "optimize_reason": "【毛利口径盈利质量】以 (营收 - 营业成本) 构造毛利并除以总资产，得到 Gross Profitability 的同比变动。毛利不受税率、一次性损益与财务费用污染，是跨国比较最干净的经营效率度量，用于检验母本收益是否由毛利端驱动。注：fnd23_cogs 覆盖率 72.7% 偏低，本槽同时是一次覆盖率承压测试。",
+    "expression": "group_rank(ts_delta(divide(subtract(fnd23_tot_revenue, fnd23_cogs), fnd23_tot_assets), 252), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 16,
+    "optimize_reason": "【应计质量反向假说】母本把利润与现金流相加，掩盖了二者背离。本槽直接做 (净利润 - 经营现金流)/总资产 的同比变动，度量应计项目恶化速度：高应计代表盈余质量差，理论上应做空，用于验证“母本收益是否主要来自现金流而非应计”这一因果链。",
+    "expression": "group_rank(ts_delta(divide(subtract(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), subindustry)",
+    "neutralization": "SUBINDUSTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 17,
+    "optimize_reason": "【现金-应计剪刀差拓扑】分别对 经营现金流/总资产 与 净利润/总资产 取 252 日时序分位，再作差，得到“现金实现能力相对会计利润的相对改善”。时序分位化使两条腿各自尺度无关，可同时抵御 EMEA/APAC 披露节奏差与跨国会计口径差。",
+    "expression": "group_rank(subtract(ts_rank(divide(fnd23_ofc, fnd23_tot_assets), 252), ts_rank(divide(fnd23_net_income, fnd23_tot_assets), 252)), subindustry)",
+    "neutralization": "COUNTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 18,
+    "optimize_reason": "【营运资本膨胀反向假说】以 (应收 + 存货)/总资产 的同比变动度量营运资本占用恶化：跨市场扩张期常见的“收入靠赊销与备货堆出来”在亚太尤为普遍。作为独立反向腿，可与母本组合成价差，验证母本信号是否被营运资本膨胀污染。",
+    "expression": "group_rank(ts_delta(divide(add(fnd23_net_reveivables, fnd23_tot_inventory), fnd23_tot_assets), 252), subindustry)",
+    "neutralization": "INDUSTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 19,
+    "optimize_reason": "【杠杆中性化分母】分母改为 总资产 - 净债务，得到近似企业价值口径的回报率，剔除欧洲高杠杆公用事业与亚太高负债制造业的资本结构差异；抵消各国利率环境对净利的机械影响，专门针对 EMEA 子样本滞后的结构性成因。",
+    "expression": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), subtract(fnd23_tot_assets, fnd23_net_debt)), 252), subindustry)",
+    "neutralization": "SECTOR",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  },
+  {
+    "slot": 20,
+    "optimize_reason": "【截面去均值替代排序】用 group_neutralize(..., subindustry) 做子行业内去均值而非排序，保留因子幅度信息与长尾分布结构，避免 rank 变换把极端改善与温和改善压成同距等分；配合 COUNTRY 中性化，构成检验“排序损失信息是否拖累聚类表现”的对照腿。",
+    "expression": "group_neutralize(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), subindustry)",
+    "neutralization": "COUNTRY",
+    "type": "explore",
+    "original_alpha": "88RgeN6o"
+  }
+]

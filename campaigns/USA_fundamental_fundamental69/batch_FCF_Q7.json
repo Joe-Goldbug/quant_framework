@@ -1,0 +1,224 @@
+{
+  "batch_id": "FCF_Q7_CENTERED_BOUNDED_PEER_ORDINAL",
+  "parent_best_alpha_id": "xAr0rmLJ",
+  "parent_best_expression": "winsorize(group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), industry), std=3)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "research_hypothesis": "Q6 proved that value-based tail caps cannot fix the recurring single-name concentration: winsorize after standardization, tighter caps, sign-preserving logs and hump all left the same roughly 0.5 share, because the daily standard deviation used by those caps is itself inflated by the very outlier being capped, and on dates where an industry cell is nearly uniform the standardized value explodes. Earlier evidence also shows the opposite failure mode: an uncentered group_rank passed concentration but produced a 688:0 long-only book, because a rank in [0,1] never takes the other side. This round therefore uses an ordinal peer comparison whose values are structurally bounded in [-0.5, 0.5] and centered at the group median, so no single name can take a dominant share while both improvement and deterioration receive signed exposure. The economic content, the quarter-scale change in cash remaining after dividends and reinvestment, is unchanged; no return direction is assumed.",
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "CENTERED_INDUSTRY_PEER_ORDINAL",
+      "expression": "subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), industry), 0.5)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors whose linear standardized scores let one issuer's extreme standardized cash-flow deviation take half the book on days when its industry cell is nearly uniform.",
+      "economic_mechanism": "The quarter-scale change in cash after dividends and capital expenditure is converted to an ordinal position within industry and then centered at the group median, so every issuer receives a value in a fixed bounded interval. The sign of the value states whether the firm's internal financing position improved or worsened relative to peers, and no single observation can carry a share beyond the bound regardless of how its group's dispersion behaves.",
+      "optimize_reason": "Combines the two pieces of direct evidence: rank mapping passed concentration while leaving a one-sided book, and centering is exactly the missing step that creates the short side. This is a structural response to the measured 0.5 concentration, not a parameter change; ordinal form may discard magnitude information and lower Sharpe, so all thresholds including zero warnings decide retention.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_q2yvd"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "CENTERED_SUBINDUSTRY_PEER_ORDINAL",
+      "expression": "subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), subindustry), 0.5)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Ordinal comparisons drawn against broad-industry peers whose payout and capital-intensity norms differ structurally from the firm in question.",
+      "economic_mechanism": "The same centered bounded ordinal comparison is computed among subindustry peers, whose cash-conversion and reinvestment economics are more homogeneous, so a firm's financing shift is judged against closer business models while remaining confined to the fixed value interval.",
+      "optimize_reason": "Tests whether the peer set matters once the concentration mechanism itself is removed: with a bounded centered mapping, subindustry groups cannot produce the exploding-standard-deviation failure, so the earlier subindustry underperformance can be attributed to uncapped z-scores rather than to peer choice. Thin groups may still add noise and must be judged empirically.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_q2yvd"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "ORDINAL_REINSTATED_AS_SIGNED_PEER_SCORE",
+      "expression": "group_zscore(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), industry), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Portfolio construction that either accepts one-sided ordinal signals or accepts raw standardized magnitudes without first removing ordinal outliers.",
+      "economic_mechanism": "The cash-flow change is first reduced to its industry-relative ordinal standing, which clips the magnitude of any single issuer's raw flow, and only then standardized among peers. The first stage bounds the input distribution so the second stage's denominator cannot be dominated by one extreme accounting change.",
+      "optimize_reason": "Keeps a z-score output, which the platform historically rewards with balanced books and higher Fitness, while attacking the concentration upstream where the raw unbounded flow enters. Whether re-standardizing a bounded ordinal reintroduces any tail risk is exactly what the concentration check will reveal.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_q2yvd"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "TAIL_CAPPED_CENTERED_PEER_ORDINAL",
+      "expression": "subtract(group_rank(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), std=3), industry), 0.5)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Ordinal comparisons in which a handful of raw flow outliers still occupy the extreme ranks and set the ordering for the entire peer group.",
+      "economic_mechanism": "The raw residual cash change is winsorized before peers are ranked, so the extreme accounting observations cannot define the group's ordering, and the centered rank then assigns bounded signed exposure. Two robustness stages operate at different levels: value capping on the raw flow and ordinal bounding on the comparison.",
+      "optimize_reason": "The only slot combining Q4's proven capping stage with Q7's bounded centered output, testing whether pre-ranking capping changes which names occupy the tails. Since ranking already bounds output values, any further gain should come from ordering quality rather than exposure control, which the metrics will show.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_q2yvd"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "SMOOTHED_CENTERED_PEER_ORDINAL",
+      "expression": "ts_decay_linear(subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), industry), 0.5), 20)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Traders who act at full size on the day a quarterly filing reorders the industry ranking of internally available cash.",
+      "economic_mechanism": "A short linear decay weights recent days more heavily on the completed centered ordinal signal, so a one-day change in peer standing contributes gradually while the bounded signed interpretation of the financing shift is preserved.",
+      "optimize_reason": "Q6's decay applied before capping worsened concentration to 0.745; applying it to an already bounded centered signal removes that failure channel and tests only information-absorption timing. Turnover near 10 percent leaves room for smoothing to help, but the variant is judged solely on the full threshold set.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_q2yvd"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "ANNUAL_HORIZON_CENTERED_PEER_ORDINAL",
+      "expression": "subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), industry), 0.5)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors who extrapolate a quarter-scale cash change without asking whether the funding position shifted over a full annual cycle.",
+      "economic_mechanism": "The bounded centered industry ordinal is computed from the one-year change in cash remaining after payout and reinvestment, measuring a slower capital-allocation regime shift with the same signed, capped peer comparison.",
+      "optimize_reason": "Provides the horizon contrast against Slot 1 under the new bounded centered construction: the annual delta previously lagged badly under z-scoring, and this tests whether that underperformance came from the unbounded mapping rather than from the horizon itself. It is a diagnostic, not a presumed improvement.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_q2yvd"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "POSITION_STABILIZED_CENTERED_PEER_ORDINAL",
+      "expression": "hump(subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), industry), 0.5))",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Books that jump to a new peer-rank position in a single rebalancing step whenever a filing reorders the industry.",
+      "economic_mechanism": "The bounded centered ordinal signal is passed through a change-limiting operator so positions adjust gradually toward the peer-implied stance, making a single filing-date reorder contribute partially rather than fully while keeping the signed relative interpretation intact.",
+      "optimize_reason": "Q6 showed the single-input hump operator cut turnover from 10.1 to 5.7 percent and raised margin to 48.9 bps while preserving Sharpe; applying it to the bounded centered signal tests whether stabilization retains that cost advantage while removing the residual concentration it could not fix on a z-score output.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_q2yvd"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "OWN_BASELINE_CENTERED_PEER_ORDINAL",
+      "expression": "subtract(group_rank(ts_av_diff(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), industry), 0.5)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Peer comparisons that treat the same absolute cash-residual change as equally informative for a firm whose financing position always swings and for one whose shift is genuinely unusual.",
+      "economic_mechanism": "The current residual cash level is first compared with its own annual average, isolating a firm-specific innovation in internal financing, and the resulting innovation is then ranked and centered among industry peers within the bounded interval.",
+      "optimize_reason": "Combines the own-history novelty idea, which failed twice under unbounded standardization, with the bounded centered output that now controls exposure structurally, so prior failures cannot be attributed to concentration. Quarterly repetition can tie the ordinal values and reduce effective resolution, which breadth and all checks will expose.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_capxy2q",
+          "fnd69_q2yvd"
+        ]
+      }
+    }
+  ],
+  "known_fields": {
+    "fnd69_q2yfcnao": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "description": "Operating Activities - Net Cash Flow (Quarterly)"
+    },
+    "fnd69_q2yvd": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": true,
+      "description": "Cash Dividends (Cash Flow) (Quarterly)"
+    },
+    "fnd69_capxy2q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": true,
+      "description": "Capital Expenditures (Quarterly)"
+    }
+  },
+  "technical_audit": {
+    "passed_count": 8,
+    "total": 8,
+    "exact_fingerprint_duplicates": [],
+    "skeleton_frequency": {
+      "subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry),NUM)": 2,
+      "subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),subindustry),NUM)": 1,
+      "group_zscore(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry),industry)": 1,
+      "subtract(group_rank(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),std=NUM),industry),NUM)": 1,
+      "ts_decay_linear(subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry),NUM),NUM)": 1,
+      "hump(subtract(group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry),NUM))": 1,
+      "subtract(group_rank(ts_av_diff(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry),NUM)": 1
+    }
+  },
+  "submission_forbidden": true
+}

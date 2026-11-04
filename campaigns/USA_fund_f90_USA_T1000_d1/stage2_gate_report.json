@@ -1,0 +1,263 @@
+{
+  "gates": [
+    {
+      "gate": "gate3_skeleton_diversity",
+      "skeletons": [
+        "subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_noa),NUM))",
+        "subtract(ts_delta(vec_avg(fnd90_us_qes_gamef_pscore),NUM),ts_delta(vec_avg(fnd90_us_game_equity_dilution),NUM))",
+        "-add(ts_zscore(vec_avg(fnd90_us_qes_gamef_chs_default),NUM),ts_zscore(vec_avg(fnd90_us_qes_gamef_cashflow_var),NUM))",
+        "subtract(group_zscore(vec_avg(fnd90_us_game_optimism_sale),subindustry),group_zscore(vec_avg(fnd90_us_game_accruals_vol),subindustry))",
+        "-add(ts_zscore(vec_avg(fnd90_us_game_inventory_chg),NUM),ts_zscore(vec_avg(fnd90_us_game_receivable_chg),NUM))",
+        "ts_decay_linear(subtract(ts_zscore(vec_avg(fnd90_us_game_optimism_sale),NUM),ts_zscore(vec_avg(fnd90_us_game_eps_sur_vol),NUM)),NUM)",
+        "subtract(group_rank(vec_avg(fnd90_us_game_labor_efficiency_chg),subindustry),group_rank(vec_avg(fnd90_us_game_sg_a_inefficiency),subindustry))",
+        "subtract(group_zscore(vec_avg(fnd90_us_qes_gamef_grossprofit_asset),subindustry),group_zscore(vec_avg(fnd90_us_qes_gamef_cscore),subindustry))"
+      ],
+      "freq": {
+        "subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_noa),NUM))": 1,
+        "subtract(ts_delta(vec_avg(fnd90_us_qes_gamef_pscore),NUM),ts_delta(vec_avg(fnd90_us_game_equity_dilution),NUM))": 1,
+        "-add(ts_zscore(vec_avg(fnd90_us_qes_gamef_chs_default),NUM),ts_zscore(vec_avg(fnd90_us_qes_gamef_cashflow_var),NUM))": 1,
+        "subtract(group_zscore(vec_avg(fnd90_us_game_optimism_sale),subindustry),group_zscore(vec_avg(fnd90_us_game_accruals_vol),subindustry))": 1,
+        "-add(ts_zscore(vec_avg(fnd90_us_game_inventory_chg),NUM),ts_zscore(vec_avg(fnd90_us_game_receivable_chg),NUM))": 1,
+        "ts_decay_linear(subtract(ts_zscore(vec_avg(fnd90_us_game_optimism_sale),NUM),ts_zscore(vec_avg(fnd90_us_game_eps_sur_vol),NUM)),NUM)": 1,
+        "subtract(group_rank(vec_avg(fnd90_us_game_labor_efficiency_chg),subindustry),group_rank(vec_avg(fnd90_us_game_sg_a_inefficiency),subindustry))": 1,
+        "subtract(group_zscore(vec_avg(fnd90_us_qes_gamef_grossprofit_asset),subindustry),group_zscore(vec_avg(fnd90_us_qes_gamef_cscore),subindustry))": 1
+      },
+      "pass": true
+    }
+  ],
+  "seeds": [
+    {
+      "id": "SEED_Q1_INVARIANCE",
+      "expression": "subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_noa), 252))",
+      "checks": {
+        "gate2_dimension": {
+          "is_valid": true,
+          "issues": [],
+          "operator_count": 5,
+          "math_operator_count": 3,
+          "vector_casts": 2,
+          "used_fields": [
+            "fnd90_us_game_cash_flow_coverage",
+            "fnd90_us_game_noa"
+          ]
+        },
+        "gate1_red_team": {
+          "verdict": "PASS",
+          "issues": [],
+          "checks": {
+            "domain_alignment_check": true,
+            "hypothesis_to_ast_fidelity": true,
+            "parsimony_check": true
+          }
+        },
+        "field_existence": {
+          "unknown_tokens": []
+        }
+      }
+    },
+    {
+      "id": "SEED_Q2_DYNAMICS",
+      "expression": "subtract(ts_delta(vec_avg(fnd90_us_qes_gamef_pscore), 252), ts_delta(vec_avg(fnd90_us_game_equity_dilution), 252))",
+      "checks": {
+        "gate2_dimension": {
+          "is_valid": true,
+          "issues": [],
+          "operator_count": 5,
+          "math_operator_count": 3,
+          "vector_casts": 2,
+          "used_fields": [
+            "fnd90_us_game_equity_dilution",
+            "fnd90_us_qes_gamef_pscore"
+          ]
+        },
+        "gate1_red_team": {
+          "verdict": "PASS",
+          "issues": [],
+          "checks": {
+            "domain_alignment_check": true,
+            "hypothesis_to_ast_fidelity": true,
+            "parsimony_check": true
+          }
+        },
+        "field_existence": {
+          "unknown_tokens": []
+        }
+      }
+    },
+    {
+      "id": "SEED_Q3_ANOMALY",
+      "expression": "-add(ts_zscore(vec_avg(fnd90_us_qes_gamef_chs_default), 252), ts_zscore(vec_avg(fnd90_us_qes_gamef_cashflow_var), 252))",
+      "checks": {
+        "gate2_dimension": {
+          "is_valid": true,
+          "issues": [],
+          "operator_count": 5,
+          "math_operator_count": 3,
+          "vector_casts": 2,
+          "used_fields": [
+            "fnd90_us_qes_gamef_cashflow_var",
+            "fnd90_us_qes_gamef_chs_default"
+          ]
+        },
+        "gate1_red_team": {
+          "verdict": "PASS",
+          "issues": [],
+          "checks": {
+            "domain_alignment_check": true,
+            "hypothesis_to_ast_fidelity": true,
+            "parsimony_check": true
+          }
+        },
+        "field_existence": {
+          "unknown_tokens": []
+        }
+      }
+    },
+    {
+      "id": "SEED_Q4_INTERACTION",
+      "expression": "subtract(group_zscore(vec_avg(fnd90_us_game_optimism_sale), subindustry), group_zscore(vec_avg(fnd90_us_game_accruals_vol), subindustry))",
+      "checks": {
+        "gate2_dimension": {
+          "is_valid": true,
+          "issues": [],
+          "operator_count": 5,
+          "math_operator_count": 3,
+          "vector_casts": 2,
+          "used_fields": [
+            "fnd90_us_game_accruals_vol",
+            "fnd90_us_game_optimism_sale"
+          ]
+        },
+        "gate1_red_team": {
+          "verdict": "PASS",
+          "issues": [],
+          "checks": {
+            "domain_alignment_check": true,
+            "hypothesis_to_ast_fidelity": true,
+            "parsimony_check": true
+          }
+        },
+        "field_existence": {
+          "unknown_tokens": []
+        }
+      }
+    },
+    {
+      "id": "SEED_Q5_STRUCTURE",
+      "expression": "-add(ts_zscore(vec_avg(fnd90_us_game_inventory_chg), 252), ts_zscore(vec_avg(fnd90_us_game_receivable_chg), 252))",
+      "checks": {
+        "gate2_dimension": {
+          "is_valid": true,
+          "issues": [],
+          "operator_count": 5,
+          "math_operator_count": 3,
+          "vector_casts": 2,
+          "used_fields": [
+            "fnd90_us_game_inventory_chg",
+            "fnd90_us_game_receivable_chg"
+          ]
+        },
+        "gate1_red_team": {
+          "verdict": "PASS",
+          "issues": [],
+          "checks": {
+            "domain_alignment_check": true,
+            "hypothesis_to_ast_fidelity": true,
+            "parsimony_check": true
+          }
+        },
+        "field_existence": {
+          "unknown_tokens": []
+        }
+      }
+    },
+    {
+      "id": "SEED_Q6_ACCUMULATION",
+      "expression": "ts_decay_linear(subtract(ts_zscore(vec_avg(fnd90_us_game_optimism_sale), 252), ts_zscore(vec_avg(fnd90_us_game_eps_sur_vol), 252)), 60)",
+      "checks": {
+        "gate2_dimension": {
+          "is_valid": true,
+          "issues": [],
+          "operator_count": 6,
+          "math_operator_count": 4,
+          "vector_casts": 2,
+          "used_fields": [
+            "fnd90_us_game_eps_sur_vol",
+            "fnd90_us_game_optimism_sale"
+          ]
+        },
+        "gate1_red_team": {
+          "verdict": "PASS",
+          "issues": [],
+          "checks": {
+            "domain_alignment_check": true,
+            "hypothesis_to_ast_fidelity": true,
+            "parsimony_check": true
+          }
+        },
+        "field_existence": {
+          "unknown_tokens": []
+        }
+      }
+    },
+    {
+      "id": "SEED_Q7_RELATIVE",
+      "expression": "subtract(group_rank(vec_avg(fnd90_us_game_labor_efficiency_chg), subindustry), group_rank(vec_avg(fnd90_us_game_sg_a_inefficiency), subindustry))",
+      "checks": {
+        "gate2_dimension": {
+          "is_valid": true,
+          "issues": [],
+          "operator_count": 5,
+          "math_operator_count": 3,
+          "vector_casts": 2,
+          "used_fields": [
+            "fnd90_us_game_labor_efficiency_chg",
+            "fnd90_us_game_sg_a_inefficiency"
+          ]
+        },
+        "gate1_red_team": {
+          "verdict": "PASS",
+          "issues": [],
+          "checks": {
+            "domain_alignment_check": true,
+            "hypothesis_to_ast_fidelity": true,
+            "parsimony_check": true
+          }
+        },
+        "field_existence": {
+          "unknown_tokens": []
+        }
+      }
+    },
+    {
+      "id": "SEED_Q8_ESSENCE",
+      "expression": "subtract(group_zscore(vec_avg(fnd90_us_qes_gamef_grossprofit_asset), subindustry), group_zscore(vec_avg(fnd90_us_qes_gamef_cscore), subindustry))",
+      "checks": {
+        "gate2_dimension": {
+          "is_valid": true,
+          "issues": [],
+          "operator_count": 5,
+          "math_operator_count": 3,
+          "vector_casts": 2,
+          "used_fields": [
+            "fnd90_us_qes_gamef_cscore",
+            "fnd90_us_qes_gamef_grossprofit_asset"
+          ]
+        },
+        "gate1_red_team": {
+          "verdict": "PASS",
+          "issues": [],
+          "checks": {
+            "domain_alignment_check": true,
+            "hypothesis_to_ast_fidelity": true,
+            "parsimony_check": true
+          }
+        },
+        "field_existence": {
+          "unknown_tokens": []
+        }
+      }
+    }
+  ],
+  "all_green": true
+}

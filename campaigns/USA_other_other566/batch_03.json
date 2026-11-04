@@ -1,0 +1,79 @@
+{
+  "batch": 3,
+  "family": "cross_model_consensus_ensemble",
+  "hypothesis": "跨模型共识与集成方差削减: 两个训练信息集正交的模型等权合成, 联合信噪比高于任一单腿 ('wisdom of crowds'), 且因拥挤度差异极大不易撞生产库。覆盖订单簿深度对 (L2/L3)、多期限对 (multiL2/multiL3)、技术vs订单簿、残差化 vs 原始 L2、Gasf vs GasfMulti、L5 模型 vs L5 GasfCulr 六组独立配对。",
+  "items": [
+    {
+      "id": "b3_c1",
+      "expr": "group_rank(ts_mean(add(ts_zscore(oth566_r20marsi_ret, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_l5r20gasfculr_ret"
+      ]
+    },
+    {
+      "id": "b3_c1w",
+      "expr": "group_rank(ts_mean(add(ts_zscore(oth566_r20marsi_ret, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 52), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_l5r20gasfculr_ret"
+      ]
+    },
+    {
+      "id": "b3_c2",
+      "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l2r5_label, 60), ts_zscore(oth566_l3r5_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l2r5_label",
+        "oth566_l3r5_label"
+      ]
+    },
+    {
+      "id": "b3_c3",
+      "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l2r20_label, 60), ts_zscore(oth566_l3r20_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l2r20_label",
+        "oth566_l3r20_label"
+      ]
+    },
+    {
+      "id": "b3_c4",
+      "expr": "group_rank(ts_mean(add(ts_zscore(oth566_multil2_label, 60), ts_zscore(oth566_multil3_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_multil2_label",
+        "oth566_multil3_label"
+      ]
+    },
+    {
+      "id": "b3_c5",
+      "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l2r5res_label, 60), ts_zscore(oth566_l2r5_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l2r5res_label",
+        "oth566_l2r5_label"
+      ]
+    },
+    {
+      "id": "b3_c6",
+      "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l3r20gasf_label, 60), ts_zscore(oth566_l3r20gasfmulti_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r20gasf_label",
+        "oth566_l3r20gasfmulti_label"
+      ]
+    },
+    {
+      "id": "b3_c7",
+      "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l5r20_label, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l5r20_label",
+        "oth566_l5r20gasfculr_ret"
+      ]
+    }
+  ]
+}

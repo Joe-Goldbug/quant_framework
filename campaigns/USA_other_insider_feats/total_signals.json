@@ -1,0 +1,672 @@
+{
+  "region": "USA",
+  "delay": 1,
+  "universe": "TOP1000",
+  "category": "other",
+  "dataset_id": "insider_feats",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "价值加权方向信念的期限结构",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "buy_sell_ratio_all_60d_filled（COLD, aC=0, cov=0.8833）是全员近 60 日金额加权买卖比，为分子主信号源，量纲 [0,inf) 比率；buy_sell_ratio_all_250d_filled（HOT, aC=3, cov=0.8833）是全员 250 日同口径字段，承担双重角色：先作差分基准剥离各公司内部人交易习惯水平，再以 add(·,1) 包裹后作分母，把偏移量转换为相对自身基线的无量纲相对幅度，同时保证分母恒正防除零。",
+      "economic_mechanism": "内部人出现非常规的信息驱动买入（或退出卖出）时，60 日净买入强度率先越过其 250 日习惯基线 -> 该异动经披露延迟与投资者注意力稀缺未能即时定价，且市场受『内部人卖出=常态』锚定偏误影响对买入认证反应不足 -> 未来超额收益随信息扩散同向释放。表达式越大代表相对基线的买入跃迁越强，预期未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), 1))",
+      "fields_used": [
+        "buy_sell_ratio_all_250d_filled",
+        "buy_sell_ratio_all_60d_filled"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_ratio_all_60d_filled",
+        "normalizer": "buy_sell_ratio_all_250d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "价值加权方向信念的期限结构",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "buy_sell_ratio_all_5d_filled（COLD, aC=0）为最新 5 日脉冲主信号源；buy_sell_ratio_all_60d_filled（COLD, aC=0）为中期信念基准；buy_sell_ratio_all_250d_filled（HOT, cov=0.8833）为 250 日规模归一锚。三者同量纲（比率），5d-60d 差分先剥离中期趋势共同分量，再除以长窗基线消除公司间交易强度量纲差异，得到纯相对脉冲。",
+      "economic_mechanism": "5 日脉冲超越 60 日中期水平，代表信息驱动交易正在加速（边际动量而非存量状态）-> 核心层的最新交易是对私有信息最即时的暴露，而短窗异动的披露滞后最大、定价最不充分 -> 加速方向预示未来收益方向。脉冲越强未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(vec_avg(buy_sell_ratio_all_5d_filled), vec_avg(buy_sell_ratio_all_60d_filled)), vec_avg(buy_sell_ratio_all_250d_filled))",
+      "fields_used": [
+        "buy_sell_ratio_all_60d_filled",
+        "buy_sell_ratio_all_250d_filled",
+        "buy_sell_ratio_all_5d_filled"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_ratio_all_60d_filled",
+        "normalizer": "buy_sell_ratio_all_250d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "价值加权方向信念的期限结构",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "buy_sell_ratio_top20_5d_filled（COLD, aC=0, cov=0.8833）为董监高层 5 日脉冲；buy_sell_ratio_top20_60d_filled（COLD, aC=0, cov=0.8833，同时充当 cov>=0.80 归一锚）为同口径 60 日基准。两字段完全同量纲同口径，直接作比率得到自归一的短/中期动量倍数，无任何量纲混杂。",
+      "economic_mechanism": "董监高层（法定知情人）短期买入强度相对其 60 日基线的倍数上升 -> 董监高的窗口期交易受合规规则约束最严、信息含量最高，而多数投研管线只取字段水平值不看期限结构 -> 短期倍数异动存在定价真空。倍数越高未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(vec_avg(buy_sell_ratio_top20_5d_filled), vec_avg(buy_sell_ratio_top20_60d_filled))",
+      "fields_used": [
+        "buy_sell_ratio_top20_5d_filled",
+        "buy_sell_ratio_top20_60d_filled"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_ratio_top20_5d_filled",
+        "normalizer": "buy_sell_ratio_top20_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "价值加权方向信念的期限结构",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "buy_sell_ratio_top5_60d_filled（COLD, aC=0）为核心高管层 60 日信念；buy_sell_ratio_top5_250d_filled（COLD, aC=0, cov=0.8833，兼归一锚）为同层级 250 日习惯基线。两字段同量纲，直接差分得到核心层的信念水平偏移，保留原始幅度信息（不做比率），与 SEED_01/02 的相对幅度形成互补的绝对幅度变体。",
+      "economic_mechanism": "CEO/CFO 级内部人 60 日净买入绝对水平高于其一年习惯基线 -> 核心层掌握财务与经营的第一手信息，其习惯基线之上的偏离几乎必然对应重大未公开信息（全员口径噪声大）-> 市场对核心层偏离反应不足。偏移为正预示正超额收益，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "subtract(vec_avg(buy_sell_ratio_top5_60d_filled), vec_avg(buy_sell_ratio_top5_250d_filled))",
+      "fields_used": [
+        "buy_sell_ratio_top5_250d_filled",
+        "buy_sell_ratio_top5_60d_filled"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_ratio_top5_250d_filled",
+        "normalizer": "buy_sell_ratio_top5_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "金额信念×交易广度双通道背离",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "金额通道动量=divide(60d 金额比, 250d 金额比)；笔数通道动量=divide(60d 笔数比, 250d 笔数比)。两通道各自自归一消除量纲后作差。buy_sell_ratio_all_60d_filled（COLD）与 buy_sell_tx_count_ratio_all_250d_filled（HOT, cov=0.8833）分别构成冷主锚与高覆盖归一锚。四个字段均为无量纲比率，差分两侧量纲一致。",
+      "economic_mechanism": "金额动量 > 笔数动量：近 60 日净买入的增长由大额交易驱动而参与人数未同步扩大 -> 单一（或极少数）知情人重仓下注，信念集中度高、信息含量最大；反之笔数驱动=群体常规调仓，信息被稀释 -> 市场必须同时拼接两个通道才能观测『集中式大额异动』，识别成本最高、定价最慢。金额动量相对笔数动量的超额越大，未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(vec_avg(buy_sell_ratio_all_60d_filled), vec_avg(buy_sell_ratio_all_250d_filled)), divide(vec_avg(buy_sell_tx_count_ratio_all_60d_filled), vec_avg(buy_sell_tx_count_ratio_all_250d_filled)))",
+      "fields_used": [
+        "buy_sell_ratio_all_250d_filled",
+        "buy_sell_tx_count_ratio_all_60d_filled",
+        "buy_sell_ratio_all_60d_filled",
+        "buy_sell_tx_count_ratio_all_250d_filled"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_tx_count_ratio_all_60d_filled",
+        "normalizer": "buy_sell_ratio_all_250d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "金额信念×交易广度双通道背离",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为 top5 层 60 日『未填充金额比 − 填充笔数比』的通道剪刀差：buy_to_sell_ratio_top5_60d（COLD, aC=0, cov=0.6202）取未填充口径保真（非缺失=确有真实交易），buy_sell_tx_count_ratio_top5_60d_filled（COLD, aC=0, cov=0.8833）取填充口径保覆盖，两字段同为 [0,inf) 比率量纲，差分安全；分母 add(buy_sell_tx_count_ratio_top5_250d_filled, 1) 中 buy_sell_tx_count_ratio_top5_250d_filled（COLD, aC=0, cov=0.8833）为层级 250 日广度基线高覆盖归一锚（加 1 防除零）。",
+      "economic_mechanism": "核心高管层的金额信念显著高于其交易广度（少数人用大钱投票）-> 跨管道构造保证金额侧读数来自真实交易、广度侧读数覆盖完备，两者背离是信念集中度的直接度量 -> 市场需同时处理两个计量通道并对 top5 子集单独定价，识别成本极高，故系统性欠定价。剪刀差相对长期广度基线的扩张预示信念集中度溢价兑现，未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(vec_avg(buy_to_sell_ratio_top5_60d), vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)), add(vec_avg(buy_sell_tx_count_ratio_top5_250d_filled), 1))",
+      "fields_used": [
+        "buy_to_sell_ratio_top5_60d",
+        "buy_sell_tx_count_ratio_top5_60d_filled",
+        "buy_sell_tx_count_ratio_top5_250d_filled"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_to_sell_ratio_top5_60d",
+        "normalizer": "buy_sell_tx_count_ratio_top5_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "金额信念×交易广度双通道背离",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "buy_sell_ratio_top20_20d_filled_2（COLD, aC=0）为董监高层 20 日信念主信号；buy_sell_ratio_top20_250d_filled（COLD, cov=0.8833）为长窗归一锚（divide 后 add(·,1) 防除零，得相对信念倍数）；top20_buy_tx_count_250d（COLD, aC=0, cov=0.2515）为 250 日董监高买入笔数，充当『买入活动存在性』状态催化项——量纲为计数 [0,inf)，乘法两侧为『无量纲倍数 × 计数』，物理上以稀有买入事件的绝对密度调节信念倍数的风险敞口。",
+      "economic_mechanism": "董监高相对自身基线的买入信念倍数，只有在其确实存在真实买入活动（买入笔数>0，买入在内部人交易中极稀有、该字段 coverage 仅 0.25）时才携带认证信息；无买入时倍数来自被动减少卖出，信息含量低 -> 用买入笔数作为状态调节项实现条件化暴露，抑制『伪信念』噪声。倍数×买入密度越大，认证效应越强，未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "multiply(divide(vec_avg(buy_sell_ratio_top20_20d_filled_2), add(vec_avg(buy_sell_ratio_top20_250d_filled), 1)), vec_avg(top20_buy_tx_count_250d))",
+      "fields_used": [
+        "buy_sell_ratio_top20_20d_filled_2",
+        "top20_buy_tx_count_250d",
+        "buy_sell_ratio_top20_250d_filled"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_ratio_top20_20d_filled_2",
+        "normalizer": "buy_sell_ratio_top20_250d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "金额信念×交易广度双通道背离",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子 add(top5 未填充 20d, top5 未填充 60d) 为核心层中期联合信念（同量纲比率相加安全）；分母 add(top5 filled 250d, all filled 60d) 为核心层长期基线与全员当期水平的联合归一锚（buy_sell_ratio_top5_250d_filled 与 buy_sell_ratio_all_60d_filled 均 cov=0.8833，满足高覆盖归一锚要求）。整体为『核心层近期信念 / (核心层长期+全员当期)』的相对强度结构。",
+      "economic_mechanism": "核心高管近中期（20+60d）未填充信念相对『核心层一年基线+全员当期水平』的扩张 -> 未填充族的非缺失截面是真实活动的自选择样本，且分母同时控制核心层习惯与全员情绪两个混杂源 -> 残差几乎纯粹反映核心层边际信息。扩张预示正超额收益，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(add(vec_avg(buy_to_sell_ratio_top5_20d), vec_avg(buy_to_sell_ratio_top5_60d)), add(vec_avg(buy_sell_ratio_top5_250d_filled), vec_avg(buy_sell_ratio_all_60d_filled)))",
+      "fields_used": [
+        "buy_sell_ratio_top5_250d_filled",
+        "buy_to_sell_ratio_top5_60d",
+        "buy_sell_ratio_all_60d_filled",
+        "buy_to_sell_ratio_top5_20d"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_ratio_top5_250d_filled",
+        "normalizer": "buy_sell_ratio_all_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "层级信息梯度：核心高管 vs 全员",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "核心层份额动量=divide(top5 60d, all 60d)；其长期常态=divide(top5 250d, all 250d)。四个字段均为同量纲 [0,inf) 比率，两两相除得到无量纲份额，再作差。buy_sell_ratio_top5_60d_filled（COLD）为冷主锚，buy_sell_ratio_all_250d_filled（HOT, cov=0.8833）为高覆盖归一锚之一。结构度量『核心层信念占全员份额的时序偏移』。",
+      "economic_mechanism": "核心层相对全员的信念份额上升超过其历史常态 -> CEO/CFO 比董监高外围与员工更早接触重大信息，份额抬升意味着信息梯度正处于从核心向外扩散的前夜 -> 市场通常只看全员总量而无法观测份额结构，存在结构性定价盲区。份额动量超过常态预示正超额收益，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(vec_avg(buy_sell_ratio_top5_60d_filled), vec_avg(buy_sell_ratio_all_60d_filled)), divide(vec_avg(buy_sell_ratio_top5_250d_filled), vec_avg(buy_sell_ratio_all_250d_filled)))",
+      "fields_used": [
+        "buy_sell_ratio_top5_250d_filled",
+        "buy_sell_ratio_top5_60d_filled",
+        "buy_sell_ratio_all_250d_filled",
+        "buy_sell_ratio_all_60d_filled"
+      ],
+      "times": 2,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_ratio_top5_250d_filled",
+        "normalizer": "buy_sell_ratio_top5_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "层级信息梯度：核心高管 vs 全员",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为核心层 60 日对全员 60 日的份额剪刀差（同量纲比率相减安全）；分母 add(all filled 250d 金额比, all 60d 笔数比) 为全员长期金额基线+当期广度的联合归一锚（buy_sell_ratio_all_250d_filled cov=0.8833），把份额差转换为相对全员活动强度的无量纲幅度。buy_sell_ratio_top5_60d_filled（COLD）为冷主锚。",
+      "economic_mechanism": "核心层信念超越全员的幅度，在全员交易活动（分母）越大的公司中越难被噪声淹没、信号越可信 -> 分母既是规模归一也是信噪比调节。核心层份额剪刀差的扩张预示信息由内向外扩散前的超额收益，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(vec_avg(buy_sell_ratio_top5_60d_filled), vec_avg(buy_sell_ratio_all_60d_filled)), add(vec_avg(buy_sell_ratio_all_250d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)))",
+      "fields_used": [
+        "buy_sell_tx_count_ratio_all_60d_filled",
+        "buy_sell_ratio_top5_60d_filled",
+        "buy_sell_ratio_all_250d_filled",
+        "buy_sell_ratio_all_60d_filled"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_tx_count_ratio_all_60d_filled",
+        "normalizer": "buy_sell_ratio_top5_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "层级信息梯度：核心高管 vs 全员",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "核心层相对份额=divide(top5 60d filled, add(all 60d filled, 1))（无量纲倍数，分母加 1 防除零）；top5_buy_tx_count_250d（COLD, aC=0, cov=0.2054）为核心层一年买入笔数，作状态催化项（计数 [0,inf)，与无量纲倍数相乘量纲安全）。buy_sell_ratio_top5_60d_filled（COLD）为冷主锚，buy_sell_ratio_all_60d_filled（cov=0.8833）为归一锚。",
+      "economic_mechanism": "核心层买入的认证效应只在核心层确实发生买入时成立（核心层买入极稀有，250 日笔数字段 coverage 仅 0.21）-> 用核心层买入笔数作暴露调节器：有买入时份额信号全额暴露，无买入时信号自动衰减，抑制核心层『不交易=份额被动漂移』的伪信号。份额×买入密度的联合值越大，未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "multiply(divide(vec_avg(buy_sell_ratio_top5_60d_filled), add(vec_avg(buy_sell_ratio_all_60d_filled), 1)), vec_avg(top5_buy_tx_count_250d))",
+      "fields_used": [
+        "buy_sell_ratio_top5_60d_filled",
+        "buy_sell_ratio_all_60d_filled",
+        "top5_buy_tx_count_250d"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_ratio_top5_60d_filled",
+        "normalizer": "buy_sell_ratio_all_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "层级信息梯度：核心高管 vs 全员",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为董监高层对全员的 60 日信念剪刀差（同量纲比率相减安全）；分母 buy_sell_tx_count_ratio_top20_250d_filled（COLD, aC=0, cov=0.8833）为董监高层 250 日笔数比基线，充当层级自身的长期广度归一锚，把金额口径的剪刀差转换为相对层级广度习惯的无量纲幅度。buy_sell_ratio_top20_60d_filled（COLD）为冷主锚。",
+      "economic_mechanism": "董监高层（top20）信念超越全员、且该超越幅度相对层级自身一年广度习惯放大 -> 中层董监（独立董事、外部股东代表）信息获取晚于 CEO 但早于市场，其集体转向是信息扩散链条的中间节点 -> 剪刀差扩张预示信息即将向市场扩散，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(vec_avg(buy_sell_ratio_top20_60d_filled), vec_avg(buy_sell_ratio_all_60d_filled)), vec_avg(buy_sell_tx_count_ratio_top20_250d_filled))",
+      "fields_used": [
+        "buy_sell_tx_count_ratio_top20_250d_filled",
+        "buy_sell_ratio_all_60d_filled",
+        "buy_sell_ratio_top20_60d_filled"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_tx_count_ratio_top20_250d_filled",
+        "normalizer": "buy_sell_ratio_all_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "卖出压力的结构与期限",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "top20_sale_tx_count_60d（COLD, aC=0, cov=0.6904）为董监高层 60 日卖出笔数（主信号源，计数 [0,inf) 稀疏）；total_sale_tx_count_250d（HOT, aC=1, cov=0.8280）为公司全员 250 日卖出总量，作为高覆盖内生规模归一锚（add(·,1) 防除零），把核心层短期卖出转换为『相对公司年度卖出基线的卖出加速度』无量纲比率。",
+      "economic_mechanism": "董监高层短期卖出笔数相对公司一年卖出基线的比率抬升 -> 常规卖出（10b5-1 计划、分散化）在长窗基线中已被平均，短窗对长窗的偏离主要来自计划外的主动减持 -> 计划外减持是对未来现金流悲观的最直接暴露，但投资者受『卖出=常态』锚定偏误系统性低估其信息 -> 卖出加速度越高未来收益越低，expected_polarity=-1。",
+      "expected_polarity": -1,
+      "expression": "divide(vec_avg(top20_sale_tx_count_60d), add(vec_avg(total_sale_tx_count_250d), 1))",
+      "fields_used": [
+        "top20_sale_tx_count_60d",
+        "total_sale_tx_count_250d"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "top20_sale_tx_count_60d",
+        "normalizer": "total_sale_tx_count_250d",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.828,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "卖出压力的结构与期限",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "核心层卖出份额=divide(top20 250d 卖出笔数, 全员 250d 卖出笔数)（同为计数，相除为无量纲份额）；total_insider_sale_count_20d（COLD, aC=0, cov=0.6716）为公司近 20 日卖出活跃度（计数），作状态规模项。total_sale_tx_count_250d（HOT, cov=0.8280）为高覆盖归一锚。整体量纲=『份额 × 当期卖出笔数』，物理含义为按当期活跃度放大的核心层卖出份额。",
+      "economic_mechanism": "核心高管占据公司卖出流量的份额高、且当期卖出活跃 -> 大股东与高管的计划外出卖（而非员工零星行权卖出）主导卖压 -> 知情程度最高的群体正在系统性出货，散户与噪声交易者在接盘 -> 卖压的『知情浓度』越高未来收益越低，expected_polarity=-1。",
+      "expected_polarity": -1,
+      "expression": "multiply(divide(vec_avg(top20_sale_tx_count_250d), vec_avg(total_sale_tx_count_250d)), vec_avg(total_insider_sale_count_20d))",
+      "fields_used": [
+        "total_sale_tx_count_250d",
+        "total_insider_sale_count_20d",
+        "top20_sale_tx_count_250d"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "total_insider_sale_count_20d",
+        "normalizer": "total_sale_tx_count_250d",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.828,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "卖出压力的结构与期限",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子为董监高层 60 日净方向广度（卖出笔数−买入笔数，同为计数 [0,inf)，差分安全；买入极稀有故该差以正为主但保留对称性）；分母 total_sale_tx_count_250d（HOT, cov=0.8280）为公司年度卖出规模锚，把净广度转换为相对卖基量的无量纲净方向强度。top20_sale_tx_count_60d（COLD）为冷主锚。",
+      "economic_mechanism": "董监高层内『卖家人数−买家人数』的净广度为正且相对公司卖基量放大 -> 多数知情者同时选择退出而几乎无人选择进入，广度口径排除了单一大额交易的主导（与金额口径正交）-> 群体一致转向是最难被个股层面噪声解释的信号，市场反应最慢。净卖出广度越强未来收益越低，expected_polarity=-1。",
+      "expected_polarity": -1,
+      "expression": "divide(subtract(vec_avg(top20_sale_tx_count_60d), vec_avg(top20_buy_tx_count_60d)), vec_avg(total_sale_tx_count_250d))",
+      "fields_used": [
+        "top20_buy_tx_count_60d",
+        "top20_sale_tx_count_60d",
+        "total_sale_tx_count_250d"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "top20_sale_tx_count_60d",
+        "normalizer": "total_sale_tx_count_250d",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.828,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "卖出压力的结构与期限",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "top5_sale_tx_count_5d（COLD, aC=0, cov=0.4438）为核心高管层最新 5 日卖出脉冲（计数）；total_sale_tx_count_250d（HOT, cov=0.8280）为公司年度卖基量归一锚。divide 得到『核心层极短窗卖出占公司年度卖基的比率』，reverse 取负号使表达式方向与收益方向一致，避免极性混淆。",
+      "economic_mechanism": "CEO/CFO 级在最近 5 日完全停止（或极少）计划外出卖、相对公司卖基的脉冲趋近于零 -> 核心层通常在负面信息暴露风险期被迫暂停卖出（合规与内幕审查约束），『核心层卖出静默』是高管无法继续常规减持的间接状态，而维持常规卖出节奏说明无重大隐性利空 -> 表达式（负的卖出脉冲）越大代表核心层越静默，未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "reverse(divide(vec_avg(top5_sale_tx_count_5d), vec_avg(total_sale_tx_count_250d)))",
+      "fields_used": [
+        "top5_sale_tx_count_5d",
+        "total_sale_tx_count_250d"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "top5_sale_tx_count_5d",
+        "normalizer": "total_sale_tx_count_250d",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.828,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "未填充原始比率族的独立与交互验证",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "全部采用未填充（unfilled）原始比率族（非缺失=窗口内确有真实交易的自选择样本）：核心层份额动量=divide(top5 60d, top5 250d)，全员份额动量=divide(all 60d, all 250d)，两动量均为无量纲比率，作差为层级梯度动量。buy_to_sell_ratio_top5_60d（COLD）为冷主锚，buy_to_sell_ratio_all_60d（COLD, cov=0.8031）与 all_250d（COLD, cov=0.8833）兼作高覆盖归一锚。",
+      "economic_mechanism": "用与簇 1/3 完全独立的数据管道（不填充、缺失即无活动）复验『核心层信念动量超越全员』的层级梯度逻辑 -> 若该结构在独立管道下依然成立，则信号源于真实交易行为而非填充伪影，且 unfilled 的自选择截面天然过滤无交易噪声股 -> 核心层梯度动量越强未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(vec_avg(buy_to_sell_ratio_top5_60d), vec_avg(buy_to_sell_ratio_top5_250d)), divide(vec_avg(buy_to_sell_ratio_all_60d), vec_avg(buy_to_sell_ratio_all_250d)))",
+      "fields_used": [
+        "buy_to_sell_ratio_all_250d",
+        "buy_to_sell_ratio_top5_250d",
+        "buy_to_sell_ratio_top5_60d",
+        "buy_to_sell_ratio_all_60d"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_to_sell_ratio_all_250d",
+        "normalizer": "buy_to_sell_ratio_all_60d",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.803,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "未填充原始比率族的独立与交互验证",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子 multiply(top20 未填充 60d 金额比, top20 60d 笔数比) 为价值×广度的联合认证交互项（两因子均为 [0,inf) 比率，仅在同时为正时交互项非零——天然排除『填充产生的零信念』伪样本）；分母 add(total_sale_tx_count_250d, 1) 中 total_sale_tx_count_250d（HOT, aC=1, cov=0.8280）为公司全员 250 日卖出总量高覆盖规模归一锚，把联合认证强度转换为相对公司级卖基活动量的无量纲密度。",
+      "economic_mechanism": "核心董监层的金额信念与交易广度必须同时为正才产生非零信号 -> 乘法交互要求『有人买、且买得多』双重成立，过滤单一通道的统计噪声 -> 再以公司级一年卖出活动量为标尺：在卖压沉重的公司中仍维持强联合买入认证，是知情者逆向下注的最强形态；市场对『逆卖压买入』的识别需拼接三重信息，定价最慢。联合认证密度越大未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(multiply(vec_avg(buy_to_sell_ratio_top20_60d), vec_avg(buy_sell_tx_count_ratio_top20_60d)), add(vec_avg(total_sale_tx_count_250d), 1))",
+      "fields_used": [
+        "buy_sell_tx_count_ratio_top20_60d",
+        "buy_to_sell_ratio_top20_60d",
+        "total_sale_tx_count_250d"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_sell_tx_count_ratio_top20_60d",
+        "normalizer": "total_sale_tx_count_250d",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.828,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "未填充原始比率族的独立与交互验证",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "分子 multiply(top5 未填充 60d 金额比, top5 填充 60d 笔数比) 为跨管道联合认证：金额通道取未填充（保真），广度通道取填充（保覆盖），两因子 [0,inf) 比率相乘量纲安全；分母 add(top5 250d 填充笔数比, 1) 为长期广度基线归一锚（cov=0.8833，加 1 防除零）。buy_to_sell_ratio_top5_60d（COLD）为冷主锚。",
+      "economic_mechanism": "核心高管的『真金白银强度（未填充金额）× 参与广度（填充笔数）』跨管道联合为正 -> 只有当真实大额交易与覆盖完备的广度口径同时确认买入时才触发，兼顾信息保真与截面完备 -> 联合认证强度相对长期基线的扩张是最高置信度的认证信号，预示正超额收益，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(multiply(vec_avg(buy_to_sell_ratio_top5_60d), vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)), add(vec_avg(buy_sell_tx_count_ratio_top5_250d_filled), 1))",
+      "fields_used": [
+        "buy_to_sell_ratio_top5_60d",
+        "buy_sell_tx_count_ratio_top5_60d_filled",
+        "buy_sell_tx_count_ratio_top5_250d_filled"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_to_sell_ratio_top5_60d",
+        "normalizer": "buy_sell_tx_count_ratio_top5_60d_filled",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.883,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "未填充原始比率族的独立与交互验证",
+      "hypothesis_type": "LEVEL",
+      "field_semantics_mapping": "insider_buy_to_sell_transaction_ratio_lookback_60（COLD, aC=0, cov=0.8031）为 lookback 别名族的 60 日笔数比，是主信号源兼高覆盖字段；buy_to_sell_ratio_all_250d（COLD, aC=0, cov=0.8833）为全员 250 日金额比基线。两字段同为 [0,inf) 比率，直接相除得无量纲相对强度（最简结构，仅 1 个外层算子）。",
+      "economic_mechanism": "别名族（独立估计管道）度量的 60 日交易广度动量相对全员 250 日金额基线的比率 -> 广度口径对『多数内部人方向一致』敏感，金额基线对『资金总量习惯』敏感，两者相除提取『人数共识相对资金习惯』的偏移 -> 共识广度扩张而资金习惯未变时，信息尚在早期扩散阶段、定价最不充分。比率越大未来收益越高，expected_polarity=+1。",
+      "expected_polarity": 1,
+      "expression": "divide(vec_avg(insider_buy_to_sell_transaction_ratio_lookback_60), vec_avg(buy_to_sell_ratio_all_250d))",
+      "fields_used": [
+        "buy_to_sell_ratio_all_250d",
+        "insider_buy_to_sell_transaction_ratio_lookback_60"
+      ],
+      "times": 0,
+      "pairing": {
+        "is_asymmetric": true,
+        "main_anchor": "buy_to_sell_ratio_all_250d",
+        "normalizer": "insider_buy_to_sell_transaction_ratio_lookback_60",
+        "main_anchor_alpha_pct": 0.0,
+        "main_anchor_tier": "COLD",
+        "normalizer_coverage": 0.803,
+        "pairing_score": 1.5,
+        "issues": []
+      }
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "Global Insider Transaction Features (USA/TOP1000/D1, 118 字段全部为 VECTOR 型) 记录公司内部人（高管、董事、大股东）真实交易行为的衍生特征，字段构成「层级(all/top20/top5) × 回看窗口(5/10/20/60/250d) × 计量口径(金额比率/笔数比率/笔数计数/卖出金额)」三维网格，随申报披露每日滚动重算。其信息物理学有四个决定性结构：(1) 买卖不对称——卖出因 10b5-1 计划、流动性管理与分散化需求而高频普遍（卖出计数族 coverage 0.44~0.83），买入罕见而昂贵、受严格自我约束（买入计数族 coverage 仅 0.07~0.44），一笔真实买入的信息密度远高于一笔常规卖出，属『稀有认证信号』；(2) 双通道计量——同一交易流同时以金额加权（buy_sell_ratio / buy_to_sell_ratio，资金信念强度）与笔数加权（buy_sell_tx_count_ratio，参与广度）两条正交通道计量，金额通道捕捉单一知情人重仓下注，笔数通道捕捉知情群体分散共识，两通道背离=信念集中度；(3) 层级结构——all/top20/top5 分别对应全员、董监高、核心高管，职级越高信息优势越大，层级间比值即信息梯度；(4) 期限结构——5/10/20/60/250 日窗口提供内生行为基准，短窗对 250 日长窗的偏移刻画内部人行为机制 regime shift，且全部为字段内生差分，无需任何时序算子。拥挤度上本数据集极端冷门：118 字段中 111 个 alpha_count=0（COLD，alpha_pct=0.0），仅 7 个字段有存量因子（HOT），全数据集 alphaCount 仅 155，生产库近乎未开垦；同时 37 个 coverage≥0.80 的高覆盖字段（filled 比率族 0.8833、total_sale_tx_count_250d 0.828 等）可充当内生归一锚。市场未充分定价的摩擦点：内部人买入的认证效应与内部人集体行为 regime shift 的信息，需经披露延迟、投资者注意力稀缺与『卖出=常态』锚定偏误三重过滤后才缓慢扩散到价格，短窗异动相对长窗基准的偏离在此窗口内持续产生超额收益。",
+    "economic_clusters": [
+      {
+        "cluster_name": "价值加权方向信念的期限结构",
+        "fields": [
+          "buy_sell_ratio_all_5d_filled",
+          "buy_sell_ratio_all_60d_filled",
+          "buy_sell_ratio_all_250d_filled",
+          "buy_sell_ratio_top20_5d_filled",
+          "buy_sell_ratio_top20_60d_filled",
+          "buy_sell_ratio_top20_250d_filled",
+          "buy_sell_ratio_top5_60d_filled",
+          "buy_sell_ratio_top5_250d_filled"
+        ],
+        "cluster_logic": "金额加权的买卖价值比率度量内部人真金白银的净方向信念。短窗（5/60d）对自身 250 日长窗基准的偏移剥离了各公司内部人交易强度的固有毒性与规模量纲（字段内生自归一化，无需时序算子），刻画『行为机制跃迁』：当短期信念系统性越过长期基线，说明出现了非常规的信息驱动交易而非日常流动性操作。全部采用 filled 高覆盖（0.8833）变体保证截面完备。"
+      },
+      {
+        "cluster_name": "金额信念×交易广度双通道背离",
+        "fields": [
+          "buy_sell_ratio_all_60d_filled",
+          "buy_sell_ratio_all_250d_filled",
+          "buy_sell_tx_count_ratio_all_60d_filled",
+          "buy_sell_tx_count_ratio_all_250d_filled",
+          "buy_to_sell_ratio_top5_20d",
+          "buy_sell_tx_count_ratio_top5_20d_filled",
+          "buy_to_sell_ratio_top5_250d",
+          "buy_sell_tx_count_ratio_top5_250d_filled",
+          "buy_sell_ratio_top20_20d_filled_2",
+          "top20_buy_tx_count_250d",
+          "buy_to_sell_ratio_top5_60d",
+          "buy_sell_ratio_all_60d_filled"
+        ],
+        "cluster_logic": "同一交易流的金额通道与笔数通道物理含义正交：金额比率高而笔数比率低=单一知情人大额重仓（信念集中度最高、信息含量最大）；两者同向=群体性常规调仓（信息稀释）。将两通道各自对 250 日基准归一后作差或作乘法交互，提取『信念集中度溢价』，并用买入笔数（稀有事件）作为状态催化项实现条件化暴露。"
+      },
+      {
+        "cluster_name": "层级信息梯度：核心高管 vs 全员",
+        "fields": [
+          "buy_sell_ratio_top5_60d_filled",
+          "buy_sell_ratio_all_60d_filled",
+          "buy_sell_ratio_top5_250d_filled",
+          "buy_sell_ratio_all_250d_filled",
+          "buy_sell_ratio_top20_60d_filled",
+          "buy_sell_tx_count_ratio_all_60d_filled",
+          "buy_sell_tx_count_ratio_all_250d_filled",
+          "buy_sell_tx_count_ratio_top20_250d_filled",
+          "top5_buy_tx_count_250d"
+        ],
+        "cluster_logic": "top5（CEO/CFO 级）与 top20（董监高级）持有最直接的私有信息，all 口径混入大量低信息含量的员工/大股东交易。核心层信念占全员的份额（top5/all 比值）相对其 250 日历史份额的偏移，剥离全员噪声，度量『最知情人相对共识的分歧方向』——核心层加码快于全员是强认证，反之是隐秘背离信号。"
+      },
+      {
+        "cluster_name": "卖出压力的结构与期限",
+        "fields": [
+          "top20_sale_tx_count_60d",
+          "top20_sale_tx_count_250d",
+          "total_sale_tx_count_250d",
+          "top20_buy_tx_count_60d",
+          "top5_sale_tx_count_5d",
+          "total_insider_sale_count_20d"
+        ],
+        "cluster_logic": "卖出是本数据集覆盖最密（0.44~0.83）且天然高频的通道，其水平值无信息（人人都卖），信息藏在结构里：短窗卖出笔数相对 250 日公司级基准的加速度、核心高管卖出占公司总卖出的份额×当期卖出活跃度、卖出广度减买入广度的净方向、以及核心高管极短窗（5d）卖出脉冲。全部以公司级 250 日卖出总量（coverage 0.828）为归一锚消除公司规模与内部人人数差异。"
+      },
+      {
+        "cluster_name": "未填充原始比率族的独立与交互验证",
+        "fields": [
+          "buy_to_sell_ratio_top5_60d",
+          "buy_to_sell_ratio_top5_250d",
+          "buy_to_sell_ratio_all_60d",
+          "buy_to_sell_ratio_all_250d",
+          "buy_to_sell_ratio_top20_60d",
+          "buy_sell_tx_count_ratio_top20_60d",
+          "buy_sell_tx_count_ratio_top20_250d",
+          "buy_sell_tx_count_ratio_top5_60d_filled",
+          "buy_sell_tx_count_ratio_top5_250d_filled",
+          "insider_buy_to_sell_transaction_ratio_lookback_60"
+        ],
+        "cluster_logic": "未填充（unfilled）比率族与 filled 族在数据处理上独立：unfilled 缺失本身意味着窗口内无交易（信息真空），其非缺失截面是『有真实活动』的自选择样本，与 filled 族的填充值构成天然正交验证轴。lookback 别名字段是同族独立估计量。本簇用 unfilled 族独立复验簇 1/2/3 的层级与通道逻辑，并用乘法交互（价值×广度）构造联合认证条件，防止结论被单一数据管道的填充伪影驱动。"
+      }
+    ]
+  },
+  "crowding_profile": {
+    "field_total": 118,
+    "alpha_count_known": 118,
+    "tier_counts": {
+      "COLD": 111,
+      "WARM": 0,
+      "HOT": 7,
+      "UNKNOWN": 0
+    }
+  },
+  "pairing_candidates": [
+    {
+      "main_anchor": "buy_sell_tx_count_ratio_top5_10d",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.5,
+      "normalizer": "buy_sell_ratio_all_10d_filled",
+      "normalizer_coverage": 0.883,
+      "normalizer_alpha_pct": 0.9831
+    },
+    {
+      "main_anchor": "buy_to_sell_ratio_top5_10d",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.5,
+      "normalizer": "buy_sell_ratio_all_250d_filled",
+      "normalizer_coverage": 0.883,
+      "normalizer_alpha_pct": 0.9831
+    },
+    {
+      "main_anchor": "top5_insider_sale_transaction_count_lookback_20",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.486,
+      "normalizer": "buy_sell_ratio_top5_20d_filled",
+      "normalizer_coverage": 0.883,
+      "normalizer_alpha_pct": 0.9407
+    },
+    {
+      "main_anchor": "top5_sale_tx_count_20d",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.486,
+      "normalizer": "buy_sell_tx_count_ratio_all_250d_filled",
+      "normalizer_coverage": 0.883,
+      "normalizer_alpha_pct": 0.9407
+    },
+    {
+      "main_anchor": "buy_sell_tx_count_ratio_top5_5d",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.483,
+      "normalizer": "buy_sell_tx_count_ratio_all_5d_filled",
+      "normalizer_coverage": 0.883,
+      "normalizer_alpha_pct": 0.9407
+    },
+    {
+      "main_anchor": "buy_to_sell_ratio_top5_5d",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.483,
+      "normalizer": "buy_sell_ratio_all_20d_filled",
+      "normalizer_coverage": 0.883,
+      "normalizer_alpha_pct": 0.0
+    },
+    {
+      "main_anchor": "buy_sell_tx_count_ratio_top5_20d",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.53,
+      "normalizer": "buy_sell_ratio_all_10d_filled",
+      "normalizer_coverage": 0.883,
+      "normalizer_alpha_pct": 0.9831
+    },
+    {
+      "main_anchor": "buy_to_sell_ratio_top5_20d",
+      "main_anchor_alpha_count": 0.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.53,
+      "normalizer": "buy_sell_ratio_all_250d_filled",
+      "normalizer_coverage": 0.883,
+      "normalizer_alpha_pct": 0.9831
+    }
+  ]
+}

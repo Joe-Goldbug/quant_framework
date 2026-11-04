@@ -1,0 +1,18 @@
+{
+  "task": "OPTIMIZE_SEED_ALPHA",
+  "seed_expression": "divide(target_price - close, adv20)",
+  "region": "USA",
+  "dataset_id": "analyst_estimates",
+  "prescriptions_to_apply": [
+    "group_rank(·, subindustry)",
+    "s_log_1p 凹压缩 (若 CW > 0.10)",
+    "ts_backfill (若更新频次不连续)",
+    "regression_neut(·, volume) 成交量正交化"
+  ],
+  "target_gate": {
+    "sharpe": ">= 1.58",
+    "fitness": ">= 1.0",
+    "cw": "<= 0.10",
+    "pcorr": "< 0.70"
+  }
+}

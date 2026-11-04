@@ -1,0 +1,25 @@
+{
+  "wave": 32,
+  "seed_id": "GATE1_WAVE32",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "xAr3wXZb (Mgn 10.28, PC 0.6316) / omELn5nb (Mgn 13.41, PC 0.7231)",
+  "hypothesis": "Wave31 测绘出跷跷板：信念腿统计源控制 PC（量比0.80→笔数比0.63），窗口控制 Margin 但拉窗同步抬 PC。缺口=PC<0.70 侧 Margin 只到 11.18。三个不触禁令的杠杆关缺口：① 信念期限结构加宽 20−250（更强 conviction → 收益↑）；② txn20 近端确认腿；③ decay 4→8（压换手抬 Margin，设置层非中性化轴）。判据不变：Margin≥15 且 PC<0.70。",
+  "decay_a": 4,
+  "decay_b": 8,
+  "items_decay_a": [
+    {"id": "w32_allbel_wide250", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "信念期限结构加宽 20−250（all 队列笔数比，双腿 cov 0.8833）：更宽的期限差 = 更强 conviction 信号 → 抬收益/Margin，统计源仍是最冷门笔数比。6 算子。"},
+    {"id": "w32_allbel_txn20", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)", "optimize_reason": "确认腿换近端 txn20（wpQZxAml 曾证 txn20 确认 Sh 1.17 强确认）：近端广度对收益贡献更锐。6 算子。"},
+    {"id": "w32_allbel_w26", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),26), subindustry)", "optimize_reason": "窗口插值 26（20 与 33 之间）：测绘 PC 0.70 临界窗，找 Margin-PC 前沿的切点。6 算子。"},
+    {"id": "w32_allbel_w40", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),40), subindustry)", "optimize_reason": "窗口外推 40：前沿测绘上界（预期 Mgn~15 但 PC~0.74，用于锁定联合天花板的证据链）。6 算子。"},
+    {"id": "w32_allbel_wide250_33", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33), subindustry)", "optimize_reason": "宽信念 × 33 窗交叉：宽信念抬收益 + 33 窗抬 Margin 的叠加测试。6 算子。"},
+    {"id": "w32_allbel_w20_repro", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "xAr3wXZb 复现槽（decay 4 基线对照，与 decay 8 批对照隔离 decay 效应）。"}
+  ],
+  "items_decay_b": [
+    {"id": "w32d8_allbel_w20", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "decay 8 主槽：同 xAr3wXZb 表达式，decay 4→8 压换手（5.7%→~4%）抬 Margin（10.28→目标 13~15），观测 PC 是否随持仓周期拉长而变化。"},
+    {"id": "w32d8_omELn5nb", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33), subindustry)", "optimize_reason": "omELn5nb (Mgn 13.41, PC 0.7231) 的 decay 8 版：Margin 目标 17+，若 PC 随 decay 降至 <0.70 则双达标。"},
+    {"id": "w32d8_wide250", "neutralization": "INDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)", "optimize_reason": "宽信念槽的 decay 8 版：双杠杆（宽信念+压换手）叠加。"}
+  ]
+}

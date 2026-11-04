@@ -1,0 +1,67 @@
+{
+  "wave": 13,
+  "seed_id": "GATE1_WAVE13",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "Attack fitness via sign-gate (binary conviction filter) on best multiply resonance (txn × volume @ CROWDING). Test INDUSTRY neutralization which may preserve IC better. Use valid 10d/20d fields only. Vary arg_max window to avoid fingerprint collision.",
+  "items": [
+    {
+      "id": 1,
+      "type": "w13_sign_gate",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),sign(vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled))),5), subindustry)",
+      "optimize_reason": "W13-1: txn_momentum(20d-60d) × sign(volume_10d) @ CROWDING — binary gate: trade txn momentum only when volume ratio positive; preserves IC better than multiply"
+    },
+    {
+      "id": 2,
+      "type": "w13_sign_gate",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_to_sell_txn_ratio_lookback_10_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),sign(vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled))),5), subindustry)",
+      "optimize_reason": "W13-2: txn_momentum 10d-20d × sign(volume) — shorter window using buy_to_sell_txn_ratio_lookback_10_filled"
+    },
+    {
+      "id": 3,
+      "type": "w13_industry",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5), subindustry)",
+      "optimize_reason": "W13-3: best resonance (slot 3 W12) @ INDUSTRY — test if INDUSTRY neutral preserves Sharpe better than CROWDING"
+    },
+    {
+      "id": 4,
+      "type": "w13_industry",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),5), subindustry)",
+      "optimize_reason": "W13-4: baseline txn 20d-60d @ INDUSTRY — sanity, compare neutralization impact on raw signal"
+    },
+    {
+      "id": 5,
+      "type": "w13_10d20d",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_to_sell_txn_ratio_lookback_10_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),5), subindustry)",
+      "optimize_reason": "W13-5: txn 10d-20d @ SLOW — ultra-short window using available 10d field"
+    },
+    {
+      "id": 6,
+      "type": "w13_10d20d",
+      "neutralization": "CROWDING",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_to_sell_txn_ratio_lookback_10_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "W13-6: txn 10d-20d × all_count_breadth @ CROWDING — multiply resonance on shorter window"
+    },
+    {
+      "id": 7,
+      "type": "w13_vol_sign_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),sign(vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled))),8), subindustry)",
+      "optimize_reason": "W13-7: txn_momentum × sign(volume) @ SLOW with arg_max(8) — binary gate at SLOW, arg_max(8) avoids fingerprint collision with slot1"
+    },
+    {
+      "id": 8,
+      "type": "w13_baseline",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),8), subindustry)",
+      "optimize_reason": "W13-8: baseline txn 20d-60d @SLOW with arg_max(8) — avoids fingerprint collision with slot4"
+    }
+  ]
+}

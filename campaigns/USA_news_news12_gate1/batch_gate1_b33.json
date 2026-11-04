@@ -1,0 +1,67 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 25,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news_pv",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "returns",
+    "volume",
+    "close"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_PV_VOL_SCALED_SENT",
+      "expression": "group_rank(ts_decay_linear(divide(winsorize(mean_sentiment_score_transfer, std=3), add(ts_std_dev(returns, 20), 0.005)), 10), subindustry)",
+      "optimize_reason": "News sentiment scaled by 20-day historical return volatility. Normalizes risk across small and large cap stocks to boost Sharpe."
+    },
+    {
+      "id": 2,
+      "type": "N84_PV_VOL_SCALED_CUBIC",
+      "expression": "group_rank(ts_decay_linear(divide(power(winsorize(mean_sentiment_score_transfer, std=3), 3), add(ts_std_dev(returns, 20), 0.005)), 10), subindustry)",
+      "optimize_reason": "Cubic news sentiment scaled by return volatility with 10-day linear smoothing."
+    },
+    {
+      "id": 3,
+      "type": "N84_PV_VOL_SHOCK_SENT",
+      "expression": "group_rank(ts_decay_linear(multiply(winsorize(mean_sentiment_score_transfer, std=3), log(add(divide(volume, ts_mean(volume, 20)), 1))), 10), subindustry)",
+      "optimize_reason": "News sentiment interacted with abnormal trading volume ratio. Confirms institutional trading support."
+    },
+    {
+      "id": 4,
+      "type": "N84_PV_UNDERREACTION_REVERSAL",
+      "expression": "group_rank(ts_decay_linear(multiply(winsorize(mean_sentiment_score_transfer, std=3), reverse(ts_rank(returns, 10))), 10), subindustry)",
+      "optimize_reason": "Unpriced news shock: positive sentiment occurring alongside recent price dip (reverse 10d return rank) captures high-margin reversal."
+    },
+    {
+      "id": 5,
+      "type": "ERM_PV_VOL_SCALED_10D",
+      "expression": "group_rank(ts_decay_linear(divide(winsorize(prob_rank_bin1_10d_img_news, std=3), add(ts_std_dev(returns, 20), 0.005)), 10), subindustry)",
+      "optimize_reason": "10-day DL event forward return prediction scaled by return volatility under subindustry ranking."
+    },
+    {
+      "id": 6,
+      "type": "ERM_PV_VOL_SCALED_CUBIC",
+      "expression": "group_rank(ts_decay_linear(divide(power(winsorize(prob_rank_bin1_10d_img_news, std=3), 3), add(ts_std_dev(returns, 20), 0.005)), 10), subindustry)",
+      "optimize_reason": "Cubic 10-day DL forward return forecast scaled by return volatility."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_PV_VOL_SCALED_3F",
+      "expression": "group_rank(ts_decay_linear(divide(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), add(ts_std_dev(returns, 20), 0.005)), 10), subindustry)",
+      "optimize_reason": "3-field master ensemble: Cubic sentiment x 10d DL forecast scaled by return volatility with 10d smoothing."
+    },
+    {
+      "id": 8,
+      "type": "N84_PV_MOMENTUM_ALIGNMENT",
+      "expression": "group_rank(ts_decay_linear(multiply(winsorize(mean_sentiment_score_transfer, std=3), ts_rank(divide(close, ts_mean(close, 20)), 10)), 10), subindustry)",
+      "optimize_reason": "News sentiment confirmed by medium-term price trend (close vs 20d moving average)."
+    }
+  ]
+}

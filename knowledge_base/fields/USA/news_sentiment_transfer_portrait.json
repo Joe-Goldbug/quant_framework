@@ -1,0 +1,59 @@
+{
+  "dataset": "news_sentiment_transfer",
+  "name": "Transferred News Sentiment Analytics",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "sentiment",
+  "stage": "Stage1_field_portrait",
+  "date": "2026-10-27",
+  "total_fields": 23,
+  "matrix_fields": 19,
+  "vector_fields": 4,
+  "coverage": "all fields 0.947 (consistent, daily MATRIX panel)",
+  "alpha_count": {"max": 10, "zero_alpha": "several (primary_sentiment_skewness_2, primary_sentiment_total_2, secondary_sentiment_average, secondary_sentiment_middle_value, secondary_sentiment_minimum, sentiment_score_maximum, sentiment_score_minimum)"},
+  "crowding": "LOW — max alphaCount=10, most fields ac<=7, several ac=0 (anti-crowding law satisfied)",
+  "stage1_verdict": "VIRGIN sentiment-category dataset; part of news_sentiment family (Sharpe ceiling 3.0+ per CLUSTER mechanism report P1); consistent 0.947 coverage; no vec_* needed for 19 MATRIX fields.",
+  "field_inventory": {
+    "MATRIX": [
+      "news_article_count (ac=10) — total news articles per entity",
+      "normalized_news_article_count (ac=9) — article count normalized cross-sectionally",
+      "primary_sentiment_average (ac=7) — mean primary sentiment",
+      "primary_sentiment_maximum (ac=2) — max primary sentiment",
+      "primary_sentiment_middle_value (ac=3) — median primary sentiment",
+      "primary_sentiment_minimum (ac=1) — min primary sentiment",
+      "primary_sentiment_skewness_2 (ac=0) — skewness of primary sentiment (UNCROWDED)",
+      "primary_sentiment_total_2 (ac=0) — sum of primary sentiment (UNCROWDED)",
+      "primary_sentiment_value (VECTOR, ac=1) — main sentiment score",
+      "secondary_sentiment_average (ac=0) — mean secondary sentiment (UNCROWDED)",
+      "secondary_sentiment_maximum (ac=3) — max secondary sentiment",
+      "secondary_sentiment_middle_value (ac=0) — median secondary sentiment (UNCROWDED)",
+      "secondary_sentiment_minimum (ac=0) — min secondary sentiment (UNCROWDED)",
+      "secondary_sentiment_skewness_2 (ac=2) — skewness of secondary sentiment",
+      "secondary_sentiment_total_2 (ac=4) — sum of secondary sentiment",
+      "secondary_sentiment_value (VECTOR, ac=1)",
+      "sentiment_distribution_skewness_2 (ac=2) — sentiment distribution skewness",
+      "sentiment_score_average (ac=3) — average sentiment over period",
+      "sentiment_score_maximum (ac=0) — max sentiment (UNCROWDED)",
+      "sentiment_score_median (ac=3) — median sentiment",
+      "sentiment_score_minimum (ac=0) — min sentiment (UNCROWDED)",
+      "total_sentiment_score (ac=3) — sum of sentiment values"
+    ],
+    "VECTOR": ["news_sentiment_score", "primary_sentiment_value", "secondary_sentiment_value"]
+  },
+  "role_classification": {
+    "Signal_Flow": ["primary_sentiment_average", "sentiment_score_average", "primary_sentiment_value", "secondary_sentiment_average"],
+    "Uncertainty_Scale": ["primary_sentiment_skewness_2", "sentiment_distribution_skewness_2", "secondary_sentiment_skewness_2"],
+    "Catalyst_Event": ["news_article_count", "normalized_news_article_count", "total_sentiment_score"],
+    "Dimension_Anchor": ["sentiment_score_average"]
+  },
+  "design_notes": [
+    "All MATRIX coverage=0.947 (consistent) → ts_backfill(x,120) for sparse days, no vec_* for MATRIX.",
+    "Sentiment scores bounded [0,1] → de-center via ts_zscore (range-invariant, no decimal constant).",
+    "ts_rank shift-invariant → safe on raw bounded fields.",
+    "Article counts are non-negative → can be weights via rank().",
+    "VECTOR fields (news_sentiment_score, *_value) need vec_* wrappers → avoid in Phase 0 (2-3 field law, no vec_* complexity).",
+    "Cross-structure: primary vs secondary sentiment = divergence signal; skewness = tail risk; article count x sentiment = conviction weighting.",
+    "Settings: STATISTICAL / decay 8 / trunc 0.08."
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "dataset_id": "news84_event_return_model",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "theme_status": "theme=True (3.38x multiplier qualified)",
+  "total_fields": 6,
+  "fields": {
+    "mean_sentiment_score_transfer": {
+      "dataset": "news84",
+      "semantic_role": "Signal_Flow",
+      "range": "[0, 1]",
+      "median": 0.5,
+      "coverage": 1.0,
+      "crowding_alphas": 2,
+      "crowding_users": 2,
+      "prescriptions": ["subtract(field, ts_mean(field, 20))", "ts_zscore(field, 20)"]
+    },
+    "mean_primary_sentiment_score_transfer": {
+      "dataset": "news84",
+      "semantic_role": "Signal_Flow",
+      "range": "[0, 1]",
+      "median": 0.5,
+      "coverage": 1.0,
+      "crowding_alphas": 0,
+      "crowding_users": 0,
+      "prescriptions": ["subtract(field, ts_mean(field, 20))", "ts_zscore(field, 20)"]
+    },
+    "prob_rank_bin1_10d_img_news": {
+      "dataset": "event_return_model",
+      "semantic_role": "Signal_Flow",
+      "range": "[-inf, +inf]",
+      "coverage": 1.0,
+      "crowding_alphas": 18,
+      "crowding_users": 11,
+      "prescriptions": ["group_zscore", "rank"]
+    },
+    "prob_rank_bin3_label2_10d_img_news": {
+      "dataset": "event_return_model",
+      "semantic_role": "Signal_Flow",
+      "range": "[0, 1]",
+      "coverage": 1.0,
+      "crowding_alphas": 3,
+      "crowding_users": 3,
+      "prescriptions": ["subtract(label2, label0)"]
+    },
+    "prob_rank_bin4_label3_5d_img_news": {
+      "dataset": "event_return_model",
+      "semantic_role": "Signal_Flow",
+      "range": "[0, 1]",
+      "coverage": 1.0,
+      "crowding_alphas": 0,
+      "crowding_users": 0,
+      "prescriptions": ["subtract(label3, label0)"]
+    },
+    "news_relevance_score_2": {
+      "dataset": "event_return_model",
+      "semantic_role": "Uncertainty_Scale",
+      "range": "[0, 100]",
+      "coverage": 0.9424,
+      "crowding_alphas": 3,
+      "crowding_users": 3,
+      "prescriptions": ["sqrt", "divide(field, 100)"]
+    }
+  }
+}

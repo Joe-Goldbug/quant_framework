@@ -1,0 +1,20 @@
+{
+  "wave": 34,
+  "seed_id": "GATE1_WAVE34",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "Wave 33 优选 × SUBINDUSTRY 设置层",
+  "hypothesis": "CLUSTER_TEST 是最大缺口（现役最高 1.04@SUBINDUSTRY vs 门 1.58）。设置层 SUBINDUSTRY 是已实证的 CLUSTER 唯一杠杆（0.82→1.04，Margin 保留）。本批把 Wave 33 的表达式放在 SUBINDUSTRY 设置下重跑 + 3 条 CLUSTER 专属结构（双层嵌套秩 / ts_rank 时间均匀化 / vec_range 离散度切片），系统性补上 CLUSTER 研究空白。判据不变：Margin≥10 且 PC<0.70 且四门全过。",
+  "items": [
+    {"id": "w34_w1_subind", "neutralization": "SUBINDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),33), subindustry)", "optimize_reason": "Wave33 W1 的 SUBINDUSTRY 版：窗33 Margin 杠杆 × CLUSTER 设置杠杆交叉。"},
+    {"id": "w34_w3_subind", "neutralization": "SUBINDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_max(buy_sell_tx_count_ratio_all_20d_filled),vec_max(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)", "optimize_reason": "vec_max Fitness 杠杆 × SUBINDUSTRY CLUSTER 杠杆：Fitness 与 CLUSTER 双缺口的交叉赌注。"},
+    {"id": "w34_w7_subind", "neutralization": "SUBINDUSTRY", "expression": "group_rank(ts_decay_exp_window(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),10), subindustry)", "optimize_reason": "双平滑 Margin 杠杆 × SUBINDUSTRY：保 2Y 的 Margin 抬升在 CLUSTER 友好设置下的表现。"},
+    {"id": "w34_w8_subind", "neutralization": "SUBINDUSTRY", "expression": "group_rank(ts_mean(signed_power(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),0.5),20), subindustry)", "optimize_reason": "凹变换去集中 × SUBINDUSTRY：CW/CLUSTER 双 target 在两层去集中杠杆下的叠加。"},
+    {"id": "w34_w4_doublerank", "neutralization": "SUBINDUSTRY", "expression": "group_rank(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), industry), subindustry)", "optimize_reason": "双层嵌套秩（industry 秩内再 subindustry 秩）：信号在粗/细两个聚类粒度都均匀化，CLUSTER 专属最大胆结构。8算子。"},
+    {"id": "w34_w5_subind", "neutralization": "SUBINDUSTRY", "expression": "group_rank(ts_rank(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),66), subindustry)", "optimize_reason": "ts_rank(66) 时间均匀化 × SUBINDUSTRY：时间与截面双均匀化，CLUSTER+SubUniv 双 target。"},
+    {"id": "w34_w6_subind", "neutralization": "SUBINDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_stddev(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)", "optimize_reason": "分歧度切片 × SUBINDUSTRY：与簇内共同因子暴露低的信号在细粒度中性化下 CLUSTER 改善假设。"},
+    {"id": "w34_w12_range", "neutralization": "SUBINDUSTRY", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_range(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)", "optimize_reason": "vec_range 极差切片（W6 姊妹假设）：内部人群体严重分裂时方向信号定价最不充分。族内对照确认分歧度方向稳健性。"}
+  ]
+}

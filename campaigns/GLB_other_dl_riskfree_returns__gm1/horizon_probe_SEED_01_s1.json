@@ -1,0 +1,57 @@
+{
+  "summary": {
+    "pairs": 2,
+    "counts": {
+      "PLATEAU": 2,
+      "SPIKE": 0,
+      "WEAK": 0,
+      "NO_DATA": 0
+    },
+    "plateau_slots": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "spike_slots": [],
+    "paired_slot_count": 4
+  },
+  "verdicts": [
+    {
+      "slots": [
+        1,
+        2
+      ],
+      "windows": [
+        10,
+        30
+      ],
+      "sharpe_short": 2.03,
+      "sharpe_long": 1.7,
+      "stable_min_abs_sharpe": 1.7,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_mean(vector_neut(divide(subtract(probability_label1_4quantile_60day_ohlcv_img,probability_label0_2quantile_60day_ohlcv_img),add(quantile_label_4bucket_60day_ohlcv_img_2,NUM)),quantile_label_4bucket_60day_ohlcv_img_2),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        3,
+        4
+      ],
+      "windows": [
+        10,
+        30
+      ],
+      "sharpe_short": 2.14,
+      "sharpe_long": 2.14,
+      "stable_min_abs_sharpe": 2.14,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_exp_window(divide(subtract(probability_label1_4quantile_60day_ohlcv_img,probability_label0_2quantile_60day_ohlcv_img),add(quantile_label_4bucket_60day_ohlcv_img_2,NUM)),NUM,factor=NUM),subindustry)"
+    }
+  ]
+}

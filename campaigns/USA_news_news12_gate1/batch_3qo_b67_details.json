@@ -1,0 +1,2016 @@
+{
+  "MPYM52lo": {
+    "slot": 1,
+    "details": {
+      "id": "MPYM52lo",
+      "code": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "status": "UNSUBMITTED",
+      "stage": "IS",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 11,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.025,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "metrics": {
+        "sharpe": 1.53,
+        "fitness": 0.85,
+        "turnover": 0.1333,
+        "returns": 0.0413,
+        "drawdown": 0.0413,
+        "margin": 0.000619,
+        "longCount": 444,
+        "shortCount": 591,
+        "pnl": 4117475,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 1.05,
+        "two_year_sharpe": 2.06,
+        "two_year_ladder_window": 3,
+        "investability_sharpe": 1.48,
+        "investability_fitness": 0.82
+      },
+      "ra": {
+        "failed_ra_count": 2,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_SHARPE",
+          "LOW_FITNESS"
+        ],
+        "pyramid_short": "news"
+      },
+      "checks": {
+        "fail": [],
+        "warning": [
+          {
+            "name": "LOW_SHARPE",
+            "value": 1.53,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.85,
+            "limit": 1.0
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "value": 1.19,
+            "limit": 1.58
+          }
+        ],
+        "pass": [
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "IS_LADDER_SHARPE",
+          "MATCHES_PYRAMID",
+          "MATCHES_THEMES"
+        ],
+        "pending": [
+          "SELF_CORRELATION",
+          "DATA_DIVERSITY",
+          "PROD_CORRELATION",
+          "REGULAR_SUBMISSION",
+          "POWER_POOL_CORRELATION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "pyramids": {
+        "effective": 1,
+        "list": [
+          {
+            "name": "USA/D1/NEWS",
+            "multiplier": 1.2
+          }
+        ]
+      }
+    },
+    "yearly": {
+      "records": [
+        {
+          "year": "2014",
+          "pnl": 690677.0,
+          "bookSize": 20000000,
+          "longCount": 457,
+          "shortCount": 571,
+          "turnover": 0.1438,
+          "sharpe": 3.56,
+          "returns": 0.0685,
+          "drawdown": 0.0065,
+          "margin": 0.000953,
+          "fitness": 2.46,
+          "stage": "IS"
+        },
+        {
+          "year": "2015",
+          "pnl": 215198.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 600,
+          "turnover": 0.1288,
+          "sharpe": 0.89,
+          "returns": 0.0213,
+          "drawdown": 0.0226,
+          "margin": 0.000332,
+          "fitness": 0.36,
+          "stage": "IS"
+        },
+        {
+          "year": "2016",
+          "pnl": 182206.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 602,
+          "turnover": 0.1302,
+          "sharpe": 0.79,
+          "returns": 0.0181,
+          "drawdown": 0.0209,
+          "margin": 0.000278,
+          "fitness": 0.29,
+          "stage": "IS"
+        },
+        {
+          "year": "2017",
+          "pnl": 199101.0,
+          "bookSize": 20000000,
+          "longCount": 445,
+          "shortCount": 583,
+          "turnover": 0.1316,
+          "sharpe": 0.97,
+          "returns": 0.0198,
+          "drawdown": 0.013,
+          "margin": 0.000301,
+          "fitness": 0.38,
+          "stage": "IS"
+        },
+        {
+          "year": "2018",
+          "pnl": 363932.0,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 583,
+          "turnover": 0.1365,
+          "sharpe": 1.38,
+          "returns": 0.0362,
+          "drawdown": 0.0222,
+          "margin": 0.000531,
+          "fitness": 0.71,
+          "stage": "IS"
+        },
+        {
+          "year": "2019",
+          "pnl": 521683.0,
+          "bookSize": 20000000,
+          "longCount": 433,
+          "shortCount": 599,
+          "turnover": 0.1351,
+          "sharpe": 2.21,
+          "returns": 0.0518,
+          "drawdown": 0.0113,
+          "margin": 0.000766,
+          "fitness": 1.37,
+          "stage": "IS"
+        },
+        {
+          "year": "2020",
+          "pnl": -5151.0,
+          "bookSize": 20000000,
+          "longCount": 435,
+          "shortCount": 594,
+          "turnover": 0.1286,
+          "sharpe": -0.02,
+          "returns": -0.0006,
+          "drawdown": 0.0413,
+          "margin": -9e-06,
+          "fitness": -0.0,
+          "stage": "IS"
+        },
+        {
+          "year": "2021",
+          "pnl": 942420.0,
+          "bookSize": 20000000,
+          "longCount": 444,
+          "shortCount": 590,
+          "turnover": 0.1325,
+          "sharpe": 2.98,
+          "returns": 0.0935,
+          "drawdown": 0.0137,
+          "margin": 0.001411,
+          "fitness": 2.5,
+          "stage": "IS"
+        },
+        {
+          "year": "2022",
+          "pnl": 489814.0,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 591,
+          "turnover": 0.1307,
+          "sharpe": 1.41,
+          "returns": 0.0488,
+          "drawdown": 0.034,
+          "margin": 0.000747,
+          "fitness": 0.86,
+          "stage": "IS"
+        },
+        {
+          "year": "2023",
+          "pnl": 483275.0,
+          "bookSize": 20000000,
+          "longCount": 448,
+          "shortCount": 595,
+          "turnover": 0.1343,
+          "sharpe": 1.7,
+          "returns": 0.0483,
+          "drawdown": 0.0103,
+          "margin": 0.00072,
+          "fitness": 1.02,
+          "stage": "IS"
+        }
+      ]
+    }
+  },
+  "GrW13703": {
+    "slot": 2,
+    "details": {
+      "id": "GrW13703",
+      "code": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "status": "UNSUBMITTED",
+      "stage": "IS",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 10,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.025,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "metrics": {
+        "sharpe": 1.53,
+        "fitness": 0.83,
+        "turnover": 0.1387,
+        "returns": 0.0411,
+        "drawdown": 0.0403,
+        "margin": 0.000593,
+        "longCount": 444,
+        "shortCount": 591,
+        "pnl": 4106095,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 1.04,
+        "two_year_sharpe": 1.58,
+        "two_year_ladder_window": 2,
+        "investability_sharpe": 1.48,
+        "investability_fitness": 0.8
+      },
+      "ra": {
+        "failed_ra_count": 3,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "IS_LADDER_SHARPE"
+        ],
+        "pyramid_short": "news"
+      },
+      "checks": {
+        "fail": [],
+        "warning": [
+          {
+            "name": "LOW_SHARPE",
+            "value": 1.53,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.83,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 1.58,
+            "limit": 1.58,
+            "year": 2
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "value": 1.18,
+            "limit": 1.58
+          }
+        ],
+        "pass": [
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "MATCHES_PYRAMID",
+          "MATCHES_THEMES"
+        ],
+        "pending": [
+          "SELF_CORRELATION",
+          "DATA_DIVERSITY",
+          "PROD_CORRELATION",
+          "REGULAR_SUBMISSION",
+          "POWER_POOL_CORRELATION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "pyramids": {
+        "effective": 1,
+        "list": [
+          {
+            "name": "USA/D1/NEWS",
+            "multiplier": 1.2
+          }
+        ]
+      }
+    },
+    "yearly": {
+      "records": [
+        {
+          "year": "2014",
+          "pnl": 689881.0,
+          "bookSize": 20000000,
+          "longCount": 456,
+          "shortCount": 572,
+          "turnover": 0.1493,
+          "sharpe": 3.57,
+          "returns": 0.0684,
+          "drawdown": 0.0066,
+          "margin": 0.000917,
+          "fitness": 2.42,
+          "stage": "IS"
+        },
+        {
+          "year": "2015",
+          "pnl": 209927.0,
+          "bookSize": 20000000,
+          "longCount": 439,
+          "shortCount": 600,
+          "turnover": 0.1341,
+          "sharpe": 0.87,
+          "returns": 0.0208,
+          "drawdown": 0.0225,
+          "margin": 0.000311,
+          "fitness": 0.34,
+          "stage": "IS"
+        },
+        {
+          "year": "2016",
+          "pnl": 179140.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 603,
+          "turnover": 0.1355,
+          "sharpe": 0.78,
+          "returns": 0.0178,
+          "drawdown": 0.021,
+          "margin": 0.000262,
+          "fitness": 0.28,
+          "stage": "IS"
+        },
+        {
+          "year": "2017",
+          "pnl": 209129.0,
+          "bookSize": 20000000,
+          "longCount": 445,
+          "shortCount": 584,
+          "turnover": 0.1372,
+          "sharpe": 1.02,
+          "returns": 0.0208,
+          "drawdown": 0.0123,
+          "margin": 0.000304,
+          "fitness": 0.4,
+          "stage": "IS"
+        },
+        {
+          "year": "2018",
+          "pnl": 369454.0,
+          "bookSize": 20000000,
+          "longCount": 450,
+          "shortCount": 584,
+          "turnover": 0.1422,
+          "sharpe": 1.41,
+          "returns": 0.0368,
+          "drawdown": 0.0222,
+          "margin": 0.000517,
+          "fitness": 0.72,
+          "stage": "IS"
+        },
+        {
+          "year": "2019",
+          "pnl": 514896.0,
+          "bookSize": 20000000,
+          "longCount": 432,
+          "shortCount": 600,
+          "turnover": 0.1404,
+          "sharpe": 2.19,
+          "returns": 0.0511,
+          "drawdown": 0.0117,
+          "margin": 0.000727,
+          "fitness": 1.32,
+          "stage": "IS"
+        },
+        {
+          "year": "2020",
+          "pnl": -5837.0,
+          "bookSize": 20000000,
+          "longCount": 434,
+          "shortCount": 595,
+          "turnover": 0.134,
+          "sharpe": -0.02,
+          "returns": -0.0006,
+          "drawdown": 0.0403,
+          "margin": -9e-06,
+          "fitness": -0.0,
+          "stage": "IS"
+        },
+        {
+          "year": "2021",
+          "pnl": 937411.0,
+          "bookSize": 20000000,
+          "longCount": 443,
+          "shortCount": 590,
+          "turnover": 0.138,
+          "sharpe": 2.96,
+          "returns": 0.093,
+          "drawdown": 0.0138,
+          "margin": 0.001347,
+          "fitness": 2.43,
+          "stage": "IS"
+        },
+        {
+          "year": "2022",
+          "pnl": 496199.0,
+          "bookSize": 20000000,
+          "longCount": 450,
+          "shortCount": 592,
+          "turnover": 0.1362,
+          "sharpe": 1.43,
+          "returns": 0.0494,
+          "drawdown": 0.0336,
+          "margin": 0.000726,
+          "fitness": 0.86,
+          "stage": "IS"
+        },
+        {
+          "year": "2023",
+          "pnl": 472544.0,
+          "bookSize": 20000000,
+          "longCount": 447,
+          "shortCount": 595,
+          "turnover": 0.1401,
+          "sharpe": 1.67,
+          "returns": 0.0473,
+          "drawdown": 0.0106,
+          "margin": 0.000674,
+          "fitness": 0.97,
+          "stage": "IS"
+        }
+      ]
+    }
+  },
+  "78L7K2q1": {
+    "slot": 3,
+    "details": {
+      "id": "78L7K2q1",
+      "code": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 9)",
+      "status": "UNSUBMITTED",
+      "stage": "IS",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 11,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.025,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "metrics": {
+        "sharpe": 1.53,
+        "fitness": 0.83,
+        "turnover": 0.1385,
+        "returns": 0.0412,
+        "drawdown": 0.0404,
+        "margin": 0.000595,
+        "longCount": 444,
+        "shortCount": 591,
+        "pnl": 4112102,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 1.04,
+        "two_year_sharpe": 1.57,
+        "two_year_ladder_window": 2,
+        "investability_sharpe": 1.48,
+        "investability_fitness": 0.81
+      },
+      "ra": {
+        "failed_ra_count": 3,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "IS_LADDER_SHARPE"
+        ],
+        "pyramid_short": "news"
+      },
+      "checks": {
+        "fail": [],
+        "warning": [
+          {
+            "name": "LOW_SHARPE",
+            "value": 1.53,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.83,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 1.57,
+            "limit": 1.58,
+            "year": 2
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "value": 1.19,
+            "limit": 1.58
+          }
+        ],
+        "pass": [
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "MATCHES_PYRAMID",
+          "MATCHES_THEMES"
+        ],
+        "pending": [
+          "SELF_CORRELATION",
+          "DATA_DIVERSITY",
+          "PROD_CORRELATION",
+          "REGULAR_SUBMISSION",
+          "POWER_POOL_CORRELATION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "pyramids": {
+        "effective": 1,
+        "list": [
+          {
+            "name": "USA/D1/NEWS",
+            "multiplier": 1.2
+          }
+        ]
+      }
+    },
+    "yearly": {
+      "records": [
+        {
+          "year": "2014",
+          "pnl": 695574.0,
+          "bookSize": 20000000,
+          "longCount": 456,
+          "shortCount": 572,
+          "turnover": 0.1492,
+          "sharpe": 3.6,
+          "returns": 0.069,
+          "drawdown": 0.0066,
+          "margin": 0.000925,
+          "fitness": 2.45,
+          "stage": "IS"
+        },
+        {
+          "year": "2015",
+          "pnl": 210264.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 600,
+          "turnover": 0.1338,
+          "sharpe": 0.87,
+          "returns": 0.0209,
+          "drawdown": 0.0225,
+          "margin": 0.000312,
+          "fitness": 0.34,
+          "stage": "IS"
+        },
+        {
+          "year": "2016",
+          "pnl": 180341.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 602,
+          "turnover": 0.1353,
+          "sharpe": 0.79,
+          "returns": 0.0179,
+          "drawdown": 0.021,
+          "margin": 0.000265,
+          "fitness": 0.29,
+          "stage": "IS"
+        },
+        {
+          "year": "2017",
+          "pnl": 208838.0,
+          "bookSize": 20000000,
+          "longCount": 445,
+          "shortCount": 584,
+          "turnover": 0.137,
+          "sharpe": 1.02,
+          "returns": 0.0208,
+          "drawdown": 0.0123,
+          "margin": 0.000304,
+          "fitness": 0.4,
+          "stage": "IS"
+        },
+        {
+          "year": "2018",
+          "pnl": 370383.0,
+          "bookSize": 20000000,
+          "longCount": 450,
+          "shortCount": 584,
+          "turnover": 0.142,
+          "sharpe": 1.41,
+          "returns": 0.0369,
+          "drawdown": 0.0221,
+          "margin": 0.00052,
+          "fitness": 0.72,
+          "stage": "IS"
+        },
+        {
+          "year": "2019",
+          "pnl": 514112.0,
+          "bookSize": 20000000,
+          "longCount": 432,
+          "shortCount": 600,
+          "turnover": 0.1403,
+          "sharpe": 2.19,
+          "returns": 0.051,
+          "drawdown": 0.0117,
+          "margin": 0.000727,
+          "fitness": 1.32,
+          "stage": "IS"
+        },
+        {
+          "year": "2020",
+          "pnl": -5902.0,
+          "bookSize": 20000000,
+          "longCount": 434,
+          "shortCount": 595,
+          "turnover": 0.1338,
+          "sharpe": -0.02,
+          "returns": -0.0006,
+          "drawdown": 0.0404,
+          "margin": -1e-05,
+          "fitness": -0.0,
+          "stage": "IS"
+        },
+        {
+          "year": "2021",
+          "pnl": 940037.0,
+          "bookSize": 20000000,
+          "longCount": 443,
+          "shortCount": 590,
+          "turnover": 0.1379,
+          "sharpe": 2.97,
+          "returns": 0.0933,
+          "drawdown": 0.0137,
+          "margin": 0.001353,
+          "fitness": 2.44,
+          "stage": "IS"
+        },
+        {
+          "year": "2022",
+          "pnl": 493273.0,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 592,
+          "turnover": 0.136,
+          "sharpe": 1.42,
+          "returns": 0.0491,
+          "drawdown": 0.0337,
+          "margin": 0.000722,
+          "fitness": 0.85,
+          "stage": "IS"
+        },
+        {
+          "year": "2023",
+          "pnl": 471840.0,
+          "bookSize": 20000000,
+          "longCount": 447,
+          "shortCount": 595,
+          "turnover": 0.1399,
+          "sharpe": 1.67,
+          "returns": 0.0472,
+          "drawdown": 0.0106,
+          "margin": 0.000674,
+          "fitness": 0.97,
+          "stage": "IS"
+        }
+      ]
+    }
+  },
+  "O0AQ52wR": {
+    "slot": 4,
+    "details": {
+      "id": "O0AQ52wR",
+      "code": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.2), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "status": "UNSUBMITTED",
+      "stage": "IS",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 11,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.025,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "metrics": {
+        "sharpe": 1.52,
+        "fitness": 0.84,
+        "turnover": 0.1332,
+        "returns": 0.0411,
+        "drawdown": 0.0402,
+        "margin": 0.000617,
+        "longCount": 444,
+        "shortCount": 591,
+        "pnl": 4104876,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 1.05,
+        "two_year_sharpe": 1.56,
+        "two_year_ladder_window": 2,
+        "investability_sharpe": 1.48,
+        "investability_fitness": 0.82
+      },
+      "ra": {
+        "failed_ra_count": 3,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "IS_LADDER_SHARPE"
+        ],
+        "pyramid_short": "news"
+      },
+      "checks": {
+        "fail": [],
+        "warning": [
+          {
+            "name": "LOW_SHARPE",
+            "value": 1.52,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.84,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 1.56,
+            "limit": 1.58,
+            "year": 2
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "value": 1.18,
+            "limit": 1.58
+          }
+        ],
+        "pass": [
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "MATCHES_PYRAMID",
+          "MATCHES_THEMES"
+        ],
+        "pending": [
+          "SELF_CORRELATION",
+          "DATA_DIVERSITY",
+          "PROD_CORRELATION",
+          "REGULAR_SUBMISSION",
+          "POWER_POOL_CORRELATION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "pyramids": {
+        "effective": 1,
+        "list": [
+          {
+            "name": "USA/D1/NEWS",
+            "multiplier": 1.2
+          }
+        ]
+      }
+    },
+    "yearly": {
+      "records": [
+        {
+          "year": "2014",
+          "pnl": 695105.0,
+          "bookSize": 20000000,
+          "longCount": 457,
+          "shortCount": 571,
+          "turnover": 0.1439,
+          "sharpe": 3.58,
+          "returns": 0.069,
+          "drawdown": 0.0065,
+          "margin": 0.000958,
+          "fitness": 2.48,
+          "stage": "IS"
+        },
+        {
+          "year": "2015",
+          "pnl": 225433.0,
+          "bookSize": 20000000,
+          "longCount": 439,
+          "shortCount": 600,
+          "turnover": 0.1287,
+          "sharpe": 0.93,
+          "returns": 0.0224,
+          "drawdown": 0.0226,
+          "margin": 0.000347,
+          "fitness": 0.39,
+          "stage": "IS"
+        },
+        {
+          "year": "2016",
+          "pnl": 174486.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 603,
+          "turnover": 0.1302,
+          "sharpe": 0.76,
+          "returns": 0.0173,
+          "drawdown": 0.0211,
+          "margin": 0.000266,
+          "fitness": 0.28,
+          "stage": "IS"
+        },
+        {
+          "year": "2017",
+          "pnl": 194440.0,
+          "bookSize": 20000000,
+          "longCount": 445,
+          "shortCount": 583,
+          "turnover": 0.1318,
+          "sharpe": 0.95,
+          "returns": 0.0194,
+          "drawdown": 0.0128,
+          "margin": 0.000294,
+          "fitness": 0.36,
+          "stage": "IS"
+        },
+        {
+          "year": "2018",
+          "pnl": 350346.0,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 584,
+          "turnover": 0.1364,
+          "sharpe": 1.33,
+          "returns": 0.0349,
+          "drawdown": 0.0222,
+          "margin": 0.000512,
+          "fitness": 0.67,
+          "stage": "IS"
+        },
+        {
+          "year": "2019",
+          "pnl": 527870.0,
+          "bookSize": 20000000,
+          "longCount": 433,
+          "shortCount": 600,
+          "turnover": 0.1351,
+          "sharpe": 2.24,
+          "returns": 0.0524,
+          "drawdown": 0.0113,
+          "margin": 0.000775,
+          "fitness": 1.4,
+          "stage": "IS"
+        },
+        {
+          "year": "2020",
+          "pnl": 13559.0,
+          "bookSize": 20000000,
+          "longCount": 434,
+          "shortCount": 595,
+          "turnover": 0.1286,
+          "sharpe": 0.04,
+          "returns": 0.0015,
+          "drawdown": 0.0402,
+          "margin": 2.3e-05,
+          "fitness": 0.0,
+          "stage": "IS"
+        },
+        {
+          "year": "2021",
+          "pnl": 928893.0,
+          "bookSize": 20000000,
+          "longCount": 444,
+          "shortCount": 590,
+          "turnover": 0.1323,
+          "sharpe": 2.96,
+          "returns": 0.0922,
+          "drawdown": 0.014,
+          "margin": 0.001393,
+          "fitness": 2.47,
+          "stage": "IS"
+        },
+        {
+          "year": "2022",
+          "pnl": 473315.0,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 592,
+          "turnover": 0.1306,
+          "sharpe": 1.36,
+          "returns": 0.0471,
+          "drawdown": 0.035,
+          "margin": 0.000722,
+          "fitness": 0.82,
+          "stage": "IS"
+        },
+        {
+          "year": "2023",
+          "pnl": 486871.0,
+          "bookSize": 20000000,
+          "longCount": 448,
+          "shortCount": 595,
+          "turnover": 0.1343,
+          "sharpe": 1.71,
+          "returns": 0.0487,
+          "drawdown": 0.0105,
+          "margin": 0.000725,
+          "fitness": 1.03,
+          "stage": "IS"
+        }
+      ]
+    }
+  },
+  "P0oQXAqJ": {
+    "slot": 5,
+    "details": {
+      "id": "P0oQXAqJ",
+      "code": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.8), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "status": "UNSUBMITTED",
+      "stage": "IS",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 11,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.025,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "metrics": {
+        "sharpe": 1.5,
+        "fitness": 0.83,
+        "turnover": 0.1332,
+        "returns": 0.0407,
+        "drawdown": 0.0416,
+        "margin": 0.00061,
+        "longCount": 445,
+        "shortCount": 591,
+        "pnl": 4057033,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 1.04,
+        "two_year_sharpe": 1.53,
+        "two_year_ladder_window": 2,
+        "investability_sharpe": 1.46,
+        "investability_fitness": 0.8
+      },
+      "ra": {
+        "failed_ra_count": 3,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "IS_LADDER_SHARPE"
+        ],
+        "pyramid_short": "news"
+      },
+      "checks": {
+        "fail": [],
+        "warning": [
+          {
+            "name": "LOW_SHARPE",
+            "value": 1.5,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.83,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 1.53,
+            "limit": 1.58,
+            "year": 2
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "value": 1.17,
+            "limit": 1.58
+          }
+        ],
+        "pass": [
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "MATCHES_PYRAMID",
+          "MATCHES_THEMES"
+        ],
+        "pending": [
+          "SELF_CORRELATION",
+          "DATA_DIVERSITY",
+          "PROD_CORRELATION",
+          "REGULAR_SUBMISSION",
+          "POWER_POOL_CORRELATION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "pyramids": {
+        "effective": 1,
+        "list": [
+          {
+            "name": "USA/D1/NEWS",
+            "multiplier": 1.2
+          }
+        ]
+      }
+    },
+    "yearly": {
+      "records": [
+        {
+          "year": "2014",
+          "pnl": 668403.0,
+          "bookSize": 20000000,
+          "longCount": 458,
+          "shortCount": 570,
+          "turnover": 0.1436,
+          "sharpe": 3.46,
+          "returns": 0.0663,
+          "drawdown": 0.0066,
+          "margin": 0.000923,
+          "fitness": 2.35,
+          "stage": "IS"
+        },
+        {
+          "year": "2015",
+          "pnl": 224150.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 599,
+          "turnover": 0.1289,
+          "sharpe": 0.93,
+          "returns": 0.0222,
+          "drawdown": 0.0219,
+          "margin": 0.000345,
+          "fitness": 0.39,
+          "stage": "IS"
+        },
+        {
+          "year": "2016",
+          "pnl": 173895.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 602,
+          "turnover": 0.1301,
+          "sharpe": 0.76,
+          "returns": 0.0173,
+          "drawdown": 0.0208,
+          "margin": 0.000265,
+          "fitness": 0.28,
+          "stage": "IS"
+        },
+        {
+          "year": "2017",
+          "pnl": 205810.0,
+          "bookSize": 20000000,
+          "longCount": 446,
+          "shortCount": 583,
+          "turnover": 0.1316,
+          "sharpe": 1.0,
+          "returns": 0.0205,
+          "drawdown": 0.0124,
+          "margin": 0.000312,
+          "fitness": 0.39,
+          "stage": "IS"
+        },
+        {
+          "year": "2018",
+          "pnl": 372800.0,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 584,
+          "turnover": 0.1365,
+          "sharpe": 1.41,
+          "returns": 0.0371,
+          "drawdown": 0.022,
+          "margin": 0.000544,
+          "fitness": 0.74,
+          "stage": "IS"
+        },
+        {
+          "year": "2019",
+          "pnl": 516381.0,
+          "bookSize": 20000000,
+          "longCount": 433,
+          "shortCount": 599,
+          "turnover": 0.1352,
+          "sharpe": 2.19,
+          "returns": 0.0512,
+          "drawdown": 0.0112,
+          "margin": 0.000758,
+          "fitness": 1.35,
+          "stage": "IS"
+        },
+        {
+          "year": "2020",
+          "pnl": -19456.0,
+          "bookSize": 20000000,
+          "longCount": 435,
+          "shortCount": 594,
+          "turnover": 0.1287,
+          "sharpe": -0.06,
+          "returns": -0.0021,
+          "drawdown": 0.0416,
+          "margin": -3.3e-05,
+          "fitness": -0.01,
+          "stage": "IS"
+        },
+        {
+          "year": "2021",
+          "pnl": 944001.0,
+          "bookSize": 20000000,
+          "longCount": 445,
+          "shortCount": 589,
+          "turnover": 0.1324,
+          "sharpe": 2.99,
+          "returns": 0.0937,
+          "drawdown": 0.0135,
+          "margin": 0.001415,
+          "fitness": 2.52,
+          "stage": "IS"
+        },
+        {
+          "year": "2022",
+          "pnl": 476341.0,
+          "bookSize": 20000000,
+          "longCount": 452,
+          "shortCount": 591,
+          "turnover": 0.1306,
+          "sharpe": 1.37,
+          "returns": 0.0474,
+          "drawdown": 0.0348,
+          "margin": 0.000726,
+          "fitness": 0.83,
+          "stage": "IS"
+        },
+        {
+          "year": "2023",
+          "pnl": 459811.0,
+          "bookSize": 20000000,
+          "longCount": 448,
+          "shortCount": 594,
+          "turnover": 0.1344,
+          "sharpe": 1.61,
+          "returns": 0.046,
+          "drawdown": 0.0109,
+          "margin": 0.000684,
+          "fitness": 0.94,
+          "stage": "IS"
+        }
+      ]
+    }
+  },
+  "wpQKJvO1": {
+    "slot": 6,
+    "details": {
+      "id": "wpQKJvO1",
+      "code": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), 10)",
+      "status": "UNSUBMITTED",
+      "stage": "IS",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 12,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.025,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "metrics": {
+        "sharpe": 1.52,
+        "fitness": 0.87,
+        "turnover": 0.1268,
+        "returns": 0.0415,
+        "drawdown": 0.0424,
+        "margin": 0.000654,
+        "longCount": 448,
+        "shortCount": 587,
+        "pnl": 4136865,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 1.06,
+        "two_year_sharpe": 2.05,
+        "two_year_ladder_window": 3,
+        "investability_sharpe": 1.48,
+        "investability_fitness": 0.84
+      },
+      "ra": {
+        "failed_ra_count": 2,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_SHARPE",
+          "LOW_FITNESS"
+        ],
+        "pyramid_short": "news"
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "value": 1.52,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.87,
+            "limit": 1.0
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": 1.22,
+            "limit": 1.58
+          },
+          {
+            "name": "MATCHES_THEMES"
+          }
+        ],
+        "pass": [
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "IS_LADDER_SHARPE",
+          "MATCHES_PYRAMID",
+          "MATCHES_THEMES"
+        ],
+        "pending": [
+          "SELF_CORRELATION",
+          "DATA_DIVERSITY",
+          "PROD_CORRELATION",
+          "REGULAR_SUBMISSION"
+        ]
+      },
+      "pyramids": {
+        "effective": 1,
+        "list": [
+          {
+            "name": "USA/D1/NEWS",
+            "multiplier": 1.2
+          }
+        ]
+      }
+    },
+    "yearly": {
+      "records": [
+        {
+          "year": "2014",
+          "pnl": 704916.0,
+          "bookSize": 20000000,
+          "longCount": 462,
+          "shortCount": 566,
+          "turnover": 0.1357,
+          "sharpe": 3.55,
+          "returns": 0.0699,
+          "drawdown": 0.007,
+          "margin": 0.001031,
+          "fitness": 2.55,
+          "stage": "IS"
+        },
+        {
+          "year": "2015",
+          "pnl": 190513.0,
+          "bookSize": 20000000,
+          "longCount": 445,
+          "shortCount": 595,
+          "turnover": 0.1222,
+          "sharpe": 0.78,
+          "returns": 0.0189,
+          "drawdown": 0.0263,
+          "margin": 0.000309,
+          "fitness": 0.3,
+          "stage": "IS"
+        },
+        {
+          "year": "2016",
+          "pnl": 180241.0,
+          "bookSize": 20000000,
+          "longCount": 445,
+          "shortCount": 597,
+          "turnover": 0.1239,
+          "sharpe": 0.78,
+          "returns": 0.0179,
+          "drawdown": 0.0216,
+          "margin": 0.000289,
+          "fitness": 0.3,
+          "stage": "IS"
+        },
+        {
+          "year": "2017",
+          "pnl": 186552.0,
+          "bookSize": 20000000,
+          "longCount": 450,
+          "shortCount": 579,
+          "turnover": 0.1253,
+          "sharpe": 0.91,
+          "returns": 0.0186,
+          "drawdown": 0.0126,
+          "margin": 0.000297,
+          "fitness": 0.35,
+          "stage": "IS"
+        },
+        {
+          "year": "2018",
+          "pnl": 378832.0,
+          "bookSize": 20000000,
+          "longCount": 454,
+          "shortCount": 580,
+          "turnover": 0.13,
+          "sharpe": 1.43,
+          "returns": 0.0377,
+          "drawdown": 0.0212,
+          "margin": 0.000581,
+          "fitness": 0.77,
+          "stage": "IS"
+        },
+        {
+          "year": "2019",
+          "pnl": 521076.0,
+          "bookSize": 20000000,
+          "longCount": 436,
+          "shortCount": 596,
+          "turnover": 0.1295,
+          "sharpe": 2.19,
+          "returns": 0.0517,
+          "drawdown": 0.0113,
+          "margin": 0.000798,
+          "fitness": 1.38,
+          "stage": "IS"
+        },
+        {
+          "year": "2020",
+          "pnl": 14702.0,
+          "bookSize": 20000000,
+          "longCount": 438,
+          "shortCount": 591,
+          "turnover": 0.1228,
+          "sharpe": 0.04,
+          "returns": 0.0016,
+          "drawdown": 0.0424,
+          "margin": 2.6e-05,
+          "fitness": 0.0,
+          "stage": "IS"
+        },
+        {
+          "year": "2021",
+          "pnl": 949480.0,
+          "bookSize": 20000000,
+          "longCount": 448,
+          "shortCount": 586,
+          "turnover": 0.1261,
+          "sharpe": 2.97,
+          "returns": 0.0942,
+          "drawdown": 0.0145,
+          "margin": 0.001494,
+          "fitness": 2.57,
+          "stage": "IS"
+        },
+        {
+          "year": "2022",
+          "pnl": 472638.0,
+          "bookSize": 20000000,
+          "longCount": 455,
+          "shortCount": 588,
+          "turnover": 0.1244,
+          "sharpe": 1.36,
+          "returns": 0.0471,
+          "drawdown": 0.0328,
+          "margin": 0.000757,
+          "fitness": 0.83,
+          "stage": "IS"
+        },
+        {
+          "year": "2023",
+          "pnl": 503749.0,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 591,
+          "turnover": 0.1276,
+          "sharpe": 1.76,
+          "returns": 0.0504,
+          "drawdown": 0.011,
+          "margin": 0.000789,
+          "fitness": 1.11,
+          "stage": "IS"
+        }
+      ]
+    }
+  },
+  "O0AQ52qR": {
+    "slot": 7,
+    "details": {
+      "id": "O0AQ52qR",
+      "code": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(subtract(prob_rank_bin2_label1_10d_img_news, 0.5), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "status": "UNSUBMITTED",
+      "stage": "IS",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 12,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.025,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "metrics": {
+        "sharpe": 1.09,
+        "fitness": 0.52,
+        "turnover": 0.1287,
+        "returns": 0.0298,
+        "drawdown": 0.0467,
+        "margin": 0.000463,
+        "longCount": 444,
+        "shortCount": 592,
+        "pnl": 2971875,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 0.82,
+        "two_year_sharpe": 0.93,
+        "two_year_ladder_window": 2,
+        "investability_sharpe": 1.05,
+        "investability_fitness": 0.5
+      },
+      "ra": {
+        "failed_ra_count": 3,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "IS_LADDER_SHARPE"
+        ],
+        "pyramid_short": "news"
+      },
+      "checks": {
+        "fail": [],
+        "warning": [
+          {
+            "name": "LOW_SHARPE",
+            "value": 1.09,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.52,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 0.93,
+            "limit": 1.58,
+            "year": 2
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "value": 0.82,
+            "limit": 1.58
+          }
+        ],
+        "pass": [
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "MATCHES_PYRAMID",
+          "MATCHES_THEMES"
+        ],
+        "pending": [
+          "SELF_CORRELATION",
+          "DATA_DIVERSITY",
+          "PROD_CORRELATION",
+          "REGULAR_SUBMISSION",
+          "POWER_POOL_CORRELATION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "pyramids": {
+        "effective": 1,
+        "list": [
+          {
+            "name": "USA/D1/NEWS",
+            "multiplier": 1.2
+          }
+        ]
+      }
+    },
+    "yearly": {
+      "records": [
+        {
+          "year": "2014",
+          "pnl": 636323.0,
+          "bookSize": 20000000,
+          "longCount": 450,
+          "shortCount": 578,
+          "turnover": 0.1362,
+          "sharpe": 3.18,
+          "returns": 0.0631,
+          "drawdown": 0.0095,
+          "margin": 0.000927,
+          "fitness": 2.16,
+          "stage": "IS"
+        },
+        {
+          "year": "2015",
+          "pnl": 4324.0,
+          "bookSize": 20000000,
+          "longCount": 443,
+          "shortCount": 596,
+          "turnover": 0.1209,
+          "sharpe": 0.02,
+          "returns": 0.0004,
+          "drawdown": 0.0349,
+          "margin": 7e-06,
+          "fitness": 0.0,
+          "stage": "IS"
+        },
+        {
+          "year": "2016",
+          "pnl": 203812.0,
+          "bookSize": 20000000,
+          "longCount": 442,
+          "shortCount": 600,
+          "turnover": 0.1225,
+          "sharpe": 0.84,
+          "returns": 0.0202,
+          "drawdown": 0.0175,
+          "margin": 0.00033,
+          "fitness": 0.34,
+          "stage": "IS"
+        },
+        {
+          "year": "2017",
+          "pnl": 182234.0,
+          "bookSize": 20000000,
+          "longCount": 447,
+          "shortCount": 581,
+          "turnover": 0.1318,
+          "sharpe": 0.9,
+          "returns": 0.0182,
+          "drawdown": 0.0097,
+          "margin": 0.000275,
+          "fitness": 0.33,
+          "stage": "IS"
+        },
+        {
+          "year": "2018",
+          "pnl": 444321.0,
+          "bookSize": 20000000,
+          "longCount": 453,
+          "shortCount": 582,
+          "turnover": 0.1369,
+          "sharpe": 1.7,
+          "returns": 0.0443,
+          "drawdown": 0.0135,
+          "margin": 0.000647,
+          "fitness": 0.97,
+          "stage": "IS"
+        },
+        {
+          "year": "2019",
+          "pnl": 355499.0,
+          "bookSize": 20000000,
+          "longCount": 435,
+          "shortCount": 597,
+          "turnover": 0.1341,
+          "sharpe": 1.46,
+          "returns": 0.0353,
+          "drawdown": 0.0169,
+          "margin": 0.000526,
+          "fitness": 0.75,
+          "stage": "IS"
+        },
+        {
+          "year": "2020",
+          "pnl": -160946.0,
+          "bookSize": 20000000,
+          "longCount": 436,
+          "shortCount": 593,
+          "turnover": 0.1285,
+          "sharpe": -0.47,
+          "returns": -0.0174,
+          "drawdown": 0.0456,
+          "margin": -0.000271,
+          "fitness": -0.17,
+          "stage": "IS"
+        },
+        {
+          "year": "2021",
+          "pnl": 723893.0,
+          "bookSize": 20000000,
+          "longCount": 441,
+          "shortCount": 593,
+          "turnover": 0.125,
+          "sharpe": 2.37,
+          "returns": 0.0718,
+          "drawdown": 0.0155,
+          "margin": 0.001149,
+          "fitness": 1.8,
+          "stage": "IS"
+        },
+        {
+          "year": "2022",
+          "pnl": 396902.0,
+          "bookSize": 20000000,
+          "longCount": 447,
+          "shortCount": 596,
+          "turnover": 0.1247,
+          "sharpe": 1.16,
+          "returns": 0.0395,
+          "drawdown": 0.038,
+          "margin": 0.000634,
+          "fitness": 0.65,
+          "stage": "IS"
+        },
+        {
+          "year": "2023",
+          "pnl": 160116.0,
+          "bookSize": 20000000,
+          "longCount": 442,
+          "shortCount": 600,
+          "turnover": 0.1265,
+          "sharpe": 0.57,
+          "returns": 0.016,
+          "drawdown": 0.0202,
+          "margin": 0.000253,
+          "fitness": 0.2,
+          "stage": "IS"
+        }
+      ]
+    }
+  },
+  "9qxZA2Kq": {
+    "slot": 8,
+    "details": {
+      "id": "9qxZA2Kq",
+      "code": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(subtract(prob_rank_bin3_label2_10d_img_news, 0.333), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "status": "UNSUBMITTED",
+      "stage": "IS",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 12,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.025,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "metrics": {
+        "sharpe": 1.09,
+        "fitness": 0.52,
+        "turnover": 0.1338,
+        "returns": 0.0305,
+        "drawdown": 0.0486,
+        "margin": 0.000456,
+        "longCount": 444,
+        "shortCount": 591,
+        "pnl": 3043623,
+        "bookSize": 20000000,
+        "startDate": "2014-01-01",
+        "sub_universe_sharpe": 0.73,
+        "two_year_sharpe": 0.83,
+        "two_year_ladder_window": 2,
+        "investability_sharpe": 1.07,
+        "investability_fitness": 0.51
+      },
+      "ra": {
+        "failed_ra_count": 3,
+        "failed_ppa_count": 0,
+        "ra_failed": true,
+        "ppa_failed": false,
+        "ra_failed_checks": [
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "IS_LADDER_SHARPE"
+        ],
+        "pyramid_short": "news"
+      },
+      "checks": {
+        "fail": [],
+        "warning": [
+          {
+            "name": "LOW_SHARPE",
+            "value": 1.09,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.52,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 0.83,
+            "limit": 1.58,
+            "year": 2
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "value": 0.97,
+            "limit": 1.58
+          }
+        ],
+        "pass": [
+          "LOW_TURNOVER",
+          "HIGH_TURNOVER",
+          "CONCENTRATED_WEIGHT",
+          "LOW_SUB_UNIVERSE_SHARPE",
+          "MATCHES_PYRAMID",
+          "MATCHES_THEMES"
+        ],
+        "pending": [
+          "SELF_CORRELATION",
+          "DATA_DIVERSITY",
+          "PROD_CORRELATION",
+          "REGULAR_SUBMISSION",
+          "POWER_POOL_CORRELATION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "pyramids": {
+        "effective": 1,
+        "list": [
+          {
+            "name": "USA/D1/NEWS",
+            "multiplier": 1.2
+          }
+        ]
+      }
+    },
+    "yearly": {
+      "records": [
+        {
+          "year": "2014",
+          "pnl": 658069.0,
+          "bookSize": 20000000,
+          "longCount": 450,
+          "shortCount": 577,
+          "turnover": 0.1316,
+          "sharpe": 3.33,
+          "returns": 0.0653,
+          "drawdown": 0.0097,
+          "margin": 0.000992,
+          "fitness": 2.35,
+          "stage": "IS"
+        },
+        {
+          "year": "2015",
+          "pnl": -63675.0,
+          "bookSize": 20000000,
+          "longCount": 446,
+          "shortCount": 594,
+          "turnover": 0.1277,
+          "sharpe": -0.26,
+          "returns": -0.0063,
+          "drawdown": 0.0415,
+          "margin": -9.9e-05,
+          "fitness": -0.06,
+          "stage": "IS"
+        },
+        {
+          "year": "2016",
+          "pnl": 99080.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 602,
+          "turnover": 0.1287,
+          "sharpe": 0.4,
+          "returns": 0.0098,
+          "drawdown": 0.0195,
+          "margin": 0.000153,
+          "fitness": 0.11,
+          "stage": "IS"
+        },
+        {
+          "year": "2017",
+          "pnl": 159849.0,
+          "bookSize": 20000000,
+          "longCount": 445,
+          "shortCount": 583,
+          "turnover": 0.1346,
+          "sharpe": 0.77,
+          "returns": 0.0159,
+          "drawdown": 0.0123,
+          "margin": 0.000237,
+          "fitness": 0.26,
+          "stage": "IS"
+        },
+        {
+          "year": "2018",
+          "pnl": 454296.0,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 583,
+          "turnover": 0.1399,
+          "sharpe": 1.57,
+          "returns": 0.0452,
+          "drawdown": 0.0175,
+          "margin": 0.000647,
+          "fitness": 0.89,
+          "stage": "IS"
+        },
+        {
+          "year": "2019",
+          "pnl": 201207.0,
+          "bookSize": 20000000,
+          "longCount": 438,
+          "shortCount": 594,
+          "turnover": 0.1398,
+          "sharpe": 0.78,
+          "returns": 0.02,
+          "drawdown": 0.0198,
+          "margin": 0.000286,
+          "fitness": 0.3,
+          "stage": "IS"
+        },
+        {
+          "year": "2020",
+          "pnl": 202194.0,
+          "bookSize": 20000000,
+          "longCount": 439,
+          "shortCount": 590,
+          "turnover": 0.1352,
+          "sharpe": 0.59,
+          "returns": 0.0219,
+          "drawdown": 0.0228,
+          "margin": 0.000324,
+          "fitness": 0.24,
+          "stage": "IS"
+        },
+        {
+          "year": "2021",
+          "pnl": 834840.0,
+          "bookSize": 20000000,
+          "longCount": 440,
+          "shortCount": 594,
+          "turnover": 0.133,
+          "sharpe": 2.38,
+          "returns": 0.0828,
+          "drawdown": 0.0144,
+          "margin": 0.001246,
+          "fitness": 1.88,
+          "stage": "IS"
+        },
+        {
+          "year": "2022",
+          "pnl": 548080.0,
+          "bookSize": 20000000,
+          "longCount": 446,
+          "shortCount": 596,
+          "turnover": 0.1314,
+          "sharpe": 1.77,
+          "returns": 0.0546,
+          "drawdown": 0.0197,
+          "margin": 0.000831,
+          "fitness": 1.14,
+          "stage": "IS"
+        },
+        {
+          "year": "2023",
+          "pnl": -76427.0,
+          "bookSize": 20000000,
+          "longCount": 447,
+          "shortCount": 596,
+          "turnover": 0.1368,
+          "sharpe": -0.26,
+          "returns": -0.0076,
+          "drawdown": 0.0486,
+          "margin": -0.000112,
+          "fitness": -0.06,
+          "stage": "IS"
+        }
+      ]
+    }
+  }
+}

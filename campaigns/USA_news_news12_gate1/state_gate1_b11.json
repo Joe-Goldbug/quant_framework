@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/40q94SbkV4gIamCHeAl3i9Q",
+  "submitted_at": 1792935425,
+  "items": [
+    {
+      "id": 1,
+      "type": "BF2_RAW_RANK",
+      "expression": "reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2)))",
+      "optimize_reason": "Benchmark 2-day backfill on the mLYNEWjW pure engine. Balances holding horizon between 1-day (Sh 1.59, TO 114%) and 3-day (Sh 1.20, TO 68.8%), targeting Sharpe ~1.45 and Turnover ~80%."
+    },
+    {
+      "id": 2,
+      "type": "BF2_DECAY2_RANK",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2), 2)))",
+      "optimize_reason": "2-day backfill with 2-day linear decay (weights 2/3 on Day 1, 1/3 on Day 2). Tapers holding to cut turnover from ~80% down into the 55%~65% compliant zone while retaining 67% fresh weight."
+    },
+    {
+      "id": 3,
+      "type": "BF3_DECAY2_RANK",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 3), 2)))",
+      "optimize_reason": "3-day backfill with 2-day decay window. Retains 3-day event breadth but concentrates 67% conviction in the primary 2-day reversal window, aiming for Turnover <= 55% and Fitness >= 0.80."
+    },
+    {
+      "id": 4,
+      "type": "DUAL_OPEN_BF2_DECAY2",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 2), 2)))",
+      "optimize_reason": "The champion return engine of Batch 10 (RRAObJVj, Ret 8.93%, 2Y 1.72) smoothed by 2-day linear decay. Direct attack to bring its 82.9% turnover down below 65% while keeping Sharpe high."
+    },
+    {
+      "id": 5,
+      "type": "THRESHOLD_005_BF2",
+      "expression": "trade_when(greater(abs(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 0.005), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+      "optimize_reason": "50 bps threshold filter: only initiates trades when intraday post-news move exceeds 0.5%. Eliminates small noise rebalancing, slashing turnover into the 30%~50% zone and boosting margin."
+    },
+    {
+      "id": 6,
+      "type": "THRESHOLD_010_BF2",
+      "expression": "trade_when(greater(abs(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 0.01), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+      "optimize_reason": "100 bps threshold filter: only trades high-conviction events where post-news drift exceeds 1.0%. Expected turnover 15%~30%, Margin > 6.0 bps."
+    },
+    {
+      "id": 7,
+      "type": "VEC_EXC_GATED_BF2",
+      "expression": "trade_when(greater(vec_count(high_price_excursion_stddev), 0), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+      "optimize_reason": "Strict event gating: trades only when at least 1 high-price excursion event occurs today. Cleans out zero-count non-news days."
+    },
+    {
+      "id": 8,
+      "type": "DUAL_OPEN_THRESHOLD_005",
+      "expression": "trade_when(greater(abs(divide(subtract(news_eod_close, news_open), news_open)), 0.01), reverse(rank(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 2))), 0)",
+      "optimize_reason": "Dual open drift gated by 1% open-to-close excursion. Combines high-conviction filter with 8.93% return engine to achieve the holy grail: High Sharpe + Low Turnover + High Margin."
+    }
+  ]
+}

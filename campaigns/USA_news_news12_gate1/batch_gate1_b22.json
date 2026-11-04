@@ -1,0 +1,72 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 15,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_item_count_transfer",
+    "mean_primary_sentiment_score_transfer",
+    "mean_secondary_sentiment_score_transfer",
+    "sentiment_overall_average",
+    "headline_item_count",
+    "news_eod_close",
+    "news_ton_last",
+    "nws97_2pos_mean",
+    "nws97_2neg_mean"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_SENT_COUNT_DEC10",
+      "expression": "group_rank(ts_decay_linear(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), 10), sector)",
+      "optimize_reason": "PR headline sentiment weighted by log news volume. High sentiment backed by heavy news coverage drives post-announcement drift, targeting Turnover < 18%, Margin >= 12 bps."
+    },
+    {
+      "id": 2,
+      "type": "N84_PRIMARY_SEC_SPREAD",
+      "expression": "group_rank(ts_decay_linear(subtract(mean_primary_sentiment_score_transfer, mean_secondary_sentiment_score_transfer), 10), sector)",
+      "optimize_reason": "Differential between primary and secondary NLP sentiment models in news84. Isolates high-conviction agreement, targeting Turnover < 15%, Margin >= 14 bps."
+    },
+    {
+      "id": 3,
+      "type": "N85_SENT_COUNT_DEC10",
+      "expression": "group_rank(ts_decay_linear(multiply(subtract(sentiment_overall_average, 0.5), log(add(headline_item_count, 1))), 10), sector)",
+      "optimize_reason": "Ravenpack DNN news sentiment probability centered at 0.5 and weighted by headline activity. Targets Turnover < 15%, Margin >= 15.0 bps."
+    },
+    {
+      "id": 4,
+      "type": "N97_NET_SENT_DEC10",
+      "expression": "group_rank(ts_decay_linear(subtract(nws97_2pos_mean, nws97_2neg_mean), 10), sector)",
+      "optimize_reason": "Web crowd news sentiment net spread from Seeking Alpha articles. 10-day decay produces smooth sentiment drift, targeting Turnover < 12%, Margin >= 16 bps."
+    },
+    {
+      "id": 5,
+      "type": "CROSS_N84_N12_DEC10",
+      "expression": "group_rank(subtract(ts_decay_linear(mean_sentiment_score_transfer, 10), divide(subtract(news_eod_close, news_ton_last), news_ton_last)), sector)",
+      "optimize_reason": "Combines slow institutional PR news sentiment (news84) with retail news overreaction dip (news12). Buys positive-sentiment stocks on intraday dips, targeting Turnover < 25%, Sharpe >= 1.70."
+    },
+    {
+      "id": 6,
+      "type": "CROSS_N84_N12_DEC5",
+      "expression": "group_rank(subtract(ts_decay_linear(mean_sentiment_score_transfer, 5), divide(subtract(news_eod_close, news_ton_last), news_ton_last)), sector)",
+      "optimize_reason": "5-day responsive PR sentiment paired with news dip. Tighter event alignment, targeting Turnover < 28%, Margin >= 15 bps."
+    },
+    {
+      "id": 7,
+      "type": "CROSS_N85_N12_DEC10",
+      "expression": "group_rank(subtract(ts_decay_linear(subtract(sentiment_overall_average, 0.5), 10), divide(subtract(news_eod_close, news_ton_last), news_ton_last)), sector)",
+      "optimize_reason": "10-day DNN sentiment probability from news85 combined with news12 overreaction dip. Targets Turnover < 22%, Margin >= 15.0 bps, Fitness >= 1.05."
+    },
+    {
+      "id": 8,
+      "type": "CROSS_N97_N12_DEC10",
+      "expression": "group_rank(subtract(ts_decay_linear(nws97_2pos_mean, 10), divide(subtract(news_eod_close, news_ton_last), news_ton_last)), sector)",
+      "optimize_reason": "Web news positive sentiment combined with intraday news12 liquidity shock. Targets Turnover < 20%, Margin >= 16 bps, Fitness >= 1.10."
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "seed": "rKR1qVWo",
+  "batch_id": "rKR_B62",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 22,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "test_period": "P0Y0M",
+  "design_axis": "prescription cure (CARD_OP_OVERFLOW: group_rank(ts_decay_exp_window(causal_core,10), subindustry) lean 3-段式, 4 slots op<=8) + trunc 0.08 concentration axis + recency-safe exp outer smoothing to defend 2Y ladder; strict non-submission, zero code changes",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "max_primary_sentiment_score_transfer",
+    "skew_primary_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B62_S1_CURE_R3_RANK_EXP10_LEAN5OPS",
+      "expression": "group_rank(ts_decay_exp_window(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3)), 10, factor=0.5), subindustry)",
+      "optimize_reason": "处方卡 CARD_OP_OVERFLOW 原方槽: group_rank(ts_decay_exp_window(因果微核,10), subindustry) 三段式, 算子数 5。种子外壳的 power(subtract(group_rank,0.5),5) 在数学上保序 (单调变换, 不改截面名次), 真正起作用的是 power 凸性带来的权重分布加工——在 trunc 0.08 下权重自由度变大后, 无凸性壳是否扶得住 1.58 夏普是本批骨架问题。Q2 稀疏性: 纯 ts_decay_exp_window(10, factor=0.5) 指数半衰平滑内部消化 90% 零新闻日的步进噪声, 这正是信源 (Q2) 的时序维需要。判决价值: 若此 5 算子瘦壳在 trunc 8 下 Sharpe>=1.4 且 2Y ladder 不跨, 则种子的 9-10 算子嵌套每层都可能只是元灵装饰, 处方的瘦身方向就是家族终态。"
+    },
+    {
+      "id": 2,
+      "type": "B62_S2_CURE_R3_RANK_EXP10_REL_LEAN6OPS",
+      "expression": "group_rank(ts_decay_exp_window(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2)), 10, factor=0.5), subindustry)",
+      "optimize_reason": "S1 加相关度腿的瘦壳 6 算子版: 因果微核 = 情绪均值^4 (注意力强度) x winsorize(prob_rank, std=3) (无界回归信源去极值, Q1) x sqrt(relevance) (相关度二阶门, Q3)。B61 S2 (同微核+tse 外线性) 实测 Fit 0.85/TO 11.5% 是家族史峰, 本槽把外层 linear 换成指数半衰 decay 并剥掉最外 power 凸性壳, 唯一保留的信息通路是 rank (截面名次) —— 若 2Y 相比 B61 S2 的 1.53 显著恢复, 则证明 2Y 损伤来自线性 decay 的滞后与 power 凸性联合效应; 若 2Y 仍低, 则 IS_LADDER 的损伤贯穿所有平滑算子, recency 假说转向 ts_target_tvr_decay 槽追查。"
+    },
+    {
+      "id": 3,
+      "type": "B62_S3_CURE_R3_BACKFILL_SPARSE",
+      "expression": "group_rank(ts_decay_exp_window(multiply(power(ts_backfill(mean_sentiment_score_transfer, 10), 4), winsorize(prob_rank_bin1_10d_img_news, std=3)), 10, factor=0.5), subindustry)",
+      "optimize_reason": "Q2 稀疏性诊断的瘦壳修复槽 (7 算子): mean_sentiment_score_transfer 约 90% 交易日为 0 (无新闻日), power^4 把零值放大述信为'无注意力'而真实机制是'无信息', 二者不可混等——ts_backfill(10) 前向填记忆最新非零值, 把'昨天有重磅新闻、今天无新稿'的状态在 10 日窗口内保持催化剂记忆。B61 全部 8 槽 (家族斩铁律 440 行) 从未测过 backfill sparse-native版本, 是纯新骨架。若本槽 Sharpe 与 S1/S2 同调而 2Y 更高, 则'稀疏孪生填坑'是情绪 transfer 族的普适前端件之一。"
+    },
+    {
+      "id": 4,
+      "type": "B62_S4_CURE_R3_RANK_EXP10_POWER5",
+      "expression": "power(subtract(group_rank(ts_decay_exp_window(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3)), 10, factor=0.5), subindustry), 0.5), 5)",
+      "optimize_reason": "处方三段式 + 权重凸性壳 8 算子版: S1 骨架外加 power(subtract(rank,0.5),5) 凸性包装 (保序单调, 只改权重分布), 内层用指数半衰 tse 替换种子的线性 tsd(10) —— 这是'种子裸壳 + recency 平滑'的最低手术。trunc 0.08 下 power5 权重梯度理论上是 B61 备忘录实证的'0.025 下零梯度死局'的解药槽。判决价值: 与 S1 单变量隔离 (有/无凸性壳), 若 S4 Sharpe 显著高于 S1, 幂 x trunc 8 联合假说成立, 权重加工壳保留; 若两者相当, 凸性壳退役为肉, 瘦体长存。"
+    },
+    {
+      "id": 5,
+      "type": "B62_S5_EXP_DAMP5_WINNER_SHELL",
+      "expression": "ts_decay_exp_window(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), 5, factor=0.5)",
+      "optimize_reason": "B61 冠军壳 (S2: 1.48/0.85/11.5%) 的 recency-safe 复刻: 内部逐字保留 winner 壳 (内层 linear10 记忆 + subindustry group_rank + 3 字段乘积 + power5 凸性), 仅把最外层 ts_decay_linear(5) 换成指数半衰 tse(5, factor=0.5), 唯一变量。直接目标: 保住 TO<=12.5% 地板收益 (Fitness 达标线 Ret>=5.01%) 的同时把 2Y 从 1.53 抬回 1.58+。指数衰减的近端最高权重特征保护'最近两年 regime'信息 (正是 IS_LADDER 检查的区间)。10 算子在 9~11 用户授权窗口内。"
+    },
+    {
+      "id": 6,
+      "type": "B62_S6_TVR_TARGET_DIRECT",
+      "expression": "ts_target_tvr_decay(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), lambda_min=0, lambda_max=1, target_tvr=0.11)",
+      "optimize_reason": "平台原生换手调校算子 ts_target_tvr_decay 首次入场 (9 算子): 数学语义是'在 decay 参数范围内引擎自搜索, 使最终 turnover 贴近 target_tvr=0.11'——等价于 B61 手工调出的 11.5% 地板区但由引擎自优化, 理论解空间覆盖手工 linear decay 只是一个单点。核心风险: 该算子文档 level 显示非 ALL, 可能超出用户算子权限; 若 PLATFORM_FAILED 则单槽承担学习成本 (与 hump 槽先例同价)。判决价值: 若成功且 Sharpe>=1.48, 换手最优解从此机械化, L4 层退役。"
+    },
+    {
+      "id": 7,
+      "type": "B62_S7_SEED_SHELL_TRUNC08_P5_NOREL",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 5), winsorize(prob_rank_bin1_10d_img_news, std=3)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "trunc 0.08 下的纯集中度探针 (9 算子): 种子裸壳, 唯二变化 = trunc 0.025->0.08 (设置层) + 放弃 sqrt(relevance) 相关度腿使骨架 кров全新避免与 B61 或更早 wave 的'种子 clone'骨架撞流 (历史去重预判)。Q3 截面独立性物理: relevance 腿在 B61 S2 (带腿 1.48) 未被独立对照过, 裸两字段微核的预测力包络从未单独采样。若本槽 Sharpe>=1.4, 相关度腿是家族可用冗余; 若与带腿版同调, 相关度腿是死重, 处方瘦身顺延到 trunc 8 主限的裸壳。"
+    },
+    {
+      "id": 8,
+      "type": "B62_S8_SKEW_RIGHT_TAIL_GATED_B_SHELL",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(add(skew_primary_sentiment_score_transfer, 1.0), winsorize(prob_rank_bin1_10d_img_news, std=3))), 10), subindustry), 0.5), 5), 5)",
+      "optimize_reason": "skew 门在赢家壳内的最后一审 (10 算子): B61 S5 的 skew 门是在 D 壳 (group_zscore 连续极值, TO 爆到 86.8%/2Y -0.34) 内, 崩因归属不明——是 skew 门毒还是 D 壳毒? 本槽在 B61 冠军 B 壳内单变量重测 skew 门 (sub(R): add(skew,1.0) 非负门域替换 sqrt(relevance) 腿, 尊重'双 [-1,1] 裸乘伪因果'铁律的平移)。若 S8 优于 S2 的 1.48, '分布形态(Q7) > 相关度(Q3)'的信息经济学成立, skew 门转正; 若重平, 则 skew_legacy 在 news12 族永久除名, Q7 轴归档。"
+    }
+  ]
+}

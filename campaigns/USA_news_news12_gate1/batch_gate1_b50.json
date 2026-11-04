@@ -1,0 +1,72 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 22,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "mean_primary_sentiment_score_transfer",
+    "avg_sentiment_score_news_transfer",
+    "avg_primary_sentiment_score_news_transfer",
+    "average_positive_sentiment_score_1",
+    "average_negative_sentiment_score_1",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_5d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B50_S1_WjO_POWER5_DECAY22",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 1: WjOExjWk \u9ec4\u91d1\u5206\u5272 Decay 22 \u7cbe\u51c6\u6821\u51c6\u3011\u5728 Batch 46 \u6700\u5f3a\u6bcd\u672c WjOExjWk\uff08Sharpe 1.56, 2Y 2.16\uff09\u57fa\u7840\u4e0a\uff0c\u5c06\u4eff\u771f decay \u5b9a\u683c\u5728 22\uff08\u4ecb\u4e8e 18 \u7684\u9ad8\u654f\u9510\u5ea6\u4e0e 28 \u7684\u4f4e\u6362\u624b\u4e4b\u95f4\u7684\u9ec4\u91d1\u5206\u5272\u70b9\uff09\u3002\u76ee\u6807\uff1a\u4fdd\u6301 IS Sharpe >= 1.56 \u751a\u81f3\u7a81\u7834 1.58 \u7684\u540c\u65f6\uff0c\u5c06 Turnover \u538b\u4f4e\u81f3 16.5%~17.0%\uff0c\u62c9\u52a8 Fitness \u8dc3\u5411 0.80+ \u4e0e Margin \u63d0\u5347\u81f3 5.2+ bps\u3002"
+    },
+    {
+      "id": 2,
+      "type": "B50_S2_2rA_POWER3_DECAY22",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), 10), subindustry), 0.5), 3)",
+      "optimize_reason": "\u3010Slot 2: 2rA1eRLZ 3 \u6b21\u65b9\u5bbd\u5c3e\u805a\u7126 + Decay 22 \u6821\u51c6\u3011\u5728 2rA1eRLZ \u9aa8\u67b6\u4e0b\u9a8c\u8bc1 Decay 22\u30023 \u6b21\u65b9\u5c3e\u90e8\u805a\u7126\u62e5\u6709\u66f4\u5747\u5300\u7684\u5c3e\u90e8\u4ed3\u4f4d\u5206\u5e03\uff0c\u914d\u5408 22 \u65e5\u5e73\u6ed1\u6d4b\u8bd5\u662f\u5426\u80fd\u591f\u66f4\u6709\u6548\u5730\u63a7\u5236\u56de\u64a4\u5e76\u63d0\u4f9b\u66f4\u4f4e\u7684\u6362\u624b\u7387\u4e0e\u66f4\u9ad8\u7684\u4fe1\u606f\u6bd4\u7387\u3002"
+    },
+    {
+      "id": 3,
+      "type": "B50_S3_WjO_INNER_DECAY11",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 3: \u5185\u5c42 11 \u65e5\u5fae\u8c03\uff0810\u65e5 vs 11\u65e5\u7cbe\u51c6\u6d88\u878d\uff09\u3011\u5c06\u5185\u5c42\u65f6\u5e8f\u7ebf\u6027\u8870\u51cf\u7a97\u53e3\u7531 10 \u65e5\u5fae\u8c03\u81f3 11 \u65e5\u3002\u7cbe\u51c6\u5339\u914d\u65b0\u95fb\u6f02\u79fb\u5728\u7b2c\u4e8c\u4e2a\u4ea4\u6613\u5468\u7684\u5c3e\u58f0\u6548\u5e94\uff0c\u6d4b\u8bd5\u5fae\u8c03\u80fd\u5426\u5f25\u5408 0.02 \u7684 Sharpe \u5dee\u8ddd\u7a81\u7834 1.58 \u9608\u503c\u3002"
+    },
+    {
+      "id": 4,
+      "type": "B50_S4_WjO_INNER_DECAY12",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), 12), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 4: \u5185\u5c42 12 \u65e5\u65f6\u5e8f\u5e73\u6ed1\u62d3\u5c55\u3011\u5c06\u5185\u5c42\u8870\u51cf\u6269\u5c55\u81f3 12 \u65e5\uff0c\u5ef6\u957f\u4e8b\u4ef6\u4fe1\u53f7\u7684\u8de8\u5468\u5ef6\u7eed\u6027\uff0c\u8fdb\u4e00\u6b65\u5e73\u6291\u65e5\u9891\u622a\u9762\u6392\u5e8f\u6ce2\u52a8\uff0c\u964d\u4f4e\u6362\u624b\u7387\u3002"
+    },
+    {
+      "id": 5,
+      "type": "B50_S5_WjO_WINSOR_22",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.2), sqrt(news_relevance_score_2))), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 5: \u89c6\u89c9\u9884\u6d4b 2.2-sigma \u7d27\u81f4\u622a\u65ad\u3011\u5c06 prob_10d \u7684 winsorize \u9608\u503c\u4ece 2.5 \u6536\u7d27\u81f3 2.2-sigma\u3002\u5728\u6781\u7aef\u5e02\u573a\u6ce2\u52a8\u65e5\u6291\u5236\u6a21\u578b\u5355\u80a1\u9884\u6d4b\u8fc7\u6fc0\uff0c\u63d0\u9ad8\u7ec4\u5408\u6297\u6781\u7aef\u6270\u52a8\u80fd\u529b\uff0c\u6539\u5584 2015-2017 \u5e74\u7684\u7a33\u5065\u5ea6\u3002"
+    },
+    {
+      "id": 6,
+      "type": "B50_S6_NEWS83_AVG_SENTIMENT_ZERO_CROWD",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(avg_sentiment_score_news_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 6: \u8de8 news83 \u96f6\u62e5\u6324\u60c5\u7eea\u5747\u503c\u5e73\u66ff\uff08Alphas=0\uff09\u3011\u91c7\u7528 news83 \u4e2d\u5b58\u91cf\u4f7f\u7528\u6570\u4e3a 0 \u7684\u5b98\u65b9\u60c5\u7eea\u5b57\u6bb5 avg_sentiment_score_news_transfer\uff08\u8986\u76d6\u7387 1.00\uff0c\u4e3b\u9898\u4e58\u6570 1.2x\uff09\u3002\u4e0e\u5b58\u91cf\u56e0\u5b50\u96f6\u91cd\u53e0\uff0c\u4e3b\u653b\u51fb\u7a7f Cluster Sharpe >= 1.58\u3002"
+    },
+    {
+      "id": 7,
+      "type": "B50_S7_NEWS83_PRIMARY_ZERO_CROWD",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(avg_primary_sentiment_score_news_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 7: \u8de8 news83 \u6743\u5a01\u4e00\u624b\u60c5\u7eea\u5e73\u66ff\uff08Alphas=0\uff09\u3011\u91c7\u7528 news83 \u4e2d\u7684\u7b2c\u4e00\u4fe1\u6e90\u4e00\u624b\u60c5\u7eea avg_primary_sentiment_score_news_transfer\uff08\u5b58\u91cf 0 Alpha\uff09\u3002\u4ee5\u5168\u65b0\u6743\u5a01\u4fe1\u6e90\u4e0e\u56fe\u50cf\u9884\u6d4b\u5171\u632f\uff0c\u51b2\u523a\u751f\u4ea7\u7ea7\u5168\u7eff\u8ba4\u8bc1\u3002"
+    },
+    {
+      "id": 8,
+      "type": "B50_S8_FINNEWS_NET_SENTIMENT_3F",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(subtract(average_positive_sentiment_score_1, average_negative_sentiment_score_1), winsorize(prob_rank_bin1_10d_img_news, std=2.5)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "\u3010Slot 8: \u8de8 finnews_nlp_scores \u53d8\u538b\u5668\u7f51\u7edc\u51c0\u60c5\u7eea\uff08\u4e25\u683c 3 \u5b57\u6bb5\uff09\u3011\u5f15\u5165 finnews_nlp_scores\uff08\u8986\u76d6\u7387 1.00\uff0c\u4e3b\u9898\u4e58\u6570 1.4x\uff0c\u4ec5 1 \u4e2a Alpha \u4f7f\u7528\uff09\u7684 Transformer \u6b63\u8d1f\u6982\u7387\u51c0\u5dee subtract(pos, neg)\u3002\u5b58\u91cf\u51e0\u65e0\u62e5\u6324\uff0c\u4e0e\u89c6\u89c9\u9884\u6d4b\u6df1\u5ea6\u5171\u632f\uff0c\u76f4\u51fb Cluster >= 1.58 \u7ec8\u5ba1\u95e8\u7981\u3002"
+    }
+  ]
+}

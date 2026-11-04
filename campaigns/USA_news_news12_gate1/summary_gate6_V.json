@@ -1,0 +1,409 @@
+{
+ "direction": "V",
+ "direction_name": "main_* 注意力归一族 (成交量稀缺)",
+ "hypothesis": "单位成交量惊异 (而非事件计数) 下的相对基准移动/多视野反应才是定价不充分异常——与已实证的事件计数归一化互补的第二个注意力代理",
+ "settings": {
+  "neutralization": "INDUSTRY",
+  "universe": "TOP1000",
+  "decay": 6,
+  "truncation": 0.025,
+  "region": "USA",
+  "delay": 1,
+  "nan_handling": "ON"
+ },
+ "rows": [
+  {
+   "slot": 1,
+   "type": "BENCH_PER_VOLSURGE",
+   "expression": "reverse(rank(divide(vec_avg(main_session_performance_vs_benchmark), vec_avg(main_session_volume_ratio))))",
+   "alpha_id": "9qE3b1o2",
+   "sharpe": 1.29,
+   "fitness": 0.35,
+   "turnover": 1.4108,
+   "returns": 0.1015,
+   "ret_over_to": 0.07194499574709384,
+   "drawdown": 0.0928,
+   "margin_bps": 1.44,
+   "longCount": 248,
+   "shortCount": 248,
+   "sub_sharpe": 0.9,
+   "two_year_sharpe": 0.9,
+   "inv_sharpe": 1.07,
+   "rn_sharpe": 1.9,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 2,
+   "type": "P10_PER_VOLSURGE",
+   "expression": "reverse(rank(divide(vec_avg(main_pct_change_ten_minute_post_news), vec_avg(main_session_volume_ratio))))",
+   "alpha_id": "1YjR1b6Q",
+   "sharpe": 0.44,
+   "fitness": 0.06,
+   "turnover": 1.4183,
+   "returns": 0.0285,
+   "ret_over_to": 0.020094479306211666,
+   "drawdown": 0.2166,
+   "margin_bps": 0.4,
+   "longCount": 245,
+   "shortCount": 244,
+   "sub_sharpe": 0.18,
+   "two_year_sharpe": 0.87,
+   "inv_sharpe": 0.16,
+   "rn_sharpe": 0.49,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 3,
+   "type": "CLOSE_VWAP_PER_VOLSURGE",
+   "expression": "reverse(rank(divide(subtract(vec_avg(main_session_closing_price), vec_avg(main_session_volume_weighted_average_price)), vec_avg(main_session_volume_ratio))))",
+   "alpha_id": "WjLRnQKN",
+   "sharpe": 1.29,
+   "fitness": 0.3,
+   "turnover": 1.3872,
+   "returns": 0.0769,
+   "ret_over_to": 0.055435409457900806,
+   "drawdown": 0.0845,
+   "margin_bps": 1.11,
+   "longCount": 247,
+   "shortCount": 246,
+   "sub_sharpe": 0.81,
+   "two_year_sharpe": 1.41,
+   "inv_sharpe": 0.76,
+   "rn_sharpe": 1.78,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "UNITS",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 4,
+   "type": "GAP_PER_VOLSURGE",
+   "expression": "reverse(rank(divide(vec_avg(main_opening_gap_percent), vec_avg(main_session_volume_ratio))))",
+   "alpha_id": "pwvkorQv",
+   "sharpe": 0.35,
+   "fitness": 0.05,
+   "turnover": 1.3792,
+   "returns": 0.0266,
+   "ret_over_to": 0.019286542923433875,
+   "drawdown": 0.2087,
+   "margin_bps": 0.39,
+   "longCount": 248,
+   "shortCount": 248,
+   "sub_sharpe": 0.22,
+   "two_year_sharpe": 0.71,
+   "inv_sharpe": 0.46,
+   "rn_sharpe": 0.02,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 5,
+   "type": "P120_PER_VOLSURGE",
+   "expression": "reverse(rank(divide(vec_avg(main_pct_change_one_twenty_minute_post_news), vec_avg(main_session_volume_ratio))))",
+   "alpha_id": "RRAoqQZj",
+   "sharpe": 0.95,
+   "fitness": 0.21,
+   "turnover": 1.4179,
+   "returns": 0.0686,
+   "ret_over_to": 0.04838140912617251,
+   "drawdown": 0.0967,
+   "margin_bps": 0.97,
+   "longCount": 247,
+   "shortCount": 247,
+   "sub_sharpe": 0.78,
+   "two_year_sharpe": 0.77,
+   "inv_sharpe": 0.82,
+   "rn_sharpe": 1.24,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 6,
+   "type": "RANGE_PER_VOLSURGE",
+   "expression": "reverse(rank(divide(vec_avg(main_session_price_range), vec_avg(main_session_volume_ratio))))",
+   "alpha_id": "6XAQ3VPY",
+   "sharpe": 0.16,
+   "fitness": 0.02,
+   "turnover": 1.1038,
+   "returns": 0.0246,
+   "ret_over_to": 0.022286646131545573,
+   "drawdown": 0.6811,
+   "margin_bps": 0.45,
+   "longCount": 251,
+   "shortCount": 246,
+   "sub_sharpe": 0.16,
+   "two_year_sharpe": 0.59,
+   "inv_sharpe": 0.19,
+   "rn_sharpe": 0.41,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 7,
+   "type": "CLOSE_VWAPN_PER_VOLSURGE",
+   "expression": "reverse(rank(divide(subtract(vec_avg(main_session_closing_price), vec_avg(main_session_vwap_from_news)), vec_avg(main_session_volume_ratio))))",
+   "alpha_id": "pwvkorJv",
+   "sharpe": 1.32,
+   "fitness": 0.3,
+   "turnover": 1.4014,
+   "returns": 0.0747,
+   "ret_over_to": 0.053303839018124737,
+   "drawdown": 0.0689,
+   "margin_bps": 1.07,
+   "longCount": 249,
+   "shortCount": 247,
+   "sub_sharpe": 0.92,
+   "two_year_sharpe": 1.08,
+   "inv_sharpe": 0.99,
+   "rn_sharpe": 1.75,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "UNITS",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 8,
+   "type": "RANGEZ_PER_VOLSURGE",
+   "expression": "reverse(rank(divide(vec_avg(main_price_range_deviation_std), vec_avg(main_session_volume_ratio))))",
+   "alpha_id": "1YjR1b1Q",
+   "sharpe": -0.45,
+   "fitness": -0.06,
+   "turnover": 1.3006,
+   "returns": -0.0264,
+   "ret_over_to": -0.020298323850530525,
+   "drawdown": 0.3428,
+   "margin_bps": -0.41000000000000003,
+   "longCount": 246,
+   "shortCount": 249,
+   "sub_sharpe": -0.5,
+   "two_year_sharpe": -0.4,
+   "inv_sharpe": -0.37,
+   "rn_sharpe": -0.02,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  }
+ ],
+ "gate": {
+  "step1": {
+   "should_prune": false,
+   "max_abs_sharpe": 1.32,
+   "qualified_count": 3,
+   "qualified_seeds": [
+    {
+     "expression": "reverse(rank(divide(vec_avg(main_session_performance_vs_benchmark), vec_avg(main_session_volume_ratio))))",
+     "sharpe": 1.29,
+     "metrics": {
+      "sharpe": 1.29,
+      "fitness": 0.35,
+      "turnover": 1.4108,
+      "returns": 0.1015,
+      "drawdown": 0.0928,
+      "margin": 0.000144,
+      "longCount": 248,
+      "shortCount": 248,
+      "pnl": 10133534,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 0.9,
+      "two_year_sharpe": 0.9,
+      "investability_sharpe": 1.07,
+      "investability_fitness": 0.31,
+      "risk_neutralized_sharpe": 1.9
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "reverse(rank(divide(subtract(vec_avg(main_session_closing_price), vec_avg(main_session_volume_weighted_average_price)), vec_avg(main_session_volume_ratio))))",
+     "sharpe": 1.29,
+     "metrics": {
+      "sharpe": 1.29,
+      "fitness": 0.3,
+      "turnover": 1.3872,
+      "returns": 0.0769,
+      "drawdown": 0.0845,
+      "margin": 0.000111,
+      "longCount": 247,
+      "shortCount": 246,
+      "pnl": 7679472,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 0.81,
+      "two_year_sharpe": 1.41,
+      "investability_sharpe": 0.76,
+      "investability_fitness": 0.17,
+      "risk_neutralized_sharpe": 1.78
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "reverse(rank(divide(subtract(vec_avg(main_session_closing_price), vec_avg(main_session_vwap_from_news)), vec_avg(main_session_volume_ratio))))",
+     "sharpe": 1.32,
+     "metrics": {
+      "sharpe": 1.32,
+      "fitness": 0.3,
+      "turnover": 1.4014,
+      "returns": 0.0747,
+      "drawdown": 0.0689,
+      "margin": 0.000107,
+      "longCount": 249,
+      "shortCount": 247,
+      "pnl": 7451820,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 0.92,
+      "two_year_sharpe": 1.08,
+      "investability_sharpe": 0.99,
+      "investability_fitness": 0.25,
+      "risk_neutralized_sharpe": 1.75
+     },
+     "status": "STEP1_PASSED"
+    }
+   ],
+   "message": "【Step 1 通过】捕获 3 条达标种子 (最高 |Sharpe| = 1.32)"
+  },
+  "step2_count": 0,
+  "final_count": 0,
+  "step2": [],
+  "final": []
+ }
+}

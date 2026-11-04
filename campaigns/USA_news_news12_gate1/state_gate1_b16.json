@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/4BG4H41HJ4HRaNcHhmogqYe",
+  "submitted_at": 1792984348,
+  "items": [
+    {
+      "id": 1,
+      "type": "DUAL_BF4_DEC5",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 4), 5)))",
+      "optimize_reason": "Dual-anchor confluence with 4-day backfill and 5-day linear tapering. Smoothly phases out post-news reversion over a 1-week horizon, targeting turnover <= 25% and Margin >= 8 bps."
+    },
+    {
+      "id": 2,
+      "type": "DUAL_BF6_DEC6",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 6), 6)))",
+      "optimize_reason": "6-day holding with 6-day linear decay. Balances fundamental news diffusion with smooth portfolio exit, targeting turnover <= 18% and Margin >= 11 bps."
+    },
+    {
+      "id": 3,
+      "type": "DUAL_BF8_DEC8",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 8), 8)))",
+      "optimize_reason": "8-day holding horizon with linear weighting. Targets Turnover <= 12%, unlocking Margin >= 14.0 bps and Fitness >= 1.00."
+    },
+    {
+      "id": 4,
+      "type": "DUAL_BF10_DEC10",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 10), 10)))",
+      "optimize_reason": "2-calendar-week holding horizon. Maximum turnover compression to ~8%, targeting Margin >= 18.0 bps and Fitness >= 1.15."
+    },
+    {
+      "id": 5,
+      "type": "DUAL_BF12_DEC12",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 12), 12)))",
+      "optimize_reason": "12-day smoothed linear tapering. Tests extended holding boundary, targeting Turnover <= 6.5%, Margin >= 22.0 bps, and full zero-warn compliance."
+    },
+    {
+      "id": 6,
+      "type": "DUAL_VWAP_BF6_DEC6",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 6), 6)))",
+      "optimize_reason": "Institutional VWAP anchor confluence with 6-day backfill and decay. Targets Turnover <= 18% and Margin >= 10 bps."
+    },
+    {
+      "id": 7,
+      "type": "SEED_CORE_BF6_DEC6",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 6), 6)))",
+      "optimize_reason": "Direct seed mLYNEWjW core signal extended with 6-day backfill and 6-day linear decay. Preserves seed's high Sharpe (1.59) while slashing turnover from 114% to ~18%."
+    },
+    {
+      "id": 8,
+      "type": "SEED_CORE_BF8_DEC8",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 8), 8)))",
+      "optimize_reason": "Seed mLYNEWjW core signal with 8-day holding horizon. Targets turnover <= 11.5%, Margin >= 15.0 bps, Sharpe >= 1.45, and Fitness >= 1.05."
+    }
+  ]
+}

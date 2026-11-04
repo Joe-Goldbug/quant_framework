@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "max_primary_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B76_S1_WPQ_MAX_PRIMARY_P45_D12",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(max_primary_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 8 ops: Injects max_primary_sentiment_score_transfer (platform Sharpe 1.95) into wpQKJ1K5 architecture. Targets immediate Sharpe >= 1.65 and Fitness >= 1.00 at 12.8% turnover."
+    },
+    {
+      "id": 2,
+      "type": "B76_S2_WPQ_MAX_PRIMARY_P45_D14",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(max_primary_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 8 ops: wpQKJ1K5 max_primary with decay 14. Further compresses turnover to ~11.5% while capturing high SNR peak sentiment."
+    },
+    {
+      "id": 3,
+      "type": "B76_S3_WPQ_MAX_PRIMARY_P40_D12",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(max_primary_sentiment_score_transfer, 4.0), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 8 ops: Power 4.0 on max_primary. Softer power preserves subtle gradient in primary news reports."
+    },
+    {
+      "id": 4,
+      "type": "B76_S4_D5W_MAX_PRIMARY_POW5_D16",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 9 ops: d5WkjPmJ (Sharpe 1.58 champion) injected with max_primary. Targets Sharpe >= 1.70."
+    },
+    {
+      "id": 5,
+      "type": "B76_S5_SYNTH_MAX_PRIMARY_OUTER_D6_SIM15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Full synthesis: max_primary + inner decay 11 + power 5 + outer decay 6. Directly addresses both Sharpe and Fitness."
+    },
+    {
+      "id": 6,
+      "type": "B76_S6_SYNTH_MAX_PRIMARY_OUTER_D8_SIM15",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 10 ops: Outer decay 8 on max_primary synthesis. Pushes turnover toward 12.3% record while maintaining high Sharpe."
+    },
+    {
+      "id": 7,
+      "type": "B76_S7_SYNTH_MAX_PRIMARY_POW7_OUTER_D6_SIM16",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), 6)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 10 ops: 7th power tail magnification with max_primary and sim decay 16."
+    },
+    {
+      "id": 8,
+      "type": "B76_S8_WPQ_MAX_PRIMARY_TAILPOW3_D12",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(max_primary_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 9 ops: wpQKJ1K5 max_primary with tail-power 3 inside outer decay 10."
+    }
+  ]
+}

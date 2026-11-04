@@ -1,0 +1,16 @@
+{
+  "wave": 46,
+  "theme": "PC边界微带扫描(w14/16/18) + w15基座组合(幂次1.5/2.5, 新闻腿10/30, 复合)",
+  "trigger": "Wave45: omEW12Qk(w15) PC0.6987双达标且CLST0.75史上最高; PC边界在w15~w20之间",
+  "base_settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025},
+  "expressions": [
+    {"tag": "nc_w14", "fields": 3, "note": "窗14", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 14), subindustry), 0.5), 2)"},
+    {"tag": "nc_w16", "fields": 3, "note": "窗16", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 16), subindustry), 0.5), 2)"},
+    {"tag": "nc_w18", "fields": 3, "note": "窗18", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)"},
+    {"tag": "nc15_p15", "fields": 3, "note": "w15+幂次1.5", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 15), subindustry), 0.5), 1.5)"},
+    {"tag": "nc15_p25", "fields": 3, "note": "w15+幂次2.5", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 15), subindustry), 0.5), 2.5)"},
+    {"tag": "nc15_nleg10", "fields": 3, "note": "w15+新闻腿平滑10", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 10))), 15), subindustry), 0.5), 2)"},
+    {"tag": "nc15_nleg30", "fields": 3, "note": "w15+新闻腿平滑30", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 30))), 15), subindustry), 0.5), 2)"},
+    {"tag": "nc15_nleg10_p15", "fields": 3, "note": "复合: w15+新闻腿10+幂次1.5", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 10))), 15), subindustry), 0.5), 1.5)"}
+  ]
+}

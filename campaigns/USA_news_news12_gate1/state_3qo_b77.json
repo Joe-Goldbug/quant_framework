@@ -1,0 +1,70 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/3VOnqs7rH4zFcqQvfshGHVz",
+  "submitted_at": 1793080580,
+  "items": [
+    {
+      "id": 1,
+      "type": "B77_S1_5D_HORIZON_ENGINE",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_5d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 10 ops: Replaces 10d forward model with 5d forward prediction (prob_rank_bin1_5d_img_news). Shorter horizon has higher SNR, targeting Returns >= 5.0% and Sharpe >= 1.58."
+    },
+    {
+      "id": 2,
+      "type": "B77_S2_5D_ALIGNED_IN8_OUT10",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_5d_img_news, std=3.0), sqrt(news_relevance_score_2))), 8), subindustry), 0.5), 5), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 10 ops: 5d model aligned with 8d inner event decay and 10d outer portfolio smoothing. Targets Turnover <= 11.5% and Fitness >= 1.00."
+    },
+    {
+      "id": 3,
+      "type": "B77_S3_11OPS_FINAL_WINSORIZE",
+      "expression": "winsorize(ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 8), std=3.0)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 11 ops: Adds 11th operator winsorize(..., std=3.0) on final output weights. Dampens extreme idiosyncratic risk spikes to stabilize Sharpe >= 1.58."
+    },
+    {
+      "id": 4,
+      "type": "B77_S4_10D_FRESH_IN8_OUT10",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 8), subindustry), 0.5), 5), 10)",
+      "decay": 14,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 10 ops: 10d model with faster inner decay 8 (reducing stale news memory) + deeper outer decay 10 (holding turnover below 12%)."
+    },
+    {
+      "id": 5,
+      "type": "B77_S5_SENT_P38_IN10_OUT8",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 3.8), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 10), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Conjugate tuning: power 3.8 preserves broader tone gradients, combined with inner 10 and outer 8."
+    },
+    {
+      "id": 6,
+      "type": "B77_S6_POW7_TAIL_CONVEX_OUT10",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), 10)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 10 ops: 7th power tail magnification (from KPJlxe5l Sharpe 1.58 champion) paired with outer decay 10 to crush turnover from 21.2% down into 11.8%."
+    },
+    {
+      "id": 7,
+      "type": "B77_S7_INDUSTRY_BROAD_RANK",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), industry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 10 ops: Expands peer comparison from 6 stocks in subindustry to 18 stocks in industry, removing micro-bucket tie distortion."
+    },
+    {
+      "id": 8,
+      "type": "B77_S8_PRECISION_D5W_SIM16_OUT9",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 9)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 10 ops: Reproduces exact sim decay 16 where d5WkjPmJ reached Sharpe 1.58, using outer decay 9 to compress turnover to ~11.5%."
+    }
+  ]
+}

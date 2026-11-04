@@ -1,0 +1,72 @@
+{
+  "seed": "rKR1qVWo",
+  "batch_id": "rKR_B61",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 22,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "test_period": "P0Y0M",
+  "design_axis": "9-11 op relaxation: L1 winsorize(std=3) + L3 dual-decay + L4 outer hump(tvr damping) / signed_power(group_zscore) continuous-extremes, per authorized Batch-61 memo",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "max_primary_sentiment_score_transfer",
+    "skew_primary_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B61_S1_PLAN_A_L1HUMP_STD3",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), hump=0.01)",
+      "optimize_reason": "【Slot 1: 备忘录方案A忠实原句 · L1标准去极值+L4最外壳hump持仓阻尼】四层物理架构的正宗旗舰：L1 对无界回归字段 winsorize(std=3)(数据字典铁证: not a quantile, must winsorize before use，保留比 std=2.2 更完整的 2022 熊市尾部信息以守住 1.58+ 夏普)；L3 内层 10 日线性平滑聚合两周公关事件催化强度；L4 最外壳 hump(hump=0.01) 直接阻尼持仓权重变化幅度，斩断'同细分行业其他股票发新闻导致本股票 group_rank 阶梯跳变被 power5 放大 83%' 的换手噪声，目标把 Turnover 从种子 16.79% 压入 12.5%~13.5% 区间，使 Fitness 达标线从 Ret>=6.73% 降到 Ret>=5.01%(详见立项研报系数推导)。算子数 9 个，三元 multiply(x,y,z) 原生官方支持。"
+    },
+    {
+      "id": 2,
+      "type": "B61_S2_PLAN_B_DUAL_DECAY_WEEKLY_DAMP",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), 5)",
+      "optimize_reason": "【Slot 2: 备忘录方案B · 内10日+外5日双层正交平滑】与 Slot1 同构但最外壳换成 5 日周度线性平滑(hump 的 decay 替身)：内层 10 日平滑负责信号层记忆(聚合两周事件强度)，外层 5 日平滑把激进的 power5 单日目标组合分摊成 1 周建/平仓斜坡，彻底消除 subindustry 离散分位跳变带来的日频冲击。判决价值：若此槽与 Slot1 同时把 TO 压到 <=13.5% 但 Slot1 Sharpe 更高，实证'阻尼类算子优于平滑类算子'这一 l4 物理序，为后续批次的转向武器定型。9 算子满内层 winsorize 完整保留。"
+    },
+    {
+      "id": 3,
+      "type": "B61_S3_PLAN_C_10D20D_RESONANCE_HUMP",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), add(winsorize(prob_rank_bin1_10d_img_news, std=3), winsorize(prob_rank_bin1_20d_img_news, std=3))), 10), subindustry), 0.5), 5), hump=0.01)",
+      "optimize_reason": "【Slot 3: 备忘录方案C · 10d+20d 跨周期共振+L1+L4】修复 Batch 58 S5/S6 的正确打开方式：当时 7 算子挤掉 sqrt(relevance) 且未 winsorize 导致失败；本槽以 10 算子保留全部 winsorize 包裹且维持最外 hump 阻尼，10日(短期突发催化)+20日(中期机构建仓趋势)等权相加构成双重确认，专门修复 2015-2017 年单靠短线脉冲无法获利的年份缺口，从分子 Returns 端拉高 Cluster Sharpe。字段数注记：受本地 3 字段硬门限制明确放弃 sqrt(relevance) 共四字段架构，该代价由 S1/S2/S6 的 relevance 对照槽补偿。"
+    },
+    {
+      "id": 4,
+      "type": "B61_S4_PLAN_D_ZSCORE_SIGNED_POWER",
+      "expression": "ts_decay_linear(signed_power(group_zscore(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 3), 5)",
+      "optimize_reason": "【Slot 4: 备忘录方案D · group_zscore+signed_power 连续极值架构】直接攻击种子壳的两个结构性病灶：(1) group_rank 在细行业生成阶梯跳变(名次第1掉到第2的权重暴跌83%)，group_zscore 把同一信息映射为连续 [-1,1] z 分数，微小的 x 变动只产生微小的 z 变动，等效消除断崖式换仓源；(2) signed_power(z,3) 保留符号且只对 |z| 做三次方凸化，避开 truncation=0.025 对头部 2% 权重硬削顶的零梯度死局(3qoQr0QX/KPJldglg/kqNEeRWL 三行实测记录)，让中间分位也保有差异化权重。外层 5 日平滑柔化 zscore 日内噪声。8 算子满档内层三因子门控。"
+    },
+    {
+      "id": 5,
+      "type": "B61_S5_D_SHELL_SKEW_GATE",
+      "expression": "ts_decay_linear(signed_power(group_zscore(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(add(skew_primary_sentiment_score_transfer, 1.0), winsorize(prob_rank_bin1_10d_img_news, std=3))), 10), subindustry), 3), 5)",
+      "optimize_reason": "【Slot 5: D壳源差异化 · 偏度右尾确认门】在 Slot4 壳上把内层 sqrt(relevance) 权重腿替换为 skew_primary 偏度右尾确认腿：add(skew, 1.0) 先平移到非负门域(尊重'双 [-1,1] 裸乘伪因果'铁律)，仅当情绪分布整体右偏(单条重磅稿拉动时 skew>0)才给 prob 置信度以权重增益，机械过滤'峰值打满但分布整体平庸'的灌水日。判决价值：这是 max_primary 换核路线之外的第二条源差异化路线，检验'分布形态信息是否比平均量级信息更能预测 10 日收益'。9 算子，与 S4 骨架不同(内层 multiply(add，与 S4 的 sqrt 不同名)。"
+    },
+    {
+      "id": 6,
+      "type": "B61_S6_B_SHELL_MAX_PRIMARY_SWAP",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(max_primary_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), 5)",
+      "optimize_reason": "【Slot 6: B壳源差异化 · max_primary(1.95) vs mean(0.38) 核对照】Slot2 的唯一变量=情绪核：把平台单因子实测夏普仅 0.38 的 mean_sentiment 换成实测 1.95、alphaCount=1 零拥挤、覆盖100%的 max_primary(第一信源峰值)。曾于 maxprim 批在无 winsorize 的裸壳上测得 S2 果限 1.16；本次在大 L1+L3+L4 双层平滑壳上的重测是有判决力的——若 max_primary 在'强壳'里反超 mean 版 Slot2，则实证均值稀释是可修复的(种子壳护不住峰线触发信息)；若仍不超，则从物理上证明 news84 情绪族的族上限 1.56 是核本身的 IC 包络问题，与外壳无关。9 算子。"
+    },
+    {
+      "id": 7,
+      "type": "B61_S7_H20D_SINGLE_ARM_BENCHMARK",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_20d_img_news, std=3), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5)",
+      "optimize_reason": "【Slot 7: 20d 单臂独立预测力锚 · 全批基准槽】fit 系列只测过 add(p10,p20) 和裸 p10，从未单独测过 p20 臂：本槽与 S2 壳异质(S2 有外层平滑而 S7 无)，严格执行单变量隔离——p10 已在全族多次实证为最强臂，p20 是否有独立增量只需本槽给出答案。若本槽 Sharpe 明显低于 S1/S2，则 S3 的 10d+20d 共振增益应主要来自'短期脉冲过滤'而非'中期趋势'，为后续批次剪除 20d 腿提供证据。8 算子最精简基准壳，参数全在合法 grid(std=3, 窗口10) 内。"
+    },
+    {
+      "id": 8,
+      "type": "B61_S8_10DX20D_PRODUCT_RESONANCE_HUMP",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), winsorize(prob_rank_bin1_20d_img_news, std=3))), 10), subindustry), 0.5), 5), hump=0.01)",
+      "optimize_reason": "【Slot 8: 10d×20d 串行共振(AND 门) · S3 的 add 对偶】与 S3 唯一差异=add→multiply：add 是'短催化 OR 中期趋势'的软共振(任一臂强即给信号)；multiply 是'短催化 AND 中期趋势'的硬共振(两臂同强才给信号)。物理语义：10 日脉冲确认+20 日趋势确认同时成立时才建仓，把信号密度压得更稀、单笔信息量更高——按 Margin 恒等式 Mgn=20×Ret/TO，Ret/TO 比只会因信号密度可信度提高而上升。判决价值：若 S8 的 Sharpe/Fit 均优于 S3，则 AND 机制是本族未来壳的标配；若 S8 均劣于 S3，则说明 p20 臂噪声多于信息(与 S7 锚对照可以定位)。10 算子，与 S3/S1 骨架均不同名。"
+    }
+  ]
+}

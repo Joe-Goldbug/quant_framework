@@ -1,0 +1,10 @@
+{
+  "card_id": "CARD_IMBAL_01",
+  "tag": "dead_weight_imbalance",
+  "domain": "long_short_symmetry",
+  "title": "多空持仓失衡与零值死重消除处方",
+  "one_line": "多空持仓失衡/零值死重：使用 ts_zscore 自归一、subtract_ts_mean 或 trade_when 状态机消除单边多头偏倚",
+  "symptom": "abs(avg_long - avg_short) / (avg_long + avg_short) > 0.10，无事件或恒正字段导致空头仓位为零",
+  "authorized_operators": ["ts_zscore", "subtract_ts_mean", "trade_when", "rank_tail_power"],
+  "prescription_recipe": "1. 采用 subtract(F, ts_mean(F, 20)) 重建对称时序均值偏离；2. 采用 trade_when(F > 0, F, -1) 或 rank_tail_power 聚焦尾部截面。"
+}

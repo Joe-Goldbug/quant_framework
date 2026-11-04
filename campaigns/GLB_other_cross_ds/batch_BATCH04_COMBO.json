@@ -1,0 +1,106 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "task_tag": "BATCH04_COMBO",
+  "note": "BATCH03 结论: industry 分组 Sharpe 1.54 (优于母本 1.47), 500 日窗口 1.38, EMEA 仍仅 0.14。本批叠加 industry x 长窗 x 填坑通道 x 截断放宽 (0.08) 四个维度。",
+  "known_fields": [
+    "negative_score_maximum_value",
+    "oth635_sentiment",
+    "oth424_divyld",
+    "dividend_growth_factor_score"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 500), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "双杠杆叠加: 500 日超长窗 (独立贡献 1.38) x industry 大类分组 (独立贡献 1.54), 两者同时降噪与扩大可比样本"
+    },
+    {
+      "slot": 2,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(oth424_divyld, 250), 2), filter=true), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "industry 核心 + 2 倍股息率通道: 股息率单通道 EMEA 0.89 是唯一被验证的欧洲强通道, 2 倍权重才足以撼动 -0.03 的 EMEA 截面"
+    },
+    {
+      "slot": 3,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 500), ts_mean(dividend_growth_factor_score, 500), filter=true), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "长窗核心 + 股息增长预期填坑: 2014-2016 由股息通道独立成像 (该窗口年收益 8.6%/7.8%), 2017+ 双通道共存"
+    },
+    {
+      "slot": 4,
+      "expression": "group_rank(add(rank(ts_mean(negative_score_maximum_value, 500)), rank(ts_mean(oth424_divyld, 500)), filter=true), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "秩标准化 50/50: 情绪与股息率量纲完全对齐, 检验等风险贡献能否把 EMEA 拉到 1.0 而不牺牲整体 Sharpe"
+    },
+    {
+      "slot": 5,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(vec_avg(oth635_sentiment), 250), filter=true), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "industry 核心 + 路透情绪: 路透库含 2014-2016 数据且欧洲覆盖 79%, 与 AI 新闻同族异构, 用于同时填坑与扩欧洲样本"
+    },
+    {
+      "slot": 6,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 500), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.08,
+      "nan": "ON",
+      "optimize_reason": "截断放宽至 0.08: 在同等 Sharpe 下放大高置信度持仓权重, 直接抬高年化收益, 是 Fitness 的唯一免费杠杆"
+    },
+    {
+      "slot": 7,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.08,
+      "nan": "ON",
+      "optimize_reason": "截断放宽对照组: 在已验证的 1.54 核心上单独测试 0.08 截断, 量化其对收益/回撤/集中度检查的影响"
+    },
+    {
+      "slot": 8,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 500), ts_mean(dividend_growth_factor_score, 500), filter=true), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.08,
+      "nan": "ON",
+      "optimize_reason": "长窗填坑核心 + 宽截断: 同时拿满收益端 (填坑 + 放大持仓), 检验能否一次性把 Fitness 推过 1.0"
+    },
+    {
+      "slot": 9,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(oth424_divyld, 250), 2), filter=true), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.08,
+      "nan": "ON",
+      "optimize_reason": "EMEA 抢救核心 + 宽截断: 若 slot 2 的 EMEA 提升成立, 宽截断可再补足 Fitness 缺口"
+    },
+    {
+      "slot": 10,
+      "expression": "group_rank(add(rank(ts_mean(negative_score_maximum_value, 500)), rank(ts_mean(dividend_growth_factor_score, 500)), filter=true), industry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.08,
+      "nan": "ON",
+      "optimize_reason": "双通道秩标准化 + 宽截断: 风险平价式融合叠加收益放大, 目标同时覆盖 Sharpe/Fitness/EMEA 三项缺口"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "MINVOL10M",
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "dataset_field_study": {
+    "dataset_essence": "fundamental23 季度科目快照；本轮聚焦『现金化盈余质量』与『资产级盈利能力』两条已实证有效的机制，并用非对称拥挤度配对（低 alpha_count 分子 + 高覆盖资产锚）降低与平台存量因子的相关性。",
+    "economic_clusters": []
+  },
+  "signals": [
+    {
+      "id": "VF2_01",
+      "cluster_ref": "现金流增强经营盈余质量（低拥挤配对）",
+      "fields_used": [
+        "fnd23_intfvalld1_ipos",
+        "fnd23_intfvalld1_fcos",
+        "fnd23_tot_assets"
+      ],
+      "field_semantics_mapping": "ipos 是经营利润（利润表真实主业盈利能力），fcos 是营运资本变动（间接法下从净利到经营现金的核心桥接项），tot_assets 是总资产内生规模锚。三者相加后除以资产，得到『每单位资产创造的、已现金化的经营盈余』。",
+      "economic_mechanism": "经营利润含应计成分，营运资本变动则反映这部分利润中有多少被应收/存货占用而未实现现金。二者相加等于剔除折旧摊销噪音后的现金化经营盈余，比单看净利或单看现金流更接近真实价值创造。市场对『利润表利润』定价、对『现金实现程度』定价不足，因此该比率的年度改善会领先于后续 ROE 上修，预期收益方向为正。",
+      "expression": "divide(add(fnd23_intfvalld1_ipos, fnd23_intfvalld1_fcos), fnd23_tot_assets)",
+      "times": 0
+    },
+    {
+      "id": "VF2_02",
+      "cluster_ref": "资产级毛利能力（Novy-Marx 毛利率）",
+      "fields_used": [
+        "fnd23_intfvalld1_tbie",
+        "fnd23_tot_assets"
+      ],
+      "field_semantics_mapping": "tbie 是总收入扣除成本后的毛利口径（alpha_count 仅 2，极度冷门但覆盖 100%），tot_assets 为总资产。二者构成『资产毛利密度』。",
+      "economic_mechanism": "毛利率是质量因子中最稳健的单一维度（Novy-Marx 2013）：高毛利意味着定价权与更低的边际成本弹性。用总资产归一后，衡量的是每一元资产能榨出多少毛利，等价于『资产端的定价权密度』，比 ROE 更少受杠杆与税率污染。预期收益方向为正。",
+      "expression": "divide(fnd23_intfvalld1_tbie, fnd23_tot_assets)",
+      "times": 0
+    },
+    {
+      "id": "VF2_03",
+      "cluster_ref": "现金流增强盈余质量（冠军基线对照）",
+      "fields_used": [
+        "fnd23_net_income",
+        "fnd23_ofc",
+        "fnd23_tot_assets"
+      ],
+      "field_semantics_mapping": "净利 + 经营现金流，除以总资产。这是已验证的冠军骨架，作为对照基准用于校准本轮改写的相对增益。",
+      "economic_mechanism": "净利与经营现金流相加可抵消应计噪音的两端（纯应计与纯现金各自的极端），得到稳健的现金化盈余水平；以总资产归一消除规模，年度差分捕捉边际改善。预期收益方向为正。",
+      "expression": "divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets)",
+      "times": 0
+    },
+    {
+      "id": "VF2_04",
+      "cluster_ref": "资本开支强度与再投资周期",
+      "fields_used": [
+        "fnd23_intfvalld1_xecs",
+        "fnd23_tot_assets"
+      ],
+      "field_semantics_mapping": "xecs 为资本开支（alpha_count 仅 1，最冷门且覆盖 99.5%），tot_assets 为总资产锚。比率为资本开支强度。",
+      "economic_mechanism": "资本开支强度刻画再投资周期位置：扩张期高强度资本开支往往领先于产能过剩与后续 ROIC 下滑（过度投资异象），而收缩期低资本开支意味着现金回流与估值修复。以资产归一消除规模，年度差分捕捉投资周期的转向。预期收益方向为负（高强度扩张为负向）。",
+      "expression": "divide(fnd23_intfvalld1_xecs, fnd23_tot_assets)",
+      "times": 0
+    },
+    {
+      "id": "VF2_05",
+      "cluster_ref": "正常化税前盈余的现金化",
+      "fields_used": [
+        "fnd23_intfvalld1_itpv",
+        "fnd23_intfvalld1_fcos",
+        "fnd23_tot_assets"
+      ],
+      "field_semantics_mapping": "itpv 为正常化税前利润（剔除一次性），fcos 为营运资本变动，tot_assets 为资产锚。三者组合得到税前口径的现金化盈余密度。",
+      "economic_mechanism": "税前口径规避各国税率结构差异，正常化口径剔除一次性项目，再叠加营运资本变动还原现金实现程度。在 GLB 跨 20+ 国家税制差异的环境下，税前现金化盈余的可比性显著优于税后净利。预期收益方向为正。",
+      "expression": "divide(add(fnd23_intfvalld1_itpv, fnd23_intfvalld1_fcos), fnd23_tot_assets)",
+      "times": 0
+    }
+  ]
+}

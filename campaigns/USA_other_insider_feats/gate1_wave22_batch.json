@@ -1,0 +1,60 @@
+{
+  "wave": 22,
+  "seed_id": "GATE1_WAVE22",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "j2YAbw6W (j2Y32V9j lineage)",
+  "hypothesis": "Wave18~21 已把 Sharpe 推到 1.27 / 2Y 1.60，但 ProdCorr 结构性卡在 0.818（四个头部候选 0.818~0.872），瓶颈不是表达式的锐度而是经济内容与生产池同类 insider 比率因子重叠。本轮换经济量而非换算子：把第一腿从『同队列价值信念期限结构(top5 20d - top5 60d)』改为『知情度集中度溢价(top5 - top20 队列信念差)』——测量最大内部人相对次大内部人队列的超额信念，经济含义是 conviction concentration 而非 level/期限。理论上该量与生产池的 level/change 类 insider 因子相关性更低，同时保留 group_rank 秩外壳（Wave19 已证不可替换）与笔数强度确认通道。成对窗口 10/20 判高原，另设 txn20/txn60 场窗成对与 ts_arg_max timing 壳对照。",
+  "items": [
+    {
+      "id": "w22_conc_ts20",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "optimize_reason": "主候选：队列集中度差 (top5 20d - top20 20d) × top20 笔数强度 60d，ts_mean(20) 平滑，group_rank 秩壳保留。经济量换核 -> 目标 ProdCorr < 0.70；算子数 4（vec 不计）。"
+    },
+    {
+      "id": "w22_conc_ts10",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),10), subindustry)",
+      "optimize_reason": "成对窗口验证：平滑窗 20 -> 2N=10，判定集中度骨架上参数高原是否延续（单窗尖峰一票否决）。"
+    },
+    {
+      "id": "w22_conc_shift",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(subtract(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top20_60d_filled))), subindustry)",
+      "optimize_reason": "集中度的一阶变化：20d 集中度差 - 60d 集中度差，测『信念向头部集中』的加速度。若成立则经济含义与基线版本正交，是去相关潜力最高的一槽；算子数 4。"
+    },
+    {
+      "id": "w22_conc_norm",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(divide(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),add(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "optimize_reason": "量纲归一化集中度 (top5-top20)/(top5+top20)，消除比率水平绝对值随市场周期的漂移，只留相对倾斜；配合笔数强度确认。算子数 6，卡上限。"
+    },
+    {
+      "id": "w22_conc_all",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_all_20d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "optimize_reason": "更宽的对照腿：top5 相对『全体内部人』均值的超额信念（all_20d alphaCount=0），若比 top20 腿更锐，说明信号本质是头部 vs 全体的偏离而非头部 vs 次头部。"
+    },
+    {
+      "id": "w22_conc_60legs",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top20_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "optimize_reason": "两腿都用 60d 窗的纯水平版集中度，检验 20d 短窗是否只是噪音放大器；作为窗口对照确保结论不依赖单一窗选择。"
+    },
+    {
+      "id": "w22_conc_ts20_txn20",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)",
+      "optimize_reason": "确认通道场窗成对：txn60 -> txn20（父本 j2YAbw6W 用 60 最强，wpQZxAml 用 20 次强），验证集中度骨架上冷字段窗口最优位是否移位。"
+    },
+    {
+      "id": "w22_conc_argmax",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top20_20d_filled_2)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "optimize_reason": "timing 壳对照：母本 ts_arg_max 在集中度骨架上是否复活。Wave20 证 20d-60d 窗下水平信息 > 新近度，此槽用于在同骨架上复核该结论而非直接采用。"
+    }
+  ]
+}

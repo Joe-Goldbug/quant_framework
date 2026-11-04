@@ -1,0 +1,79 @@
+{
+  "batch": 2,
+  "family": "forecast_revision_information_shock",
+  "hypothesis": "预测修正即信息冲击: 分析师评级上调的横截面定价效应是稳健异象, 本数据集的 ts_delta 是机构观点修正的机器版本。修正量是增量信息而非水平, ProdCorr 显著更低。5/1/10 日三档差分窗口扫描最优冲击吸收速度; 对数概率字段一律走 ts_delta/ts_zscore 以规避符号陷阱。",
+  "items": [
+    {
+      "id": "b2_r5",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_r20marsi_ret, 5), oth566_r20marsi_prob_5), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b2_r5w",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_r20marsi_ret, 5), oth566_r20marsi_prob_5), 52), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b2_r1",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_r20marsi_ret, 1), oth566_r20marsi_prob_5), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b2_r10",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_r20marsi_ret, 10), oth566_r20marsi_prob_5), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b2_ret2",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_return, 5), group_rank(oth566_prob_2, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ]
+    },
+    {
+      "id": "b2_l5rev",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_l5r20gasfculr_ret, 5), group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_l5r20gasfculr_prob_pattern"
+      ]
+    },
+    {
+      "id": "b2_lp5",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_l5r20gasfculr_prob_5, 20), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l5r20gasfculr_prob_5",
+        "oth566_l5r20gasfculr_ret"
+      ]
+    },
+    {
+      "id": "b2_ml3",
+      "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_multil3_prob, 20), ts_zscore(oth566_multil3_label, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_multil3_prob",
+        "oth566_multil3_label"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/4zA2Ncdk57PcnxV3mrwr5M",
+  "submitted_at": 1792935148,
+  "items": [
+    {
+      "id": 1,
+      "type": "DUAL_VWAP_BF2",
+      "expression": "reverse(rank(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 2)))",
+      "optimize_reason": "Dual-anchor percentage dislocation with 2-day backfill. Combines post-news arrival drift and end-of-day VWAP deviation into a single composite percentage dislocation. Normalized by news_eod_vwap to eliminate cross-sectional size/dollar distortion. Backfilled for 2 days to capture the prime mean-reversion window while reducing turnover below 70%."
+    },
+    {
+      "id": 2,
+      "type": "DUAL_VWAP_BF3",
+      "expression": "reverse(rank(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 3)))",
+      "optimize_reason": "Dual-anchor percentage dislocation with 3-day holding. Directly compares with Slot 1 to map the optimal decay horizon for dual-anchored overreaction. Expected turnover ~50%, scaling margin to > 3.0 bps and pushing Fitness above 0.85."
+    },
+    {
+      "id": 3,
+      "type": "DUAL_OPEN_BF2",
+      "expression": "reverse(rank(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 2)))",
+      "optimize_reason": "Open-to-close + post-news dual drift with 2-day backfill. Merges the explosive intraday news drift (close - ton_last) with the long-horizon institutional persistence of COPEN (close - open, 2Y=2.35). Normalizing by news_open ensures scale neutrality. 2-day backfill preserves the high Sharpe of both engines while curbing rebalancing friction."
+    },
+    {
+      "id": 4,
+      "type": "DUAL_OPEN_BF3",
+      "expression": "reverse(rank(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_open)), news_open), 3)))",
+      "optimize_reason": "Open-to-close + post-news dual drift with 3-day backfill. 3-day holding window for the COPEN + CTN confluence signal. Expected turnover ~45%, targeting Fitness >= 1.00 and zero cluster test warnings."
+    },
+    {
+      "id": 5,
+      "type": "QUANTILE_CTN_BF2",
+      "expression": "reverse(quantile(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2)))",
+      "optimize_reason": "Gaussian quantile concentrated core on CTN with 2-day backfill. Rather than uniform ranking, gaussian quantiles concentrate portfolio weights on the high-conviction tails while shrinking the noisy middle to zero. This cuts turnover while boosting Sharpe."
+    },
+    {
+      "id": 6,
+      "type": "QUANTILE_DUAL_BF2",
+      "expression": "reverse(quantile(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 2)))",
+      "optimize_reason": "Gaussian quantile weighting on the dual-anchor dislocation. Delivers optimal tail concentration and turnover compression for the highest expected Sharpe configuration."
+    },
+    {
+      "id": 7,
+      "type": "IND_DUAL_BF3",
+      "expression": "reverse(group_rank(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 3), industry))",
+      "optimize_reason": "Industry neutralized dual drift with 3-day backfill. Within-industry relative ranking on the dual-anchor dislocation. Isolates pure idiosyncratic micro-overreaction by removing industry-wide momentum, designed specifically to pass CLUSTER_TEST with zero warnings."
+    },
+    {
+      "id": 8,
+      "type": "DECAY_DUAL_BF3",
+      "expression": "reverse(rank(ts_decay_linear(ts_backfill(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap), 3), 3)))",
+      "optimize_reason": "Linear decay smoothing on 3-day dual-anchor surface. Weights Day 1 at 3/6, Day 2 at 2/6, Day 3 at 1/6, eliminating abrupt step-function rebalancing and compressing turnover below 35% while expanding margin."
+    }
+  ]
+}

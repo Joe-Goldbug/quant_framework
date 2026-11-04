@@ -1,0 +1,70 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/35exhO7jE5929tvBIUlDw65",
+  "submitted_at": 1793083188,
+  "items": [
+    {
+      "id": 1,
+      "type": "B80_S1_REL_GATE_IN11_CONFOUND_FIX",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), if_else(news_relevance_score_2 > 0.2, sqrt(news_relevance_score_2), 0))), 11), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "11 ops. B79 S1 tested rel-gate ONLY at inner 7d (confounded by the proven-bad short memory). Retest the gate at the LOCKED inner 11d: zeroes routine PR fluff before the accumulator, cleaning the signal for the 14-day PEAD window. Targets Ret >= 4.6% with Sh >= 1.55."
+    },
+    {
+      "id": 2,
+      "type": "B80_S2_BOOK_TILT_045_LONG",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.45), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "10 ops. Op-neutral constant surgery: long/short split threshold 0.50 -> 0.45. Book is 435L/600S (short-heavy); lowering the long entry bar deepens long-side conviction names only (rank > 0.45) and rebalances the book. Miller(1977): long side of PEAD under-exploited. Targets Ret >= 4.7% with balanced L/S >= 480/520."
+    },
+    {
+      "id": 3,
+      "type": "B80_S3_BOOK_TILT_055_SHORT",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.55), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "10 ops. Mirror A/B of S2: threshold 0.50 -> 0.55 makes shorts deeper (bad news bleeds longer, Hong-Stein slow-diffusion). S2 vs S3 is a clean paired experiment on WHICH side of the news carries unpriced alpha. Winner's threshold enters B81 champion shell."
+    },
+    {
+      "id": 4,
+      "type": "B80_S4_QUANTILE_GAUSS_TAIL",
+      "expression": "quantile(ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 8))",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "11 ops. quantile() on the FINAL dense score (NOT the raw sparse signal that killed B78 global rank): no-news stocks collapse to a stable tie at the bucket-median constant, so zero tie-jitter risk; gaussian driver compresses the middle 80% and expands the tails -> per-unit-position Returns jump. Direct attack on the Ret 4.20 -> 5.01% gap."
+    },
+    {
+      "id": 5,
+      "type": "B80_S5_GROUP_SCALE_BUCKET_EQ",
+      "expression": "ts_decay_linear(group_scale(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), subindustry), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "11 ops. group_scale re-normalizes each subindustry bucket's final score to [0,1]: low-variance buckets (subtle but consistent catalysts) stop being diluted by high-variance buckets, equalizing risk budget per micro-bucket. Report Direction-3, never tested. Watch CW: bucket amplification could concentrate book."
+    },
+    {
+      "id": 6,
+      "type": "B80_S6_HUMP_DEADBAND_D0",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5))",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "10 ops. hump() deadband on the D=0 Sharpe-king (d5WkjPmJ, 1.58/20.3%): a deadband suppresses MICRO position changes without the phase lag of decay smoothing (lag is what costs Sharpe on the D-curve). If hump cuts TO 20.3% -> ~13% while Sh stays ~1.57, fit reaches ~0.91 as a base for the Return attack. Hump NEVER tested in 79 batches."
+    },
+    {
+      "id": 7,
+      "type": "B80_S7_INNER_EXP_FILTER",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_exp_window(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "10 ops. Op-neutral swap: inner ts_decay_linear(11) -> ts_decay_exp_window(11) (default factor). Exponential kernel puts relatively MORE weight on the newest 2-3 days while keeping the full 11d memory (B79 law respected) - a cheap single-kernel approximation of dual-frequency coupling: fast reaction + slow memory in one operator. Inner exp never tested (B62 tested exp OUTER only)."
+    },
+    {
+      "id": 8,
+      "type": "B80_S8_GATE_FLAT_QUANTILE_COMBO",
+      "expression": "quantile(ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), if_else(news_relevance_score_2 > 0.2, news_relevance_score_2, 0))), 11), subindustry), 0.5), 5), 8))",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "11 ops. Ret double-strike: flat rel gate (no sqrt, saves the op for quantile) zeroes routine-PR days AND quantile gaussianizes the tails. Two orthogonal Return levers (input cleaning + output spreading) in one slot; if S4 or S1 alone fails, their combination tests superadditivity."
+    }
+  ]
+}

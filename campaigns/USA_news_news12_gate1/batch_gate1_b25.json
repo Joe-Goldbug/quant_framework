@@ -1,0 +1,68 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 10,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_item_count_transfer",
+    "prob_rank_bin1_5d_img_news",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_10D_WINSOR",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, winsorize(prob_rank_bin1_10d_img_news, std=3)), news_relevance_score_2), sector)",
+      "optimize_reason": "Winsorized 10-day forward DL event return prediction multiplied by PR news sentiment and relevance score. Eliminates regression fat-tails to boost Sharpe and Fitness."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_5D_WINSOR",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, winsorize(prob_rank_bin1_5d_img_news, std=3)), news_relevance_score_2), sector)",
+      "optimize_reason": "Winsorized 5-day event forecast with headline sentiment and relevance score. Captures immediate post-event drift with maximum predictive IC."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_DUAL_HORIZON",
+      "expression": "group_rank(multiply(mean_sentiment_score_transfer, add(winsorize(prob_rank_bin1_10d_img_news, std=3), winsorize(prob_rank_bin1_20d_img_news, std=3))), sector)",
+      "optimize_reason": "Dual-horizon event ensemble (10d + 20d) confirmed by PR headline sentiment. Smooths predictive variance across time horizons while keeping fields <= 3."
+    },
+    {
+      "id": 4,
+      "type": "N84_VOL_ERM_10D",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), winsorize(prob_rank_bin1_10d_img_news, std=3)), sector)",
+      "optimize_reason": "News volume-weighted headline sentiment interacted with 10-day DL event return forecast. High headline activity validates event significance."
+    },
+    {
+      "id": 5,
+      "type": "N84_VOL_ERM_20D",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), winsorize(prob_rank_bin1_20d_img_news, std=3)), sector)",
+      "optimize_reason": "News volume-weighted headline sentiment interacted with 20-day DL event return forecast. Drives multi-week holding persistence, targeting Turnover < 18%."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_10D_SHOCK",
+      "expression": "group_rank(multiply(mean_sentiment_score_transfer, subtract(winsorize(prob_rank_bin1_10d_img_news, std=3), ts_mean(winsorize(prob_rank_bin1_10d_img_news, std=3), 5))), sector)",
+      "optimize_reason": "5-day moving average departure shock of 10-day event forecast multiplied by headline sentiment. Isolates unexpected breaking event upgrades."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_20D_SUBIND",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, winsorize(prob_rank_bin1_20d_img_news, std=3)), news_relevance_score_2), subindustry)",
+      "optimize_reason": "20-day event prediction and sentiment normalized within subindustry. Strips out fine-grained industry beta to elevate pure Alpha Margin."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_10D_SUBIND",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, winsorize(prob_rank_bin1_10d_img_news, std=3)), news_relevance_score_2), subindustry)",
+      "optimize_reason": "10-day event prediction and sentiment normalized within subindustry. Maximizes granularity and cross-sectional dispersion."
+    }
+  ]
+}

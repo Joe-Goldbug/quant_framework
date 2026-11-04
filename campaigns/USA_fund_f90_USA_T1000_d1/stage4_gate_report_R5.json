@@ -1,0 +1,119 @@
+{
+  "slots": [
+    {
+      "id": "R5_S1_PARENT_WINDOW_10",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), 10)",
+      "math_ops": 4,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R5_S2_PARENT_THIRD_LEG_DILUTION",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(vec_avg(fnd90_us_game_equity_dilution), 252)), 20)",
+      "math_ops": 6,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R5_S3_PARENT_CROSS_SECTIONAL",
+      "expression": "ts_mean(subtract(group_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), subindustry), group_zscore(vec_avg(fnd90_us_game_short_term_debt), subindustry)), 20)",
+      "math_ops": 4,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R5_S4_PARENT_RANK_MAP",
+      "expression": "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), 20))",
+      "math_ops": 5,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R5_S5_GROSSPROFIT_VS_ACCRUAL_NOISE",
+      "expression": "subtract(group_rank(ts_mean(vec_avg(fnd90_us_qes_gamef_grossprofit_asset), 20), subindustry), group_rank(ts_mean(vec_avg(fnd90_us_game_accruals_vol), 20), subindustry))",
+      "math_ops": 5,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R5_S6_COVERAGE_VS_INTEREST_COST",
+      "expression": "winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_eff_interest_rate), 252)), 20), std=3)",
+      "math_ops": 5,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R5_S7_REINVEST_VS_DEBT_EXPANSION",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_capex_dep), 252), ts_zscore(vec_avg(fnd90_us_game_total_debt_chg), 252)), 20)",
+      "math_ops": 4,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    },
+    {
+      "id": "R5_S8_TAX_CONTINGENT_OFFBALANCE",
+      "expression": "-ts_mean(add(ts_zscore(vec_avg(fnd90_us_game_inc_cash_tax), 252), ts_zscore(vec_avg(contingent_liabilities_equity_ratio), 252)), 20)",
+      "math_ops": 4,
+      "gate2": {
+        "ok": true,
+        "issues": []
+      },
+      "gate1": {
+        "verdict": "PASS",
+        "issues": []
+      }
+    }
+  ],
+  "all_green": true,
+  "skeleton_freq": {
+    "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_short_term_debt),NUM)),NUM)": 1,
+    "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_short_term_debt),NUM)),ts_zscore(vec_avg(fnd90_us_game_equity_dilution),NUM)),NUM)": 1,
+    "ts_mean(subtract(group_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),subindustry),group_zscore(vec_avg(fnd90_us_game_short_term_debt),subindustry)),NUM)": 1,
+    "rank(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_short_term_debt),NUM)),NUM))": 1,
+    "subtract(group_rank(ts_mean(vec_avg(fnd90_us_qes_gamef_grossprofit_asset),NUM),subindustry),group_rank(ts_mean(vec_avg(fnd90_us_game_accruals_vol),NUM),subindustry))": 1,
+    "winsorize(ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage),NUM),ts_zscore(vec_avg(fnd90_us_game_eff_interest_rate),NUM)),NUM),std=NUM)": 1,
+    "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_capex_dep),NUM),ts_zscore(vec_avg(fnd90_us_game_total_debt_chg),NUM)),NUM)": 1,
+    "-ts_mean(add(ts_zscore(vec_avg(fnd90_us_game_inc_cash_tax),NUM),ts_zscore(vec_avg(contingent_liabilities_equity_ratio),NUM)),NUM)": 1
+  }
+}

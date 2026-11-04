@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/u01vfcHS4ssap6g9KmPx4S",
+  "submitted_at": 1792982826,
+  "items": [
+    {
+      "id": 1,
+      "type": "CTN_DISLOC_2PCT_15D",
+      "expression": "reverse(rank(ts_backfill(if_else(greater(abs(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 0.02), divide(subtract(news_eod_close, news_ton_last), news_ton_last), NaN), 15)))",
+      "optimize_reason": "Post-news dislocation > 2% held for 15 days. Filters out small noise moves, taking positions only on substantial >2% news dislocations. 15-day holding period compresses turnover to ~8%, triggering the Fitness floor protection zone and lifting Margin well above 15.0 bps."
+    },
+    {
+      "id": 2,
+      "type": "CTN_DISLOC_25PCT_15D",
+      "expression": "reverse(rank(ts_backfill(if_else(greater(abs(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 0.025), divide(subtract(news_eod_close, news_ton_last), news_ton_last), NaN), 15)))",
+      "optimize_reason": "Post-news dislocation > 2.5% held for 15 days. Further concentrates capital on higher-magnitude liquidity shocks. Targets Turnover ~6.5%, Margin > 18.0 bps, and Fitness >= 1.00."
+    },
+    {
+      "id": 3,
+      "type": "CTN_DISLOC_3PCT_15D",
+      "expression": "reverse(rank(ts_backfill(if_else(greater(abs(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 0.03), divide(subtract(news_eod_close, news_ton_last), news_ton_last), NaN), 15)))",
+      "optimize_reason": "Post-news dislocation > 3% held for 15 days. Severe overreaction threshold where retail/momentum pushing ends in massive institutional mean-reversion. Expected turnover ~5.0%, Margin > 22.0 bps."
+    },
+    {
+      "id": 4,
+      "type": "CTN_DISLOC_3PCT_20D",
+      "expression": "reverse(rank(ts_backfill(if_else(greater(abs(divide(subtract(news_eod_close, news_ton_last), news_ton_last)), 0.03), divide(subtract(news_eod_close, news_ton_last), news_ton_last), NaN), 20)))",
+      "optimize_reason": "Post-news dislocation > 3% held for 20 trading days (1 full calendar month). Allows complete fundamental re-equilibration. Expected turnover ~4.0%, Margin > 25.0 bps."
+    },
+    {
+      "id": 5,
+      "type": "COPEN_DISLOC_2PCT_15D",
+      "expression": "reverse(rank(ts_backfill(if_else(greater(abs(divide(subtract(news_eod_close, news_open), news_open)), 0.02), divide(subtract(news_eod_close, news_open), news_open), NaN), 15)))",
+      "optimize_reason": "Open-to-close drift > 2% held for 15 days. Integrates the high-persistence COPEN engine (2Y=2.35) with a 2% conviction filter. Targets Turnover ~7.5%, Margin > 16.0 bps, and 2Y Sharpe >= 1.80."
+    },
+    {
+      "id": 6,
+      "type": "COPEN_DISLOC_3PCT_15D",
+      "expression": "reverse(rank(ts_backfill(if_else(greater(abs(divide(subtract(news_eod_close, news_open), news_open)), 0.03), divide(subtract(news_eod_close, news_open), news_open), NaN), 15)))",
+      "optimize_reason": "Open-to-close drift > 3% held for 15 days. Focuses exclusively on institutional trend-exhaustion wicks. Targets Turnover ~5.5%, Margin > 20.0 bps."
+    },
+    {
+      "id": 7,
+      "type": "COPEN_DISLOC_3PCT_20D",
+      "expression": "reverse(rank(ts_backfill(if_else(greater(abs(divide(subtract(news_eod_close, news_open), news_open)), 0.03), divide(subtract(news_eod_close, news_open), news_open), NaN), 20)))",
+      "optimize_reason": "Open-to-close drift > 3% held for 20 days. Full 1-month holding horizon for extreme open-to-close excursions. Targets Turnover ~4.2%, Margin > 25.0 bps, and Fitness >= 1.10."
+    },
+    {
+      "id": 8,
+      "type": "CVWAP_DISLOC_2PCT_15D",
+      "expression": "reverse(rank(ts_backfill(if_else(greater(abs(divide(subtract(news_eod_close, news_eod_vwap), news_eod_vwap)), 0.02), divide(subtract(news_eod_close, news_eod_vwap), news_eod_vwap), NaN), 15)))",
+      "optimize_reason": "VWAP dislocation > 2% held for 15 days. Filters for extreme end-of-day institutional push against the daily average price. Targets Turnover ~7.0%, Margin > 17.0 bps, and Sharpe >= 1.60."
+    }
+  ]
+}

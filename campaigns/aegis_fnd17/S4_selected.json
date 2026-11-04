@@ -1,0 +1,249 @@
+[
+ {
+  "id": "CAND_A_Q2_1",
+  "question_type": "Q2_Dynamics",
+  "expression": "zscore(subtract(fnd17_ghcspemtt,fnd17_ttmnichg))",
+  "fields": [
+   "fnd17_ghcspemtt",
+   "fnd17_ttmnichg"
+  ],
+  "mechanism": "每股盈利同比增速减净利润同比增速，剥离经营后剩下的股本稀释缺口",
+  "counterparty": "只看EPS增速不看股本扩张的成长风格资金",
+  "optimize_reason": "①针对的物理短板：TTM 净利润同比增速与 TTM 每股盈利同比增速各自都被单独盯住，但市场几乎不把两者放在一起算，『增长被股本吃掉多少』这一稀释缺口从未被定价；同时 fnd17_aebitd 等规模字段当分母已被证伪（Sharpe 0.33~0.41、Y2 为负），说明纯水平量无效，二阶差分才是出路。②数学变形如何增强捕捉：由 EPS=净利润/股数，两条同比增速之差近似等于股本增速的相反数，差值因此把『经营改善』与『股权融资』两个混在一起的成分拆开，直接度量稀释强度；两个字段 ac 均为 0，是本数据集最干净的二阶预期差源之一，且域均为 [-1,1] 的同比百分比。③为什么不会单边/伪因果：两腿同为单位为百分比的同比变化率（同为 TTM 对比上一 TTM 的平行构造），相减得到百分点差，量纲完全可比，且本式不含每股金额与总额金额的直接相减；差分结构天然零均值，顶层 zscore 后多空对称；缺口为正（EPS 增速快于净利润增速，股本收缩或回购）做多、缺口为负（增发稀释）做空，符合『股权融资毁损价值』的经典证据；若方向被实证证伪应整体反号。",
+  "treatment_tag": "none",
+  "self_check": {
+   "operator_count": 2,
+   "field_count": 2,
+   "window_used": 0,
+   "top_level_zero_mean": true,
+   "unit_consistent": "fnd17_ghcspemtt='Percent change in trailing-twelve-month EPS versus the prior trailing-twelve-month period' 与 fnd17_ttmnichg='Percent change in trailing 12-month net income versus the prior TTM' 均为同比变化百分比，且同为 TTM 对比上一 TTM 的平行构造，相减得到百分点差；EPS 增速虽修饰每股口径，其本身已是百分比，与另一百分比相减合法，未把每股金额与总额金额直接相减。",
+   "no_double_signed_multiply": true,
+   "no_pv_contamination": true,
+   "fields_exist_in_dossier": true,
+   "field_acs": [
+    0,
+    0
+   ],
+   "field_covs": [
+    0.9059,
+    0.9059
+   ],
+   "why_not_already_used": "两个字段 ac 均为 0（平台 alphaCount=0，即从未被任何平台 alpha 使用），是本数据集最干净的材料之一；本账户 USA/d1 从未使用过 fnd17 字段，也从未构造过『EPS 增速减净利润增速』的稀释缺口结构；与本批次其他切片（Q1 用 atmtt/aroa5yavg、Q2 另一条用 tcpaormtp）字段不重叠，8 槽内字段复用压力低。"
+  },
+  "_src": "slice_A.json",
+  "_skel": "zscore(subtract(fnd17_ghcspemtt,fnd17_ttmnichg))",
+  "_ac": 0
+ },
+ {
+  "id": "CAND_D_2",
+  "question_type": "Q8_Essence",
+  "expression": "zscore(winsorize(subtract(fnd17_ghcspemtt, fnd17_ttmnichg), std=3))",
+  "fields": [],
+  "mechanism": "干跑占位",
+  "counterparty": "干跑占位",
+  "optimize_reason": "干跑占位：捕捉边际变化与结构变化，用于验证装配器。",
+  "treatment_tag": "none",
+  "self_check": {},
+  "_src": "slice_D.json",
+  "_skel": "zscore(winsorize(subtract(fnd17_ghcspemtt,fnd17_ttmnichg),std=NUM))",
+  "_ac": 0
+ },
+ {
+  "id": "CAND_E_0",
+  "question_type": "Q5_Structure",
+  "expression": "zscore(divide(fnd17_ttmrev, fnd17_atmtt))",
+  "fields": [
+   "fnd17_ttmrev",
+   "fnd17_atmtt"
+  ],
+  "mechanism": "滚动12个月收入相对资产总量的比重，度量资本占用效率的结构比。",
+  "counterparty": "重资产低周转、以扩张叙事掩盖效率恶化的管理人",
+  "optimize_reason": "①物理短板：fnd17_ttmrev 与 fnd17_atmtt 都是季报驱动的绝对金额，裸值就是规模因子而不是信号——单看收入绝对额无法区分「赚得多」与「占资太多」，两者截面排序会被市值规模主导。②数学变形：divide 构造收入/资产的无量纲结构比，把规模维度彻底约掉，使同一子行业内不同体量的公司可比；该比值的物理含义是资本周转效率——同样的资产产生更多营业收入，通常对应更高的单位资产盈利、以及更少的价格战消耗；zscore 只做截面居中与等比缩放，保留比值的相对次序而不做硬截断。③为何不单边、不会伪因果：divide 输出恒为正且无上界，但顶层 zscore 以截面均值为零点强制正负对称，组合必然同时存在多头腿与空头腿，不存在 group_rank 造成的单边持仓与市值暴露幻觉；该比值与利息保障、利润率等纯财务困境指标不共享量纲，全程只有一次除法与线性缩放，没有两个有符号量纲的裸乘，因此不可能出现负负得正伪因果；两腿同为金额口径（滚动12个月收入与总资产，单位均为百万美元），量纲完全可比，unit_handling=VERIFY 可直接通过；两字段覆盖率分别为 0.9291 与 0.9083，均不稀疏，无需 ts_backfill，避免引入陈旧填充造成的伪跳变。",
+  "treatment_tag": "none",
+  "self_check": {
+   "operator_count": 2,
+   "field_count": 2,
+   "window_used": null,
+   "windows_used": [],
+   "top_level_zero_mean": true,
+   "unit_consistent": "两腿同为金额口径：滚动12个月营业收入与总资产，单位均为百万美元，除法后为无量纲周转比，量纲完全可比。",
+   "no_double_signed_multiply": true,
+   "no_pv_contamination": true,
+   "fields_exist_in_dossier": true,
+   "field_acs": [
+    0,
+    0
+   ],
+   "field_covs": [
+    0.9291,
+    0.9083
+   ],
+   "why_not_already_used": "fnd17_ttmrev(ac=0) 与 fnd17_atmtt(ac=0) 均为平台零拥挤字段；USA/TOP1000 指纹库中 fnd17 历史仅 8 条且只用过 atmtt 做 FCF/资产 分母，本条用收入/资产、且顶层换成零均值 zscore（历史那批是 FCF/资产 裸比），结构与骨架均未重复。"
+  },
+  "_src": "slice_Q5Q8.json",
+  "_skel": "zscore(divide(fnd17_ttmrev,fnd17_atmtt))",
+  "_ac": 0
+ },
+ {
+  "id": "CAND_E_2",
+  "question_type": "Q6_Accumulation",
+  "expression": "ts_decay_linear(ts_mean(subtract(fnd17_ttmnichg, fnd17_ttmrevchg), 20), 60)",
+  "fields": [
+   "fnd17_ttmnichg",
+   "fnd17_ttmrevchg"
+  ],
+  "mechanism": "利润增速相对收入增速的差在时间上的累积记忆与线性衰减。",
+  "counterparty": "只在季度报表日集中调仓、随后放任读数过期的交易型资金",
+  "optimize_reason": "①物理短板：fundamental17 是季报/年报驱动的阶跃式数据，单期净利同比读数会在披露日跳变并随后数月不动；若直接用裸读数或单点差分，整段信号由四五个孤立跳点支配，而报表落地后信息被市场迅速消化，其经济效力随时间衰减——这正是「累积记忆」维度要刻画的现象。②数学变形：subtract 取滚动12个月净利同比增速减滚动12个月收入同比增速，两腿同为同比百分比，差值即单位收入的利润扩张幅度（利润率扩张），把「规模增长」与「盈利能力」拆开；ts_mean 在 20 天窗口内把阶跃读数累积成一段连续记忆，抹平单点跳变；ts_decay_linear 在 60 天窗口上对这份记忆做线性衰减，最近披露的信息作用最强、陈旧信息的影响自动衰减，形成「累积—衰减」的双时间结构，把经济效应的时间衰减半衰期显式写进 AST 而非依赖仿真层 decay。③为何不单边、不会伪因果：ts_mean 与 ts_decay_linear 都是线性算子，对零均值输入保持零均值，输出天然正负对称，组合不会退化为单边暴露；两腿百分比相减得到的是有序边际量，不涉及任何相乘，因此不存在两个有符号量纲裸乘的负负得正伪因果；顶层输出域由线性算子继承，零均值性质可被预检结构化判定直接确认。",
+  "treatment_tag": "ts_mean_smooth",
+  "self_check": {
+   "operator_count": 3,
+   "field_count": 2,
+   "window_used": 20,
+   "windows_used": [
+    20,
+    60
+   ],
+   "top_level_zero_mean": true,
+   "unit_consistent": "两腿同为同比百分比口径：滚动12个月净利同比增速与滚动12个月收入同比增速，相减后仍为百分点口径的利润率扩张量。",
+   "no_double_signed_multiply": true,
+   "no_pv_contamination": true,
+   "fields_exist_in_dossier": true,
+   "field_acs": [
+    0,
+    0
+   ],
+   "field_covs": [
+    0.9059,
+    0.8498
+   ],
+   "why_not_already_used": "fnd17_ttmnichg(ac=0) 与 fnd17_ttmrevchg(ac=0) 均为平台零拥挤字段，二者组合从未出现在 USA/TOP1000 指纹库中；历史 8 条 fnd17 指纹无一使用「增速差 + 双时间聚合」这一骨架，本条是全新拓扑而非网格变体。"
+  },
+  "_src": "slice_Q5Q8.json",
+  "_skel": "ts_decay_linear(ts_mean(subtract(fnd17_ttmnichg,fnd17_ttmrevchg),NUM),NUM)",
+  "_ac": 0
+ },
+ {
+  "id": "CAND_B_0",
+  "question_type": "Q3_Anomaly",
+  "expression": "zscore(power(divide(fnd17_atmtt, fnd17_atotce), 2))",
+  "fields": [],
+  "mechanism": "干跑占位",
+  "counterparty": "干跑占位",
+  "optimize_reason": "干跑占位：捕捉边际变化与结构变化，用于验证装配器。",
+  "treatment_tag": "none",
+  "self_check": {},
+  "_src": "slice_B.json",
+  "_skel": "zscore(power(divide(fnd17_atmtt,fnd17_atotce),NUM))",
+  "_ac": 1
+ },
+ {
+  "id": "CAND_B_Q3_1",
+  "question_type": "Q3_Anomaly",
+  "expression": "zscore(ts_backfill(max(divide(fnd17_atotce, fnd17_atmtt), 0), 120))",
+  "fields": [
+   "fnd17_atotce",
+   "fnd17_atmtt"
+  ],
+  "mechanism": "权益/资产是账面杠杆倍数的倒数，高值即低杠杆，低杠杆者随后超额收益更高。",
+  "counterparty": "按账面杠杆机械排序、卖空高杠杆低账面权益的低风险再平衡资金",
+  "optimize_reason": "①针对的物理短板：杠杆异象最干净的载体是账面杠杆倍数，但本账户 USA/d1 已提交 70 条 alpha 中 fnd17 字段使用数为 0，而平台该数据集 alphaCount 已达 781，任何热门杠杆比值写法都落在最拥挤象限；且季报/年报驱动的杠杆水平本身近乎静态，裸水平值缺乏时间序列动态，只能靠构造取胜。②数学变形如何捕捉真实经济学：把杠杆倍数倒过来写成权益/总资产，两腿同为货币总额口径、量纲完全消去，该比值对杠杆倍数单调递减，于是「杠杆越高、后续超额收益越低」的负向异象在不引入任何反向算子的前提下被翻成天然正向信号——方向写在被除项与被乘项的摆放上，而不是事后翻转，这正是本战役 reverse 被列入黑名单后的唯一合规实现路径。尾部处理上刻意不用 power(x,2)：偶次幂虽能压缩偏态，却会把 -0.5 的负权益公司与 +0.5 的正常公司压成同值，符号湮灭、把最差一档误判为最好；改用 max(·,0) 作零地板，既对全体正权益主体保持严格单调排序（截面序完全等价于杠杆排序），又把负权益尾部拉回最差档，同时避免极端值主导截面。ts_backfill(120) 按简报规定的「降维→ts_backfill→标准化」顺序补齐年度与滚动两种口径在换季窗口的空档，并抹平时点错配造成的伪跳变。③为什么不会单边、不会伪因果：最外层 zscore 强制零均值使组合多空对称；全程无 multiply，不存在双有符号裸乘与负负得正；两腿量纲一致且除数资产恒正，无除零与 NaN 风险；零地板对正权益主体严格单调，不破坏截面信息。",
+  "treatment_tag": "ts_backfill_staleness",
+  "self_check": {
+   "operator_count": 4,
+   "field_count": 2,
+   "window_used": 120,
+   "top_level_zero_mean": true,
+   "unit_consistent": "权益(fnd17_atotce)与总资产(fnd17_atmtt)同为货币总额口径，相除后量纲完全消去；除数资产恒正，无除零与 NaN；max(·,0) 为零地板不改变量纲。",
+   "no_double_signed_multiply": true,
+   "no_pv_contamination": true,
+   "fields_exist_in_dossier": true,
+   "field_acs": [
+    1,
+    0
+   ],
+   "field_covs": [
+    0.9372,
+    0.9083
+   ],
+   "why_not_already_used": "本账户 USA/d1 已提交的 70 条 alpha 中 fnd17 字段使用数为 0；该数据集平台 alphaCount 虽达 781，但本组字段 ac 仅 1/0（atotce 与 atmtt 几乎无人使用），且结构是「权益/资产 + 零地板 + 回填」的倒置写法，与平台常见的债务/权益表达式骨架完全不同，属真正冷启动面。"
+  },
+  "_src": "slice_B.json",
+  "_skel": "zscore(ts_backfill(max(divide(fnd17_atotce,fnd17_atmtt),NUM),NUM))",
+  "_ac": 1
+ },
+ {
+  "id": "CAND_E_3",
+  "question_type": "Q6_Accumulation",
+  "expression": "ts_mean(subtract(ts_backfill(fnd17_ttmintcov, 250), ts_backfill(fnd17_ptmintcov, 250)), 120)",
+  "fields": [
+   "fnd17_ttmintcov",
+   "fnd17_ptmintcov"
+  ],
+  "mechanism": "利息保障能力的边际改善在半年窗口内的累积记忆。",
+  "counterparty": "在利率上行期滚动再融资、只把偿债缓冲做在账面上的融资方",
+  "optimize_reason": "①物理短板：利息保障倍数是 [0, inf) 的稀疏比率（两腿覆盖率仅 0.6489 与 0.6415），财报未披露处留下大片空洞，直接使用会把有效样本压缩到少数已充分披露的公司，同时触发 CONCENTRATED_WEIGHT 与多空失衡；即便读数齐全，单期差分也只反映一次报告噪声，看不出偿债缓冲的改善是持续的还是一次性的。②数学变形：先按战役规范在「降维之后、标准化之前」用 ts_backfill(250) 在两个字段上分别延续最近一次真实披露读数，把「本期财报尚未更新」与「读数确实未变」区分开，使缺口的填补来源明确落在最近一次真实披露上，同时不制造虚假跳变；subtract 得到「当前偿债缓冲 − 上一轮偿债缓冲」的边际改善；ts_mean 再在 120 天（半年）窗口内把这一改善累积成连续记忆，使信号不因单次财报跳变而闪烁，正好刻画偿债能力的累积记忆与衰减。③为何不单边、不会伪因果：ts_mean 为线性算子，对零均值差分保持零均值，输出正负对称，不存在单边持仓幻觉；两腿同为利息保障比率（EBIT 除以利息费用），量纲一致，差值仍是比率口径；全程只有回填、减法与线性平均，没有相乘，不存在双有符号裸乘的伪因果；250 与 120 均在战役窗口白名单内，且 ts_backfill 未嵌套任何 ts_decay 类算子，符合降维→回填→标准化→最外层衰减的次序铁律。",
+  "treatment_tag": "ts_backfill_staleness",
+  "self_check": {
+   "operator_count": 4,
+   "field_count": 2,
+   "window_used": 120,
+   "windows_used": [
+    250,
+    120
+   ],
+   "top_level_zero_mean": true,
+   "unit_consistent": "两腿同为利息保障倍数口径（EBIT/利息费用），相减后仍为倍数差（偿债缓冲的边际改善），量纲完全可比。",
+   "no_double_signed_multiply": true,
+   "no_pv_contamination": true,
+   "fields_exist_in_dossier": true,
+   "field_acs": [
+    1,
+    0
+   ],
+   "field_covs": [
+    0.6489,
+    0.6415
+   ],
+   "why_not_already_used": "fnd17_ptmintcov(ac=0) 是 AGENT_BRIEF 明列的 8 个零拥挤「上期」字段之一，fnd17_ttmintcov(ac=1) 亦为低拥挤孪生；本账户 USA/d1 从未使用过 fnd17_ 字段，跨区域已烧字段清单也不含这两个 interest coverage 字段，骨架「回填-相减-半年累积」为全新拓扑。"
+  },
+  "_src": "slice_Q5Q8.json",
+  "_skel": "ts_mean(subtract(ts_backfill(fnd17_ttmintcov,NUM),ts_backfill(fnd17_ptmintcov,NUM)),NUM)",
+  "_ac": 1
+ },
+ {
+  "id": "CAND_A_Q2_2",
+  "question_type": "Q2_Dynamics",
+  "expression": "zscore(ts_av_diff(subtract(fnd17_tcpaormtt,fnd17_tcpaormtp),60))",
+  "fields": [
+   "fnd17_tcpaormtt",
+   "fnd17_tcpaormtp"
+  ],
+  "mechanism": "ROA改善幅度的60日二次差分，度量盈利质量改善的加速度",
+  "counterparty": "锚定静态ROA水平选股、只认改善水平不认改善速度的资金",
+  "optimize_reason": "①针对的物理短板：Q2 要回答速度与加速度，但 fnd17_tcpaormtt（TTM ROA，ac=4）与 fnd17_tcpaormtp（前一 TTM ROA，ac=0）的水平差只给出盈利改善的一阶幅度，改善在变好还是变差（加速度）无人问津；而一阶差分本身在报告期之间是阶梯函数，直接使用会得到噪声很大的水平。②数学变形如何增强捕捉：先做同口径相减得到 ROA 改善幅度（百分点），再用 ts_av_diff(...,60) 取该幅度相对自身 60 日均值的偏离，等价于对『改善』再求一次时间差分，即盈利质量改善的加速度；战役 EUR 实测 accel 窗口 60 最优（30 使 robust 掉到 0.69，120 使 Sharpe 掉到 0.95），本条沿用 60，不做网格微调。③为什么不会单边/伪因果：两腿同为 return on average assets 的百分比口径，差值量纲可比；ts_av_diff 与 subtract 均为零均值型算子，顶层 zscore 后截面分布以 0 为中心，多空对称；全式 3 算子 2 字段、无 multiply、无 rank 加总、无外部量价与内嵌量价字段，也不触碰跨区域已烧的 atq/cainq/qtotd2eq 等字段。",
+  "treatment_tag": "ts_mean_smooth",
+  "self_check": {
+   "operator_count": 3,
+   "field_count": 2,
+   "window_used": 60,
+   "top_level_zero_mean": true,
+   "unit_consistent": "fnd17_tcpaormtt='Return on average assets over the trailing 12 months (percentage)' 与 fnd17_tcpaormtp='Return on average assets for the prior trailing twelve months' 同为平均资产回报率百分比口径（同一公司、相差一个 TTM 的同口径孪生），相减得到百分点差，量纲完全可比；ts_av_diff 作用在该差值上只做时序均值基准，不改变量纲族。",
+   "no_double_signed_multiply": true,
+   "no_pv_contamination": true,
+   "fields_exist_in_dossier": true,
+   "field_acs": [
+    4,
+    0
+   ],
+   "field_covs": [
+    0.9072,
+    0.8638
+   ],
+   "why_not_already_used": "fnd17_tcpaormtp ac=0、fnd17_tcpaormtt ac=4，组合 ac 极低；『ROA 改善的加速度』这一结构（ts_av_diff 包裹同口径孪生差分）不在平台常用模板内，属罕见形态；本账户 USA/d1 无任何 fnd17_ 字段使用记录，也不含跨区域已烧字段，与已提交 70 条 alpha 无字段级重叠。"
+  },
+  "_src": "slice_A.json",
+  "_skel": "zscore(ts_av_diff(subtract(fnd17_tcpaormtt,fnd17_tcpaormtp),NUM))",
+  "_ac": 4
+ }
+]

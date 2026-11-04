@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B82_S1_HUMP_D5W_0005",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0005)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 10 ops: Ultra-fine deadband hump=0.0005 on d5WkjPmJ (Sharpe 1.58). Freezes micro-rebalancing jitter (<0.0005) while executing breaking news catalysts with zero phase lag."
+    },
+    {
+      "id": 2,
+      "type": "B82_S2_HUMP_D5W_0010",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.001)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 10 ops: Medium deadband hump=0.001 on d5WkjPmJ. Cuts turnover from 20.3% toward ~15% while holding 1.58 Sharpe, targeting Fitness >= 0.95."
+    },
+    {
+      "id": 3,
+      "type": "B82_S3_HUMP_D5W_0015",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0015)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 10 ops: Strong deadband hump=0.0015 on d5WkjPmJ. Targets turnover ~13.5% with pristine day-1 alpha capture."
+    },
+    {
+      "id": 4,
+      "type": "B82_S4_HUMP_D5W_0020",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.002)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 10 ops: Deep deadband hump=0.002 on d5WkjPmJ. Pushes turnover toward the 12.5% boundary."
+    },
+    {
+      "id": 5,
+      "type": "B82_S5_HUMP_KPJ_0002",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0002)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Deadband on 7th power tail champion KPJlxe5l (Sharpe 1.58, 2Y 2.22). Fine deadband 0.0002 fits smaller 7th power weight scale."
+    },
+    {
+      "id": 6,
+      "type": "B82_S6_HUMP_KPJ_0005",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0005)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 10 ops: Medium deadband 0.0005 on KPJlxe5l. Slashes 21.2% turnover while locking 2.22 2Y ladder."
+    },
+    {
+      "id": 7,
+      "type": "B82_S7_HUMP_WPQ_003",
+      "expression": "hump(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), hump=0.03)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 8 ops: Power Pool compliant 8-operator shell: deadband hump=0.03 directly on linear rank-centered weights (std=0.28). Replaces outer ts_decay_linear(10) with zero-lag hump."
+    },
+    {
+      "id": 8,
+      "type": "B82_S8_HUMP_WPQ_005",
+      "expression": "hump(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), hump=0.05)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 8 ops: Stronger deadband hump=0.05 on linear rank-centered weights. Tests turnover compression on 8-operator shell."
+    }
+  ]
+}

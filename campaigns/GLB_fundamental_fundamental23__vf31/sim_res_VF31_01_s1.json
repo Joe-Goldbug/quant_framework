@@ -1,0 +1,58 @@
+{
+  "step1": {
+    "should_prune": false,
+    "max_abs_sharpe": 1.16,
+    "qualified_count": 1,
+    "qualified_seeds": [
+      {
+        "expression": "group_rank(ts_delta(divide(subtract(total_equity_book_value, fnd23_blsm_vbts), fnd23_intfvalld1_letq), 252), subindustry)",
+        "sharpe": 1.16,
+        "fitness": 0.59,
+        "margin_bps": 23.07,
+        "turnover": 0.0278,
+        "fail_count": 6,
+        "fails": [
+          "PLATFORM_FAILED",
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "LOW_GLB_EMEA_SHARPE",
+          "LOW_GLB_APAC_SHARPE",
+          "LOW_2Y_SHARPE"
+        ],
+        "cw_failed": false,
+        "metrics": {
+          "sharpe": 1.16,
+          "fitness": 0.59,
+          "turnover": 0.0278,
+          "returns": 0.032,
+          "drawdown": 0.0396,
+          "margin": 0.002307,
+          "longCount": 1890,
+          "shortCount": 2061,
+          "pnl": 3312527,
+          "bookSize": 20000000,
+          "startDate": "2014-01-01",
+          "sub_universe_sharpe": 0.87,
+          "two_year_sharpe": 1.03,
+          "investability_sharpe": 1.16,
+          "investability_fitness": 0.59,
+          "risk_neutralized_sharpe": 0.41
+        },
+        "status": "STEP1_PASSED"
+      }
+    ],
+    "platform_failure": false,
+    "message": "【Step 1 通过】捕获 1 条达标种子 (最高 |Sharpe| = 1.16)"
+  },
+  "step2_passed": [],
+  "final_passed": [],
+  "prescriptions": {
+    "symptoms": [],
+    "allowed_mutations": [
+      "group_rank",
+      "industry",
+      "subindustry"
+    ],
+    "rag_prescriptions": []
+  }
+}

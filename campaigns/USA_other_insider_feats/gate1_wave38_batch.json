@@ -1,0 +1,21 @@
+{
+  "wave": 38,
+  "theme": "PM处方验证轮: 消零结块(rank化/250d基线) + 尾部幂次(signed_power) + 信噪比(ts_ir语义改写) + group_neutralize壳",
+  "trigger": "用户提供 LLMNRnkL 根因分析(Load/Short失衡+零值结块、风险中性化坍塌、TO惩罚盲区)与方案A/B处方",
+  "preflight": {
+    "field_check": "PASS - buy_sell_tx_count_ratio_all_20d/60d/250d_filled, top20_buy_to_sell_txn_ratio_lookback_60_filled, buy_sell_ratio_top20_250d_filled 均真实存在(118字段核实)",
+    "operator_check": "ts_ir 不在104算子白名单 -> 方案A按 ts_ir(x,15)=divide(ts_mean(x,15),ts_std_dev(x,15)) 语义改写; signed_power/ts_decay_linear/ts_rank/group_neutralize 均合法",
+    "op_budget": "A11/B_decay0/A_tail_w=11op(超预算1,标注), 其余<=10op"
+  },
+  "base_settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025},
+  "expressions": [
+    {"tag": "B_exact", "ops": 10, "note": "方案B原样: rank差x250d锚?否-60d锚+ts_rank(120)置信+group_neutralize壳", "expr": "group_neutralize(ts_decay_linear(multiply(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_60d_filled))), ts_rank(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled), 120)), 10), subindustry)"},
+    {"tag": "B_rank_shell", "ops": 10, "note": "B核+group_rank壳(Wave19教训对照)", "expr": "group_rank(ts_decay_linear(multiply(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_60d_filled))), ts_rank(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled), 120)), 10), subindustry)"},
+    {"tag": "A9_tail", "ops": 9, "note": "方案A压缩: 纯rank差+尾部幂次, 2字段", "expr": "signed_power(subtract(group_rank(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_60d_filled))), subindustry), 0.5), 2)"},
+    {"tag": "A11_tail_w", "ops": 11, "note": "A9+top60置信腿(超预算对照)", "expr": "signed_power(subtract(group_rank(multiply(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_60d_filled))), rank(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled))), subindustry), 0.5), 2)"},
+    {"tag": "A9_ablation_noSP", "ops": 7, "note": "A9消融对照: 无signed_power, 隔离尾部幂次贡献", "expr": "group_rank(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_60d_filled))), subindustry)"},
+    {"tag": "A9_250base", "ops": 9, "note": "250d长锚消零结块变体", "expr": "signed_power(subtract(group_rank(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_250d_filled))), subindustry), 0.5), 2)"},
+    {"tag": "B_250base", "ops": 10, "note": "B核+250d长锚", "expr": "group_rank(ts_decay_linear(multiply(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_250d_filled))), rank(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled))), 10), subindustry)"},
+    {"tag": "A_sn_ir15", "ops": 13, "note": "信噪比腿(ts_ir语义): ts_mean/ts_std_dev(15)过滤逆势噪音, 超预算标注", "expr": "signed_power(subtract(group_rank(multiply(divide(ts_mean(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_60d_filled))), 15), ts_std_dev(subtract(rank(vec_avg(buy_sell_tx_count_ratio_all_20d_filled)), rank(vec_avg(buy_sell_tx_count_ratio_all_60d_filled))), 15)), rank(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled))), subindustry), 0.5), 2)"}
+  ]
+}

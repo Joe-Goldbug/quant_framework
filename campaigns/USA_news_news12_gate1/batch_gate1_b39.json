@@ -1,0 +1,66 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 14,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.02,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_relevance_score_2",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_5d_img_news"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_5D_FORECAST_CUBIC",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), multiply(winsorize(prob_rank_bin1_5d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "5-day forward DL forecast replacing 10-day. Higher responsiveness to capture immediate post-news reaction."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_DECAY14_WINSOR25_S7",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 6), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "6-day sentiment decay under simulation decay 14 to prune stale tail weights."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_WINSOR22_SMOOTH7",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.2), 3), 7), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.2), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Tighter 2.2-sigma winsorization to suppress tail outliers further and boost Sharpe."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_FORECAST_ZSCORE",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), multiply(group_zscore(prob_rank_bin1_10d_img_news, subindustry), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Subindustry Z-score normalized forecast interacted with decayed cubic sentiment."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_DUAL_POWER_15",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), multiply(power(winsorize(prob_rank_bin1_10d_img_news, std=2.5), 1.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Convex 1.5 power on positive forecast magnitude to reward high-conviction events."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_SENT_ZSCORE_SUBIND",
+      "expression": "group_rank(multiply(group_zscore(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), subindustry), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Subindustry Z-score normalized smoothed sentiment to remove subindustry drift."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_REL_POWER_075",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.5), power(news_relevance_score_2, 0.75))), subindustry)",
+      "optimize_reason": "Relevance utility tuned to 0.75 power (between sqrt 0.5 and linear 1.0)."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_REVERSE_SHORT_HEDGE",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=2.5), 3), 7), multiply(subtract(winsorize(prob_rank_bin1_10d_img_news, std=2.5), ts_mean(winsorize(prob_rank_bin1_10d_img_news, std=2.5), 10)), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "10-day mean deviation departure forecast capturing dynamic acceleration."
+    }
+  ]
+}

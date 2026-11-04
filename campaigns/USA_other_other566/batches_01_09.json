@@ -1,0 +1,725 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "dataset": "other566",
+  "neutralization": "INDUSTRY",
+  "decay": 4,
+  "truncation": 0.08,
+  "pasteurization": "ON",
+  "nan_handling": "ON",
+  "batches": [
+    {
+      "batch": 1,
+      "family": "confidence_weighted_point_forecast",
+      "hypothesis": "信念加权的点预测: 把「模型预测了多少」转为「模型有多确定」。R20MaRsi 的连续预测水平是全数据集最拥挤用法(71u/90a), 乘以冷门置信腿(1u/1a)既保留预测力又大幅去拥挤, 并自动收缩低信念个股上的死重仓位。5 个模型家族各测一次以检验跨信息集的可迁移性; 26/52 双窗口 + group_neutralize/group_zscore 非秩外层构成参数高原与幅度保留探针。",
+      "items": [
+        {
+          "id": "b1_m1",
+          "expr": "group_rank(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), subindustry)",
+          "ops": 3,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b1_m2",
+          "expr": "group_rank(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 52), subindustry)",
+          "ops": 3,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b1_m3",
+          "expr": "group_neutralize(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), subindustry)",
+          "ops": 3,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b1_m4",
+          "expr": "group_zscore(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), industry)",
+          "ops": 3,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b1_m5",
+          "expr": "group_rank(ts_mean(multiply(oth566_l5r20gasfculr_ret, group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_l5r20gasfculr_ret",
+            "oth566_l5r20gasfculr_prob_pattern"
+          ]
+        },
+        {
+          "id": "b1_m6",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_multil3_label, 60), group_rank(oth566_multil3_prob, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_multil3_label",
+            "oth566_multil3_prob"
+          ]
+        },
+        {
+          "id": "b1_m7",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_l3r5_label",
+            "oth566_l3r5_prob"
+          ]
+        },
+        {
+          "id": "b1_m8",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(twenty_bucket_return_rank_label_l5, 60), group_rank(twenty_bucket_return_rank_confidence_l5, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "twenty_bucket_return_rank_label_l5",
+            "twenty_bucket_return_rank_confidence_l5"
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 2,
+      "family": "forecast_revision_information_shock",
+      "hypothesis": "预测修正即信息冲击: 分析师评级上调的横截面定价效应是稳健异象, 本数据集的 ts_delta 是机构观点修正的机器版本。修正量是增量信息而非水平, ProdCorr 显著更低。5/1/10 日三档差分窗口扫描最优冲击吸收速度; 对数概率字段一律走 ts_delta/ts_zscore 以规避符号陷阱。",
+      "items": [
+        {
+          "id": "b2_r5",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_r20marsi_ret, 5), oth566_r20marsi_prob_5), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b2_r5w",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_r20marsi_ret, 5), oth566_r20marsi_prob_5), 52), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b2_r1",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_r20marsi_ret, 1), oth566_r20marsi_prob_5), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b2_r10",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_r20marsi_ret, 10), oth566_r20marsi_prob_5), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b2_ret2",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_return, 5), group_rank(oth566_prob_2, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_return",
+            "oth566_prob_2"
+          ]
+        },
+        {
+          "id": "b2_l5rev",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_l5r20gasfculr_ret, 5), group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_l5r20gasfculr_ret",
+            "oth566_l5r20gasfculr_prob_pattern"
+          ]
+        },
+        {
+          "id": "b2_lp5",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_l5r20gasfculr_prob_5, 20), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l5r20gasfculr_prob_5",
+            "oth566_l5r20gasfculr_ret"
+          ]
+        },
+        {
+          "id": "b2_ml3",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_multil3_prob, 20), ts_zscore(oth566_multil3_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_multil3_prob",
+            "oth566_multil3_label"
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 3,
+      "family": "cross_model_consensus_ensemble",
+      "hypothesis": "跨模型共识与集成方差削减: 两个训练信息集正交的模型等权合成, 联合信噪比高于任一单腿 ('wisdom of crowds'), 且因拥挤度差异极大不易撞生产库。覆盖订单簿深度对 (L2/L3)、多期限对 (multiL2/multiL3)、技术vs订单簿、残差化 vs 原始 L2、Gasf vs GasfMulti、L5 模型 vs L5 GasfCulr 六组独立配对。",
+      "items": [
+        {
+          "id": "b3_c1",
+          "expr": "group_rank(ts_mean(add(ts_zscore(oth566_r20marsi_ret, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_l5r20gasfculr_ret"
+          ]
+        },
+        {
+          "id": "b3_c1w",
+          "expr": "group_rank(ts_mean(add(ts_zscore(oth566_r20marsi_ret, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 52), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_l5r20gasfculr_ret"
+          ]
+        },
+        {
+          "id": "b3_c2",
+          "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l2r5_label, 60), ts_zscore(oth566_l3r5_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l2r5_label",
+            "oth566_l3r5_label"
+          ]
+        },
+        {
+          "id": "b3_c3",
+          "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l2r20_label, 60), ts_zscore(oth566_l3r20_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l2r20_label",
+            "oth566_l3r20_label"
+          ]
+        },
+        {
+          "id": "b3_c4",
+          "expr": "group_rank(ts_mean(add(ts_zscore(oth566_multil2_label, 60), ts_zscore(oth566_multil3_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_multil2_label",
+            "oth566_multil3_label"
+          ]
+        },
+        {
+          "id": "b3_c5",
+          "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l2r5res_label, 60), ts_zscore(oth566_l2r5_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l2r5res_label",
+            "oth566_l2r5_label"
+          ]
+        },
+        {
+          "id": "b3_c6",
+          "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l3r20gasf_label, 60), ts_zscore(oth566_l3r20gasfmulti_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l3r20gasf_label",
+            "oth566_l3r20gasfmulti_label"
+          ]
+        },
+        {
+          "id": "b3_c7",
+          "expr": "group_rank(ts_mean(add(ts_zscore(oth566_l5r20_label, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l5r20_label",
+            "oth566_l5r20gasfculr_ret"
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 4,
+      "family": "cross_model_disagreement_relative_value",
+      "hypothesis": "模型间分歧的相对价值: 当两个信息集结论相反时必有一方信息滞后。先验: 订单簿深度 (L5>L3>L2) 权威性高于技术指标模型。以深减浅交易「浅模型相对过度乐观」的修正, 对市场整体方向免疫并把权重集中在分歧最大的个股。组内跨五种分歧对以检验「信息深度单调性」是否成立 (若成立则机制可信, 若反转则说明收益来自久期差异)。",
+      "items": [
+        {
+          "id": "b4_d1",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_ret, 60), ts_zscore(oth566_r20marsi_ret, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l5r20gasfculr_ret",
+            "oth566_r20marsi_ret"
+          ]
+        },
+        {
+          "id": "b4_d1w",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_ret, 60), ts_zscore(oth566_r20marsi_ret, 60)), 52), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l5r20gasfculr_ret",
+            "oth566_r20marsi_ret"
+          ]
+        },
+        {
+          "id": "b4_d2",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l5r20_label, 60), ts_zscore(oth566_l3r20_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l5r20_label",
+            "oth566_l3r20_label"
+          ]
+        },
+        {
+          "id": "b4_d3",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l3r20_label, 60), ts_zscore(oth566_l2r20_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l3r20_label",
+            "oth566_l2r20_label"
+          ]
+        },
+        {
+          "id": "b4_d4",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_multil3_label, 60), ts_zscore(oth566_multil2_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_multil3_label",
+            "oth566_multil2_label"
+          ]
+        },
+        {
+          "id": "b4_d5",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_5, 60), ts_zscore(oth566_l5r20gasfculr_label_5, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_label_5",
+            "oth566_l5r20gasfculr_label_5"
+          ]
+        },
+        {
+          "id": "b4_d6",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l3r20gasfmulti_label, 60), ts_zscore(oth566_l3r20gasf_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l3r20gasfmulti_label",
+            "oth566_l3r20gasf_label"
+          ]
+        },
+        {
+          "id": "b4_d7",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l2r5res_label, 60), ts_zscore(oth566_l2r5_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l2r5res_label",
+            "oth566_l2r5_label"
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 5,
+      "family": "term_structure_of_model_expectations",
+      "hypothesis": "模型预期的期限结构: 债券定价的预期假说是有百年实证基础的强机制, 本数据集天然提供 2/3/5/20 日前向预测, 可直接迁移到股票横截面。短端乐观而中端悲观 = 反趋势反弹的典型特征。5 组期限斜率对 + 1 组分桶粒度对 (5桶 vs 3桶) 检验「被压缩掉的分布形状信息」。所有标签先各自 ts_zscore 定心定标, 直接相减必是伪信号。",
+      "items": [
+        {
+          "id": "b5_t1",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_5, 60), ts_zscore(oth566_l5r20gasfculr_label_5, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_label_5",
+            "oth566_l5r20gasfculr_label_5"
+          ]
+        },
+        {
+          "id": "b5_t2",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_3, 60), ts_zscore(oth566_r20marsi_label_5, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_label_3",
+            "oth566_r20marsi_label_5"
+          ]
+        },
+        {
+          "id": "b5_t3",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_3, 60), ts_zscore(oth566_l5r20gasfculr_label_3, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_label_3",
+            "oth566_l5r20gasfculr_label_3"
+          ]
+        },
+        {
+          "id": "b5_t4",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_label_5, 60), ts_zscore(oth566_l5r20gasfculr_label_3, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l5r20gasfculr_label_5",
+            "oth566_l5r20gasfculr_label_3"
+          ]
+        },
+        {
+          "id": "b5_t5",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_label_2, 60), ts_zscore(oth566_r20marsi_label_3, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_label_2",
+            "oth566_r20marsi_label_3"
+          ]
+        },
+        {
+          "id": "b5_t6",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_r20marsi_label_3, 60), ts_zscore(oth566_l5r20_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_label_3",
+            "oth566_l5r20_label"
+          ]
+        },
+        {
+          "id": "b5_t7",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(twenty_bucket_return_rank_label_l5, 60), ts_zscore(twenty_bucket_return_rank_label_l3, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "twenty_bucket_return_rank_label_l5",
+            "twenty_bucket_return_rank_label_l3"
+          ]
+        },
+        {
+          "id": "b5_t8",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_multil3_label, 60), ts_zscore(oth566_l3r20_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_multil3_label",
+            "oth566_l3r20_label"
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 6,
+      "family": "conviction_migration_regime_break",
+      "hypothesis": "形态信念迁移 = 格局突破代理: 本数据集最冷门的一对字段 (0 用户/0 alpha), 机制上最接近信息到达的可观测量。当前形态置信度与最近形态置信度之差刻画模型信念从旧形态迁移到新检测形态的速度。两个独立形态检测器 (multiL3 与 GasfMulti) 同时报告迁移 = 真实微观结构事件而非算法假象 (机制复现性检验)。",
+      "items": [
+        {
+          "id": "b6_m1",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_multil3_prob_pattern, 60), ts_zscore(oth566_multil3_prob_last_pattern, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_multil3_prob_pattern",
+            "oth566_multil3_prob_last_pattern"
+          ]
+        },
+        {
+          "id": "b6_m2",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l3r20gasfmulti_prob_pattern, 60), ts_zscore(oth566_l3r20gasfmulti_prob_last_pattern, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l3r20gasfmulti_prob_pattern",
+            "oth566_l3r20gasfmulti_prob_last_pattern"
+          ]
+        },
+        {
+          "id": "b6_m3",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_multil3_prob_pattern, 60), ts_zscore(oth566_multil3_prob_last_pattern, 60)), 52), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_multil3_prob_pattern",
+            "oth566_multil3_prob_last_pattern"
+          ]
+        },
+        {
+          "id": "b6_m4",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l5r20gasfculr_prob_pattern, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l5r20gasfculr_prob_pattern",
+            "oth566_l5r20gasfculr_ret"
+          ]
+        },
+        {
+          "id": "b6_m5",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_multil3_prob_pattern, 60), ts_zscore(oth566_multil3_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_multil3_prob_pattern",
+            "oth566_multil3_label"
+          ]
+        },
+        {
+          "id": "b6_m6",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l3r20gasfmulti_prob_pattern, 60), ts_zscore(oth566_l3r20gasfmulti_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l3r20gasfmulti_prob_pattern",
+            "oth566_l3r20gasfmulti_label"
+          ]
+        },
+        {
+          "id": "b6_m7",
+          "expr": "group_rank(ts_mean(subtract(ts_zscore(oth566_l3r20gasfmulti_prob_pattern, 60), ts_zscore(oth566_l3r20gasfmulti_prob_last_pattern, 60)), 52), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l3r20gasfmulti_prob_pattern",
+            "oth566_l3r20gasfmulti_prob_last_pattern"
+          ]
+        },
+        {
+          "id": "b6_m8",
+          "expr": "group_rank(ts_mean(multiply(ts_delta(oth566_l3r20gasfmulti_prob, 20), ts_zscore(oth566_l3r20gasfmulti_label, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l3r20gasfmulti_prob",
+            "oth566_l3r20gasfmulti_label"
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 7,
+      "family": "freshness_gating_trade_when",
+      "hypothesis": "预测新鲜度门控: other566 模型每日重训重估, 但多数个股预测数日内不变。跟随未变化的预测是纯换手噪音。trade_when 只在信息真正到达 (预测发生变化) 时更新持仓, 事件之间冻结 = 信念持有, 与「分析师评级上调后持有 N 日」的事件驱动逻辑同构。8 个槽位分别对不同更新条件 (预测变 / 置信变) 与不同信号腿 (水平 / 修正) 交叉, 以确定最优门控对象。",
+      "items": [
+        {
+          "id": "b7_t1",
+          "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_r20marsi_ret, 1), 0), multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), -1), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b7_t2",
+          "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_r20marsi_ret, 5), 0), multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), -1), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b7_t3",
+          "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_l5r20gasfculr_ret, 1), 0), multiply(ts_zscore(oth566_l5r20gasfculr_ret, 60), group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), -1), subindustry)",
+          "ops": 6,
+          "fields": [
+            "oth566_l5r20gasfculr_ret",
+            "oth566_l5r20gasfculr_prob_pattern"
+          ]
+        },
+        {
+          "id": "b7_t4",
+          "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_multil3_label, 1), 0), multiply(ts_zscore(oth566_multil3_label, 60), group_rank(oth566_multil3_prob, industry)), -1), subindustry)",
+          "ops": 6,
+          "fields": [
+            "oth566_multil3_label",
+            "oth566_multil3_prob"
+          ]
+        },
+        {
+          "id": "b7_t5",
+          "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_l3r5_prob, 1), 0), multiply(oth566_l3r5_label, group_rank(oth566_l3r5_prob, industry)), -1), subindustry)",
+          "ops": 6,
+          "fields": [
+            "oth566_l3r5_label",
+            "oth566_l3r5_prob"
+          ]
+        },
+        {
+          "id": "b7_t6",
+          "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_r20marsi_prob_5, 1), 0), multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), -1), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b7_t7",
+          "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_l5r20gasfculr_ret, 1), 0), multiply(ts_delta(oth566_l5r20gasfculr_ret, 5), group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), -1), subindustry)",
+          "ops": 6,
+          "fields": [
+            "oth566_l5r20gasfculr_ret",
+            "oth566_l5r20gasfculr_prob_pattern"
+          ]
+        },
+        {
+          "id": "b7_t8",
+          "expr": "group_rank(trade_when(not_equal(ts_delta(oth566_return, 1), 0), multiply(ts_delta(oth566_return, 5), group_rank(oth566_prob_2, industry)), -1), subindustry)",
+          "ops": 6,
+          "fields": [
+            "oth566_return",
+            "oth566_prob_2"
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 8,
+      "family": "magnitude_preservation_non_rank_outer",
+      "hypothesis": "幅度保留 (铁律 B): group_rank 把极端幅度拍平, 使因子间相关性飙升且 Margin 受损; group_zscore/group_neutralize 保留连续形态, 同等 Sharpe 下 Margin (bps) 通常提升 50%~100%, 且保留的幅度使生产库共线性暴露更分散。本批 8 槽位把 B1/B3/B4/B6 的四个核心机制各做一次 group_zscore 与 group_neutralize 对照, 验证非秩外层是否真的换来更低 ProdCorr 与更高 Margin。",
+      "items": [
+        {
+          "id": "b8_z1",
+          "expr": "group_zscore(ts_mean(multiply(ts_zscore(oth566_multil3_label, 60), group_rank(oth566_multil3_prob, industry)), 26), industry)",
+          "ops": 4,
+          "fields": [
+            "oth566_multil3_label",
+            "oth566_multil3_prob"
+          ]
+        },
+        {
+          "id": "b8_n1",
+          "expr": "group_neutralize(ts_mean(multiply(ts_zscore(oth566_multil3_label, 60), group_rank(oth566_multil3_prob, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_multil3_label",
+            "oth566_multil3_prob"
+          ]
+        },
+        {
+          "id": "b8_z2",
+          "expr": "group_zscore(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), industry)",
+          "ops": 3,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b8_n2",
+          "expr": "group_neutralize(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), subindustry)",
+          "ops": 3,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b8_z3",
+          "expr": "group_zscore(ts_mean(add(ts_zscore(oth566_l2r5_label, 60), ts_zscore(oth566_l3r5_label, 60)), 26), industry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l2r5_label",
+            "oth566_l3r5_label"
+          ]
+        },
+        {
+          "id": "b8_n3",
+          "expr": "group_neutralize(ts_mean(add(ts_zscore(oth566_r20marsi_ret, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_r20marsi_ret",
+            "oth566_l5r20gasfculr_ret"
+          ]
+        },
+        {
+          "id": "b8_z4",
+          "expr": "group_zscore(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_ret, 60), ts_zscore(oth566_r20marsi_ret, 60)), 26), industry)",
+          "ops": 5,
+          "fields": [
+            "oth566_l5r20gasfculr_ret",
+            "oth566_r20marsi_ret"
+          ]
+        },
+        {
+          "id": "b8_n4",
+          "expr": "group_neutralize(ts_mean(subtract(ts_zscore(oth566_multil3_prob_pattern, 60), ts_zscore(oth566_multil3_prob_last_pattern, 60)), 26), subindustry)",
+          "ops": 5,
+          "fields": [
+            "oth566_multil3_prob_pattern",
+            "oth566_multil3_prob_last_pattern"
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 9,
+      "family": "confidence_weighted_grid_horizon",
+      "hypothesis": "置信加权网格探针: 把 B1 胜出的「标准化方向 x 行业内正信念权重」结构铺到 8 个不同字段对上, 每对都用 26/52 窗口配对, 以确认该机制是普适结构而非 R20MaRsi 个例。含 log-prob 字段 (L2R20P/L5C_P3) 的处理 — 因其水平为负, 必须经 ts_zscore 定心或 group_rank 化为正权重, 绝不可裸乘。",
+      "items": [
+        {
+          "id": "b9_g1",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_r20marsi_label_5, 60), group_rank(oth566_r20marsi_prob_5, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_r20marsi_label_5",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b9_g2",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_r20marsi_label_5, 60), group_rank(oth566_r20marsi_prob_5, industry)), 52), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_r20marsi_label_5",
+            "oth566_r20marsi_prob_5"
+          ]
+        },
+        {
+          "id": "b9_g3",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_l3r5_label",
+            "oth566_l3r5_prob"
+          ]
+        },
+        {
+          "id": "b9_g4",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), 52), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_l3r5_label",
+            "oth566_l3r5_prob"
+          ]
+        },
+        {
+          "id": "b9_g5",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l2r20_label, 60), group_rank(oth566_l2r20_prob, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_l2r20_label",
+            "oth566_l2r20_prob"
+          ]
+        },
+        {
+          "id": "b9_g6",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(oth566_l5r20gasfculr_label_3, 60), group_rank(oth566_l5r20gasfculr_prob_3, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "oth566_l5r20gasfculr_label_3",
+            "oth566_l5r20gasfculr_prob_3"
+          ]
+        },
+        {
+          "id": "b9_g7",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(twenty_bucket_return_rank_label_l3, 60), group_rank(twenty_bucket_return_rank_confidence_l3, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "twenty_bucket_return_rank_label_l3",
+            "twenty_bucket_return_rank_confidence_l3"
+          ]
+        },
+        {
+          "id": "b9_g8",
+          "expr": "group_rank(ts_mean(multiply(ts_zscore(five_bucket_return_rank_label_l3, 60), group_rank(five_bucket_return_rank_confidence_l3, industry)), 26), subindustry)",
+          "ops": 4,
+          "fields": [
+            "five_bucket_return_rank_label_l3",
+            "five_bucket_return_rank_confidence_l3"
+          ]
+        }
+      ]
+    }
+  ]
+}

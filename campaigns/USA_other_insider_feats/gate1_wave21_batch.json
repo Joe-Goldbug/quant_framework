@@ -1,0 +1,66 @@
+{
+  "wave": 21,
+  "seed_id": "GATE1_WAVE21",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "wpQZxAml + mLomRNpX (j2Y32V9j lineage)",
+  "hypothesis": "func2 final synthesis: two independently verified increments on the 20d-60d skeleton are combined — cold field top20_buy_to_sell_txn_ratio_lookback_20_filled (Sh 1.17, CLUSTER 0.97) x ts_mean(20) (Sh 1.11, 2Y 1.25, Margin 19.21bps). Paired probes: ts_mean 20/40, field 20/60. Plus dual-neutralization survival checks (SUBINDUSTRY/SLOW) for the champion candidates per champion-council rule. All expressions keep operator count = 6 with mandatory group_rank shell (Wave19 verdict: rank shell is non-negotiable for this family).",
+  "items": [
+    {
+      "id": "w21_syn_tsmean20",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)",
+      "optimize_reason": "合成主候选：冷字段阶梯 #2 (txn20, CLUSTER 0.97) × 平滑窗 20 (2Y 1.25, Margin 19.21bps) 双增量合并，6 算子。"
+    },
+    {
+      "id": "w21_syn_tsmean40",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),40), subindustry)",
+      "optimize_reason": "双窗口成对验证：合成骨架 ts_mean 20 -> 2N=40，判定参数高原延续性（单窗尖峰一票否决）。"
+    },
+    {
+      "id": "w21_syn_txn60_tsmean20",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry)",
+      "optimize_reason": "冷字段 20/60 成对验证在合成骨架上复检（wave20 已证 2Y 1.13/1.52 双活）。"
+    },
+    {
+      "id": "w21_champ_vecmax",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_max(top20_buy_to_sell_txn_ratio_lookback_20_filled)),10), subindustry)",
+      "optimize_reason": "vec 切面增量移植：vec_max 在体积通道上曾 +0.10 2Y（Xg9bQxQ1 1.02/1.09），移植到最强 Sharpe 骨架（wpQZxAml）。"
+    },
+    {
+      "id": "w21_champ_subnz",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),10), subindustry)",
+      "optimize_reason": "冠军存活验证（设置层）：最强 Sharpe 候选 wpQZxAml @ SUBINDUSTRY。"
+    },
+    {
+      "id": "w21_syn_tsmean20_subnz",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)",
+      "optimize_reason": "合成候选 @ SUBINDUSTRY 存活验证。"
+    },
+    {
+      "id": "w21_champ_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),10), subindustry)",
+      "optimize_reason": "冠军存活验证（SLOW）：双中性化存活是冠军台准入条件。"
+    },
+    {
+      "id": "w21_syn_tsmean20_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),20), subindustry)",
+      "optimize_reason": "合成候选 @ SLOW 存活验证。"
+    },
+    {
+      "id": "w21_tsmean20_slow",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),20), subindustry)",
+      "optimize_reason": "mLomRNpX（Margin 19.21bps）@ SLOW 存活验证。"
+    }
+  ]
+}

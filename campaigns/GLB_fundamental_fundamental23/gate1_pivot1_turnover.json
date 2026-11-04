@@ -1,0 +1,68 @@
+{
+  "wave": "pivot1_turnover",
+  "seed_id": "GLB23_PIVOT1_TURNOVER",
+  "region": "GLB",
+  "universe": "MINVOL10M",
+  "delay": 1,
+  "category": "fundamental",
+  "dataset": "fundamental23",
+  "hypothesis": "GLB fnd23 vR1aLRoG(EBIT/TA YoY, Sh1.71/Fit1.17/0-fail) 仅差 ProdCorr 0.72(门槛0.65)+EMEA warning。记忆glb-fnd23-prodcorr-floor证实 ProdCorr 由公式族锁死(应计/ROA同比族=0.72-0.73), 与字段拥挤度无关→唯一PC破门杠杆是换公式族。换分子为顶线 sales_revenue_total(alpha_count=0/user_count=0 真零拥挤): 资产周转率同比=效率因子, 与利润因子(EBIT/TA)经济学正交(顶线驱动vs利润率驱动)。受控对: #1(周转) vs #8(EBIT利润率) 应证明周转族PC显著更低。",
+  "items": [
+    {
+      "id": 1,
+      "type": "turnover_yoy_sector",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(sales_revenue_total, add(fnd23_tot_assets,1)), 252), sector)",
+      "optimize_reason": "P1 顶线资产周转率同比 @sector(冠军壳 group_rank(ts_delta(divide(N,D),252),sector)): 效率因子, 破利润族PC。2字段4op。"
+    },
+    {
+      "id": 2,
+      "type": "turnover_yoy_industry",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(sales_revenue_total, add(fnd23_tot_assets,1)), 252), industry)",
+      "optimize_reason": "P2 同P1 @industry 截面基准扫描(记忆: sector1.71>industry1.59, 校验基座敏感性)。"
+    },
+    {
+      "id": 3,
+      "type": "turnover_yoy_subindustry",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(sales_revenue_total, add(fnd23_tot_assets,1)), 252), subindustry)",
+      "optimize_reason": "P3 同P1 @subindustry 截面基座(与平台中性化一致时可能过中性化, 校验)。"
+    },
+    {
+      "id": 4,
+      "type": "turnover_yoy_66d",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(sales_revenue_total, add(fnd23_tot_assets,1)), 66), sector)",
+      "optimize_reason": "P4 同P1 窗66d(GLB A14 曾用66), 较短窗口对季度更新更及时, 校验窗口高原。"
+    },
+    {
+      "id": 5,
+      "type": "turnover_plus_ofc_yoy",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(add(sales_revenue_total, fnd23_ofc), add(fnd23_tot_assets,1)), 252), sector)",
+      "optimize_reason": "P5 顶线+经营现金流双腿(leAJVdKn 证明 net_income+ofc 双腿修EMEA 0.89): 顶线+现金流效率, 3字段5op。"
+    },
+    {
+      "id": 6,
+      "type": "turnover_plus_ni_yoy",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(add(sales_revenue_total, fnd23_net_income), add(fnd23_tot_assets,1)), 252), sector)",
+      "optimize_reason": "P6 顶线+净利润双腿: 顶线带动利润的效率复合, 对照P5检验现金流vs应计腿。"
+    },
+    {
+      "id": 7,
+      "type": "cash_margin_yoy",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(fnd23_ofc, add(sales_revenue_total,1)), 252), sector)",
+      "optimize_reason": "P7 经营现金流/顶线=现金利润率同比: 现金流口径利润率, 与应计口径(EBIT/Rev)区分, 检验现金vs应计。"
+    },
+    {
+      "id": 8,
+      "type": "ebit_margin_yoy_control",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(fnd23_ebit, add(sales_revenue_total,1)), 252), sector)",
+      "optimize_reason": "P8 受控对照: EBIT/顶线=应计利润率同比(利润族). 预期PC>=0.72(族饱和), 与P1对照证明公式族PC杠杆。"
+    }
+  ]
+}

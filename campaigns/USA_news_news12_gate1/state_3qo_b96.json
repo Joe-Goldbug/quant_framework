@@ -1,0 +1,119 @@
+{
+  "locations": [
+    "https://api.worldquantbrain.com/simulations/39myDqdIh5aHaGh15XDbrO2y",
+    "https://api.worldquantbrain.com/simulations/3ash3l1fG4uFadh1bMJpIY03",
+    "https://api.worldquantbrain.com/simulations/3brqAfbsN4XBctyBVV3whQv",
+    "https://api.worldquantbrain.com/simulations/vhiPa40J54S9uzsw4Hni1a",
+    "https://api.worldquantbrain.com/simulations/PaptDd0z4yeaBu114AY8a5r",
+    "https://api.worldquantbrain.com/simulations/ms1rg8p04ifamc10Rrmi1aO",
+    "https://api.worldquantbrain.com/simulations/3Tu3wV6r74mBbT4115HULb7r",
+    "https://api.worldquantbrain.com/simulations/1hsXbce5S4QcclB159VSKSfo"
+  ],
+  "submitted_at": 1793157180,
+  "items": [
+    {
+      "id": 1,
+      "type": "B96_S1_PWR7_OUT10_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 7), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 1: 10 ops: Convexity Power 7 on QPvkZkQp. Further sharpens extreme top 1% news events, expanding Returns from 4.34% toward >= 4.55%."
+    },
+    {
+      "id": 2,
+      "type": "B96_S2_PWR7_OUT10_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 7), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 2: 10 ops: Convexity Power 7 with tighter 3.5% truncation cap to prevent single-stock over-concentration, boosting Sharpe towards 1.70."
+    },
+    {
+      "id": 3,
+      "type": "B96_S3_PWR7_OUT9_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 7), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 3: 10 ops: Convexity Power 7 + Outer 9d. Releases 1-day outer smoothing lag on Power 7 architecture."
+    },
+    {
+      "id": 4,
+      "type": "B96_S4_SCALE_PWR5_D13",
+      "expression": "ts_decay_linear(group_neutralize(scale(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5)), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 4: 11 ops: Daily Capital Scale Normalization on QPvkZkQp. scale(X) ensures 100% full book deployment every day, eliminating cash drag on quiet news days."
+    },
+    {
+      "id": 5,
+      "type": "B96_S5_HUMP0001_PWR5",
+      "expression": "ts_decay_linear(group_neutralize(hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), hump=0.0001), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 5: 11 ops: hump=0.0001 trimming middle 30% near-zero stocks, eliminating passive holding drag to elevate Returns and Sharpe."
+    },
+    {
+      "id": 6,
+      "type": "B96_S6_HUMP0003_PWR5",
+      "expression": "ts_decay_linear(group_neutralize(hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), hump=0.0003), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 6: 11 ops: hump=0.0003 trimming middle 40% noise, focusing 100% risk budget purely on high-conviction catalyst deciles."
+    },
+    {
+      "id": 7,
+      "type": "B96_S7_OUT9_D13_TRUNC035",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.035,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 7: 10 ops: 0mY3OjJk (Ret 4.36%, Sharpe 1.66) with trunc 0.035 to dampen TO back below 12.8%."
+    },
+    {
+      "id": 8,
+      "type": "B96_S8_SCALE_PWR7_D13",
+      "expression": "ts_decay_linear(group_neutralize(scale(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 7)), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 8: 11 ops: Dual synergy: Power 7 extreme tail convexity + Scale full capital deployment."
+    }
+  ]
+}

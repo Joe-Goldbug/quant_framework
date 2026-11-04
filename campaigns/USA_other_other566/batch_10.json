@@ -1,0 +1,86 @@
+{
+  "batch": 10,
+  "family": "cross_dataset_other566_plus_insider_feats",
+  "hypothesis": "波次 10 (跨数据集, 仍在 USA/D1/OTHER 金字塔内): insider_feats 的 category 为 other, 与 other566 同属 USA/D1/OTHER 金字塔 (乘数 1.4, 且该金字塔当前 0 alpha, 正需点塔), 因此满足 theme 要求。insider_feats 仅 9 用户/10 alpha, 且所选字段多在 0 用户/0 alpha —— 是全市场最冷的横截面源之一, 天然带来极低 ProdCorr。经济学机制: 内部人交易 (insider trading) 是信息优势最强、最难被套利的信号源之一 —— 内部人掌握公司基本面与内部人网络信息, 且交易受法律与声誉约束, 故买卖方向比金额更具信息含量。本波用 3 条机制与 other566 的订单簿形态预测正交组合: (a) 共识叠加 (两个独立信息集共同看多时信号更强, wisdom of crowds); (b) 相对价值分歧 (内部人信念 vs 模型预测的分歧, 押注哪一方信息更新); (c) 内部人信念加权的模型预测 (用内部人方向作为置信权重, 相当于提高模型信念的先验可信度)。每条机制的窗口 20/60 日配对, 外层以 group_zscore 保留幅度。",
+  "items": [
+    {
+      "id": "x10_cons_20",
+      "expr": "group_zscore(ts_mean(add(ts_zscore(vec_avg(buy_sell_ratio_all_20d_filled), 60), ts_zscore(oth566_r20marsi_ret, 60)), 26), industry)",
+      "ops": 4,
+      "fields": [
+        "insider_feats:buy_sell_ratio_all_20d_filled",
+        "other566:r20marsi_ret"
+      ],
+      "why": "共识叠加: 内部人 20 日买卖比 (标准化) + 模型点预测 (标准化)。两个正交信息集共同看多 = 内部人用真实现金投票 + 订单簿模型用微观结构投票, 双重确认。"
+    },
+    {
+      "id": "x10_cons_60",
+      "expr": "group_zscore(ts_mean(add(ts_zscore(vec_avg(buy_sell_ratio_all_60d_filled), 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), industry)",
+      "ops": 4,
+      "fields": [
+        "insider_feats:buy_sell_ratio_all_60d_filled",
+        "other566:l5r20gasfculr_ret"
+      ],
+      "why": "共识叠加 (60 日内部人窗口 x 最深订单簿模型): 与 x10_cons_20 构成窗口配对, 检验内部人信号在 1 个月 vs 1 个季度尺度的一致性。"
+    },
+    {
+      "id": "x10_relval_ins_minus",
+      "expr": "group_zscore(ts_mean(subtract(ts_zscore(oth566_r20marsi_ret, 60), ts_zscore(vec_avg(buy_sell_ratio_all_60d_filled), 60)), 26), industry)",
+      "ops": 4,
+      "fields": [
+        "other566:r20marsi_ret",
+        "insider_feats:buy_sell_ratio_all_60d_filled"
+      ],
+      "why": "相对价值 (内部人 vs 模型): 模型看多而内部人看空 = 模型可能滞后于知情交易 (内部人有基本面信息优势); 押注内部人方向的修正。"
+    },
+    {
+      "id": "x10_relval_ins_minus2",
+      "expr": "group_zscore(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_ret, 60), ts_zscore(vec_avg(buy_sell_ratio_all_60d_filled), 60)), 26), industry)",
+      "ops": 4,
+      "fields": [
+        "other566:l5r20gasfculr_ret",
+        "insider_feats:buy_sell_ratio_all_60d_filled"
+      ],
+      "why": "相对价值 (订单簿模型 vs 内部人): 与上一条配对, 但用 L5 深订单簿模型替代技术指标模型, 检验「内部人 vs 订单簿」是否比「内部人 vs 技术指标」更强 (订单簿更微观、更接近交易层面的实时信息)。"
+    },
+    {
+      "id": "x10_weight_ins",
+      "expr": "group_zscore(ts_mean(multiply(ts_zscore(oth566_r20marsi_ret, 60), group_rank(vec_avg(buy_sell_ratio_all_20d_filled), industry)), 26), industry)",
+      "ops": 4,
+      "fields": [
+        "other566:r20marsi_ret",
+        "insider_feats:buy_sell_ratio_all_20d_filled"
+      ],
+      "why": "内部人信念加权的模型预测: 把内部人买卖比作为模型预测的置信权重 (行业内秩, 恒正不翻转方向)。经济含义: 当内部人也在买入时, 模型的看多预测更可信, 加大权重; 反之自动收缩仓位。"
+    },
+    {
+      "id": "x10_weight_ins2",
+      "expr": "group_zscore(ts_mean(multiply(ts_zscore(oth566_l5r20gasfculr_ret, 60), group_rank(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled), industry)), 26), industry)",
+      "ops": 4,
+      "fields": [
+        "other566:l5r20gasfculr_ret",
+        "insider_feats:top20_buy_to_sell_txn_ratio_lookback_60_filled"
+      ],
+      "why": "权重加权的第二组: 用「前 20 名内部人」的成交笔数买卖比 (0/0 冷源) 替代全体内部人的金额买卖比, 检验「头部内部人信号质量更高」这一经典假设 (高管与大股东比中层员工更具信息含量)。"
+    },
+    {
+      "id": "x10_cons_txr",
+      "expr": "group_zscore(ts_mean(add(ts_zscore(vec_avg(buy_sell_tx_count_ratio_all_60d_filled), 60), ts_zscore(oth566_multil3_label, 60)), 26), industry)",
+      "ops": 4,
+      "fields": [
+        "insider_feats:buy_sell_tx_count_ratio_all_60d_filled",
+        "other566:multil3_label"
+      ],
+      "why": "共识叠加 (笔数口径): 用「买入笔数/卖出笔数」而非金额, 捕捉内部人行为的频率维度 (多次小额买入的累积意图), 与订单簿多期限模型共识。"
+    },
+    {
+      "id": "x10_ins_only",
+      "expr": "group_zscore(ts_mean(ts_zscore(vec_avg(buy_sell_ratio_all_60d_filled), 60), 26), industry)",
+      "ops": 3,
+      "fields": [
+        "insider_feats:buy_sell_ratio_all_60d_filled"
+      ],
+      "why": "纯内部人基线 (单字段, 供对照): 测量该冷源在 USA/D1/TOP1000 自身的 Sharpe/Margin 基线, 作为上述所有跨数据集组合的增量归因基准。这是本波唯一的单字段槽位 —— 它是基线对照而非候选 alpha。"
+    }
+  ]
+}

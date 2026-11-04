@@ -1,0 +1,85 @@
+{
+  "id": "qMLPOJPK",
+  "alpha_id": "qMLPOJPK",
+  "expression": "group_neutralize(ts_decay_linear(subtract(predicted_fifth_quantile_ten_day_return_23, predicted_third_quantile_ten_day_return_23), 240), industry)",
+  "economic_mechanism": "Fifth quantile (highest predicted return) minus third quantile (median predicted return) over 10 days in techindi_model, capturing extreme alpha divergence while avoiding noisy lower tails, smoothed by 240-day decay and cross-sectional industry neutralization.",
+  "expected_polarity": 1,
+  "fields_used": [
+    "predicted_fifth_quantile_ten_day_return_23",
+    "predicted_third_quantile_ten_day_return_23"
+  ],
+  "metrics": {
+    "sharpe": 1.54,
+    "fitness": 1.11,
+    "turnover": 0.0688,
+    "returns": 0.0655,
+    "drawdown": 0.1073,
+    "margin": 0.001903,
+    "margin_bps": 19.03,
+    "longCount": 1496,
+    "shortCount": 1423,
+    "pnl": 6773931,
+    "bookSize": 20000000,
+    "startDate": "2014-01-01",
+    "sub_universe_sharpe": 1.26,
+    "two_year_sharpe": 2.22,
+    "investability_sharpe": 1.54,
+    "investability_fitness": 1.1,
+    "risk_neutralized_sharpe": 1.33
+  },
+  "ra": {
+    "failed_ra_count": 3,
+    "failed_ppa_count": 0,
+    "ra_failed": true,
+    "ppa_failed": false,
+    "ra_failed_checks": [
+      "LOW_SHARPE",
+      "LOW_GLB_EMEA_SHARPE",
+      "LOW_GLB_APAC_SHARPE"
+    ],
+    "pyramid_short": "other"
+  },
+  "checks": {
+    "fail": [],
+    "warning": [
+      {
+        "name": "LOW_SHARPE",
+        "value": 1.54,
+        "limit": 1.58
+      },
+      {
+        "name": "LOW_GLB_EMEA_SHARPE",
+        "value": 0.93,
+        "limit": 1
+      },
+      {
+        "name": "LOW_GLB_APAC_SHARPE",
+        "value": 0.97,
+        "limit": 1
+      },
+      {
+        "name": "CLUSTER_TEST",
+        "value": 1.22,
+        "limit": 1.58
+      },
+      {
+        "name": "MATCHES_THEMES"
+      }
+    ],
+    "pass": [
+      "LOW_FITNESS",
+      "LOW_TURNOVER",
+      "HIGH_TURNOVER",
+      "CONCENTRATED_WEIGHT",
+      "LOW_SUB_UNIVERSE_SHARPE",
+      "LOW_GLB_AMER_SHARPE",
+      "LOW_2Y_SHARPE",
+      "MATCHES_PYRAMID"
+    ]
+  },
+  "prod_corr": 0.6548,
+  "pcorr": 0.6548,
+  "prod_corr_verified": true,
+  "self_corr": -0.0205,
+  "times": 0
+}

@@ -1,0 +1,16 @@
+{
+  "wave": 39,
+  "theme": "PM处方残值移植轮: 保留幅度核(vec_avg原值) + 衰减新鲜度(ts_decay_linear) + 尾部集中(signed_power) + 250d连续置信腿 + 5d脉冲",
+  "trigger": "Wave38判决: rank化全线崩(0.31~0.79), group_neutralize第5次证毒, signed_power零贡献, 幅度核不可rank化",
+  "base_settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025},
+  "expressions": [
+    {"tag": "champ_decay10", "ops": 7, "note": "冠军壳+ts_decay_linear(10)替ts_mean(20), 保留幅度+提鲜度", "expr": "group_rank(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 10), subindustry)"},
+    {"tag": "champ_decay5", "ops": 7, "note": "同上d=5, 更鲜", "expr": "group_rank(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 5), subindustry)"},
+    {"tag": "champ_tailpow", "ops": 10, "note": "冠军核+尾部幂次(幅度版signed_power)", "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 20), subindustry), 0.5), 2)"},
+    {"tag": "champ_tailpow_d10", "ops": 10, "note": "尾部幂次+decay10鲜度合并", "expr": "signed_power(subtract(group_rank(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 10), subindustry), 0.5), 2)"},
+    {"tag": "champ_ir_amp", "ops": 12, "note": "信噪比保留幅度版(ts_mean/ts_std_dev作用于幅度差), 超预算标注", "expr": "signed_power(subtract(group_rank(multiply(divide(ts_mean(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), 15), ts_std_dev(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), 15)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), subindustry), 0.5), 2)"},
+    {"tag": "champ_conf_tsrank", "ops": 8, "note": "置信腿换ts_rank(120)时序分位(幅度核不动)", "expr": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), ts_rank(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled), 120)), 20), subindustry)"},
+    {"tag": "champ_conf_250cov", "ops": 7, "note": "置信腿换buy_sell_ratio_top20_250d_filled(覆盖连续)", "expr": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(buy_sell_ratio_top20_250d_filled)), 20), subindustry)"},
+    {"tag": "champ_5d_pulse", "ops": 7, "note": "短窗换5d脉冲+decay10(PEAD黄金期)", "expr": "group_rank(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_5d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)), 10), subindustry)"}
+  ]
+}

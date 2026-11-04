@@ -1,0 +1,15 @@
+{
+  "cluster": "净乐观度簇 (median_positive_sentiment_score - median_negative_sentiment_score)",
+  "seeds": ["SEED_01", "SEED_02", "SEED_03", "SEED_04"],
+  "verdict": "FALSIFIED",
+  "date": "2026-11-02",
+  "evidence": {
+    "SEED_01": {"field_config": "idx_2/idx_2", "slots": "20/20 返回 全弱", "max_fitness": 0.10, "sharpe_range": "-0.67~+0.44"},
+    "SEED_02": {"field_config": "idx_3/idx_3", "slots": "20/20 返回 全弱", "max_fitness": 0.11, "sharpe_range": "-0.87~+0.61"},
+    "SEED_03": {"field_config": "pos_4/neg_5 (跨变体)", "slots": "20/20 返回 (BRAIN 恢复后补齐) 全弱", "max_fitness": 0.73, "sharpe_range": "-0.81~+0.84", "note": "slot15 CROWDING trade_when 5 达 fitness 0.73 / Sharpe 0.79，仍 <1.0 WEAK"},
+    "SEED_04": {"field_config": "pos_2/min_neg_5 (跨变体, 尾部)", "slots": "14/20 返回 (6 槽 COUNTRY 组未返) 全弱", "max_fitness": 0.10, "sharpe_range": "-0.49~+0.43", "note": "SEED_04 用 minimum_negative_sentiment_score_5 替代 median_neg（尾部变体），14 槽全弱"}
+  },
+  "conclusion": "跨 _2/_2、_3/_3、pos_4/neg_5、pos_2/min_neg_5 四字段配置 + 跨变体一致全弱 → 净乐观度（含尾部变体）在 GLB/MINVOL1M 无截面预测力。turnover 可压至 0.05-0.29 仍 Sharpe≈0-0.4 → 非数据伪影、非 NLP 设置伪影。SEED_01-04 全部证伪，无 finnews 种子通过 Step #1，无 🟢 PLATEAU。",
+  "decision": "标记净乐观度簇 4/4 证伪。BRAIN multisim 部分恢复（SEED_03 20/20、SEED_04 14/20 返回）但 16548 冻结于 SEED_04 结果消费后（CPU delta=0），未记 ledger。推进 SEED_05+（离散度/极端尾部/中性均衡/不确定性簇）需先解除 16548 冻结。",
+  "note": "SEED_02 已由 synthesizer 重定义为 negative 右尾厚度假说 (task_SEED_02_s1, 13:27 WAITING) —— 属极端尾部簇，非本证伪簇。"
+}

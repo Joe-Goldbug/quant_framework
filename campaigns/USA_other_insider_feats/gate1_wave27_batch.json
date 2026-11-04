@@ -1,0 +1,20 @@
+{
+  "wave": 27,
+  "seed_id": "GATE1_WAVE27",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "RREbZ0ka (CROWDING, ProdCorr 0.6986 PASS) / j2YAbw6W",
+  "hypothesis": "Wave25 已把 ProdCorr 打到 0.6986 (<0.70) 但 2Y 只剩 0.76；Wave24 证明短窗保 2Y、长窗保 Margin。本轮在 CROWDING 中性化下寻找能同时保住 2Y 的窗/配对结构：双时间尺度乘积 (20x132 / 33x132) 让短窗提供 2Y、长窗提供 Margin 与去相关；窗谱 66/99/132 填充 33 与 132 之间的空档。",
+  "items": [
+    {"id": "w27_dual20_132", "expression": "group_rank(multiply(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),132)), subindustry)", "optimize_reason": "双时间尺度主槽：同一核心信号在 20 与 132 两个尺度上同时为正才给满分，短尺度贡献 2Y、长尺度贡献 Margin；算子 6 (group_rank/multiply/ts_mean/ts_mean/multiply/subtract)。"},
+    {"id": "w27_dual33_132", "expression": "group_rank(multiply(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),33),ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),132)), subindustry)", "optimize_reason": "双尺度 33x132：33 是 Wave24 的最强短窗 (Sh 1.32)，与 132 的强 Margin 组合；成对验证双尺度窗口选择。"},
+    {"id": "w27_mean66", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),66), subindustry)", "optimize_reason": "窗谱填空：CROWDING 下 66 窗，落在 33 (PC 0.7446) 与 132 (PC 0.6986) 之间，用于定位 ProdCorr 突破 0.70 的临界窗长。"},
+    {"id": "w27_mean99", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),99), subindustry)", "optimize_reason": "窗谱 99 (~1.5 季度)：进一步细化临界窗，若 66 已过 0.70 则 99 提供更多 Margin 余量而不牺牲太多 2Y。"},
+    {"id": "w27_decay132", "expression": "group_rank(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),132), subindustry)", "optimize_reason": "平滑核对照：同 132 窗下 decay 与 mean 的差异，判断 ProdCorr 下降是来自窗长还是平滑权重形状。"},
+    {"id": "w27_txn20_132", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_20_filled)),132), subindustry)", "optimize_reason": "确认通道场窗成对：txn60 -> txn20 (更冷、更近端)，在 132 窗与 CROWDING 下复检最优确认场。"},
+    {"id": "w27_vecmax_132", "expression": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_max(top20_buy_to_sell_txn_ratio_lookback_60_filled)),132), subindustry)", "optimize_reason": "vec 切面移植：vec_max (单笔最强强度) 曾在 20 窗上 +0.12 Fitness；在 132 窗 + CROWDING 下是否仍成立。"},
+    {"id": "w27_win132", "expression": "group_rank(winsorize(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_20d_filled),vec_avg(buy_sell_ratio_top5_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),132), std=3), subindustry)", "optimize_reason": "尾部处理：秩变换前先 winsorize(std=3)，改变排序尾部从而可能进一步移动 ProdCorr，同时直接针对 CONCENTRATED_WEIGHT 风险。算子 5。"}
+  ]
+}

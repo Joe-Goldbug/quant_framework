@@ -1,0 +1,70 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 15,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_item_count_transfer",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2",
+    "news_eod_close",
+    "news_ton_last",
+    "max_bias_adjusted_price_target",
+    "median_bias_adjusted_price_target"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_SENT_SURPRISE_5D",
+      "expression": "group_rank(subtract(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), ts_mean(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), 5)), sector)",
+      "optimize_reason": "PR headline sentiment volume-weighted departure from 5-day moving average baseline. Isolates breaking corporate news shocks, targeting Turnover < 25%, Margin >= 12 bps."
+    },
+    {
+      "id": 2,
+      "type": "N84_SENT_SURPRISE_10D",
+      "expression": "group_rank(subtract(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), ts_mean(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), 10)), sector)",
+      "optimize_reason": "PR headline sentiment volume-weighted departure from 10-day moving average baseline. Captures medium-term sentiment inflections, targeting Turnover < 20%, Margin >= 14 bps."
+    },
+    {
+      "id": 3,
+      "type": "N84_SENT_ZSCORE_VOL",
+      "expression": "group_rank(multiply(divide(subtract(mean_sentiment_score_transfer, ts_mean(mean_sentiment_score_transfer, 20)), add(ts_std_dev(mean_sentiment_score_transfer, 20), 0.01)), log(add(news_item_count_transfer, 1))), sector)",
+      "optimize_reason": "20-day rolling z-score of PR sentiment weighted by log news count. Normalizes sentiment volatility across calm and volatile stocks, targeting Turnover < 18%, Margin >= 15.0 bps."
+    },
+    {
+      "id": 4,
+      "type": "ERM_DL_20D_SURPRISE",
+      "expression": "group_rank(multiply(subtract(prob_rank_bin1_20d_img_news, ts_mean(prob_rank_bin1_20d_img_news, 5)), news_relevance_score_2), sector)",
+      "optimize_reason": "Deep learning event model 20-day forward return prediction surprise from 5-day baseline, weighted by news relevance score. Targets Turnover < 25%, Margin >= 15.0 bps."
+    },
+    {
+      "id": 5,
+      "type": "CROSS_ERM_N84_CONFLUENCE",
+      "expression": "group_rank(add(subtract(prob_rank_bin1_20d_img_news, ts_mean(prob_rank_bin1_20d_img_news, 5)), multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1)))), sector)",
+      "optimize_reason": "Confluence between deep learning event return prediction and NLP headline sentiment. Dual orthogonal news models filter out false signals, targeting Turnover < 22%, Sharpe >= 1.70."
+    },
+    {
+      "id": 6,
+      "type": "CROSS_N84_N12_UNDERREACTION",
+      "expression": "group_rank(subtract(subtract(mean_sentiment_score_transfer, ts_mean(mean_sentiment_score_transfer, 5)), divide(subtract(news_eod_close, news_ton_last), news_ton_last)), sector)",
+      "optimize_reason": "PR sentiment innovation shock minus intraday news price move. Buys stocks where positive sentiment surprise has not yet been reflected in price, targeting Turnover < 25%, Margin >= 15.0 bps."
+    },
+    {
+      "id": 7,
+      "type": "CROSS_N84_ANALYST_MAX",
+      "expression": "group_rank(multiply(mean_sentiment_score_transfer, subtract(max_bias_adjusted_price_target, ts_mean(max_bias_adjusted_price_target, 5))), sector)",
+      "optimize_reason": "News sentiment confirmation with sell-side analyst target price upgrades. Eliminates market close price to avoid crowds, targeting ProdCorr < 0.50, Turnover < 20%, Margin >= 15.0 bps."
+    },
+    {
+      "id": 8,
+      "type": "CROSS_N84_ANALYST_MEDIAN",
+      "expression": "group_rank(add(mean_sentiment_score_transfer, divide(subtract(median_bias_adjusted_price_target, ts_mean(median_bias_adjusted_price_target, 5)), ts_mean(median_bias_adjusted_price_target, 5))), sector)",
+      "optimize_reason": "Normalized median price target revision added to PR news sentiment score. Targets Turnover < 18%, Margin >= 15.0 bps, Fitness >= 1.10, ProdCorr < 0.60."
+    }
+  ]
+}

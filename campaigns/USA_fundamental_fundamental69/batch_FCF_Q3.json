@@ -1,0 +1,362 @@
+{
+  "batch_id": "FCF_Q3_FREE_CASH_CHANGE_PEER_SURPRISE",
+  "parent_best_alpha_id": "3qoZ3lLZ",
+  "parent_best_expression": "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), industry)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "research_hypothesis": "Among recent rounds, annual change in operating cash after dividends and capex was the strongest balanced long-short construction: 325 longs and 363 shorts, concentration pass, sub-universe Sharpe 0.74, versus Sharpe 0.62 and Fitness 0.36. This suggests the economic core may be the change in free cash remaining after both shareholder distributions and reinvestment, rather than retained cash after dividends alone. This round tests whether comparison to the issuer's own history and peer-normalization at appropriate levels can isolate an economically meaningful surprise. Reported quarterly fields create stale-value and sparse-update risk; no return direction is assumed.",
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "PARENT_CHANGE_SUBINDUSTRY_CENTER",
+      "expression": "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), subindustry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors comparing cash-flow changes across broad industries without controlling for subindustry payout and reinvestment economics.",
+      "economic_mechanism": "The measured annual change in operating cash after dividends and capital expenditures is centered among subindustry peers, testing whether comparable firms' free-cash changes are more informative than a broad-industry comparison.",
+      "optimize_reason": "Retain the Q2 slot 5 post-payout/post-reinvestment change, the only observed balanced candidate that passed concentration, and refine its peer set to test subindustry capital allocation regimes. This is motivated by measured breadth and sub-universe results, not a claim of success.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "PARENT_CHANGE_CROSS_SECTIONAL_RANK",
+      "expression": "group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors whose linear standardized weights are dominated by a few unusually large accounting flow changes.",
+      "economic_mechanism": "Peer ranking of the annual change in post-dividend, post-capex cash flow tests whether robust ordinal comparisons avoid undue influence from extreme values while preserving both positive and negative peer positions.",
+      "optimize_reason": "Use a rank rather than a z-score to limit outlier leverage in an unbounded quarterly flow difference. Ranking can also produce one-sided exposure; long/short counts and concentration remain explicit decision criteria.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 3",
+      "slot_role": "FREE_CASH_CHANGE_OWN_BASELINE",
+      "expression": "group_zscore(ts_av_diff(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors who extrapolate a firm's annual free-cash change without asking whether it is abnormal for that firm's own recent history.",
+      "economic_mechanism": "The post-payout, post-investment cash-flow change is compared with its own annual mean before industry standardization, testing firm-specific surprise rather than absolute change.",
+      "optimize_reason": "The parent change shows relative sub-universe resilience but weak overall Sharpe and Fitness. This tests whether own-history novelty, rather than magnitude alone, is the missing economic condition. Because quarterly observations repeat, the 252-day baseline may contain very few distinct reports.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 4",
+      "slot_role": "FREE_CASH_CHANGE_OWN_VOLATILITY",
+      "expression": "group_zscore(divide(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), add(ts_std_dev(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), 0.0001)), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors comparing absolute cash-flow improvements without adjusting for each issuer's normal variability in reported funding flows.",
+      "economic_mechanism": "Annual free-cash-flow change is scaled by its own historical variability to measure a signal-to-noise-adjusted funding surprise, then compared within industries. This is not a causal t-statistic; sparse accounting updates can make the denominator unstable.",
+      "optimize_reason": "Build on the parent's high breadth and positive sub-universe Sharpe while testing whether noisy extreme cash-flow changes diluted Fitness. The small constant prevents division by zero but is a numerical stabilizer, not an economically calibrated scale; the output must be checked for numerical artifacts and concentration.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 9,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 5",
+      "slot_role": "FREE_CASH_CHANGE_NORMALIZED_TO_OPERATING_CASH",
+      "expression": "group_zscore(ts_delta(divide(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), fnd69_q2yfcnao), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors comparing absolute free-cash changes without accounting for the operating cash-generation base that supports them.",
+      "economic_mechanism": "The annual change in the post-dividend, post-capex residual relative to operating cash flow tests changes in the fraction of operating funds remaining after payouts and reinvestment. It uses a common flow denominator and all three fields are cash-flow items; operating cash flow near zero can make this ratio unstable.",
+      "optimize_reason": "Preserve the three-field limit by using operating cash flow, rather than an additional assets field, as the normalization base. This tests the economic conversion of operating funds into post-investment, post-payout cash, while explicitly treating small denominators and sign changes as high-risk edge cases.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 6",
+      "slot_role": "SHORTER_HORIZON_FREE_CASH_SURPRISE",
+      "expression": "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors who only update annual free-cash comparisons and are slow to incorporate more recent changes in internally available cash.",
+      "economic_mechanism": "The 60-day change in post-payout, post-capex cash flow tests a shorter reporting-absorption horizon than the best observed annual change.",
+      "optimize_reason": "Use one fiscal-report-adjacent contrast to the successful diagnostic horizon, not a parameter grid. A 60-day window may contain no new quarterly value, in which case weak performance or stale positions would be expected.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 7",
+      "slot_role": "SMOOTHED_FREE_CASH_CHANGE",
+      "expression": "group_zscore(ts_decay_linear(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), 20), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors reacting to a single accounting change without considering its persistence or delayed information absorption.",
+      "economic_mechanism": "A short linear decay of the completed annual free-cash change tests whether gradual absorption or reporting noise explains the parent's weak overall Sharpe.",
+      "optimize_reason": "Smooth only the parent signal after formation to isolate information-absorption effects. This can only be retained if it improves measured breadth and all relevant return gates; stale quarterly values could simply increase delay.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 8",
+      "slot_role": "FREE_CASH_CHANGE_VOLATILITY",
+      "expression": "group_zscore(ts_std_dev(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 252), 252), industry)",
+      "fields_used": [
+        "fnd69_q2yfcnao",
+        "fnd69_q2yvd",
+        "fnd69_capxy2q"
+      ],
+      "counterparty": "Investors focusing on the direction of annual free-cash change while ignoring whether such changes are stable or erratic.",
+      "economic_mechanism": "The annual variability of annual free-cash changes tests uncertainty in the persistence of cash remaining after payout and investment, a risk-visibility mechanism distinct from direction.",
+      "optimize_reason": "Test stability of the signal with a distinct economic interpretation. Since quarterly flow records are repeated between reporting dates, the estimate may mostly capture filing jumps; interpret only alongside breadth and consistency metrics.",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_q2yfcnao",
+          "fnd69_q2yvd",
+          "fnd69_capxy2q"
+        ]
+      }
+    }
+  ],
+  "known_fields": {
+    "fnd69_capxy2q": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Capital Expenditures (Quarterly)",
+      "coverage": 0.4197,
+      "alpha_count": 2,
+      "user_count": 2,
+      "value_domain_inferred": "unbounded_numeric",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; quarterly reporting may create stale/missing intervals",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (2 platform alphas)"
+    },
+    "fnd69_dltry2q": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Long-Term Debt - Reduction (Quarterly)",
+      "coverage": 0.393,
+      "alpha_count": 1,
+      "user_count": 1,
+      "value_domain_inferred": "unbounded_numeric; economic sign convention not verified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; quarterly reporting may create stale/missing intervals",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (1 platform alpha)"
+    },
+    "fnd69_fiscalquarter": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Fiscal quarter",
+      "coverage": 1.0,
+      "alpha_count": 5,
+      "user_count": 4,
+      "value_domain_inferred": "categorical_integer_code",
+      "observed_value_range": null,
+      "zero_inflation": "not applicable/unknown",
+      "update_frequency": "fiscal calendar (not empirically probed)",
+      "crowding": "moderate (5 platform alphas)"
+    },
+    "fnd69_fiscalyear": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Fiscal year",
+      "coverage": 1.0,
+      "alpha_count": 2,
+      "user_count": 2,
+      "value_domain_inferred": "categorical_integer_code",
+      "observed_value_range": null,
+      "zero_inflation": "not applicable/unknown",
+      "update_frequency": "fiscal calendar (not empirically probed)",
+      "crowding": "low (2 platform alphas)"
+    },
+    "fnd69_q2ycktsrp": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Purchase of Common and Preferred Stock (Quarterly)",
+      "coverage": 0.3897,
+      "alpha_count": 3,
+      "user_count": 3,
+      "value_domain_inferred": "unbounded_numeric; transaction sign convention not verified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; may be episodic",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (3 platform alphas)"
+    },
+    "fnd69_q2yfcnao": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Operating Activities - Net Cash Flow (Quarterly)",
+      "coverage": 0.4333,
+      "alpha_count": 4,
+      "user_count": 4,
+      "value_domain_inferred": "unbounded_numeric; can be positive or negative by economic meaning",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; quarterly reporting may create stale/missing intervals",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (4 platform alphas)"
+    },
+    "fnd69_q2yktss": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Sale of Common and Preferred Stock (Quarterly)",
+      "coverage": 0.3883,
+      "alpha_count": 4,
+      "user_count": 4,
+      "value_domain_inferred": "unbounded_numeric; transaction sign convention not verified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; may be episodic",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (4 platform alphas)"
+    },
+    "fnd69_q2ysitld": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Long-Term Debt - Issuance (Quarterly)",
+      "coverage": 0.3933,
+      "alpha_count": 1,
+      "user_count": 1,
+      "value_domain_inferred": "unbounded_numeric; issuance sign convention not verified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; may be episodic",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (1 platform alpha)"
+    },
+    "fnd69_q2yvd": {
+      "type": "MATRIX",
+      "semantic_role": "Signal_Flow",
+      "description": "Cash Dividends (Cash Flow) (Quarterly)",
+      "coverage": 0.401,
+      "alpha_count": 1,
+      "user_count": 1,
+      "value_domain_inferred": "unbounded_numeric; distribution and sign convention unverified",
+      "observed_value_range": null,
+      "zero_inflation": "unknown; likely episodic but not empirically measured",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (1 platform alpha)"
+    },
+    "fnd69_qta": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Assets - Total (Quarterly)",
+      "coverage": 1.0,
+      "alpha_count": 7,
+      "user_count": 6,
+      "value_domain_inferred": "nonnegative_unbounded_scale (inferred from concept; not observed)",
+      "observed_value_range": null,
+      "zero_inflation": "unknown",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "high relative to this dataset (7 platform alphas)"
+    },
+    "fnd69_rtqf": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Fiscal quarter",
+      "coverage": 1.0,
+      "alpha_count": 12,
+      "user_count": 8,
+      "value_domain_inferred": "categorical_integer_code",
+      "observed_value_range": null,
+      "zero_inflation": "not applicable/unknown",
+      "update_frequency": "fiscal calendar (not empirically probed)",
+      "crowding": "high (12 platform alphas); excluded from signal construction"
+    },
+    "fnd69_ta": {
+      "type": "MATRIX",
+      "semantic_role": "Dimension_Anchor",
+      "description": "Assets - Total (Quarterly)",
+      "coverage": 0.511,
+      "alpha_count": 2,
+      "user_count": 2,
+      "value_domain_inferred": "nonnegative_unbounded_scale (inferred from concept; not observed)",
+      "observed_value_range": null,
+      "zero_inflation": "unknown",
+      "update_frequency": "quarterly (metadata label; not empirically probed)",
+      "crowding": "low (2 platform alphas)"
+    }
+  },
+  "technical_audit": {
+    "passed_count": 8,
+    "total": 8,
+    "exact_fingerprint_duplicates": [],
+    "skeleton_frequency": {
+      "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),subindustry)": 1,
+      "group_rank(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry)": 1,
+      "group_zscore(divide(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),add(ts_std_dev(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),NUM)),industry)": 1,
+      "group_zscore(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry)": 1,
+      "group_zscore(ts_delta(divide(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),fnd69_q2yfcnao),NUM),industry)": 1,
+      "group_zscore(ts_decay_linear(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),NUM),industry)": 1,
+      "group_zscore(ts_av_diff(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),industry)": 1,
+      "group_zscore(ts_std_dev(ts_delta(subtract(subtract(fnd69_q2yfcnao,fnd69_q2yvd),fnd69_capxy2q),NUM),NUM),industry)": 1
+    }
+  }
+}

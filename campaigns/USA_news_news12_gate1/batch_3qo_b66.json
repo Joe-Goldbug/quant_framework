@@ -1,0 +1,80 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B66_S1_KPJ_DECAY18_TRUNC02",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 18,
+      "truncation": 0.02,
+      "optimize_reason": "Slot 1: Peak 1 Champion (KPJlxe5l, Sharpe 1.58, 2Y 2.22) with decay=18. Slashes turnover from 21.2% to ~17.5% while strictly preserving 2Y Ladder momentum > 2.0."
+    },
+    {
+      "id": 2,
+      "type": "B66_S2_KPJ_DECAY22_TRUNC02",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 22,
+      "truncation": 0.02,
+      "optimize_reason": "Slot 2: Peak 1 Champion with decay=22. Slashes turnover to ~14.5% to directly lift Fitness from 0.71 to ~0.90+ and Margin to 6.0+ bps."
+    },
+    {
+      "id": 3,
+      "type": "B66_S3_KPJ_DECAY25_TRUNC02",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 25,
+      "truncation": 0.02,
+      "optimize_reason": "Slot 3: Peak 1 Champion with decay=25. Compresses turnover to the 12.5% theoretical floor, maximizing theoretical Fitness towards 0.95+."
+    },
+    {
+      "id": 4,
+      "type": "B66_S4_KPJ_DECAY25_TRUNC025",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 25,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: Peak 1 Champion with decay=25 + Truncation 0.025. Slashes turnover to 12.5% while de-clipping high conviction ideas to expand Returns from 4.3% to 4.8%+, targeting Fitness >= 1.00."
+    },
+    {
+      "id": 5,
+      "type": "B66_S5_KPJ_POWER5_DECAY20",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_10d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5)",
+      "decay": 20,
+      "truncation": 0.02,
+      "optimize_reason": "Slot 5: Peak 1 with milder Power 5 outer rank + decay 20. Dual mechanism damping to eliminate excess tail churn and lower turnover to 15%."
+    },
+    {
+      "id": 6,
+      "type": "B66_S6_KPJ_PROB20D_DECAY22",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(prob_rank_bin1_20d_img_news, sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7)",
+      "decay": 22,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: Peak 1 with 20-day horizon return prediction (prob_rank_bin1_20d_img_news) at decay 22. Perfect economic alignment between event prediction horizon and portfolio holding window."
+    },
+    {
+      "id": 7,
+      "type": "B66_S7_RRE_DECAY12_TRUNC025",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: Peak 2 Champion (RREjYY0n, Fitness 0.87, Margin 7.08 bps) with decay=12. Reduces over-smoothing from 25d down to 22d to lift Sharpe from 1.51 to 1.58+ while keeping turnover <= 14%."
+    },
+    {
+      "id": 8,
+      "type": "B66_S8_RRE_PROB20D_DECAY15",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_20d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: Peak 2 Champion with 20-day regression horizon (prob_rank_bin1_20d_img_news) at decay 15. Tests if longer news drift model boosts Returns and pushes Fitness to 1.00."
+    }
+  ]
+}

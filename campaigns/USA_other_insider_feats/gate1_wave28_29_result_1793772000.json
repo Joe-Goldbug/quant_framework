@@ -1,0 +1,42 @@
+{
+  "waves": [28, 29],
+  "fetched_at": "2026-11-04T14:52:00Z",
+  "wave28": {
+    "purpose": "synthesis probe: quarterly windows x STATISTICAL neutralization (target: PC<0.70 AND Margin>20 AND Sharpe>1.3)",
+    "location": "https://api.worldquantbrain.com/simulations/1vQvU73GX4A7aEFMePET1e0",
+    "settings": {"neutralization": "STATISTICAL", "region": "USA", "universe": "TOP1000", "delay": 1, "decay": 4, "truncation": 0.025, "nan_handling": "ON", "pasteurization": "ON"},
+    "results": [
+      {"id": "xAr39Gwl", "slot": "window 33", "sharpe": 0.95, "fitness": 0.38, "margin_bps": 5.24, "turnover": 0.0754, "two_year_sharpe": 1.0, "cluster_test": 0.35},
+      {"id": "P0o2qzqq", "slot": "window 132", "sharpe": 1.1, "fitness": 0.47, "margin_bps": 7.97, "turnover": 0.0577, "two_year_sharpe": 0.74, "cluster_test": 0.65},
+      {"id": "bl6bVzV6", "slot": "window 66", "sharpe": 0.76, "fitness": 0.27, "margin_bps": 4.9, "turnover": 0.0655, "two_year_sharpe": 0.31, "cluster_test": 0.54},
+      {"id": "O0ANqzk1", "slot": "window 99", "sharpe": 0.93, "fitness": 0.37, "margin_bps": 6.52, "turnover": 0.0611, "two_year_sharpe": 0.76, "cluster_test": 0.7},
+      {"id": "WjObnzdd", "slot": "decay 132", "sharpe": 0.83, "fitness": 0.31, "margin_bps": 5.62, "turnover": 0.0618, "two_year_sharpe": 0.51, "cluster_test": 0.43},
+      {"id": "wpQZOG1Y", "slot": "vec_max 33", "sharpe": 0.95, "fitness": 0.38, "margin_bps": 5.25, "turnover": 0.0754, "two_year_sharpe": 1.0, "cluster_test": 0.36},
+      {"id": "A1VNYzbE", "slot": "txn20 confirm 33", "sharpe": 1.07, "fitness": 0.48, "margin_bps": 6.19, "turnover": 0.0799, "two_year_sharpe": 1.47, "cluster_test": 0.65},
+      {"id": "xAr39GQJ", "slot": "winsorize 33", "sharpe": 0.95, "fitness": 0.38, "margin_bps": 5.25, "turnover": 0.0754, "two_year_sharpe": 1.0, "cluster_test": 0.35}
+    ],
+    "verdict": "SYNTHESIS FAILED — STATISTICAL 把 Margin 一律压到 4.9~8.0 bps，最好的 132 窗也只有 Fit 0.47；没有出现『PC<0.70 + Margin>20 + Sh>1.3』的全门候选。STATISTICAL 的 2Y 增益 (0.74~1.47) 无法与 Margin 共存。"
+  },
+  "wave29": {
+    "purpose": "wide value-window pairs under CROWDING x 132 (target: restore 2Y while PC stays <0.70)",
+    "location": "https://api.worldquantbrain.com/simulations/p4LQDaM64RyayTrR04xsVQ",
+    "settings": {"neutralization": "CROWDING", "region": "USA", "universe": "TOP1000", "delay": 1, "decay": 4, "truncation": 0.025, "nan_handling": "ON", "pasteurization": "ON"},
+    "note": "first submit 3K8rPk9Uy52Sc9BTVc7Whcl contained a placeholder field by mistake and was discarded before fetch; corrected batch resubmitted.",
+    "results": [
+      {"id": "rKROLlE9", "slot": "value 20-250, txn60, 132", "sharpe": 1.0, "fitness": 0.51, "margin_bps": 23.31, "turnover": 0.0273, "two_year_sharpe": -0.01, "cluster_test": 0.61},
+      {"id": "kqNoX0Xl", "slot": "value 20-250, txn20, 132", "sharpe": 1.03, "fitness": 0.53, "margin_bps": 24.53, "turnover": 0.0268, "two_year_sharpe": 0.14, "cluster_test": 0.51},
+      {"id": "xAr3QkQb", "slot": "value 60-250, txn60, 132", "sharpe": 0.69, "fitness": 0.29, "margin_bps": 18.19, "turnover": 0.0247, "two_year_sharpe": -0.33, "cluster_test": 0.52},
+      {"id": "88RjrQ6o", "slot": "top20 20-250, 132", "sharpe": 0.87, "fitness": 0.42, "margin_bps": 17.78, "turnover": 0.0325, "two_year_sharpe": -0.14, "cluster_test": 0.55},
+      {"id": "qMLxdlzE", "slot": "all tx_count 20-250, 132", "sharpe": 1.0, "fitness": 0.51, "margin_bps": 20.55, "turnover": 0.0315, "two_year_sharpe": 0.05, "cluster_test": 0.55},
+      {"id": "MPYaXQ58", "slot": "value 20-250, 33", "sharpe": 1.16, "fitness": 0.65, "margin_bps": 16.79, "turnover": 0.0464, "two_year_sharpe": 0.02, "cluster_test": 0.7}
+    ],
+    "verdict": "FAILED — 宽价值对比在长平滑下 2Y 归零 (-0.33~0.14)。20/60 价值窗是本族不可替换的内核；2Y 与 Margin 的交换面无法通过价值窗宽度绕开。"
+  },
+  "final_frontier": {
+    "best_sharpe": {"id": "WjObKP8P", "sharpe": 1.32, "fitness": 0.77, "margin_bps": 17.59, "two_year_sharpe": 1.13, "prod_corr": 0.8241},
+    "best_pc_verified": {"id": "RREbZ0ka", "prod_corr": 0.6986, "margin_bps": 27.36, "fitness": 0.69, "sharpe": 1.19, "two_year_sharpe": 0.76},
+    "best_fitness": {"id": "88RjkgGz", "fitness": 0.79, "sharpe": 1.32, "margin_bps": 19.61, "two_year_sharpe": 1.1},
+    "best_two_year": {"id": "2rAwqPwb", "two_year_sharpe": 2.16, "sharpe": 1.37, "fitness": 0.69, "margin_bps": 5.89, "prod_corr": 0.6222},
+    "all_gate_candidate": null
+  }
+}

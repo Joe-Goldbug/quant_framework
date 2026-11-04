@@ -1,0 +1,72 @@
+{
+  "seed_id": "news12_cum_pressure_v1",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 6,
+  "neutralization": "INDUSTRY",
+  "truncation": 0.025,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "news_eod_close",
+    "news_ton_last",
+    "news_open",
+    "news_eod_vwap",
+    "news_atr14",
+    "news_eod_high",
+    "news_eod_low",
+    "news_indx_perf",
+    "news_vol_stddev"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "CUM3_CLOSE_PRESSURE",
+      "expression": "reverse(rank(ts_sum(divide(subtract(news_eod_close, news_ton_last), news_open), 3)))",
+      "optimize_reason": "3 日累积尾盘压迫 / 开盘价（3 字段：收盘 + 新闻时刻价 + 开盘）。分子 (EODClose − TONLast)/DayOpen 是『新闻到达之后到收盘』的相对位移，只包含新闻后的那一段价格发现，天然剔除了开盘跳空与盘前情绪——这正是母本 WjL5Wlxx 的核心口径，也是账户里唯一被证实过零 fail 的 news12 通道。本槽只做一件事：把日频刷新改成 3 日累积。经济机制上，单日压迫的回归幅度约等于做市商当日的库存补偿（2.4bps，被滑点吃掉大半）；而连续 3 日同向压迫意味着库存已单向累积到需要跨日回补的规模，按 Grossman-Miller 库存模型，价格偏离对时间的积分才是库存失衡的真实规模，其回归幅度应显著大于瞬时值。同时刷新频率降到 1/3，理论换手从 65% 降到约 22-25%，Margin 与 Fitness 按 Ret/TO 恒等式同步放大。选 3 日而非更长，是为了在『保边缘』与『降换手』之间取最保守的一档——它是本批的前沿下界锚点：若 3 日就杀死了边缘，说明 FALS_NEWS12_001 的『瞬态性』对累积口径同样成立，后续 4 槽应立刻停止延长视界。"
+    },
+    {
+      "id": 2,
+      "type": "CUM5_CLOSE_PRESSURE",
+      "expression": "reverse(rank(ts_sum(divide(subtract(news_eod_close, news_ton_last), news_open), 5)))",
+      "optimize_reason": "5 日累积尾盘压迫（3 字段，同槽 1 口径、仅视界拉长）。语义上这是从『日内过度反应』升级到『一周过度延伸』：一周恰好覆盖一个完整的信息消化周期，周内的连续单向压迫无法用单条新闻的信息含量解释，只能归因于资金的持续单向流入/流出，而这正是流动性提供者收取补偿的典型场景。文献上对应短期反转（weekly reversal）的核心驱动——Lehmann(1990)/Nagel(2012) 均指出 1 周维度的反转收益本质是做市商的库存与流动性供给回报，年化可达 6-10%，且在美国大盘上 2014 年后依然存活（因为量化拥挤主要发生在日内与隔夜）。本槽是整批的**主攻槽**：5 日视界预期换手落在 15-20%（Fitness 的地板是 12.5%，再低不会额外加分），而累积幅度只降不升，Ret/TO 有望进入 0.5-0.8 区间，直接对应 Margin 10-16bps 与 Fitness 1.0+。与槽 1 的配对给出『视界-边缘衰减曲线』的第一段斜率。"
+    },
+    {
+      "id": 3,
+      "type": "CUM10_CLOSE_PRESSURE",
+      "expression": "reverse(rank(ts_sum(divide(subtract(news_eod_close, news_ton_last), news_open), 10)))",
+      "optimize_reason": "10 日（双周）累积尾盘压迫（3 字段，同槽 1/2 口径）。双周视界把信号彻底移出『日频拥挤区』：双周反转在美国大盘上属于机构调仓与流动性再平衡的经典窗口（与月末/半月度被动申购赎回周期吻合），其收益来源不是短期动量崩溃，而是资金流冲击的均值回复，因此与母本 1 日信号（rSh 1.46 但 Margin 2.36bps）在机制上互补、在 PnL 上可能高度相关、但在 Ret/TO 上必然更优。预期换手落到 8-12%（贴近 12.5% 的 Fitness 地板，地板以下不再有杠杆效应），若 Ret 能守住 7% 以上，则 Margin 直接进 12-18bps 区间、Fitness 1.2+、Sharpe 在同等 Ret 下因波动下降而抬升到 1.6 附近——这就是本批唯一可能一次同时清掉 LOW_SHARPE / LOW_FITNESS / 低 Margin 三个缺陷的窗口。风险是过度平滑（若 10 日已属 FALS_NEWS12_001 的死亡区，本槽会显著低于槽 2），故它与槽 2 构成前沿的第二段，二者必定有一个落在峰上。"
+    },
+    {
+      "id": 4,
+      "type": "CUM20_CLOSE_PRESSURE",
+      "expression": "reverse(rank(ts_sum(divide(subtract(news_eod_close, news_ton_last), news_open), 20)))",
+      "optimize_reason": "20 日（月度）累积尾盘压迫（3 字段，同槽 1-3 口径）。月度视界是本条前沿的上界探针，经济学上对应『月度流动性周期』：月末指数再平衡、共同基金的申赎与窗口粉饰（window dressing）都会在月末造成系统性的单向价格压迫，这些行为在事后 1 个月内回吐，是文献里最稳健的日历效应之一（Ng-Wang 类月末反转）。把它写成 20 日累积而非 20 日均值，保留了脉冲幅度、只降低了刷新频率，因此与 FALS_NEWS12_001 所证伪的 MA20（Sh 0.25）在数学上不是同一个对象。预期换手 5-8%，低于 12.5% 的 Fitness 地板后不再享受杠杆，所以本槽的价值不在冲指标，而在**确定前沿的右端点**：若它明显低于槽 2/3，说明最优视界在 5-10 日之间，后续批次可以把这个结论固化进知识库并停止在视界轴上烧配额。同时它也是本批最可能与母本 PnL 脱钩的槽（月度信号与日频信号的驱动事件集几乎不重叠），对后续 PROD_CORRELATION 去相关有直接价值。"
+    },
+    {
+      "id": 5,
+      "type": "CUM10_VWAP_PRESSURE",
+      "expression": "reverse(rank(ts_sum(divide(subtract(news_eod_close, news_eod_vwap), news_open), 10)))",
+      "optimize_reason": "10 日累积「收盘 vs 新闻后 VWAP」压迫（3 字段：收盘 + 新闻后 VWAP + 开盘）。与槽 1-4 的关键差别在分子：槽 1-4 用 (收盘 − 新闻时刻价)，测的是**新闻后整段位移**；本槽用 (收盘 − 新闻后 VWAP)，测的是**收盘价相对该段成交均价的偏离**，即新闻后进场资金的浮盈亏状态。经济含义完全不同：前者是『价格走了多远』，后者是『最后一个小时是谁在付钱』。收盘高于新闻后 VWAP，说明尾盘有净买入压力，且新闻后进场的买方平均处于浮盈——浮盈者的处置效应（disposition effect）会在随后数日形成持续卖压；反过来，收盘低于 VWAP 的股票，新闻后进场者集体浮亏，其止损与补仓行为会在随后数日形成买盘。这两种机制都发生在『数日』尺度上，与 10 日累积视界天然匹配，而母本的 1 日口径只能吃到当晚的机械回吐。分母仍用 DayOpen 保持与槽 1-4 同一量纲（无量纲百分比），使本槽与槽 3 构成严格的可控对照（唯一变量是分子定义），可直接读出『位移口径 vs 均价偏离口径』哪个承载更多可交易边缘。"
+    },
+    {
+      "id": 6,
+      "type": "CUM10_ATR_NORMALIZED",
+      "expression": "reverse(rank(ts_sum(divide(subtract(news_eod_close, news_ton_last), news_atr14), 10)))",
+      "optimize_reason": "10 日累积、ATR 标准化的压迫（3 字段：收盘 + 新闻时刻价 + 14 日 ATR）。分母从 DayOpen 换成 ATR14，是把『相对股价的百分比位移』换成『多少个正常交易日的真实波幅』，这是本批唯一的纯波动标准化口径。必要性来自一个具体的实证缺陷：母本用 DayOpen 归一，等价于承认『同样 2% 的位移在所有股票上意义相同』，但高波动股（生物科技、小盘成长）日常就有 4-6% 的摆动，2% 的新闻后位移对它几乎不含信息；而低波动股（公用事业、必需消费）2% 已是显著事件。ATR 标准化正是把位移换算成『事件冲击强度』的标准做法，与 Ball-Brown 的标准化意外（SUE）同构。它在三处直接改善指标：(a) 截面可比性上升 → 排序更接近真实冲击强度 → Sharpe 抬升；(b) 剥离了『高波动股被系统性选入』的暴露 → 波动下降、DD 下降、Investability 改善；(c) 与槽 3 的比值（同视界、同分子、仅分母不同）是本批最强的一对消融，可直接判定 ATR 标准化是否值得写进知识库。"
+    },
+    {
+      "id": 7,
+      "type": "CUM10_CLOSE_LOCATION",
+      "expression": "reverse(rank(ts_sum(divide(subtract(news_eod_high, news_eod_close), add(subtract(news_eod_high, news_eod_low), 0.01)), 10)))",
+      "optimize_reason": "10 日累积『收盘在新闻后区间中的位次』（3 字段：新闻后最高 + 收盘 + 新闻后最低）。(EODHigh − EODClose)/(EODHigh − EODLow) 值域 [0,1]、无量纲，0 = 收在最高、1 = 收在最低，是最纯粹的『尾盘强度』代理：它不看价格走了多远，只看收盘时买盘还剩多少。经济机制是收盘拍卖机制的机械成分——被动基金按收盘价成交、做市商在收盘前调整库存、指数基金按收盘价再平衡，这些行为与信息无关，会在随后被逆转。母本已经证明单日口径有效（CLV 型构造在账户里历史上是 news12 风险轮廓最优的一族：rnSh 1.04 / InvSh 0.71 / DD 10.3%），本槽做的是把它从『当日 CLV』升级为『连续 10 日 CLV 累积』：若一只股票连续两周都收在事件区间的高位，说明两周来尾盘买盘持续存在，这不是单次拍卖噪声，而是资金在系统性建仓——而这种建仓往往伴随随后的获利了结。该槽不含任何位移幅度信息（分子分母都是同一天的区间量），与槽 3/5/6 在信息集上几乎不重叠，是本批去相关的主要候选，同时因为分子分母同源，量纲最干净、最不易触发平台警告。"
+    },
+    {
+      "id": 8,
+      "type": "CUM10_EXCESS_DRIFT_PER_VOLUME",
+      "expression": "reverse(rank(ts_sum(divide(news_indx_perf, add(news_vol_stddev, 1)), 10)))",
+      "optimize_reason": "10 日累积、量能标准化的市场调整超额位移（2 字段：相对 SPY 超额位移 + 量能 z 值）。分子 news_indx_perf 已经把同期 SPY 的变动扣掉，是纯个股特异的位移——这一步剔除的是行业/市场共振，母本没有做，所以它的多头暴露里混着 β，这也是 investability Sharpe 只有 0.87 的原因之一。分母 (1 + 当日量能 30 日 z 值) 是 Amihud 逻辑：同样幅度的位移，若伴随极高异常成交量，说明是信息驱动的真实重定价（价格发现完成、无需回归）；若成交量平平却有大幅位移，说明是流动性稀缺下的临时冲击（少量订单推动价格），必然回归。用成交量支撑度给冲击打折，只留下『无量位移』这一类，即最纯粹的流动性补偿。与 FALS_NEWS12_005 的区别必须说清：那条证伪的是**乘性缩放**（multiply，把信号乘上量能因子，结果引入了高波动低收益的暴露，Sh 翻负 −0.44）；本槽用的是**除性归一**，即把位移换算成『每单位异常成交量的价格冲击』，方向与含义完全不同，且已累积 10 日，不再是单日口径。若本槽显著为正，说明量能归一在累积视界下成立，FALS_NEWS12_005 的适用范围应被收窄到『乘性缩放 + 单日口径』。"
+    }
+  ]
+}

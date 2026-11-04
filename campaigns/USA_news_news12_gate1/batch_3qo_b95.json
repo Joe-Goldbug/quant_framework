@@ -1,0 +1,114 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "items": [
+    {
+      "id": 1,
+      "type": "B95_S1_0MY3_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 9)",
+      "decay": 14,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 1: 10 ops: 0mY3OjJk (Sharpe 1.66, Ret 4.36%) with Decay 14. Compresses TO from 13.0% down to ~12.2% (under 12.5% floor), locking denominator at 0.125 to project Fitness >= 0.985."
+    },
+    {
+      "id": 2,
+      "type": "B95_S2_NPVR_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 8)",
+      "decay": 14,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 2: 10 ops: npvRxadw (Sharpe 1.67, Ret 4.37%) with Decay 14. Compresses TO from 13.5% to ~12.6%, locking near the denominator floor while preserving 1.67 Sharpe."
+    },
+    {
+      "id": 3,
+      "type": "B95_S3_NPVR_D15",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 8)",
+      "decay": 15,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 3: 10 ops: npvRxadw with Decay 15. Pushes TO firmly into ~12.0% safe zone while Outer 8d preserves high returns, testing Fitness >= 0.99."
+    },
+    {
+      "id": 4,
+      "type": "B95_S4_SENT_SMOOTH2_OUT9_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(ts_decay_linear(mean_sentiment_score_transfer, 2), 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 4: 11 ops: 2-day linear smoothing on sentiment before power 4. Accumulates multi-day news narrative while filtering single-article random noise, driving Sharpe toward 1.70."
+    },
+    {
+      "id": 5,
+      "type": "B95_S5_SENT_SMOOTH3_OUT9_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(ts_decay_linear(mean_sentiment_score_transfer, 3), 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 9)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 5: 11 ops: 3-day sentiment persistence smoothing. Captures multi-day conference call guidance continuation."
+    },
+    {
+      "id": 6,
+      "type": "B95_S6_SENT_SMOOTH2_OUT8_D14",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(ts_decay_linear(mean_sentiment_score_transfer, 2), 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 8)",
+      "decay": 14,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 6: 11 ops: 2-day sentiment smoothing + Outer 8d fast reaction + Decay 14 turnover dampening. Complete synergy candidate."
+    },
+    {
+      "id": 7,
+      "type": "B95_S7_SENT_SMOOTH2_OUT10_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(ts_decay_linear(mean_sentiment_score_transfer, 2), 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 7: 11 ops: 2-day sentiment smoothing on 0.97 record holder QPvkZkQp (TO 12.56%, Margin 6.91 bps). Tests if Sharpe expands from 1.65 to 1.70."
+    },
+    {
+      "id": 8,
+      "type": "B95_S8_SENT_SMOOTH3_OUT10_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(ts_decay_linear(mean_sentiment_score_transfer, 3), 4), winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)), 10), subindustry), 0.5), 5), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.04,
+      "known_fields": [
+        "mean_sentiment_score_transfer",
+        "prob_rank_bin1_10d_img_news",
+        "news_relevance_score_2"
+      ],
+      "optimize_reason": "Slot 8: 11 ops: 3-day sentiment persistence directly on QPvkZkQp architecture."
+    }
+  ]
+}

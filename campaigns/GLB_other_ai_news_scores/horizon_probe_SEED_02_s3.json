@@ -1,0 +1,197 @@
+{
+  "summary": {
+    "pairs": 10,
+    "counts": {
+      "PLATEAU": 5,
+      "SPIKE": 0,
+      "WEAK": 5,
+      "NO_DATA": 0
+    },
+    "plateau_slots": [
+      [
+        3,
+        4
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        9,
+        10
+      ],
+      [
+        13,
+        14
+      ],
+      [
+        17,
+        18
+      ]
+    ],
+    "spike_slots": [],
+    "paired_slot_count": 20
+  },
+  "verdicts": [
+    {
+      "slots": [
+        1,
+        2
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": -0.05,
+      "sharpe_long": -0.06,
+      "stable_min_abs_sharpe": 0.05,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_neutralize(ts_decay_linear(ts_scale(divide(subtract(negative_score_maximum_value,negative_score_median_value),add(negative_score_average_value,NUM)),NUM),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        3,
+        4
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": 1.06,
+      "sharpe_long": 1.07,
+      "stable_min_abs_sharpe": 1.06,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_rank(ts_decay_linear(ts_scale(divide(subtract(negative_score_maximum_value,negative_score_median_value),add(negative_score_average_value,NUM)),NUM),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        5,
+        6
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 1.18,
+      "sharpe_long": 1.18,
+      "stable_min_abs_sharpe": 1.18,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_neutralize(ts_decay_exp_window(ts_scale(divide(subtract(negative_score_maximum_value,negative_score_median_value),add(negative_score_average_value,NUM)),NUM),NUM,factor=NUM),subindustry)"
+    },
+    {
+      "slots": [
+        7,
+        8
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": 0.01,
+      "sharpe_long": -0.0,
+      "stable_min_abs_sharpe": 0.0,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_neutralize(ts_decay_linear(ts_scale(subtract(negative_score_maximum_value,negative_score_average_value),NUM),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        9,
+        10
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": 1.05,
+      "sharpe_long": 1.07,
+      "stable_min_abs_sharpe": 1.05,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_rank(ts_decay_linear(ts_scale(subtract(negative_score_maximum_value,negative_score_average_value),NUM),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        11,
+        12
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": -0.09,
+      "sharpe_long": -0.08,
+      "stable_min_abs_sharpe": 0.08,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_neutralize(ts_decay_linear(ts_scale(negative_score_maximum_value,NUM),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        13,
+        14
+      ],
+      "windows": [
+        15,
+        30
+      ],
+      "sharpe_short": 1.33,
+      "sharpe_long": 1.32,
+      "stable_min_abs_sharpe": 1.32,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_rank(ts_decay_linear(ts_scale(negative_score_maximum_value,NUM),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        15,
+        16
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 0.28,
+      "sharpe_long": 0.4,
+      "stable_min_abs_sharpe": 0.28,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "group_neutralize(ts_std_dev(divide(subtract(negative_score_maximum_value,negative_score_median_value),add(negative_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        17,
+        18
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 1.26,
+      "sharpe_long": 1.12,
+      "stable_min_abs_sharpe": 1.12,
+      "verdict": "PLATEAU",
+      "plateau_pass": true,
+      "skeleton": "group_rank(ts_std_dev(divide(subtract(negative_score_maximum_value,negative_score_median_value),add(negative_score_average_value,NUM)),NUM),subindustry)"
+    },
+    {
+      "slots": [
+        19,
+        20
+      ],
+      "windows": [
+        10,
+        20
+      ],
+      "sharpe_short": 0.41,
+      "sharpe_long": -0.01,
+      "stable_min_abs_sharpe": 0.01,
+      "verdict": "WEAK",
+      "plateau_pass": false,
+      "skeleton": "trade_when(negative_score_maximum_value>NUM,group_rank(ts_scale(negative_score_maximum_value,NUM),subindustry),-NUM)"
+    }
+  ]
+}

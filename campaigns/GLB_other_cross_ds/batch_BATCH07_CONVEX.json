@@ -1,0 +1,63 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "task_tag": "BATCH07_CONVEX",
+  "note": "关键认知: 平台按 sum|alpha| 归一化持仓, 因此常数缩放无效, 只有【截面形状】能改变收益密度。signed_power(centered_rank, k) 把权重压向极端分位: 收益与波动同比例放大, 但极端分位 IC 更强 => Sharpe 不降而收益上升, Fitness 随之 sqrt 提升。",
+  "known_fields": [
+    "negative_score_maximum_value",
+    "oth424_divyld",
+    "dividend_growth_factor_score"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "expression": "signed_power(subtract(group_rank(ts_mean(negative_score_maximum_value, 250), industry), 0.5), 3)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.08,
+      "optimize_reason": "凸变换 k=3: 在已验证 1.54 核心上把持仓权重压向极端情绪分位, 中间分位近乎空仓, 用极端分位更强的 alpha 抬升单位账面收益"
+    },
+    {
+      "slot": 2,
+      "expression": "signed_power(subtract(group_rank(ts_mean(negative_score_maximum_value, 250), industry), 0.5), 5)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.08,
+      "optimize_reason": "凸变换 k=5: 更极端的集中度, 用于量出 收益密度-回撤 的凸性拐点 (k 过大将使有效持仓过少而触发集中度检查)"
+    },
+    {
+      "slot": 3,
+      "expression": "signed_power(subtract(group_rank(ts_mean(negative_score_maximum_value, 250), subindustry), 0.5), 3)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.08,
+      "optimize_reason": "凸变换 + 母本原分组: 隔离分组变量, 检验集中在更细行业组内是否给出更高 EMEA 截面稳定性"
+    },
+    {
+      "slot": 4,
+      "expression": "signed_power(subtract(group_rank(ts_mean(negative_score_maximum_value, 250), industry), 0.5), 2)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.08,
+      "optimize_reason": "凸变换 k=2: 温和集中, 作为 k=3/5 的下界对照, 用于判断集中度提升是否单调有益"
+    },
+    {
+      "slot": 5,
+      "expression": "signed_power(subtract(group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(dividend_growth_factor_score, 250), filter=true), industry), 0.5), 3)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.08,
+      "optimize_reason": "凸变换 + 股息预期填坑: 2014-2016 由股息通道独立成像补足 30% 年化摊薄, 2017+ 凸集中放大收益密度, 同时攻 Fitness 两大因子"
+    },
+    {
+      "slot": 6,
+      "expression": "signed_power(subtract(group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(oth424_divyld, 250), 2), filter=true), industry), 0.5), 3)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.08,
+      "optimize_reason": "凸变换 + 股息率 EMEA 通道: 股息率是唯一验证过欧洲截面 (EMEA 0.89) 的通道, 凸集中可同时放大其欧洲收益贡献"
+    },
+    {
+      "slot": 7,
+      "expression": "signed_power(subtract(group_rank(multiply(ts_mean(negative_score_maximum_value, 250), ts_mean(oth424_divyld, 250)), industry), 0.5), 3)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.08,
+      "optimize_reason": "交互 + 凸集中: 仅在高股息(定价更慢)的股票上放大负面舆情反转, 交互项本身已筛掉一半噪声, 再叠加极端分位集中"
+    },
+    {
+      "slot": 8,
+      "expression": "signed_power(subtract(group_rank(ts_mean(negative_score_maximum_value, 500), industry), 0.5), 3)",
+      "decay": 0, "neutralization": "COUNTRY", "truncation": 0.08,
+      "optimize_reason": "凸变换 + 500 日超长窗: 超长窗噪声最低, 与极端分位集中叠加, 检验是否能在极低换手下拿到最高 Sharpe 与 Margin"
+    }
+  ]
+}

@@ -1,0 +1,343 @@
+{
+  "region": "GLB",
+  "delay": 1,
+  "universe": "TOP3000",
+  "category": "other",
+  "dataset_id": "techindi_model",
+  "signals": [
+    {
+      "id": "SEED_01",
+      "cluster_ref": "方向性确信度扩散 (Directional Conviction Spread)",
+      "field_semantics_mapping": "probability_fourth_bucket_ten_day_label_three_tech1_1 (ac=0, cov=1.0) 是冷门主信号源——模型判定 10日收益落入第四分位(偏高)某子标签的概率，代表模型对该股中长线上行的确信度；probability_second_bucket_ten_day_label_zero_tech1_1 (ac=2, cov=0.954) 是相对较热的低位分位概率，作方向性减项基准。两者同源 (tech1 模型、10日、bucket label 体系)，做差剥离模型整体置信基线，得到纯方向性确信残差。",
+      "economic_mechanism": "底层机理：CNN 技术指标模型识别出该股 10日上行概率显著高于下行概率 → 市场参与者对技术形态的方向性信号存在反应不足 (散户受行为偏误、机构受风控阈值约束未及时建仓) → 概率差越大，未来 10日超额收益释放方向越偏上行 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(probability_fourth_bucket_ten_day_label_three_tech1_1, probability_second_bucket_ten_day_label_zero_tech1_1)",
+      "fields_used": [
+        "probability_fourth_bucket_ten_day_label_three_tech1_1",
+        "probability_second_bucket_ten_day_label_zero_tech1_1"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_02",
+      "cluster_ref": "方向性确信度扩散 (Directional Conviction Spread)",
+      "field_semantics_mapping": "probability_fourth_bucket_ten_day_label_two_techindi19_1 (ac=0, cov=0.954) 冷门第四分位另一子标签概率，与 SEED_01 形成同簇跨子标签证伪对；probability_third_bucket_ten_day_label_zero_techindi16_1 (ac=0, cov=0.954) 冷门第三分位(中位)概率作减项。两冷门字段做差，验证方向性确信在不同子标签下是否稳健 (后续 Step 1 可做参数高原对照)。",
+      "economic_mechanism": "机理同 SEED_01 但跨模型变体 (techindi19 vs techindi16)：若不同 CNN 变体一致给出上行概率 > 中位概率，说明方向性信号具跨模型鲁棒性而非单模型过拟合 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(probability_fourth_bucket_ten_day_label_two_techindi19_1, probability_third_bucket_ten_day_label_zero_techindi16_1)",
+      "fields_used": [
+        "probability_fourth_bucket_ten_day_label_two_techindi19_1",
+        "probability_third_bucket_ten_day_label_zero_techindi16_1"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_03",
+      "cluster_ref": "方向性确信度扩散 (Directional Conviction Spread)",
+      "field_semantics_mapping": "tm_13_..._q5_p4 (ac=0) 是模型变体13对 10日收益落入第5桶(最高)的 log-softmax 对数概率；tm_13_..._q5_p0 (ac=0) 是同变体同期限第0桶(最低)的 log-softmax。两者做差 = log(P_top/P_bottom) = 对数几率比，是无界连续量，保留基数幅度且不受 softmax 概率挤压。同变体同期限同桶数，是最纯净的方向性对数几率信号。",
+      "economic_mechanism": "对数几率比是统计意义上最优的方向性判别量 (等价于 logistic 回归的 logit)。模型对顶桶 vs 底桶的对数几率差越大，方向性确信越强；市场对 CNN 提取的图表形态信号定价滞后 → 未来收益沿模型方向释放 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4, tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p0)",
+      "fields_used": [
+        "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4",
+        "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p0"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_04",
+      "cluster_ref": "极端尾部确信归一化 (Tail Conviction Normalized)",
+      "field_semantics_mapping": "probability_fifth_quantile_one_day_bucket_four (ac=0, cov=0.982) 冷门 1日最高分位概率——模型判定次日该股进入最高收益桶的确信度，作分子主信号；probability_fourth_quantile_one_day_bucket_three (ac=0, cov=1.0) 次高(第四)分位概率作归一化锚点。做 (P_top - P_4th)/P_4th 把绝对概率转为'相对次高的超额确信'，消除模型整体置信度漂移。",
+      "economic_mechanism": "底层：模型把该股从'次高'升格至'最高'分位的相对确信度越高 → 模型识别出技术形态突破临界点 → 市场对次日催化事件定价不足 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_fifth_quantile_one_day_bucket_four, probability_fourth_quantile_one_day_bucket_three), probability_fourth_quantile_one_day_bucket_three)",
+      "fields_used": [
+        "probability_fifth_quantile_one_day_bucket_four",
+        "probability_fourth_quantile_one_day_bucket_three"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_05",
+      "cluster_ref": "极端尾部确信归一化 (Tail Conviction Normalized)",
+      "field_semantics_mapping": "probability_fifth_bucket_five_day_label_zero_tech17_1 (ac=2, cov=1.0) 5日最高分位概率作冷门分子；probability_second_bucket_five_day_label_zero_techindi19_1 (ac=11, cov=0.954) 是全样本最拥挤的 5日第二分位(低位)概率，作热门归一化锚点——这是铁律 A 的标准冷热配对：冷门顶部信号 / 热门底部共识。做 (P_top - P_bottom)/P_bottom 把方向性确信度相对于市场已充分挖掘的底部共识归一化。",
+      "economic_mechanism": "热门底部共识 (ac=11) 已被全平台充分挖掘、相关性强；用冷门顶部概率对其做归一化，得到的'相对底部的顶部超额确信'是与存量底部因子正交的新信息 → 顶部信号显著高于底部共识时，模型看到上行催化 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_fifth_bucket_five_day_label_zero_tech17_1, probability_second_bucket_five_day_label_zero_techindi19_1), probability_second_bucket_five_day_label_zero_techindi19_1)",
+      "fields_used": [
+        "probability_fifth_bucket_five_day_label_zero_tech17_1",
+        "probability_second_bucket_five_day_label_zero_techindi19_1"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_06",
+      "cluster_ref": "极端尾部确信归一化 (Tail Conviction Normalized)",
+      "field_semantics_mapping": "probability_fourth_bucket_ten_day_label_three_tech1_1 (ac=0, cov=1.0) 冷门 10日第四分位概率作方向性分子；probability_third_quantile_ten_day_bucket_zero_22 (ac=0, cov=1.0) 冷门 10日第三(中位)分位概率作减项。对称归一化 (P_high - P_mid)/(P_high + P_mid) 等价于 Tanh 风格的有界方向性确信度，值域 [-1,1]，对模型整体置信度漂移稳健。",
+      "economic_mechanism": "对称归一化的方向性确信度量模型把该股推向高端 vs 中位的相对偏倚；偏倚越大，技术形态的方向性越明确 → 市场反应不足 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_fourth_bucket_ten_day_label_three_tech1_1, probability_third_quantile_ten_day_bucket_zero_22), add(probability_fourth_bucket_ten_day_label_three_tech1_1, probability_third_quantile_ten_day_bucket_zero_22))",
+      "fields_used": [
+        "probability_fourth_bucket_ten_day_label_three_tech1_1",
+        "probability_third_quantile_ten_day_bucket_zero_22"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_07",
+      "cluster_ref": "跨期限分歧 (Horizon Disagreement)",
+      "field_semantics_mapping": "tm_14_..._r5_q5_p4 (ac=9, cov=1.0) 热门 5日最高桶 log-softmax，代表模型短期视角；tm_13_..._r10_q5_p4 (ac=0, cov=1.0) 冷门 10日最高桶 log-softmax，代表冷门长期视角。两者比率 (5日/10日) 把热门短期确信作分子、冷门长期确信作分母——铁律 A 冷热配对的跨期限版本：短期确信密度相对长期基准的超额。",
+      "economic_mechanism": "底层：当 5日顶桶对数几率 > 10日顶桶对数几率 (比率>1) → 模型认为短期催化强于长期趋势 → 市场对近期事件 (技术突破、量价异动) 定价不足 → 近期超额收益释放 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4, tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4)",
+      "fields_used": [
+        "tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4",
+        "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_08",
+      "cluster_ref": "跨期限分歧 (Horizon Disagreement)",
+      "field_semantics_mapping": "probability_fifth_quantile_one_day_bucket_four (ac=0, cov=0.982) 冷门 1日最高分位概率——次日方向性确信；likelihood_fifth_quantile_five_day_bucket_zero_3 (ac=7, cov=0.954) 热门 5日最高分位概率——中期共识锚点。比率 (1日/5日) 把冷门短期确信作分子、热门中期共识作分母，捕获'短期确信相对中期共识的超额'。",
+      "economic_mechanism": "次日顶部分位概率相对 5日热门共识更高 → 模型识别出短期技术形态异常强劲 → 市场日内反应不足 → 次日反转/延续方向收益释放 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(probability_fifth_quantile_one_day_bucket_four, likelihood_fifth_quantile_five_day_bucket_zero_3)",
+      "fields_used": [
+        "probability_fifth_quantile_one_day_bucket_four",
+        "likelihood_fifth_quantile_five_day_bucket_zero_3"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_09",
+      "cluster_ref": "跨期限分歧 (Horizon Disagreement)",
+      "field_semantics_mapping": "probability_fifth_bucket_one_day_label_four_tech1_1 (ac=8, cov=0.954) 热门 1日最高分位概率作短期方向基准；tm_18_..._r10_q5_p2 (ac=0, cov=0.954) 冷门 10日最高桶 log-softmax 作长期冷门信号。对称归一化 (P_1d - logP_10d)/(P_1d + logP_10d) 混合概率与对数概率，值域有界，捕获短期热门确信 vs 长期冷门确信的期限结构偏移。",
+      "economic_mechanism": "热门短期确信显著高于冷门长期确信 → 期限结构上短期占优 → 近期催化主导、市场对长期持续性定价保守 → 做多短期方向 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(probability_fifth_bucket_one_day_label_four_tech1_1, tm_18_r1_r5_r10_rh_ah3_d1_r10_q5_p2), add(probability_fifth_bucket_one_day_label_four_tech1_1, tm_18_r1_r5_r10_rh_ah3_d1_r10_q5_p2))",
+      "fields_used": [
+        "probability_fifth_bucket_one_day_label_four_tech1_1",
+        "tm_18_r1_r5_r10_rh_ah3_d1_r10_q5_p2"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_10",
+      "cluster_ref": "概率-预测值剪刀差 (Probability vs Predicted-Return Divergence)",
+      "field_semantics_mapping": "probability_fourth_bucket_ten_day_label_three_tech1_1 (ac=0, cov=1.0) 冷门 10日第四分位概率——模型对该股进入偏高收益桶的确信度，作权重；predicted_fourth_quantile_ten_day_return_techindi17_1 (ac=7, cov=1.0) 热门回归预测值 + predicted_fourth_quantile_ten_day_return_2 (ac=0, cov=0.999) 冷门回归预测值，两者求和构成'冷热共识预测幅度'。乘积 P x (pred_hot + pred_cold) = 概率加权的共识预测幅度，捕获'模型对自己回归预测有多笃定'的二阶信息。",
+      "economic_mechanism": "底层：模型既给出预测幅度又给出落桶概率，二者乘积 = 期望收益的贝叶斯加权估计。冷门概率权重 x 冷热共识幅度，规避单一热门预测的过拟合，期望收益估计越高 → 市场对技术面隐含上行定价不足 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "multiply(probability_fourth_bucket_ten_day_label_three_tech1_1, add(predicted_fourth_quantile_ten_day_return_techindi17_1, predicted_fourth_quantile_ten_day_return_2))",
+      "fields_used": [
+        "probability_fourth_bucket_ten_day_label_three_tech1_1",
+        "predicted_fourth_quantile_ten_day_return_techindi17_1",
+        "predicted_fourth_quantile_ten_day_return_2"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_11",
+      "cluster_ref": "概率-预测值剪刀差 (Probability vs Predicted-Return Divergence)",
+      "field_semantics_mapping": "predicted_fourth_quantile_five_day_return_5 (ac=5, cov=1.0) 热门 5日第四分位回归预测值——幅度主信号；probability_fourth_quantile_five_day_bucket_three_22 (ac=0, cov=0.942) 冷门 5日第四分位概率——确信度权重。乘积把回归幅度按模型确信度加权，过滤掉模型自己都不笃定的高幅度预测 (低概率x高幅度→降权)。",
+      "economic_mechanism": "贝叶斯视角：确信度加权的预测幅度 = 模型自评的期望收益。冷门概率权重的引入使该信号与全平台直接用 predicted_return 的热门因子正交 → 加权期望收益越高 → 超额收益释放 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "multiply(predicted_fourth_quantile_five_day_return_5, probability_fourth_quantile_five_day_bucket_three_22)",
+      "fields_used": [
+        "predicted_fourth_quantile_five_day_return_5",
+        "probability_fourth_quantile_five_day_bucket_three_22"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_12",
+      "cluster_ref": "概率-预测值剪刀差 (Probability vs Predicted-Return Divergence)",
+      "field_semantics_mapping": "predicted_fourth_quantile_one_day_return_31 (ac=1, cov=0.999) 1日预测值与 predicted_fourth_quantile_ten_day_return_2 (ac=0, cov=0.999) 10日冷门预测值，同除以 probability_fourth_quantile_one_day_bucket_three (ac=0, cov=1.0) 冷门 1日概率作归一化锚。做 (pred_1d/P) - (pred_10d/P) = (pred_1d - pred_10d)/P，即'每单位 1日确信度的期限预测差'，把预测幅度的期限结构按冷门概率归一化。",
+      "economic_mechanism": "1日预测幅度经冷门确信归一化后高于 10日 → 模型认为短期收益幅度相对长期更显著且自身确信 → 近期催化幅度被市场低估 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(predicted_fourth_quantile_one_day_return_31, probability_fourth_quantile_one_day_bucket_three), divide(predicted_fourth_quantile_ten_day_return_2, probability_fourth_quantile_one_day_bucket_three))",
+      "fields_used": [
+        "predicted_fourth_quantile_one_day_return_31",
+        "predicted_fourth_quantile_ten_day_return_2",
+        "probability_fourth_quantile_one_day_bucket_three"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_13",
+      "cluster_ref": "对数几率与桶赋值信号 (Log-Odds & Bucket Assignment)",
+      "field_semantics_mapping": "tm_14_..._r5_q5_p4 (ac=9, cov=1.0) 热门 5日最高桶 log-softmax；tm_5_..._r5_q5_p0 (ac=0, cov=0.942) 冷门 5日最低桶 log-softmax (CNN 变体5)。对称归一化 (logP_top - logP_bottom)/(logP_top + logP_bottom) 是有界对数几率确信度，热门顶 vs 冷门底的冷热配对，值域 [-1,1] 对模型整体置信漂移稳健。",
+      "economic_mechanism": "对数几率比的对称归一化是稳健方向性判别量；热门顶桶确信高于冷门底桶确信 → 跨 CNN 变体一致看多 → 市场对图表形态共识方向反应不足 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4, tm_5_r1_r5_r10_rh_d1_r5_q5_p0), add(tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4, tm_5_r1_r5_r10_rh_d1_r5_q5_p0))",
+      "fields_used": [
+        "tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4",
+        "tm_5_r1_r5_r10_rh_d1_r5_q5_p0"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_14",
+      "cluster_ref": "对数几率与桶赋值信号 (Log-Odds & Bucket Assignment)",
+      "field_semantics_mapping": "tm_12_..._r1_q4 (ac=0, cov=1.0) 冷门 1日 4桶离散赋值 (0..3)；tm_1_..._r10_q4 (ac=0, cov=1.0) 冷门 10日 4桶离散赋值。用 add(1d_bucket, reverse(10d_bucket)) 实现 1日桶 - 10日桶，捕获模型对该股评级在时间维度上的迁移路径 (升级/降级)。reverse 等价于取负，避免使用 subtract 的同质化骨架。",
+      "economic_mechanism": "底层：模型 1日桶赋值高于 10日桶赋值 → 模型判定该股短期评级高于长期 → 近期技术形态出现评级上调信号 → 市场对评级迁移路径定价不足 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "add(tm_12_r1_r5_r10_rh_ah3_d1_r1_q4, reverse(tm_1_r1_r5_r10_rh_d1_r10_q4))",
+      "fields_used": [
+        "tm_12_r1_r5_r10_rh_ah3_d1_r1_q4",
+        "tm_1_r1_r5_r10_rh_d1_r10_q4"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_15",
+      "cluster_ref": "对数几率与桶赋值信号 (Log-Odds & Bucket Assignment)",
+      "field_semantics_mapping": "tm_13_..._r1_q1 (ac=0, cov=0.982) 冷门变体13的 1日连续回归输出 ('winsorize before use')；tm_14_..._r1_q1 (ac=5, cov=1.0) 热门变体14的 1日连续回归输出。做 (cold_reg - hot_reg)/cold_reg = 1 - hot_reg/cold_reg，归一化的模型内部分歧——若两变体一致则约等于0，分歧越大偏离0越远。冷门变体作分母锚定。",
+      "economic_mechanism": "模型集成内部冷门变体相对热门变体的超额预测 → 当冷门(未被挖掘)变体看到更高 1日上行而热门变体保守时，存在未被市场定价的冷门信号 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(tm_13_r1_r5_r10_rh_ah3_d1_r1_q1, tm_14_r1_r5_r10_rh_ah3_d1_r1_q1), tm_13_r1_r5_r10_rh_ah3_d1_r1_q1)",
+      "fields_used": [
+        "tm_13_r1_r5_r10_rh_ah3_d1_r1_q1",
+        "tm_14_r1_r5_r10_rh_ah3_d1_r1_q1"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_16",
+      "cluster_ref": "极端尾部确信归一化 (Tail Conviction Normalized)",
+      "field_semantics_mapping": "probability_fourth_bucket_five_day_label_two_techindi19_1 (ac=0, cov=1.0) 冷门 5日第四分位概率；probability_third_quantile_five_day_bucket_zero_25 (ac=0, cov=1.0) 冷门 5日第三分位概率；probability_second_bucket_five_day_label_zero_techindi19_1 (ac=11, cov=0.954) 热门 5日第二分位概率作归一化锚。做 (P4th/P2nd) - (P3rd/P2nd) = (P4th - P3rd)/P2nd，即'相对热门底部共识的高端分位超额确信'。",
+      "economic_mechanism": "高端分位超额确信经热门底部共识归一化 → 剥离全平台已挖掘的底部信号后的纯方向性残差 → 残差越大，模型在底部共识之上看到的上行确信越强 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "subtract(divide(probability_fourth_bucket_five_day_label_two_techindi19_1, probability_second_bucket_five_day_label_zero_techindi19_1), divide(probability_third_quantile_five_day_bucket_zero_25, probability_second_bucket_five_day_label_zero_techindi19_1))",
+      "fields_used": [
+        "probability_fourth_bucket_five_day_label_two_techindi19_1",
+        "probability_third_quantile_five_day_bucket_zero_25",
+        "probability_second_bucket_five_day_label_zero_techindi19_1"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_17",
+      "cluster_ref": "方向性确信度扩散 (Directional Conviction Spread)",
+      "field_semantics_mapping": "短期腿 (probability_fifth_quantile_one_day_bucket_four - probability_fourth_quantile_one_day_bucket_three)：1日最高 vs 次高的方向确信；长期腿 (probability_fourth_bucket_ten_day_label_three_tech1_1 - probability_third_quantile_ten_day_bucket_zero_22)：10日第四 vs 第三的方向确信。双腿求和构造 1日+10日复合方向确信，要求短长期一致看多才给高分，过滤单期限噪音。",
+      "economic_mechanism": "1日与 10日方向性确信同向叠加 → 跨期限共振的技术形态方向信号 → 市场对共振方向反应不足 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "add(subtract(probability_fifth_quantile_one_day_bucket_four, probability_fourth_quantile_one_day_bucket_three), subtract(probability_fourth_bucket_ten_day_label_three_tech1_1, probability_third_quantile_ten_day_bucket_zero_22))",
+      "fields_used": [
+        "probability_fifth_quantile_one_day_bucket_four",
+        "probability_fourth_quantile_one_day_bucket_three",
+        "probability_fourth_bucket_ten_day_label_three_tech1_1",
+        "probability_third_quantile_ten_day_bucket_zero_22"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_18",
+      "cluster_ref": "对数几率与桶赋值信号 (Log-Odds & Bucket Assignment)",
+      "field_semantics_mapping": "tm_18_..._r10_q5_p2 (ac=0, cov=0.954) 冷门 10日最高桶 log-softmax——中长期方向确信权重；tm_16_..._r1_q5 (ac=1, cov=1.0) 1日 5桶离散赋值——模型硬判定的近期评级。乘积把长期方向确信按近期硬评级加权，构造'确信度加权的近期评级'复合信号，捕获长短期一致性。",
+      "economic_mechanism": "长期确信高且近期评级也高 → 模型在长短期维度一致看多 → 共识方向被市场低估 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "multiply(tm_18_r1_r5_r10_rh_ah3_d1_r10_q5_p2, tm_16_r1_r5_r10_rh_d1_r1_q5)",
+      "fields_used": [
+        "tm_18_r1_r5_r10_rh_ah3_d1_r10_q5_p2",
+        "tm_16_r1_r5_r10_rh_d1_r1_q5"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_19",
+      "cluster_ref": "对数几率与桶赋值信号 (Log-Odds & Bucket Assignment)",
+      "field_semantics_mapping": "tm_5_..._r5_q5_p0 (ac=0, cov=0.942) 冷门 5日最低桶 log-softmax；tm_14_..._r5_q5_p4 (ac=9, cov=1.0) 热门 5日最高桶 log-softmax。用 reverse(bottom - top) 等价于 (top - bottom)，即对数几率方向确信，但通过 reverse 算子构造与 SEED_03/SEED_13 不同的 AST 骨架，保留热门顶桶作主导、冷门底桶作反向基准的冷热配对。",
+      "economic_mechanism": "热门顶桶对数几率减去冷门底桶对数几率 → 跨变体方向性确信 → 市场反应不足 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "reverse(subtract(tm_5_r1_r5_r10_rh_d1_r5_q5_p0, tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4))",
+      "fields_used": [
+        "tm_5_r1_r5_r10_rh_d1_r5_q5_p0",
+        "tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4"
+      ],
+      "times": 0
+    },
+    {
+      "id": "SEED_20",
+      "cluster_ref": "跨期限分歧 (Horizon Disagreement)",
+      "field_semantics_mapping": "tm_14_..._r5_q5_p4 (ac=9, cov=1.0) 热门 5日顶桶 log-softmax；tm_13_..._r10_q5_p4 (ac=0, cov=1.0) 冷门 10日顶桶 log-softmax；predicted_fourth_quantile_ten_day_return_techindi17_1 (ac=7, cov=1.0) 热门 10日预测幅度。做 (logP_5d - logP_10d)/(predicted_return + 1)——把跨期限对数几率差按热门预测幅度归一化，分母 +1 保证非零且不改变符号方向。",
+      "economic_mechanism": "短期对数几率超额相对长期，再除以长期预测幅度基准 → '每单位长期预测幅度的短期确信超额'，捕获期限结构确信密度 → 短期确信密度越高，近期催化相对长期越强 → 极性 +1。",
+      "expected_polarity": 1,
+      "expression": "divide(subtract(tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4, tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4), add(predicted_fourth_quantile_ten_day_return_techindi17_1, 1))",
+      "fields_used": [
+        "tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4",
+        "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4",
+        "predicted_fourth_quantile_ten_day_return_techindi17_1"
+      ],
+      "times": 0
+    }
+  ],
+  "dataset_field_study": {
+    "dataset_essence": "techindi_model 是一套基于技术指标图表图像 (CNN) 训练的多任务学习模型输出集合，在 GLB/TOP3000/d1 上对每只股票的 1日/5日/10日 前瞻市场中性收益给出三类互补预测：(1) probability_*/likelihood_* 字段为 softmax 概率，表示模型判定该股收益落入某分位数桶 (first=最低~fifth=最高) 内某子标签的概率，值域 [0,1] 且长尾桶高度稀疏；(2) tm_*_p* 字段为 log-softmax 对数概率，可负、保留基数幅度，是'保留连续分布形态'的天然载体 (契合铁律 B)；(3) tm_*_q* 为离散桶赋值 (0..N-1)、tm_*_r*/predicted_* 为连续回归预测值，值域无界、需 winsorize。整个数据集的信息摩擦点在于：模型对极端尾部 (最高/最低分位) 的概率分配反映了其方向性确信度，而全平台研究员高度集中在 coverage=1.0 且 alpha_count>=7 的少数热门桶 (如 likelihood_fifth_quantile_five_day_bucket_zero_3 ac=7、tm_14_*_q5_p4 ac=9、predicted_fourth_quantile_ten_day_return_techindi17_1 ac=7)，而对 1025 个 alpha_count=0 的冷门子标签/对数概率字段几乎未触及——这构成铁律 A 冷热非对称配对的物质基础：用冷门尾部概率 (ac=0) 作方向性分子主信号，搭配热门高覆盖锚点 (ac>=7) 作规模/共识归一化分母，从源头规避拥挤赛道。",
+    "economic_clusters": [
+      {
+        "cluster_name": "方向性确信度扩散 (Directional Conviction Spread)",
+        "fields": [
+          "probability_fourth_bucket_ten_day_label_three_tech1_1",
+          "probability_second_bucket_ten_day_label_zero_tech1_1",
+          "probability_fourth_bucket_ten_day_label_two_techindi19_1",
+          "probability_third_bucket_ten_day_label_zero_techindi16_1",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p0"
+        ],
+        "cluster_logic": "同一期限下模型对最高分位 vs 最低/中部分位的概率差，是最直接的方向性确信度度量。用 ac=0 的冷门尾部概率做分子、ac>=2 的较热分位做减项，既保留概率幅度信息又避开最拥挤字段。对数概率差 (logprob_top - logprob_bottom) 等价于对数几率比，是无界连续量，天然保留基数幅度且与 rank 类因子低相关。"
+      },
+      {
+        "cluster_name": "极端尾部确信归一化 (Tail Conviction Normalized)",
+        "fields": [
+          "probability_fifth_quantile_one_day_bucket_four",
+          "probability_fourth_quantile_one_day_bucket_three",
+          "probability_fifth_bucket_five_day_label_zero_tech17_1",
+          "probability_second_bucket_five_day_label_zero_techindi19_1",
+          "probability_fourth_bucket_ten_day_label_three_tech1_1",
+          "probability_third_quantile_ten_day_bucket_zero_22"
+        ],
+        "cluster_logic": "极端尾部概率本身是稀疏 [0,1] 量，直接截面排序会被无事件零值稀释。用 (P_top - P_mid) / P_mid 或 (P_top - P_mid)/(P_top + P_mid) 归一化，把方向性确信度从绝对概率转化为相对确信比率，消除模型整体置信基线漂移。冷门尾部 (ac=0) 作分子、热门中部 (ac=11 的 second_bucket_five_day) 作分母锚点，是铁律 A 的标准冷热配对。"
+      },
+      {
+        "cluster_name": "跨期限分歧 (Horizon Disagreement)",
+        "fields": [
+          "tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r10_q5_p4",
+          "probability_fifth_quantile_one_day_bucket_four",
+          "likelihood_fifth_quantile_five_day_bucket_zero_3",
+          "probability_fifth_bucket_one_day_label_four_tech1_1",
+          "tm_18_r1_r5_r10_rh_ah3_d1_r10_q5_p2"
+        ],
+        "cluster_logic": "模型在同一股票上对 1日、5日、10日 前景的概率分配差异，反映期限结构信号：短期确信高于长期 → 近期催化；反之 → 长期价值。5日顶部对数概率 (ac=9 热门) 与 10日顶部对数概率 (ac=0 冷门) 的比率，把热门模型的短期视角作为基准、冷门模型的长期视角作为信号，正交于单期限方向因子。"
+      },
+      {
+        "cluster_name": "概率-预测值剪刀差 (Probability vs Predicted-Return Divergence)",
+        "fields": [
+          "probability_fourth_bucket_ten_day_label_three_tech1_1",
+          "predicted_fourth_quantile_ten_day_return_techindi17_1",
+          "predicted_fourth_quantile_ten_day_return_2",
+          "predicted_fourth_quantile_five_day_return_5",
+          "probability_fourth_quantile_five_day_bucket_three_22",
+          "predicted_fourth_quantile_one_day_return_31",
+          "probability_fourth_quantile_one_day_bucket_three"
+        ],
+        "cluster_logic": "模型同时输出'落桶概率'与'回归预测值'，二者维度不同但同源。概率反映确信度、预测值反映幅度。将冷门桶概率 (ac=0) 与热门预测值 (ac=7) 相乘或做归一化比率，可构造'每单位预测幅度的确信密度'，捕获模型对自己回归预测有多笃定的二阶信息——这是单维信号无法提供的增量。"
+      },
+      {
+        "cluster_name": "对数几率与桶赋值信号 (Log-Odds & Bucket Assignment)",
+        "fields": [
+          "tm_14_r1_r5_r10_rh_ah3_d1_r5_q5_p4",
+          "tm_5_r1_r5_r10_rh_d1_r5_q5_p0",
+          "tm_12_r1_r5_r10_rh_ah3_d1_r1_q4",
+          "tm_1_r1_r5_r10_rh_d1_r10_q4",
+          "tm_13_r1_r5_r10_rh_ah3_d1_r1_q1",
+          "tm_14_r1_r5_r10_rh_ah3_d1_r1_q1",
+          "tm_18_r1_r5_r10_rh_ah3_d1_r10_q5_p2",
+          "tm_16_r1_r5_r10_rh_d1_r1_q5"
+        ],
+        "cluster_logic": "log-softmax 的对数几率差是无界连续量，比 softmax 概率保留更多基数幅度 (契合铁律 B'保留幅度'精神)；离散桶赋值 (q*) 是模型硬判定，跨期限桶赋值差 (1日桶 - 10日桶) 反映模型对该股评级的时间迁移路径。回归输出 (r*/q1 连续型) 的同源冷热变体差分捕获模型集成内部分歧。"
+      }
+    ]
+  }
+}

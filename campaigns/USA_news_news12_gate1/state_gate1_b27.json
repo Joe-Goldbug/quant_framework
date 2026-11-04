@@ -1,0 +1,54 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/GN4SeglE4BB9z0Gk5Bdim",
+  "submitted_at": 1792991592,
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_SUBIND_WINSOR25",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=2.5), winsorize(prob_rank_bin1_10d_img_news, std=2.5)), news_relevance_score_2), subindustry)",
+      "optimize_reason": "Dual 2.5-sigma winsorization under subindustry grouping. Tightens outlier suppression to stabilize cross-sectional variance."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_SUBIND_SQRT_REL",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "Square root damping on relevance prevents extreme relevance values from overpowering sentiment and return predictions."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_SUBIND_LOG_REL",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=3)), log(add(news_relevance_score_2, 1))), subindustry)",
+      "optimize_reason": "Logarithmic scaling provides concave utility weighting on news relevance under subindustry ranking."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_SUBIND_SENT_SHOCK",
+      "expression": "group_rank(multiply(multiply(subtract(winsorize(mean_sentiment_score_transfer, std=3), ts_mean(winsorize(mean_sentiment_score_transfer, std=3), 5)), winsorize(prob_rank_bin1_10d_img_news, std=3)), news_relevance_score_2), subindustry)",
+      "optimize_reason": "5-day sentiment innovation shock multiplied by 10d event prediction and relevance under subindustry ranking."
+    },
+    {
+      "id": 5,
+      "type": "N84_VOL_ERM_SUBIND",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), log(add(news_item_count_transfer, 1))), winsorize(prob_rank_bin1_10d_img_news, std=3)), subindustry)",
+      "optimize_reason": "Volume-weighted winsorized sentiment interacted with 10d event prediction under subindustry ranking."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_20D_SUBIND_WINSOR",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_20d_img_news, std=3)), news_relevance_score_2), subindustry)",
+      "optimize_reason": "20-day horizon DL event forecast aligned with longer decay setting, normalized within subindustry."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_SUBIND_WINSOR20",
+      "expression": "group_rank(multiply(multiply(winsorize(mean_sentiment_score_transfer, std=3), winsorize(prob_rank_bin1_10d_img_news, std=2)), news_relevance_score_2), subindustry)",
+      "optimize_reason": "Aggressive 2-sigma clipping on DL event prediction to prevent fat-tail noise dampening Sharpe."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_10D_20D_SUBIND",
+      "expression": "group_rank(multiply(winsorize(mean_sentiment_score_transfer, std=3), add(winsorize(prob_rank_bin1_10d_img_news, std=3), winsorize(prob_rank_bin1_20d_img_news, std=3))), subindustry)",
+      "optimize_reason": "Multi-horizon ensemble combining 10d and 20d forecasts with winsorized sentiment under subindustry ranking."
+    }
+  ]
+}

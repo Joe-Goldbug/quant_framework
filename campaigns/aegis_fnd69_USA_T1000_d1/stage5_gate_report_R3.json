@@ -1,0 +1,201 @@
+{
+  "round": 3,
+  "neutralization": "MARKET",
+  "slots": [
+    {
+      "slot": 1,
+      "role": "L1_S7_NETEQUITY_MARKET",
+      "expression": "group_zscore(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_qta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2yktss",
+          "fnd69_qta",
+          "fnd69_q2ycktsrp"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 2,
+      "role": "L1_S2_FCF_MARKET",
+      "expression": "group_zscore(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_qta), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_capxy2q",
+          "fnd69_q2yfcnao"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 3,
+      "role": "L1_S5_CAPEX_MARKET",
+      "expression": "group_zscore(reverse(divide(abs(ts_backfill(fnd69_capxy2q, 252)), fnd69_qta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_capxy2q"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 4,
+      "role": "L1_S1_ASSETGROWTH_MARKET",
+      "expression": "group_zscore(reverse(divide(ts_delta(fnd69_qta, 252), ts_mean(fnd69_qta, 252))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 5,
+      "role": "L2_S7_NETEQUITY_DENOM_TA",
+      "expression": "group_zscore(reverse(divide(subtract(abs(ts_backfill(fnd69_q2yktss, 252)), abs(ts_backfill(fnd69_q2ycktsrp, 252))), fnd69_ta)), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 8,
+        "used_fields": [
+          "fnd69_q2yktss",
+          "fnd69_ta",
+          "fnd69_q2ycktsrp"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 6,
+      "role": "L2_S2_FCF_DENOM_TA",
+      "expression": "group_zscore(divide(subtract(ts_backfill(fnd69_q2yfcnao, 252), abs(ts_backfill(fnd69_capxy2q, 252))), fnd69_ta), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 6,
+        "used_fields": [
+          "fnd69_capxy2q",
+          "fnd69_ta",
+          "fnd69_q2yfcnao"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 7,
+      "role": "L3_S1_ASSETGROWTH_W60",
+      "expression": "group_zscore(reverse(divide(ts_delta(fnd69_qta, 60), ts_mean(fnd69_qta, 60))), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 5,
+        "used_fields": [
+          "fnd69_qta"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    },
+    {
+      "slot": 8,
+      "role": "L3_S6_OCFMOM_W60",
+      "expression": "group_zscore(ts_delta(divide(ts_backfill(fnd69_q2yfcnao, 252), fnd69_qta), 60), industry)",
+      "ast_audit": {
+        "is_valid": true,
+        "issues": [],
+        "operator_count": 4,
+        "used_fields": [
+          "fnd69_qta",
+          "fnd69_q2yfcnao"
+        ],
+        "used_pv_fields": [],
+        "group_vars": [
+          "industry"
+        ]
+      }
+    }
+  ],
+  "all_valid": true,
+  "skeleton_check": {
+    "status": "PASS"
+  },
+  "red_team": {
+    "all_passed": true,
+    "per_slot": [
+      {
+        "slot": 1,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 2,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 3,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 4,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 5,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 6,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 7,
+        "verdict": "PASS",
+        "issues": []
+      },
+      {
+        "slot": 8,
+        "verdict": "PASS",
+        "issues": []
+      }
+    ]
+  }
+}

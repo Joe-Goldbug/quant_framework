@@ -1,0 +1,67 @@
+{
+  "wave": "5_conviction",
+  "seed_id": "GATE1_WAVE5_CONVICTION",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "hypothesis": "判定度(conviction)=美元口径−笔数口径每笔溢价。wave4bisect证实volume(0.88)与count(0.86)通道冗余(同购压信号)→其差值/比值=残差溢价, 是唯一未触及单元。相位拓扑(冠军已证)承载。全SLOW单chunk=8。",
+  "items": [
+    {
+      "id": 1,
+      "type": "conv_sub_top5_60d_p5",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),5), subindustry)",
+      "optimize_reason": "CV1 top5最知情60d减法判定度, 相位窗5(冠军窗)。减法=美元加权超笔数加权每笔溢价; 大额主导净买=知情置信。"
+    },
+    {
+      "id": 2,
+      "type": "conv_sub_top5_60d_p10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),10), subindustry)",
+      "optimize_reason": "CV2 同CV1相位窗10, 参数高原测试对。"
+    },
+    {
+      "id": 3,
+      "type": "conv_ratio_top5_60d_p5",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),5), subindustry)",
+      "optimize_reason": "CV3 比值形式(均值单笔规模溢价=vol/cnt) top5 60d相位窗5; 比值独立于共享购压水平, 纯残差溢价, 对照CV1减法(被水平主导)。"
+    },
+    {
+      "id": 4,
+      "type": "conv_ratio_top5_60d_p10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),10), subindustry)",
+      "optimize_reason": "CV4 同CV3相位窗10, 参数高原测试对。"
+    },
+    {
+      "id": 5,
+      "type": "conv_ratio_all_60d_p5",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(vec_avg(buy_sell_ratio_all_60d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),5), subindustry)",
+      "optimize_reason": "CV5 全体口径60d比值判定度相位; 对照top5层级检验集中度。"
+    },
+    {
+      "id": 6,
+      "type": "conv_ratio_all_20d_p5",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(vec_avg(buy_sell_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_20d_filled)),5), subindustry)",
+      "optimize_reason": "CV6 全体20d(近期信息簇)比值判定度相位; 20d对近期大额建仓更敏感。"
+    },
+    {
+      "id": 7,
+      "type": "conv_ratio_top20_5d_p5",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(vec_avg(buy_sell_ratio_top20_5d_filled),vec_avg(buy_sell_tx_count_ratio_top20_5d_filled)),5), subindustry)",
+      "optimize_reason": "CV7 top20 5d(最短期)比值判定度相位; 最短期大额跃迁的每笔溢价。"
+    },
+    {
+      "id": 8,
+      "type": "conv_ratio_top5_250d_p10",
+      "neutralization": "SLOW",
+      "expression": "group_rank(ts_arg_max(divide(vec_avg(buy_sell_ratio_top5_250d_filled),vec_avg(buy_sell_tx_count_ratio_top5_250d_filled)),10), subindustry)",
+      "optimize_reason": "CV8 top5 250d(长基线稳定锚)比值判定度相位窗10; 长窗平滑噪声捕捉持续大额主导。"
+    }
+  ]
+}

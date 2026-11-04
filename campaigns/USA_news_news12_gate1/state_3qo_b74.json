@@ -1,0 +1,70 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/1qcXmJ9a4wPcyMH54phgP",
+  "submitted_at": 1793079112,
+  "items": [
+    {
+      "id": 1,
+      "type": "B74_S1_TAIL_POW3_OUTER_DECAY10",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 9 ops: Inserts 3rd power on centered group rank INSIDE outer 10-day decay. Tail magnification concentrates capital into high-conviction catalysts to boost Returns, while outer decay holds Turnover around 13%."
+    },
+    {
+      "id": 2,
+      "type": "B74_S2_TAIL_POW5_OUTER_DECAY10",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 9 ops: 5th power non-linear tail magnification inside outer 10-day decay. Compresses 85% of capital into top/bottom 10% extreme catalysts, targeting Returns >= 5.0% and Fitness >= 1.00."
+    },
+    {
+      "id": 3,
+      "type": "B74_S3_TAIL_POW3_OUTER_DECAY8",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), 8)",
+      "decay": 10,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 9 ops: Tail power 3 with slightly faster decay 8 and sim decay 10. Accelerates reaction to breaking news, targeting Sharpe >= 1.60."
+    },
+    {
+      "id": 4,
+      "type": "B74_S4_DUAL_DECAY_INNER4_OUTER10",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(ts_decay_linear(power(mean_sentiment_score_transfer, 4), 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 9 ops: Dual-Decay Resonant Coupling. Inner 4d linear decay captures multi-day post-earnings announcement drift (PEAD); outer 10d decay smooths execution churn."
+    },
+    {
+      "id": 5,
+      "type": "B74_S5_DUAL_DECAY_TAIL_POW3",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(ts_decay_linear(power(mean_sentiment_score_transfer, 4), 3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Full architectural union of inner 3d event drift + outer tail-power 3 conviction + outer 10d portfolio stabilization."
+    },
+    {
+      "id": 6,
+      "type": "B74_S6_TRADE_WHEN_RELEVANCE",
+      "expression": "ts_decay_linear(trade_when(news_relevance_score_2 > 0.1, subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), subindustry), 0.5), -1), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 9 ops: Dead-weight rebalancing freeze via trade_when. Freezes position for zero-news stocks (-1), eliminating non-informative churn and driving turnover below 11%."
+    },
+    {
+      "id": 7,
+      "type": "B74_S7_TAIL_POW3_CONJUGATE_D13",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(power(mean_sentiment_score_transfer, 4.3), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.8), sqrt(news_relevance_score_2))), subindustry), 0.5), 3), 11)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 9 ops: Conjugate tuning: power 4.3, std=2.8, outer decay 11, sim decay 13. Targets maximum margin expansion."
+    },
+    {
+      "id": 8,
+      "type": "B74_S8_KPJ_CHAMPION_DECAY16_POW5",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 9 ops: Direct optimization on Sharpe 1.58 champion KPJlxe5l. Softens power from 7 to 5 and extends decay to 16 to compress turnover from 21.2% down into 16%, aiming for Fitness >= 1.00."
+    }
+  ]
+}

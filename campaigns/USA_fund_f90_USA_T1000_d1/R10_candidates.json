@@ -1,0 +1,100 @@
+{
+  "candidates": [
+    {
+      "id": "C01",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_interest_investment_inc),252), ts_zscore(vec_avg(fnd90_us_game_deferred_sal_chg),252)), ts_zscore(oth466_cf_cash,252)), 10)",
+      "family": "现金充裕度背离",
+      "optimize_reason": "模型由利息与投资收入推算的现金自给度，扣除递延收入虚增部分后形成内部现金结构，再减去报表真实现金余额，得到模型读数与现实的差。对手盘是只看现金流量表总额的惯性交易者；季报现金科目有确认时滞与重分类空间，使模型前瞻估计持续偏离已披露现金，该背离在现金稀缺阶段转化为可交易定价误差。"
+    },
+    {
+      "id": "C02",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_interest_investment_inc),252), ts_zscore(vec_avg(fnd90_us_game_receivable_chg),252)), ts_zscore(oth466_bs_cash_only_q,252)), 10)",
+      "family": "现金充裕度背离",
+      "optimize_reason": "模型侧以利息投资收入代表现金造血、以应收变动代表现金被客户占用，两相抵消得内部现金净结构，再减报表净现金。对手盘是忽视应收账期恶化的价值型买方；应收账款占用推高账面利润却削弱真实现金，模型据此预判的现金紧张相对报表净现金存在系统性偏离，形成跨期可证伪信号。"
+    },
+    {
+      "id": "C03",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_debt_convertible),252), ts_zscore(vec_avg(fnd90_us_game_pension_expense),252)), ts_zscore(oth466_cf_fin,252)), 10)",
+      "family": "债务/利息压力背离",
+      "optimize_reason": "模型以可转债占比刻画潜在稀释式杠杆、以养老金支出刻画刚性现金负担，二者相减得内部债务压力结构，再减报表筹资现金流。对手盘是仅盯资产负债率的传统信用分析师；可转债与养老金属表外或半显性负债，真实融资现金流已反映再融资难易，模型对隐性债务的高估相对现实筹资能力构成可交易背离。"
+    },
+    {
+      "id": "C04",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_debt_convertible),252), ts_zscore(oth466_bs_cash_st_invest,252)), 10)",
+      "family": "债务/利息压力背离",
+      "optimize_reason": "模型估得的可转债占总债比重代表稀释式杠杆风险，减去报表真实的现金及短期投资余额，得到杠杆读数相对流动性的偏差。对手盘是依据评级符号静态持仓的被动资金；可转债在股价上行时转股权使真实负担低于模型预警，现金类资产提供缓冲，该模型与现实流动性的错位具备时序可重复性。"
+    },
+    {
+      "id": "C05",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_accruals_vol),252), ts_zscore(vec_avg(fnd90_us_game_eps_vol),252)), ts_zscore(oth466_is_oper_inc_q,252)), 10)",
+      "family": "盈利质量/应计背离",
+      "optimize_reason": "模型以应计波动与盈余波动刻画利润稳固度，二者相减得盈利质量结构，再减报表真实营业利润。对手盘是追逐盈余惊喜的趋势账户；应计与盈余的高波动预示利润靠一次性项目支撑而非经营，模型据此看空的标的相对已披露营业利润存在质量层面的预期差，该差在业绩变脸前持续存在。"
+    },
+    {
+      "id": "C06",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_earning_smooth),252), ts_zscore(vec_avg(fnd90_us_game_inc_cash_tax),252)), ts_zscore(oth466_is_gross_prof,252)), 10)",
+      "family": "盈利质量/应计背离",
+      "optimize_reason": "模型侧用盈余平滑度与所得税对现金税偏离双指标刻画盈余管理程度，相减得内部质量结构后减报表真实毛利。对手盘是只比市盈率的散户与量化中性盘；平滑利润与税会差异是典型盈余粉饰痕迹，报表毛利尚未暴露该水分，模型的质量预警相对真实毛利形成可证伪背离。"
+    },
+    {
+      "id": "C07",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_accruals_vol),252), ts_zscore(oth466_is_gross_prof,252)), 10)",
+      "family": "盈利质量/应计背离",
+      "optimize_reason": "模型估得的应计波动代表利润中不可持续的非现金成分，直接减去报表真实毛利，得到质量瑕疵相对经营成果的偏离。对手盘是依据毛利同比做调仓的基本面基金；高应计波动预示毛利中含大量未实现项目，模型读数与已披露毛利之间的差在审计季与业绩下修窗口稳定显现。"
+    },
+    {
+      "id": "C08",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_inventory_chg),252), ts_zscore(vec_avg(fnd90_us_game_receivable_chg),252)), ts_zscore(oth466_bs_receiv_tot_q,252)), 10)",
+      "family": "运营资本(存货/应收)背离",
+      "optimize_reason": "模型以存货变动与应收变动刻画营运资金占用方向，相减得内部周转结构后减报表真实应收总额。对手盘是仅看营收增速的成长股选手；存货与应收同步堆积暗示渠道压货与回款恶化，模型读数与已披露应收账款规模之间的错位反映真实周转压力，具备跨季可重复性。"
+    },
+    {
+      "id": "C09",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_inventory_days),252), ts_zscore(vec_avg(fnd90_us_game_receivable_days),252)), ts_zscore(oth466_bs_receiv_tot_q,252)), 10)",
+      "family": "运营资本(存货/应收)背离",
+      "optimize_reason": "模型以存货天数与应收天数刻画营运周期拉长程度，相减得内部效率结构后减报表真实应收总额。对手盘是依赖营运资本比率做筛选的量化因子；天数口径比绝对额更早暴露周转放缓，模型对效率恶化的前瞻读数与已披露应收规模存在系统性偏离，该偏离在景气下行期尤为显著。"
+    },
+    {
+      "id": "C10",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_inventory_chg),252), ts_zscore(oth466_bs_cash_equiv_q,252)), 10)",
+      "family": "运营资本(存货/应收)背离",
+      "optimize_reason": "模型估得的存货变动直接减去报表真实现金及等价物，得到囤货占款相对流动性的偏离。对手盘是忽视库存减值风险的动量持有者；存货积压挤占现金且常在后续计提减值，模型的前瞻占款读数与已披露现金等价物之间存在可交易的预期差。"
+    },
+    {
+      "id": "C11",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_gma_chg),252), ts_zscore(vec_avg(fnd90_us_game_gross_margin_vol),252)), ts_zscore(oth466_is_gross_prof,252)), 10)",
+      "family": "毛利动能背离",
+      "optimize_reason": "模型以毛利改善幅度与毛利波动度刻画动能质量，相减得内部动能结构后减报表真实毛利。对手盘是追逐毛利率上行的趋势资金；毛利改善若伴随高波动则动能不可持续，模型对稳健动能的偏好读数与已披露毛利之间产生质量层面的背离，可在动能反转前布局。"
+    },
+    {
+      "id": "C12",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_gma_chg),252), ts_zscore(oth466_is_oper_inc_q,252)), 10)",
+      "family": "毛利动能背离",
+      "optimize_reason": "模型估得的毛利变动幅度直接减去报表真实营业利润，得到改善预期相对经营成果的偏离。对手盘是依据毛利同比机械加仓的基金；毛利改善未必转化为营业利润，费用与减值会吞噬利润，模型的前瞻改善读数与已披露营业利润之差在费用高峰季稳定存在。"
+    },
+    {
+      "id": "C13",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_optimism_gma),252), ts_zscore(vec_avg(fnd90_us_game_gma_chg),252)), ts_zscore(oth466_is_gross_prof,252)), 10)",
+      "family": "毛利动能背离",
+      "optimize_reason": "模型以分析师毛利乐观度与估得毛利变动幅度相减，得预期与模型动能的错位结构后减报表真实毛利。对手盘是跟随卖方毛利评级的共识交易者；乐观度透支真实改善，模型动能读数与已披露毛利之间的差揭示卖方预期与经营现实的裂口，具可证伪性。"
+    },
+    {
+      "id": "C14",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_an_cov_chng),252), ts_zscore(vec_avg(fnd90_us_game_optimism_gma),252)), ts_zscore(oth466_is_oper_inc_q,252)), 10)",
+      "family": "分析师预期 vs 实际背离",
+      "optimize_reason": "模型以分析师覆盖变动与毛利乐观度相减，得关注迁移相对乐观溢价的内部结构后减报表真实营业利润。对手盘是追逐分析师覆盖扩张的动量盘；覆盖增加常伴随乐观度虚高而非盈利兑现，模型对关注泡沫的读数与已披露营业利润存在预期差，在覆盖见顶时反向显著。"
+    },
+    {
+      "id": "C15",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_an_cov_chng),252), ts_zscore(vec_avg(fnd90_us_game_accruals_vol),252)), ts_zscore(oth466_is_oper_inc_q,252)), 10)",
+      "family": "分析师预期 vs 实际背离",
+      "optimize_reason": "模型以分析师覆盖变动与应计波动相减，得关注热度相对质量瑕疵的内部结构后减报表真实营业利润。对手盘是依据研报数量做决策的买方；覆盖扩张往往扎堆于应计虚增的高质量幻象标的，模型对热度与质量错配的读数与已披露营业利润形成可交易背离。"
+    },
+    {
+      "id": "C16",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_deferred_sal_chg),252), ts_zscore(vec_avg(fnd90_us_game_inventory_chg),252)), ts_zscore(oth466_cf_cash,252)), 10)",
+      "family": "现金充裕度背离",
+      "optimize_reason": "模型以递延收入变动代表已收未结的强现金前兆、以存货变动代表现金占用来刻画净现金结构，相减后减报表真实现金。对手盘是只比较经营现金流同比的惯性资金；递延收入确认节奏与存货减值使模型前瞻现金读数与已披露现金持续偏离，该背离在订单波动期显著。"
+    }
+  ]
+}

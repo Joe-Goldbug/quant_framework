@@ -1,0 +1,10 @@
+{
+  "card_id": "CARD_TO_OVERFLOW",
+  "tag": "turnover_overflow",
+  "domain": "decay_smoothing",
+  "title": "换手率过高脉冲平滑处方",
+  "one_line": "换手率过高 (>50%)：使用 ts_decay_exp_window(x, 10, factor=0.8) 或 ts_decay_linear(x, 15) 平滑脉冲",
+  "symptom": "is.turnover > 0.50，高频抖动导致交易滑点迅速吞噬策略利润",
+  "authorized_operators": ["ts_decay_exp_window", "ts_decay_linear"],
+  "prescription_recipe": "在外层包裹 ts_decay_exp_window(..., 10, factor=0.8) 或 ts_decay_linear(..., 15)，平滑持仓脉冲并将换手率压缩至 15%~35% 黄金区间。"
+}

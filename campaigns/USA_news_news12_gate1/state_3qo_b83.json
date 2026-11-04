@@ -1,0 +1,70 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/3ntNgnFU4npc0lSTDifMLJ",
+  "submitted_at": 1793087114,
+  "items": [
+    {
+      "id": 1,
+      "type": "B83_S1_HUMP_KPJ_0007_D15",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0007)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 10 ops: Power 7 with hump=0.0007. Pushes turnover from 18.9% down toward 16.5% while holding Sharpe >= 1.58 and Returns >= 4.5%."
+    },
+    {
+      "id": 2,
+      "type": "B83_S2_HUMP_KPJ_0009_D15",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0009)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 10 ops: Power 7 with hump=0.0009. Targets turnover ~15.0%."
+    },
+    {
+      "id": 3,
+      "type": "B83_S3_HUMP_KPJ_0005_D18",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0005)",
+      "decay": 18,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 10 ops: Power 7 with hump=0.0005 and sim decay 18. Sim decay 18 dampens turnover by an additional 2%, targeting TO ~16.5% with Sharpe >= 1.58."
+    },
+    {
+      "id": 4,
+      "type": "B83_S4_HUMP_KPJ_0007_D18",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0007)",
+      "decay": 18,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 10 ops: Power 7 with hump=0.0007 and sim decay 18. Targets TO ~14.5% and Fitness >= 0.88 with Sharpe >= 1.58."
+    },
+    {
+      "id": 5,
+      "type": "B83_S5_HUMP_D5W_0007_D16",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0007)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Power 5 with hump=0.0007. Precision bridge between 0.0005 (Sharpe 1.58, TO 18.2%) and 0.0010 (Sharpe 1.47, TO 15.8%)."
+    },
+    {
+      "id": 6,
+      "type": "B83_S6_HUMP_D5W_0008_D16",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0008)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 10 ops: Power 5 with hump=0.0008. Targets Sharpe >= 1.58 and TO ~17.0%."
+    },
+    {
+      "id": 7,
+      "type": "B83_S7_HUMP_D5W_0006_D18",
+      "expression": "hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), hump=0.0006)",
+      "decay": 18,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 10 ops: Power 5 with hump=0.0006 and sim decay 18."
+    },
+    {
+      "id": 8,
+      "type": "B83_S8_HUMP_KPJ_SYNTH_OUT2",
+      "expression": "ts_decay_linear(hump(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 7), hump=0.0005), 2)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 11 ops: Full 11-operator synthesis: hump deadband 0.0005 + 2-day micro-smoothing. Blends execution, targeting TO ~15.0% while locking Returns >= 4.5% and Sharpe >= 1.58."
+    }
+  ]
+}

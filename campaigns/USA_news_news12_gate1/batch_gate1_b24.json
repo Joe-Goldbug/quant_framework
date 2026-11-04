@@ -1,0 +1,70 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 12,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_item_count_transfer",
+    "max_bias_adjusted_price_target",
+    "median_bias_adjusted_price_target",
+    "prob_quantile_2_bucket_1_10day_return",
+    "prob_quantile_2_bucket_1_20day_return",
+    "prob_rank_bin1_20d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "CROSS_N84_ANALYST_PCT_5D",
+      "expression": "group_rank(multiply(mean_sentiment_score_transfer, divide(subtract(max_bias_adjusted_price_target, ts_mean(max_bias_adjusted_price_target, 5)), ts_mean(max_bias_adjusted_price_target, 5))), sector)",
+      "optimize_reason": "PR headline news sentiment multiplied by 5-day percentage revision in analyst max target price. Eliminates nominal stock price distortion, targeting Sharpe >= 1.60, Turnover < 20%, Margin >= 10 bps."
+    },
+    {
+      "id": 2,
+      "type": "CROSS_N84_ANALYST_PCT_10D",
+      "expression": "group_rank(multiply(mean_sentiment_score_transfer, divide(subtract(max_bias_adjusted_price_target, ts_mean(max_bias_adjusted_price_target, 10)), ts_mean(max_bias_adjusted_price_target, 10))), sector)",
+      "optimize_reason": "PR headline news sentiment multiplied by 10-day percentage revision in analyst max target price. Captures sustained sell-side upgrade waves, targeting Turnover < 16%, Margin >= 12 bps."
+    },
+    {
+      "id": 3,
+      "type": "CROSS_N84_ANALYST_MED_PCT_5D",
+      "expression": "group_rank(multiply(mean_sentiment_score_transfer, divide(subtract(median_bias_adjusted_price_target, ts_mean(median_bias_adjusted_price_target, 5)), ts_mean(median_bias_adjusted_price_target, 5))), sector)",
+      "optimize_reason": "PR headline news sentiment multiplied by 5-day percentage revision in median analyst target price. Filters out single-broker outliers, targeting Turnover < 18%, Margin >= 11 bps."
+    },
+    {
+      "id": 4,
+      "type": "CROSS_N84_EARNINGS_10D",
+      "expression": "group_rank(multiply(mean_sentiment_score_transfer, prob_quantile_2_bucket_1_10day_return), sector)",
+      "optimize_reason": "Confluence between NLP headline sentiment and CNN earnings chart 10-day forward return probability. Zero analyst crowdedness, targeting ProdCorr < 0.50, Turnover < 18%, Margin >= 15.0 bps."
+    },
+    {
+      "id": 5,
+      "type": "CROSS_N84_EARNINGS_20D",
+      "expression": "group_rank(multiply(mean_sentiment_score_transfer, prob_quantile_2_bucket_1_20day_return), sector)",
+      "optimize_reason": "Confluence between NLP headline sentiment and CNN earnings chart 20-day forward return probability. Multi-week holding persistence, targeting Turnover < 14%, Margin >= 15.0 bps."
+    },
+    {
+      "id": 6,
+      "type": "CROSS_N84_ERM_RELEVANCE",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, prob_rank_bin1_20d_img_news), news_relevance_score_2), sector)",
+      "optimize_reason": "Triple interaction of headline sentiment, 20-day deep learning event return forecast, and news relevance score. Pure news category theme, targeting Turnover < 16%, Margin >= 12 bps."
+    },
+    {
+      "id": 7,
+      "type": "CROSS_N84_VOL_ANALYST_MAX",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), divide(subtract(max_bias_adjusted_price_target, ts_mean(max_bias_adjusted_price_target, 5)), ts_mean(max_bias_adjusted_price_target, 5))), sector)",
+      "optimize_reason": "Volume-weighted news sentiment combined with percentage max price target revision. Confirms heavy media coverage backing target price hikes, targeting Turnover < 18%, Margin >= 14 bps."
+    },
+    {
+      "id": 8,
+      "type": "CROSS_N84_VOL_ANALYST_MED",
+      "expression": "group_rank(multiply(multiply(mean_sentiment_score_transfer, log(add(news_item_count_transfer, 1))), divide(subtract(median_bias_adjusted_price_target, ts_mean(median_bias_adjusted_price_target, 10)), ts_mean(median_bias_adjusted_price_target, 10))), sector)",
+      "optimize_reason": "Volume-weighted news sentiment combined with 10-day median target revision. Smooth institutional consensus with strong event confirmation, targeting Turnover < 15%, Margin >= 15.0 bps."
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "batch": 8,
+  "family": "magnitude_preservation_non_rank_outer",
+  "hypothesis": "幅度保留 (铁律 B): group_rank 把极端幅度拍平, 使因子间相关性飙升且 Margin 受损; group_zscore/group_neutralize 保留连续形态, 同等 Sharpe 下 Margin (bps) 通常提升 50%~100%, 且保留的幅度使生产库共线性暴露更分散。本批 8 槽位把 B1/B3/B4/B6 的四个核心机制各做一次 group_zscore 与 group_neutralize 对照, 验证非秩外层是否真的换来更低 ProdCorr 与更高 Margin。",
+  "items": [
+    {
+      "id": "b8_z1",
+      "expr": "group_zscore(ts_mean(multiply(ts_zscore(oth566_multil3_label, 60), group_rank(oth566_multil3_prob, industry)), 26), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_multil3_label",
+        "oth566_multil3_prob"
+      ]
+    },
+    {
+      "id": "b8_n1",
+      "expr": "group_neutralize(ts_mean(multiply(ts_zscore(oth566_multil3_label, 60), group_rank(oth566_multil3_prob, industry)), 26), subindustry)",
+      "ops": 4,
+      "fields": [
+        "oth566_multil3_label",
+        "oth566_multil3_prob"
+      ]
+    },
+    {
+      "id": "b8_z2",
+      "expr": "group_zscore(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b8_n2",
+      "expr": "group_neutralize(ts_mean(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 26), subindustry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ]
+    },
+    {
+      "id": "b8_z3",
+      "expr": "group_zscore(ts_mean(add(ts_zscore(oth566_l2r5_label, 60), ts_zscore(oth566_l3r5_label, 60)), 26), industry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l2r5_label",
+        "oth566_l3r5_label"
+      ]
+    },
+    {
+      "id": "b8_n3",
+      "expr": "group_neutralize(ts_mean(add(ts_zscore(oth566_r20marsi_ret, 60), ts_zscore(oth566_l5r20gasfculr_ret, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_l5r20gasfculr_ret"
+      ]
+    },
+    {
+      "id": "b8_z4",
+      "expr": "group_zscore(ts_mean(subtract(ts_zscore(oth566_l5r20gasfculr_ret, 60), ts_zscore(oth566_r20marsi_ret, 60)), 26), industry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_r20marsi_ret"
+      ]
+    },
+    {
+      "id": "b8_n4",
+      "expr": "group_neutralize(ts_mean(subtract(ts_zscore(oth566_multil3_prob_pattern, 60), ts_zscore(oth566_multil3_prob_last_pattern, 60)), 26), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_multil3_prob_pattern",
+        "oth566_multil3_prob_last_pattern"
+      ]
+    }
+  ]
+}

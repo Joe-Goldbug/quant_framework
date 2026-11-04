@@ -1,0 +1,16 @@
+======================================================================
+slices/slice_S4_CASH.json
+  S4_CASH_01           Q4_Interaction group_zscore(winsorize(divide(subtract(fnd17_anrhsfcq, fnd17_qepsinclxo), fnd17_qrevps), std=3), sector)
+  S4_CASH_02           Q8_Essence     group_zscore(winsorize(divide(subtract(fnd17_aniacnorm, fnd17_cainmtt), fnd17_ttmrev), std=3), subindustry)
+  S4_CASH_03           Q5_Structure   group_zscore(divide(subtract(fnd17_anrhsfcq, fnd17_qcapspps), fnd17_qrevps), industry)
+  S4_CASH_04           Q1_Invariance  group_zscore(divide(multiply(fnd17_rhsfcq, fnd17_ttmastturn), fnd17_qrevps), subindustry)
+======================================================================
+slices/slice_Q5Q8.json
+  CAND_E_0             Q5_Structure   zscore(divide(fnd17_ttmrev, fnd17_atmtt))
+  CAND_E_1             Q5_Structure   zscore(divide(fnd17_qtotce, fnd17_atmtt))
+  CAND_E_2             Q6_Accumulation ts_decay_linear(ts_mean(subtract(fnd17_ttmnichg, fnd17_ttmrevchg), 20), 60)
+  CAND_E_3             Q6_Accumulation ts_mean(subtract(ts_backfill(fnd17_ttmintcov, 250), ts_backfill(fnd17_ptmintcov, 250)), 120)
+  CAND_E_4             Q7_Relative    group_zscore(subtract(fnd17_nichngyr, fnd17_revchngyr), subindustry)
+  CAND_E_5             Q7_Relative    group_zscore(subtract(fnd17_tcpngmpoa, fnd17_2tcpngmpoa), sector)
+  CAND_E_6             Q8_Essence     zscore(winsorize(subtract(fnd17_aroapct, fnd17_aroa5yavg), std=3))
+  CAND_E_7             Q8_Essence     zscore(subtract(ts_backfill(fnd17_tcpngmtpq, 250), ts_backfill(fnd17_ry5ngmtp, 250)))

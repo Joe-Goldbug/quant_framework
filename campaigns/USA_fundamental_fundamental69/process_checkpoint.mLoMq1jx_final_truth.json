@@ -1,0 +1,77 @@
+{
+  "checkpoint_id": "mLoMq1jx_final_truth_px11",
+  "date": "2026-10-28-t23",
+  "subject_alpha_id": "mLoMq1jx",
+  "expression": "group_zscore(winsorize(ts_delta(subtract(subtract(fnd69_q2yfcnao, fnd69_q2yvd), fnd69_capxy2q), 60), std=3), industry)",
+  "metadata_seen": {
+    "id":"mLoMq1jx","status":"UNSUBMITTED","stage":"IS","region":"USA","universe":"TOP1000","delay":1,
+    "decay":0,"neutralization":"NONE","truncation":0.025,"startDate":"2014-01-01","endDate":"2023-12-31",
+    "ra_failed":true,"ra_failed_checks":["LOW_SHARPE","CONCENTRATED_WEIGHT"]
+  },
+  "aggregate_metrics_visible": {
+    "sharpe":1.14,"fitness":1.18,"turnover":0.1013,"returns":0.135,"drawdown":0.0903,"margin":0.002664,
+    "longCount":363,"shortCount":376,"pnl":11877562,"bookSize":20000000,"sub_universe_sharpe":1.02,
+    "two_year_sharpe":2.32,"investability_sharpe":0.1,"investability_fitness":0.04,"risk_neutralized_sharpe":0.81
+  },
+  "checks_summary": {
+    "fail":[],
+    "warnings":[
+      {"name":"LOW_SHARPE","value":1.14,"limit":1.58},
+      {"name":"CONCENTRATED_WEIGHT","value":0.5,"limit":0.1},
+      {"name":"CLUSTER_TEST","value":0.78,"limit":1.58}
+    ],
+    "pass":["LOW_FITNESS","LOW_TURNOVER","HIGH_TURNOVER","LOW_SUB_UNIVERSE_SHARPE","LOW_2Y_SHARPE","MATCHES_PYRAMID","MATCHES_THEMES"],
+    "pending":["SELF_CORRELATION","DATA_DIVERSITY","PROD_CORRELATION","REGULAR_SUBMISSION","POWER_POOL_CORRELATION","MATCHES_THEMES"]
+  },
+  "truth_findings": {
+    "yearly_table_exact_values_returned_thrice": [
+      {"year":"2014","pnl":133835.0,"sharpe":0.53,"fitness":0.17,"longCount":400,"shortCount":420,"turnover":0.0991,"returns":0.0133,"drawdown":0.0161,"margin":0.000268},
+      {"year":"2015","pnl":-2142.0,"sharpe":-0.01,"fitness":0.0,"longCount":426,"shortCount":422,"turnover":0.0981,"returns":-0.0002,"drawdown":0.0334,"margin":-4e-6},
+      {"year":"2016","pnl":-44675.0,"sharpe":-0.15,"fitness":-0.03,"longCount":427,"shortCount":436,"turnover":0.0968,"returns":-0.0044,"drawdown":0.0374,"margin":-0.000092},
+      {"year":"2017","pnl":241240.0,"sharpe":1.07,"fitness":0.47,"longCount":414,"shortCount":443,"turnover":0.0968,"returns":0.024,"drawdown":0.0289,"margin":0.000496},
+      {"year":"2018","pnl":254824.0,"sharpe":0.92,"fitness":0.41,"longCount":418,"shortCount":447,"turnover":0.0922,"returns":0.0254,"drawdown":0.017,"margin":0.000551},
+      {"year":"2019","pnl":-189869.0,"sharpe":-0.64,"fitness":-0.25,"longCount":425,"shortCount":449,"turnover":0.0911,"returns":-0.0188,"drawdown":0.0305,"margin":-0.000413},
+      {"year":"2020","pnl":230320.0,"sharpe":0.55,"fitness":0.25,"longCount":437,"shortCount":446,"turnover":0.0985,"returns":0.0249,"drawdown":0.0312,"margin":0.000506},
+      {"year":"2021","pnl":6886649.0,"sharpe":2.45,"fitness":5.38,"longCount":260,"shortCount":256,"turnover":0.1416,"returns":0.6832,"drawdown":0.0892,"margin":0.009648},
+      {"year":"2022","pnl":4367380.0,"sharpe":2.28,"fitness":4.25,"longCount":0,"shortCount":0,"turnover":0.0797,"returns":0.435,"drawdown":0.0431,"margin":0.010918},
+      {"year":"2023","pnl":0.0,"sharpe":0.0,"fitness":0.0,"longCount":0,"shortCount":0,"turnover":0.0,"returns":0.0,"drawdown":0.0,"margin":0.0}
+    ],
+    "证伪声明": {
+      "声明A_至少七年没信号": {
+        "你说的": "长期至少七年没信号。",
+        "证据": "IS 年份统计（三次返回）表明：2014-2020 这七年里有 2014 (Sharpe 0.53, PnL +133,835), 2017 (1.07, +241,240), 2018 (0.92, +254,824), 2020 (0.55, +230,320) 四个正 Sharpe 年份。中间有 2015 (-0.01, -2,142), 2016 (-0.15, -44,675), 2019 (-0.64, -189,869) 三个负/微弱年份，但这不等于七年均无信号。",
+        "结论": "该断言与 IS 事实不符；正确的说法是信号在七年内有折返，年份分布高度不均，并非恒定线性上升。"
+      },
+      "声明B_近两年没数据": {
+        "你说的": "近两年没数据。",
+        "证据": "2023 年 IS PnL 为 0 的直接原因是 longCount=0 且 shortCount=0（头寸已关闭，bookSize 仍为 20,000,000），而非字段数据缺失。另外 2021 和 2022 两年分别提供了 +6,886,649 与 +4,367,380 的 IS PnL，是该信号最大的 IS 贡献窗口，而且这两年的 Sharpe 分别为 2.45 与 2.28，Fitness 分别为 5.38 与 4.25——明显高于其它年份。",
+        "结论": "该断言也不准确；正确的说法是 2023 年信号关闭，而非数据缺失，且最近两年在 IS 上反而是贡献最大、统计最强的区段。"
+      }
+    },
+    "真实寿命特征": {
+      "IS 日频曲线形状": "IS 日频 PnL 显示：2021-11-22 起出现大规模累积（单日 +3,786,938；2021-12-14 达 +7,510,182），2022-05-16 推至 +7,725,684，2022-07-21 至 +8,543,462，2022-09-01 跳至 +11,585,304；此后从 2022-09-23 至 2023-12-29 持平于 +11,877,562。",
+      "判断": "IS 曲线是阶段爆发式累积，而非平坦或恒定上升。因此直觉上的‘至少七年没信号’或‘长期平躺’都不符合事实，且也不符合‘近两年没数据’的想法。",
+      "正确定性": "mLoMq1jx 更接近间歇性的报表及特定时期窗口依赖型信号：几个年份 IS 上爆发，另一些年份微弱甚至为负，2023 年因头寸关闭而归零。"
+    },
+    "此前过度结论的修正": {
+      "之前的结论": "曾在 process_checkpoint.signal_truth.json 中把该构造定性为垃圾信号，并计划关闭该骨架的续申报。",
+      "现在的修正": "该构造确实不具备七年恒定信号属性，但将其直接叫做垃圾、至少七年没信号、近两年没数据，是不准确的。应改为保留‘高度年份依存、窗口依赖型’这一更精确的结论，并在后续验证 OS 一致性及窗口切片后，再决定是否值得继续。",
+      "后续应做": [
+        "获取 OS 年度统计，确认 2021/2022 IS 爆发是否在 OS 上仍然成立。",
+        "按财报窗口/非窗口年月切片 IS 日频 PnL，检验信号爆发是否集中在报表窗口附近。",
+        "比较同一数据集其它构造是否有更均匀年份分布的长期信号；若无，则可能是数据集寿命层面的局限。",
+        "若最终确认不符合七年恒定信号目标，再正式记录‘不具备长期稳定信号’这一结论，而非凭直觉中止。"
+      ]
+    }
+  },
+  "数值复核": {
+    "years_with_positive_IS_sharpe":[2014,2017,2018,2020,2021,2022],
+    "years_with_negative_IS_sharpe":[2015,2016,2019],
+    "years_with_zero_IS_sharpe":[2023],
+    "total_IS_pnl_across_10_years":11877562.0,
+    "share_from_2021_2022_percent":"约 94.7%",
+    "note":"IS 曲线形状高度集中于2021-2022 爆发，加剧了年份分布不均的现象，但这并不代表其他年份完全没有信号活动。",
+    "量化修正": "2021/2022 贡献最大的结论现在有明确量化依据：IS PnL 6,886,649 + 4,367,380 = 11,254,029 / 总 IS PnL 11,877,562 ≈ 94.7%，并且这两年的 Sharpe (2.45 / 2.28) 与 Fitness (5.38 / 4.25) 也明显高于其它年份。",
+    "数值来源": "本条 yearly_table 取自 get_alpha_yearly_stats 对 mLoMq1jx 的最新一次返回；与上一条 checkpoint 中的 yearly_table_exact_values_returned_twice 保持一致。"
+  }
+}

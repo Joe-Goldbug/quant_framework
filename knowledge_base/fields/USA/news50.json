@@ -1,0 +1,56 @@
+{
+  "dataset": "news50",
+  "name": "Web News Analytics Data (RavenPack)",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "news",
+  "category_buzzard_lock": "news21",
+  "total_fields": 83,
+  "matrix_fields": 21,
+  "vector_fields": 62,
+  "coverage": {"matrix": 1.0, "vector": "~0.91"},
+  "alpha_count": {"median": 1, "max": 4, "zero_alpha": 35},
+  "crowding": "LOW — all fields alphaCount<=4 (<=5 per AEGIS anti-crowding law)",
+  "created": {"2025-11-01": 46, "2022-12-01": 37},
+  "pyramid_multiplier": {"USA/D1/news": 1.2},
+  "stage1_date": "2026-10-27",
+  "stage1_verdict": "VIRGIN — zero prior backtest consumption on this dataset",
+  "roles": {
+    "Signal_Flow": [
+      "composite_story_sentiment_score_2",
+      "event_sentiment_score_2",
+      "earnings_release_sentiment_score",
+      "corporate_action_report_sentiment_score",
+      "multi_classifier_equity_sentiment_score",
+      "merger_acquisition_sentiment_score_4",
+      "editorial_commentary_sentiment_score_2",
+      "global_equities_sentiment_score",
+      "news_volatility_projection_score"
+    ],
+    "Uncertainty_Scale": [
+      "news_volatility_projection_score",
+      "entity_relevance_score_2",
+      "positive_event_ratio_score"
+    ],
+    "Catalyst_Event": [
+      "novelty_similarity_gap_days",
+      "global_novelty_similarity_gap_days",
+      "event_novelty_score",
+      "global_event_novelty_score",
+      "positive_event_ratio_score",
+      "non_neutral_event_count_rolling_window",
+      "entity_record_count_per_story"
+    ],
+    "Dimension_Anchor": ["composite_story_sentiment_score_2"]
+  },
+  "design_notes": [
+    "All values are 0-100 (center 50) → de-center via subtract(x,50) before multiply/divide (Axiom 1).",
+    "Use only MATRIX fields (coverage 1.0) → no vec_* needed, no tied-zeros.",
+    "Slow-clock assets present: novelty_similarity_gap_days / non_neutral_event_count_rolling_window (91-day) → address news83/news59 'no slow variable' diagnosis.",
+    "ts_rank is invariant to constant shift → safe on raw 0-100 sentiment without de-centering.",
+    "Multiplicative weights strictly positive: rank(x) or add(x,1).",
+    "No group_rank output layer; no external close/returns/volume."
+  ],
+  "settings": {"neutralization": "STATISTICAL", "decay": 8, "truncation": 0.08, "pasteurization": "ON", "nan_handling": "ON"}
+}

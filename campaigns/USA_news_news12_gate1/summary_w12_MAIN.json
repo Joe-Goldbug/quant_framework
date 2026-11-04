@@ -1,0 +1,415 @@
+{
+ "tag": "MAIN",
+ "settings": {
+  "neutralization": "INDUSTRY",
+  "decay": 6,
+  "universe": "TOP1000",
+  "region": "USA",
+  "delay": 1,
+  "truncation": 0.025
+ },
+ "result_file": "D:\\python\\Lib\\site-packages\\cnhkmcp\\untracked\\APP\\.agents\\quant_framework\\campaigns\\USA_news_news12_gate1\\batch_w12_MAIN_1792944870_result.json",
+ "rows": [
+  {
+   "slot": 1,
+   "role": "A",
+   "type": "BF3_DL2_GATE",
+   "reason": "【A1 · E5VjpeQm+门】bf3+dl2 无门版是 26 行 fail=[] 俱乐部成员 (Sh 1.16/TO 59.45%), 本槽加 mLYNEWjW 硬门: 门在无 bf 基座不改 TO, 但 bf3+dl2 的 TO 59% 中有多少来自'陈旧填充'待测量 —— 若门后 TO 仍 <=70% 且 Sh>=1.10, 即复制 fail=[] 且获得更纯的事件因果链. 判据: fail=[] = 豁免边界达成; Sh>=1.25 = 门修复 dl2 的 Sh 损失.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 3), 2))), 0)",
+   "alpha_id": "KPmoWW2x",
+   "sharpe": 0.86,
+   "fitness": 0.26,
+   "turnover": 0.3699,
+   "returns": 0.0332,
+   "ret_over_to": 0.08975398756420654,
+   "margin_bps": 1.7899999999999998,
+   "longCount": 515,
+   "shortCount": 510,
+   "sub_sharpe": 0.85,
+   "two_year_sharpe": 0.61,
+   "rn_sharpe": 1.04,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 2,
+   "role": "A",
+   "type": "BF2_DL2_GATE",
+   "reason": "【A2 · XgR3b8al+门】bf2+dl2 无门 Sh 1.37/TO 71.95% (b11), 距豁免边界仅 1.95pp TO; 加门 (K1: 门 +0.04 Sh 且几乎不动 TO) 后预期 TO ~71.5%/Sh ~1.40 —— 家族 TO-Sh 前沿上距 fail=[] 最近的点. 判据: fail=[] = 边界击穿; Sh>=1.45 = 前沿新记录.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2), 2))), 0)",
+   "alpha_id": "wp9d00vY",
+   "sharpe": 1.41,
+   "fitness": 0.42,
+   "turnover": 0.7177,
+   "returns": 0.0636,
+   "ret_over_to": 0.0886164135432632,
+   "margin_bps": 1.77,
+   "longCount": 383,
+   "shortCount": 376,
+   "sub_sharpe": 1.26,
+   "two_year_sharpe": 1.55,
+   "rn_sharpe": 1.72,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 3,
+   "role": "A",
+   "type": "BF2_WINSOR_DL2_GATE",
+   "reason": "【A3 · W11b 最佳 + dl2】槽5 (bf2+winsorize+门) 是 W11b 家族内最佳 (Sh 1.49/TO 83.66%/CLUSTER 1.43), 本槽叠加 dl2 线性衰减压最后 13.7pp TO: winsorize (K4 全线 +0.02~0.04) x dl2 (b11: -13pp TO/-0.06 Sh) 若效应可加, 落点 (TO~70%, Sh~1.42) 直击豁免框. 判据: fail=[] = 双杠杆可加性成立; Sh>=1.40 且 TO<=72% = 家族前沿.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)), 2), 2))), 0)",
+   "alpha_id": "vROEWWob",
+   "sharpe": 1.45,
+   "fitness": 0.44,
+   "turnover": 0.7175,
+   "returns": 0.0649,
+   "ret_over_to": 0.09045296167247387,
+   "margin_bps": 1.81,
+   "longCount": 383,
+   "shortCount": 376,
+   "sub_sharpe": 1.27,
+   "two_year_sharpe": 1.61,
+   "rn_sharpe": 1.76,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 4,
+   "role": "A",
+   "type": "BF2_EXP10_F07_GATE",
+   "reason": "【A4 · bf2 x 指数衰减复合】双平滑复合 (表达式内 bf2 保持事件 + 平台侧指数 f=0.7/d10 ESS≈4.7 天): K3 证明 decay 在门控基座是温和 TO 杠杆 (-7.5pp@d20), 表达式内指数衰减同理但可与 bf 复合. 与 A2 (bf2+线性) 构成衰减形状对照 (指数 vs 线性). 判据: TO 65-75% 且 Sh>=1.20 = 复合平滑路线; Sh<1.0 = 双平滑过度 (与 K2 的互斥规律一致).",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_exp_window(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2), 10, factor=0.7))), 0)",
+   "alpha_id": "vROEWWb3",
+   "sharpe": 0.91,
+   "fitness": 0.28,
+   "turnover": 0.3702,
+   "returns": 0.0357,
+   "ret_over_to": 0.09643435980551054,
+   "margin_bps": 1.93,
+   "longCount": 513,
+   "shortCount": 515,
+   "sub_sharpe": 0.8,
+   "two_year_sharpe": 0.54,
+   "rn_sharpe": 1.2,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 5,
+   "role": "B",
+   "type": "ATTENTION_DISCOUNT",
+   "reason": "【B1 · Barber-Odean 注意力折扣】单位事件位移 / 长期(20日)平均新闻覆盖: 散户注意力是有限资源 (Barber-Odean 2008), 高覆盖日的价格位移被过度反应主导 (噪声), 低覆盖日的位移更 information-laden (价格发现). 以覆盖度折扣位移 = 提取'净信息含量'. 与 K8 池化死的区别: 分母是覆盖度 (慢变量) 而非位移量, 不退化. 判据: Sh>0.8 且 R/TO>0.15 = 注意力轴成立 (族内 R/TO 上限 0.075, 翻倍即破局); Sh<0.3 = 覆盖度无信息.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)))), 0)",
+   "alpha_id": "9qEeNN3K",
+   "sharpe": 1.63,
+   "fitness": 0.42,
+   "turnover": 1.1593,
+   "returns": 0.0756,
+   "ret_over_to": 0.06521176572069352,
+   "margin_bps": 1.2999999999999998,
+   "longCount": 313,
+   "shortCount": 306,
+   "sub_sharpe": 1.42,
+   "two_year_sharpe": 2.02,
+   "rn_sharpe": 1.97,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "fail_checks": [
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 6,
+   "role": "B",
+   "type": "STDTSCALE",
+   "reason": "【B2 · scale-free 冲击】尾盘位移 / 当日事件冲击的标准差 (vec_stddev(VHEX)): 把 CTO 从'美元位移'换成'标准差单位位移' —— 高波动股票需要更大位移才构成同等信号 (异质波动调整), 直接治'横截面被高波动名主导'的 IC 泄漏. 与已证伪的'归一化分母替换' (count 类) 不同: 分母是波动率类. 判据: Sh>=1.4 且 R/TO>0.08 = 波动标准化优于计数标准化 (母本 Sh 1.59/R/TO 0.066 基准); CLUSTER 升 = scale-free 增强簇可比性.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_stddev(high_price_excursion_stddev), 0.01)))), 0)",
+   "alpha_id": "P0MRkkb7",
+   "sharpe": 1.59,
+   "fitness": 0.41,
+   "turnover": 1.2144,
+   "returns": 0.0789,
+   "ret_over_to": 0.0649703557312253,
+   "margin_bps": 1.2999999999999998,
+   "longCount": 279,
+   "shortCount": 274,
+   "sub_sharpe": 1.27,
+   "two_year_sharpe": 1.85,
+   "rn_sharpe": 1.7,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT"
+   ],
+   "fail_checks": [
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 7,
+   "role": "B",
+   "type": "MULTIEVENT_GATE",
+   "reason": "【B3 · 多事件日门 · 正面攻 CLUSTER】count>2 = 当日 >=3 条新闻的系统性新闻日. 机制: 单条新闻是个股轶事 (特异), 多条同日新闻 = 公司层面系统性事件 (财报/并购/监管) —— 簇内多家公司对同类系统性事件的反应模式相似, 正面制造 CLUSTER_TEST 要的'簇同向性'. b11 测过 count>0 门 (Sh 0.90/TO 39.5%), count>2 是收紧版未测. 判据: CLUSTER>1.54 = 多事件门是簇杠杆 (警告墙破口第一候选); Sh<1.0 但 CLUSTER 高 = 门路线的簇/整体分离读数.",
+   "expression": "trade_when(greater(vec_count(high_price_excursion_stddev), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)))), 0)",
+   "alpha_id": "pwv299k3",
+   "sharpe": 0.86,
+   "fitness": 0.26,
+   "turnover": 0.3602,
+   "returns": 0.0331,
+   "ret_over_to": 0.09189339255968905,
+   "margin_bps": 1.84,
+   "longCount": 509,
+   "shortCount": 507,
+   "sub_sharpe": 0.76,
+   "two_year_sharpe": 0.56,
+   "rn_sharpe": 0.99,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 8,
+   "role": "B",
+   "type": "ATTENTION_WINSOR",
+   "reason": "【B4 · 注意力折扣 x winsorize 加固】B1 的稳健化配对: 先对分子 CTO 横截面削极值 (std=2, K4 实证 winsorize 分子级全线微正 +0.02~0.04) 再除以长期覆盖度. 目的: ①分离 winsorize 在注意力轴上的边际作用 (与 B1 配对); ②覆盖度折扣放大低覆盖名的位移, 而这些名的位移恰好是极值高发区 (小盘股新闻少但波动大) —— winsorize 防'低覆盖+高波动'的伪信息名主导排序. 判据: Sh>B1+0.1 = winsorize 在折扣轴有效; 双槽同灭 = 覆盖度折扣族整体关闭.",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)))), 0)",
+   "alpha_id": "mLYGEEWp",
+   "sharpe": 1.52,
+   "fitness": 0.4,
+   "turnover": 1.1334,
+   "returns": 0.0772,
+   "ret_over_to": 0.06811364037409565,
+   "margin_bps": 1.36,
+   "longCount": 312,
+   "shortCount": 307,
+   "sub_sharpe": 1.28,
+   "two_year_sharpe": 1.97,
+   "rn_sharpe": 1.81,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  }
+ ],
+ "gate": {
+  "step1": {
+   "should_prune": false,
+   "max_abs_sharpe": 1.63,
+   "qualified_count": 5,
+   "qualified_seeds": [
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2), 2))), 0)",
+     "sharpe": 1.41,
+     "metrics": {
+      "sharpe": 1.41,
+      "fitness": 0.42,
+      "turnover": 0.7177,
+      "returns": 0.0636,
+      "drawdown": 0.0468,
+      "margin": 0.000177,
+      "longCount": 383,
+      "shortCount": 376,
+      "pnl": 6347258,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.26,
+      "two_year_sharpe": 1.55,
+      "investability_sharpe": 1.31,
+      "investability_fitness": 0.44,
+      "risk_neutralized_sharpe": 1.72
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_linear(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)), 2), 2))), 0)",
+     "sharpe": 1.45,
+     "metrics": {
+      "sharpe": 1.45,
+      "fitness": 0.44,
+      "turnover": 0.7175,
+      "returns": 0.0649,
+      "drawdown": 0.0465,
+      "margin": 0.000181,
+      "longCount": 383,
+      "shortCount": 376,
+      "pnl": 6476507,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.27,
+      "two_year_sharpe": 1.61,
+      "investability_sharpe": 1.33,
+      "investability_fitness": 0.45,
+      "risk_neutralized_sharpe": 1.76
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)))), 0)",
+     "sharpe": 1.63,
+     "metrics": {
+      "sharpe": 1.63,
+      "fitness": 0.42,
+      "turnover": 1.1593,
+      "returns": 0.0756,
+      "drawdown": 0.0573,
+      "margin": 0.00013,
+      "longCount": 313,
+      "shortCount": 306,
+      "pnl": 7545689,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.42,
+      "two_year_sharpe": 2.02,
+      "investability_sharpe": 1.45,
+      "investability_fitness": 0.44,
+      "risk_neutralized_sharpe": 1.97
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(subtract(news_eod_close, news_ton_last), add(vec_stddev(high_price_excursion_stddev), 0.01)))), 0)",
+     "sharpe": 1.59,
+     "metrics": {
+      "sharpe": 1.59,
+      "fitness": 0.41,
+      "turnover": 1.2144,
+      "returns": 0.0789,
+      "drawdown": 0.0551,
+      "margin": 0.00013,
+      "longCount": 279,
+      "shortCount": 274,
+      "pnl": 7879069,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.27,
+      "two_year_sharpe": 1.85,
+      "investability_sharpe": 1.36,
+      "investability_fitness": 0.42,
+      "risk_neutralized_sharpe": 1.7
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(ts_mean(vec_count(high_price_excursion_stddev), 20), 1)))), 0)",
+     "sharpe": 1.52,
+     "metrics": {
+      "sharpe": 1.52,
+      "fitness": 0.4,
+      "turnover": 1.1334,
+      "returns": 0.0772,
+      "drawdown": 0.059,
+      "margin": 0.000136,
+      "longCount": 312,
+      "shortCount": 307,
+      "pnl": 7700220,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.28,
+      "two_year_sharpe": 1.97,
+      "investability_sharpe": 1.35,
+      "investability_fitness": 0.42,
+      "risk_neutralized_sharpe": 1.81
+     },
+     "status": "STEP1_PASSED"
+    }
+   ],
+   "message": "【Step 1 通过】捕获 5 条达标种子 (最高 |Sharpe| = 1.63)"
+  },
+  "step2_count": 0,
+  "final_count": 0,
+  "step2": [],
+  "final": []
+ }
+}

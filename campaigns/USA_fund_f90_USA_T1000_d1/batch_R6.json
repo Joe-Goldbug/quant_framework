@@ -1,0 +1,220 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "fundamental90+other466",
+  "category": "fundamental",
+  "neutralization": "SUBINDUSTRY",
+  "decay": 4,
+  "truncation": 0.08,
+  "submission_forbidden": true,
+  "known_fields": {
+    "fnd90_us_game_cash_flow_coverage": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of operating cash flow to total debt, measuring how well cash flow covers debt obligations; higher is safer",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_short_term_debt": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Ratio of short-term debt to total capitalization, assets, or related base; measures reliance on short-term financing and assesses leverage/liquidity risk",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_optimism_sale": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Analyst Optimism Sales [ Descending] - [Quality.Profitability]",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_earning_smooth": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Uncertainty_Scale",
+      "description": "A measure of how consistent, stable, or “smooth” reported earnings are; higher smoothness can indicate either reliable profitability or, less desirably, earning…",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_qes_gamef_chs_default": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Catalyst_Event",
+      "description": "Campbell, Hilscher, and Szilagyi's bankruptcy/default probability score, expressing the risk that the company will default, typically reported as a standardized…",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "fnd90_us_game_sg_a_inefficiency": {
+      "type": "VECTOR",
+      "requires_vector_wrapper": true,
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Uncertainty_Scale",
+      "description": "SG&A Inefficiency [ Descending] - [Quality.Efficiency]",
+      "coverage": 0.8276,
+      "alpha_count": 0,
+      "user_count": 0,
+      "crowding": "极低 (平台 0 个 alpha 使用)",
+      "update_frequency": "季度/年度基本面 (低频，需 ts_backfill 或长窗平滑)",
+      "zero_inflation": "低覆盖字段(否)存在缺失零膨胀风险"
+    },
+    "oth466_rt_cf_sales_q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Cash Flow/Sales 经营现金流占销售额比",
+      "coverage": 0.98,
+      "alpha_count": 5
+    },
+    "oth466_rt_gross_margin": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Gross Margin 毛利率",
+      "coverage": 0.89,
+      "alpha_count": 2
+    },
+    "oth466_rt_ebit_oper_mgn_q": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Operating Margin 营业利润率",
+      "coverage": 1.0,
+      "alpha_count": 15
+    },
+    "oth466_a_ttld": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Long-Term Debt - Total 长期债务总额",
+      "coverage": 0.86,
+      "alpha_count": 1
+    },
+    "oth466_a_tnix": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Interest And Related Expense - Total 利息及相关费用净额",
+      "coverage": 0.88,
+      "alpha_count": 2
+    },
+    "oth466_cf_cash_from_oper": {
+      "type": "MATRIX",
+      "domain": "unbounded",
+      "is_sparse": false,
+      "semantic_role": "Signal_Flow",
+      "description": "Cash From Operating Activities 经营活动现金流",
+      "coverage": 1.0,
+      "alpha_count": 0
+    }
+  },
+  "items": [
+    {
+      "slot": 1,
+      "seed_id": "R6_S1_PARENT_PLUS_REAL_LTD",
+      "type": "CROSS_DATASET",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_a_ttld, 252)), 20)",
+      "counterparty": "只按模型化偿债评分配置、不核对真实长期负债余额的量化信用盘",
+      "optimize_reason": "母本(覆盖度-短债)已取得 10/10 年正收益但振幅偏弱。此处追加真实报表长期债务总额作为第三条腿：模型化的短债占比只刻画期限结构，真实长期债务余额才决定了到期的刚性偿付规模。两者同向剔除后，剩余样本的安全边际才同时通过模型与账实两道检验。"
+    },
+    {
+      "slot": 2,
+      "seed_id": "R6_S2_PARENT_PLUS_REAL_INTEREST",
+      "type": "CROSS_DATASET",
+      "expression": "ts_mean(subtract(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), ts_zscore(oth466_a_tnix, 252)), 20)",
+      "counterparty": "以账面利率估算融资压力、不看实际已付利息规模的信用模型",
+      "optimize_reason": "把第三条腿由债务余额换成实际利息与相关费用净额：利息费用是融资压力已兑现的部分，比债务存量更直接地侵蚀自由现金流。与母本同向扣除后，可分离出'低息且短债轻且覆盖足'的真安全边际。"
+    },
+    {
+      "slot": 3,
+      "seed_id": "R6_S3_REAL_MARGIN_VS_MODEL_OPTIMISM",
+      "type": "CROSS_DATASET",
+      "expression": "ts_mean(subtract(ts_zscore(oth466_rt_gross_margin, 252), ts_zscore(vec_avg(fnd90_us_game_optimism_sale), 252)), 20)",
+      "counterparty": "依赖卖方一致预期给成长溢价的资金，以及按预期而非按已实现毛利排序的选股模型",
+      "optimize_reason": "真实毛利率是已实现的定价能力，卖方销售乐观度只是对未来的预期。已实现毛利高而卖方预期冷淡的公司，其盈利质量尚未被预期定价；反之预期火热但毛利平平者，估值建立在未被验证的叙事上。跨数据集相减即为现实与预期之差。"
+    },
+    {
+      "slot": 4,
+      "seed_id": "R6_S4_REAL_CASHFLOW_VS_MODEL_SMOOTHING",
+      "type": "CROSS_DATASET",
+      "expression": "ts_mean(subtract(group_zscore(oth466_rt_cf_sales_q, subindustry), group_zscore(vec_avg(fnd90_us_game_earning_smooth), subindustry)), 20)",
+      "counterparty": "把盈余平滑读作经营稳定、并据此给低风险溢价的质量型配置盘",
+      "optimize_reason": "盈余平滑既可能来自真实经营稳定，也可能来自跨期调节；经营现金流占销售额比是判别标准。在子行业内同口径比较二者：现金转化强而平滑度低者是真实的稳定经营，现金转化弱而平滑度高者则是账面调节，市场往往只对后者给溢价。"
+    },
+    {
+      "slot": 5,
+      "seed_id": "R6_S5_MISJUDGED_DISTRESS_REVERSAL",
+      "type": "CROSS_DATASET",
+      "expression": "rank(ts_mean(subtract(ts_zscore(oth466_rt_cf_sales_q, 252), ts_zscore(vec_avg(fnd90_us_qes_gamef_chs_default), 252)), 20))",
+      "counterparty": "按历史会计特征训练的违约预测模型及其下游的困境剔除名单",
+      "optimize_reason": "CHS 违约概率由历史会计比率回归得出，对已实现转型的公司反应滞后；经营现金流占销售额比是当期的真实造血能力。二者背离即为模型的错杀样本，反向持有可捕获名单修正带来的重定价。外层排序映射用于拉平持仓集中度。"
+    },
+    {
+      "slot": 6,
+      "seed_id": "R6_S6_REAL_OPMARGIN_VS_MODEL_SGA",
+      "type": "CROSS_DATASET",
+      "expression": "winsorize(ts_mean(subtract(ts_zscore(oth466_rt_ebit_oper_mgn_q, 252), ts_zscore(vec_avg(fnd90_us_game_sg_a_inefficiency), 252)), 20), std=3)",
+      "counterparty": "按模型化费用效率评分剔除标的、却忽视已实现营业利润率的基本面筛选器",
+      "optimize_reason": "模型化的 SG&A 低效度是费用率的统计刻画，而已实现营业利润率是费用控制的最终结果。高实际营业利润率却被评为费用低效，说明模型口径与公司真实成本结构不匹配；以 3 倍标准差截尾抑制两个数据集量纲差异带来的尾部脉冲。"
+    },
+    {
+      "slot": 7,
+      "seed_id": "R6_S7_DUAL_DEBT_PRESSURE",
+      "type": "CROSS_DATASET",
+      "expression": "-ts_mean(add(ts_zscore(oth466_a_ttld, 252), ts_zscore(vec_avg(fnd90_us_game_short_term_debt), 252)), 20)",
+      "counterparty": "分头看待长期负债与短期负债、因而低估滚续叠加风险的信用筛选模型",
+      "optimize_reason": "真实长期债务余额与模型化短期债务占比分别刻画偿付规模的存量和到期压力的强度。二者同时居高意味着既要滚续又要扩表，属双重融资压力；两次独立度量同向叠加可相互抵消各自口径噪声，比任一单项更稳健。"
+    },
+    {
+      "slot": 8,
+      "seed_id": "R6_S8_MODEL_COVERAGE_VS_REAL_INTEREST",
+      "type": "CROSS_DATASET",
+      "expression": "ts_mean(subtract(ts_zscore(vec_avg(fnd90_us_game_cash_flow_coverage), 252), ts_zscore(oth466_a_tnix, 252)), 20)",
+      "counterparty": "以模型化覆盖度评分代替真实付息负担的杠杆筛选器",
+      "optimize_reason": "模型化的经营现金流覆盖度是对偿债能力的估计，实际已付利息是偿债负担的兑现值。估计乐观而实际付息沉重者，其覆盖度评分建立在偏松的假设之上；二者相减即为剔除假设松紧后的真实偿债余量。"
+    }
+  ],
+  "slot_meta": {
+    "purpose": "跨数据集二阶预期差: fnd90 模型输出 × other466 真实报表 (双数据集上限)"
+  }
+}

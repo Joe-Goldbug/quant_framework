@@ -1,0 +1,80 @@
+{
+  "seed_id": "GATE1_CAMPAIGN_BATCH7",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "news",
+  "known_fields": [
+    "news_eod_close",
+    "news_ton_last",
+    "news_short_interest",
+    "news_pe_ratio",
+    "news_cap"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "seed_id": "GATE1_B7_S1",
+      "question_type": "Q1_SHORT_SQUEEZE_OVERREACTION",
+      "name": "空头逼空踩踏后过度反应反转",
+      "expression": "ts_decay_linear(reverse(multiply(rank(news_short_interest), rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last)))), 15)",
+      "optimize_reason": "【做空逼空力竭均值回归假说】经济学微观机理：高空头持仓 (news_short_interest) 个股一旦遭遇利好新闻刺激，空头被迫不计成本平仓买入（Short Squeeze），引发暴烈的人为买盘脉冲。由于此类暴涨并非源于企业长期内在价值的提升，当逼空流动性耗尽后，股价将面临长达数周的深幅补跌。以做空比例与新闻涨幅的乘积作为反转做空依据，单笔反转深度达 50~100 bps，配合 15 日线性平滑，换手率自然压低，直接攻克 Margin 10.0 bps 死线。"
+    },
+    {
+      "slot": 2,
+      "seed_id": "GATE1_B7_S2",
+      "question_type": "Q2_PE_VALUATION_BUBBLE",
+      "name": "高估值概念股新闻过热反转",
+      "expression": "ts_decay_linear(reverse(multiply(rank(news_pe_ratio), rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last)))), 15)",
+      "optimize_reason": "【投机性高估值泡沫个股过激反应反转假说】行为金融学机理：高市盈率 (news_pe_ratio) 股票估值早已计入高度乐观预期，对新闻刺激呈现极端非理性的散户狂热追高。以 P/E 截面分位加权新闻涨跌幅，放大投机泡沫个股的反转权重，压平防御性低估值股票的权重。慢变变量 news_pe_ratio 提供稳定的时序持仓粘性，使组合兼备高收益稳定性与低换手率。"
+    },
+    {
+      "slot": 3,
+      "seed_id": "GATE1_B7_S3",
+      "question_type": "Q3_SQUEEZE_TRADE_WHEN_STICKY",
+      "name": "逼空反转 + 持仓保持 (trade_when exit=-1)",
+      "expression": "ts_decay_linear(trade_when(less(days_from_last_change(news_eod_close), 2), reverse(multiply(rank(news_short_interest), rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last)))), -1), 15)",
+      "optimize_reason": "【逼空反转结合持仓保持与长平滑】在逼空力竭假说基础上引入 trade_when(..., -1) 持仓保持机制：仅在新闻发生时更新逼空反转信号，非事件日严格维持持仓，辅以 15 日线性平滑。双重阻断高频调仓摩擦，将空头踩踏后的深厚反转利润完整落袋，预期达成超低换手与超高单笔净溢价。"
+    },
+    {
+      "slot": 4,
+      "seed_id": "GATE1_B7_S4",
+      "question_type": "Q4_FLOAT_WEIGHTED_SUBRANK",
+      "name": "做空比例连续加权 + 子行业组内排序",
+      "expression": "ts_decay_linear(reverse(group_rank(multiply(news_short_interest, divide(subtract(news_eod_close, news_ton_last), news_ton_last)), subindustry)), 15)",
+      "optimize_reason": "【连续空头敞口加权与子行业纯化】使用未经 rank 离散化的原始做空比率 news_short_interest 与百分比收益率连续相乘，保留个股间空头拥挤度的真实数量级差异；并在 subindustry 内部执行相对排序，剥离特定行业（如生物医药）天然高做空的系统性偏差，提取细分赛道内最极端的空头踩踏标的实施反转。"
+    },
+    {
+      "slot": 5,
+      "seed_id": "GATE1_B7_S5",
+      "question_type": "Q5_SIZE_LIQUIDITY_DISCOUNT",
+      "name": "市值流动性折价反转 (Small-Cap Asymmetry)",
+      "expression": "ts_decay_linear(reverse(divide(divide(subtract(news_eod_close, news_ton_last), news_ton_last), s_log_1p(news_cap))), 15)",
+      "optimize_reason": "【市值逆加权与小市值过度反应假说】市场微观结构逻辑：小市值个股 (news_cap 较小) 分析师覆盖少、机构参与度低、流动性薄弱，新闻日更容易被散户情绪冲向极端；而大市值龙头具有深厚流动性缓冲。以 s_log_1p(news_cap) 作为分母对涨跌幅进行逆市值加权，系统性放大低流动性个股的均值回归权重，吃满非流动性溢价与深厚 Margin。"
+    },
+    {
+      "slot": 6,
+      "seed_id": "GATE1_B7_S6",
+      "question_type": "Q6_SHORT_INTEREST_ZSCORE",
+      "name": "做空比率加权 + 子行业 Z-score 标准化",
+      "expression": "ts_decay_linear(reverse(group_zscore(multiply(rank(news_short_interest), divide(subtract(news_eod_close, news_ton_last), news_ton_last)), subindustry)), 15)",
+      "optimize_reason": "【空头拥挤度加权与子行业 Z-score 联合纯化】空头持仓分位数与相对收益率相乘后，直接施加 group_zscore(..., subindustry)。在子行业内部形成正态分布的多空敞口，极大增强极端逼空个股的多空权重置信度，平抑中间层无序股票，结合 15 日平滑，冲击高信息比率与高 Margin。"
+    },
+    {
+      "slot": 7,
+      "seed_id": "GATE1_B7_S7",
+      "question_type": "Q7_PE_BUBBLE_20D_DEEP",
+      "name": "高估值概念股 20日长周期深度平滑",
+      "expression": "ts_decay_linear(reverse(group_rank(multiply(rank(news_pe_ratio), rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last))), subindustry)), 20)",
+      "optimize_reason": "【估值泡沫均值回归 20 日极限持有期】高 P/E 概念股在新闻炒作退潮后的均值回归过程往往持续近一个月。将平滑窗口延展至 20 日，深度匹配泡沫出清的时间尺度，换手率自然压至 10% 左右，完全覆盖泡沫破灭的完整利润区间，直击生产级 Margin 门禁。"
+    },
+    {
+      "slot": 8,
+      "seed_id": "GATE1_B7_S8",
+      "question_type": "Q8_SHORT_SQUEEZE_20D_DEEP",
+      "name": "空头逼空反转 20日极限平滑",
+      "expression": "ts_decay_linear(reverse(group_rank(multiply(rank(news_short_interest), rank(divide(subtract(news_eod_close, news_ton_last), news_ton_last))), subindustry)), 20)",
+      "optimize_reason": "【空头逼空踩踏 20 日极限降换手攻坚】针对逼空事件后漫长的多杀多阴跌过程，采用 20 日长平滑与子行业组排。换手率严格锁死在 10%~12% 极限水平，在稳定捕获 6%~8% 年化收益的同时，将单位交易收益率推升至 12~15 bps，全维度达成终极生产准入门禁！"
+    }
+  ]
+}

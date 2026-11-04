@@ -1,0 +1,45 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "task_tag": "BATCH06A_STATISTICAL",
+  "note": "统计风险模型中性化下的 5 个候选拓扑对照 (与 BATCH06B CROWDING 并行)",
+  "known_fields": [
+    "negative_score_maximum_value",
+    "oth424_divyld",
+    "dividend_growth_factor_score"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), industry)",
+      "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.025,
+      "optimize_reason": "已验证最佳核心 (COUNTRY 下 Sh1.54) 换用统计中性化, 检验 EMEA 是否因国别中性化残差而失效"
+    },
+    {
+      "slot": 2,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 250), subindustry)",
+      "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.025,
+      "optimize_reason": "母本原式 + 统计中性化: 单独隔离中性化变量的贡献, 与 slot1 形成 industry vs subindustry 的干净对照"
+    },
+    {
+      "slot": 3,
+      "expression": "group_rank(if_else(is_nan(ts_mean(negative_score_maximum_value, 250)), ts_mean(dividend_growth_factor_score, 250), ts_mean(negative_score_maximum_value, 250)), industry)",
+      "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.025,
+      "optimize_reason": "只填坑不稀释 (is_nan 单侧切换): 2014-2016 用股息通道独立成像, 2017+ 保持核心不变, 直接检验 Fitness 能否从 0.76 抬升而不掉 Sharpe"
+    },
+    {
+      "slot": 4,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), multiply(ts_mean(oth424_divyld, 250), 2), filter=true), industry)",
+      "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.025,
+      "optimize_reason": "EMEA 抢救候选: 2 倍股息率通道在 COUNTRY 下把 EMEA 抬到约 0.85, 检验统计中性化能否进一步突破 1.0"
+    },
+    {
+      "slot": 5,
+      "expression": "group_rank(ts_mean(negative_score_maximum_value, 120), industry)",
+      "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.025,
+      "optimize_reason": "收益端候选: 120 日窗口换手约 4%, 仍在 Fitness 免费区间内, 用更高响应速度换取年化收益"
+    }
+  ]
+}

@@ -1,0 +1,327 @@
+{
+ "direction": "O",
+ "direction_name": "MARKET 中性化 TO 力学攻击",
+ "hypothesis": "行业均值日度 shuffle 是回填族 TO 37% 饱和的成因, MARKET 可结构性降 TO",
+ "settings": {
+  "neutralization": "MARKET",
+  "universe": "TOP1000",
+  "decay": 6,
+  "truncation": 0.025,
+  "region": "USA",
+  "delay": 1,
+  "nan_handling": "ON"
+ },
+ "rows": [
+  {
+   "slot": 1,
+   "type": "BF60_MARKET",
+   "expression": "reverse(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60))",
+   "alpha_id": "LL5wxgxM",
+   "sharpe": 0.73,
+   "fitness": 0.22,
+   "turnover": 0.3667,
+   "returns": 0.0331,
+   "ret_over_to": 0.09026452140714479,
+   "drawdown": 0.0884,
+   "margin_bps": 1.81,
+   "longCount": 515,
+   "shortCount": 519,
+   "sub_sharpe": 0.62,
+   "two_year_sharpe": 0.24,
+   "inv_sharpe": 0.67,
+   "rn_sharpe": 1.2,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 2,
+   "type": "BF20_MARKET",
+   "expression": "reverse(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 20))",
+   "alpha_id": "gJW5zRzl",
+   "sharpe": 0.69,
+   "fitness": 0.2,
+   "turnover": 0.3711,
+   "returns": 0.0315,
+   "ret_over_to": 0.08488278092158448,
+   "drawdown": 0.0975,
+   "margin_bps": 1.7000000000000002,
+   "longCount": 512,
+   "shortCount": 516,
+   "sub_sharpe": 0.62,
+   "two_year_sharpe": 0.22,
+   "inv_sharpe": 0.63,
+   "rn_sharpe": 1.15,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 3,
+   "type": "BF60_RANKED_MARKET",
+   "expression": "reverse(rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60)))",
+   "alpha_id": "JjPkLglE",
+   "sharpe": 0.76,
+   "fitness": 0.23,
+   "turnover": 0.3685,
+   "returns": 0.0345,
+   "ret_over_to": 0.09362279511533243,
+   "drawdown": 0.087,
+   "margin_bps": 1.8699999999999999,
+   "longCount": 517,
+   "shortCount": 518,
+   "sub_sharpe": 0.65,
+   "two_year_sharpe": 0.29,
+   "inv_sharpe": 0.67,
+   "rn_sharpe": 1.27,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 4,
+   "type": "VEC_EXC_RATIO_MARKET",
+   "expression": "reverse(divide(vec_avg(high_price_excursion_stddev), add(vec_avg(high_price_excursion_stddev), vec_avg(low_price_excursion_stddev))))",
+   "alpha_id": "GrgNvMV3",
+   "sharpe": 0.99,
+   "fitness": 0.22,
+   "turnover": 1.1617,
+   "returns": 0.0591,
+   "ret_over_to": 0.05087371954893691,
+   "drawdown": 0.1137,
+   "margin_bps": 1.02,
+   "longCount": 289,
+   "shortCount": 290,
+   "sub_sharpe": 0.84,
+   "two_year_sharpe": 1.18,
+   "inv_sharpe": 0.91,
+   "rn_sharpe": 1.54,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "CONCENTRATED_WEIGHT",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 5,
+   "type": "VEC_EXC_RATIO_BF60_MARKET",
+   "expression": "reverse(ts_backfill(divide(vec_avg(high_price_excursion_stddev), add(vec_avg(high_price_excursion_stddev), vec_avg(low_price_excursion_stddev))), 60))",
+   "alpha_id": "zqrEzPaR",
+   "sharpe": 0.51,
+   "fitness": 0.13,
+   "turnover": 0.3974,
+   "returns": 0.0243,
+   "ret_over_to": 0.061147458480120785,
+   "drawdown": 0.0819,
+   "margin_bps": 1.22,
+   "longCount": 514,
+   "shortCount": 518,
+   "sub_sharpe": 0.57,
+   "two_year_sharpe": 0.42,
+   "inv_sharpe": 0.48,
+   "rn_sharpe": 0.84,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 6,
+   "type": "MATRIX_EXC_RATIO_BF60_MARKET",
+   "expression": "reverse(ts_backfill(divide(subtract(news_high_exc_stddev, news_low_exc_stddev), add(news_high_exc_stddev, news_low_exc_stddev)), 60))",
+   "alpha_id": "O0JjvbeR",
+   "sharpe": 0.73,
+   "fitness": 0.22,
+   "turnover": 0.3661,
+   "returns": 0.0333,
+   "ret_over_to": 0.09095875443867797,
+   "drawdown": 0.0845,
+   "margin_bps": 1.82,
+   "longCount": 514,
+   "shortCount": 518,
+   "sub_sharpe": 0.61,
+   "two_year_sharpe": 0.36,
+   "inv_sharpe": 0.68,
+   "rn_sharpe": 1.25,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 7,
+   "type": "BF120_MARKET",
+   "expression": "reverse(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 120))",
+   "alpha_id": "6XAQbax5",
+   "sharpe": 0.73,
+   "fitness": 0.22,
+   "turnover": 0.3664,
+   "returns": 0.0332,
+   "ret_over_to": 0.0906113537117904,
+   "drawdown": 0.0888,
+   "margin_bps": 1.81,
+   "longCount": 516,
+   "shortCount": 520,
+   "sub_sharpe": 0.62,
+   "two_year_sharpe": 0.24,
+   "inv_sharpe": 0.67,
+   "rn_sharpe": 1.2,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 8,
+   "type": "BF60_IND_RANK_MARKET",
+   "expression": "reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), industry))",
+   "alpha_id": "leMYZQJx",
+   "sharpe": 1.15,
+   "fitness": 0.36,
+   "turnover": 0.378,
+   "returns": 0.0365,
+   "ret_over_to": 0.09656084656084656,
+   "drawdown": 0.0306,
+   "margin_bps": 1.93,
+   "longCount": 514,
+   "shortCount": 523,
+   "sub_sharpe": 0.89,
+   "two_year_sharpe": 0.67,
+   "inv_sharpe": 1.08,
+   "rn_sharpe": 1.36,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [],
+   "warning_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "CLUSTER_TEST",
+    "LOW_2Y_SHARPE"
+   ]
+  }
+ ],
+ "gate": {
+  "step1": {
+   "should_prune": false,
+   "max_abs_sharpe": 1.15,
+   "qualified_count": 1,
+   "qualified_seeds": [
+    {
+     "expression": "reverse(group_rank(ts_backfill(divide(news_max_up_amt, add(news_max_up_amt, news_max_dn_amt)), 60), industry))",
+     "sharpe": 1.15,
+     "metrics": {
+      "sharpe": 1.15,
+      "fitness": 0.36,
+      "turnover": 0.378,
+      "returns": 0.0365,
+      "drawdown": 0.0306,
+      "margin": 0.000193,
+      "longCount": 514,
+      "shortCount": 523,
+      "pnl": 3639400,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 0.89,
+      "two_year_sharpe": 0.67,
+      "investability_sharpe": 1.08,
+      "investability_fitness": 0.34,
+      "risk_neutralized_sharpe": 1.36
+     },
+     "status": "STEP1_PASSED"
+    }
+   ],
+   "message": "【Step 1 通过】捕获 1 条达标种子 (最高 |Sharpe| = 1.15)"
+  },
+  "step2_count": 0,
+  "final_count": 0,
+  "step2": [],
+  "final": []
+ }
+}

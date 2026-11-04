@@ -1,0 +1,978 @@
+[
+ {
+  "id": "CAND_A_0",
+  "question_type": "Q1_Invariance",
+  "expr": "zscore(winsorize(divide(ts_backfill(fnd17_rhsfcfmtt,252), ts_backfill(fnd17_atmtt,252)), std=3))",
+  "ok": false,
+  "issues": [
+   "G3 算子数 5 > 4（Phase0 上限）"
+  ],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 5,
+   "field_count": 2,
+   "operator_count_ok": false,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_atmtt",
+    "fnd17_rhsfcfmtt"
+   ],
+   "field_truth_ok": true,
+   "windows": [
+    [
+     "ts_backfill",
+     252
+    ],
+    [
+     "ts_backfill",
+     252
+    ]
+   ],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 5
+   },
+   "subtract_legs": [],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": ""
+ },
+ {
+  "id": "CAND_A_1",
+  "question_type": "Q1_Invariance",
+  "expr": "zscore(subtract(fnd17_tcpaormtt, fnd17_aroa5yavg))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 2,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_aroa5yavg",
+    "fnd17_tcpaormtt"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 2
+   },
+   "subtract_legs": [
+    [
+     "fnd17_tcpaormtt",
+     "fnd17_aroa5yavg"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 4,
+  "acs": [
+   0,
+   4
+  ],
+  "covs": [
+   0.7814,
+   0.9072
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise"
+  ],
+  "_skel": "zscore(subtract(fnd17_tcpaormtt,fnd17_aroa5yavg))"
+ },
+ {
+  "id": "CAND_A_2",
+  "question_type": "Q2_Dynamics",
+  "expr": "zscore(winsorize(subtract(fnd17_tcpaormtt, fnd17_tcpaormtp), std=3))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 3,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_tcpaormtp",
+    "fnd17_tcpaormtt"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 3
+   },
+   "subtract_legs": [
+    [
+     "fnd17_tcpaormtt",
+     "fnd17_tcpaormtp"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 4,
+  "acs": [
+   0,
+   4
+  ],
+  "covs": [
+   0.8638,
+   0.9072
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise",
+   "winsorize_tail"
+  ]
+ },
+ {
+  "id": "CAND_A_3",
+  "question_type": "Q2_Dynamics",
+  "expr": "zscore(subtract(fnd17_ghcspemtt, fnd17_ttmnichg))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 2,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_ghcspemtt",
+    "fnd17_ttmnichg"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 2
+   },
+   "subtract_legs": [
+    [
+     "fnd17_ghcspemtt",
+     "fnd17_ttmnichg"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 0,
+  "acs": [
+   0,
+   0
+  ],
+  "covs": [
+   0.9059,
+   0.9059
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise"
+  ],
+  "_skel": "zscore(subtract(fnd17_ghcspemtt,fnd17_ttmnichg))"
+ },
+ {
+  "id": "CAND_B_0",
+  "question_type": "Q3_Anomaly",
+  "expr": "zscore(power(divide(fnd17_atmtt, fnd17_atotce), 2))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 3,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_atmtt",
+    "fnd17_atotce"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 3
+   },
+   "subtract_legs": [],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 1,
+  "acs": [
+   0,
+   1
+  ],
+  "covs": [
+   0.9083,
+   0.9372
+  ],
+  "families": [
+   "cross_section_zscore",
+   "winsorize_tail"
+  ],
+  "_skel": "zscore(power(divide(fnd17_atmtt,fnd17_atotce),NUM))"
+ },
+ {
+  "id": "CAND_B_1",
+  "question_type": "Q3_Anomaly",
+  "expr": "zscore(subtract(fnd17_tcpaormtt, fnd17_aroa5yavg))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 2,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_aroa5yavg",
+    "fnd17_tcpaormtt"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 2
+   },
+   "subtract_legs": [
+    [
+     "fnd17_tcpaormtt",
+     "fnd17_aroa5yavg"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 4,
+  "acs": [
+   0,
+   4
+  ],
+  "covs": [
+   0.7814,
+   0.9072
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise"
+  ]
+ },
+ {
+  "id": "CAND_B_2",
+  "question_type": "Q4_Interaction",
+  "expr": "multiply(group_zscore(subtract(fnd17_cftrendgr, fnd17_revtrendgr), subindustry), add(rank(fnd17_qroipct), 0.01))",
+  "ok": false,
+  "issues": [
+   "G3 算子数 5 > 4（Phase0 上限）"
+  ],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "multiply",
+   "operator_count": 5,
+   "field_count": 3,
+   "operator_count_ok": false,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_cftrendgr",
+    "fnd17_qroipct",
+    "fnd17_revtrendgr"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 5
+   },
+   "subtract_legs": [
+    [
+     "fnd17_cftrendgr",
+     "fnd17_revtrendgr"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": ""
+ },
+ {
+  "id": "CAND_B_3",
+  "question_type": "Q4_Interaction",
+  "expr": "add(group_zscore(fnd17_tcpaormtt, subindustry), group_zscore(fnd17_qroipct, subindustry))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "add",
+   "operator_count": 3,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_qroipct",
+    "fnd17_tcpaormtt"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 3
+   },
+   "subtract_legs": [],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 6,
+  "acs": [
+   2,
+   4
+  ],
+  "covs": [
+   0.8364,
+   0.9072
+  ],
+  "families": [
+   "cross_section_zscore",
+   "group_zscore_neutral"
+  ],
+  "_skel": "add(group_zscore(fnd17_tcpaormtt,subindustry),group_zscore(fnd17_qroipct,subindustry))"
+ },
+ {
+  "id": "CAND_C_0",
+  "question_type": "Q5_Structure",
+  "expr": "group_zscore(ts_backfill(subtract(fnd17_apayratio, fnd17_apayratio2), 120), subindustry)",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "group_zscore",
+   "operator_count": 3,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_apayratio",
+    "fnd17_apayratio2"
+   ],
+   "field_truth_ok": true,
+   "windows": [
+    [
+     "ts_backfill",
+     120
+    ]
+   ],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 3
+   },
+   "subtract_legs": [
+    [
+     "fnd17_apayratio",
+     "fnd17_apayratio2"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 6,
+  "acs": [
+   0,
+   6
+  ],
+  "covs": [
+   0.6348,
+   0.6523
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise",
+   "group_zscore_neutral",
+   "ts_backfill_staleness"
+  ],
+  "_skel": "group_zscore(ts_backfill(subtract(fnd17_apayratio,fnd17_apayratio2),NUM),subindustry)"
+ },
+ {
+  "id": "CAND_C_1",
+  "question_type": "Q5_Structure",
+  "expr": "zscore(subtract(fnd17_ttmpayrat, fnd17_ttmdivshr))",
+  "ok": false,
+  "issues": [
+   "G4 subtract(fnd17_ttmpayrat[percent], fnd17_ttmdivshr[per_share]) 量纲族不一致"
+  ],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 2,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_ttmdivshr",
+    "fnd17_ttmpayrat"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 2
+   },
+   "subtract_legs": [
+    [
+     "fnd17_ttmpayrat",
+     "fnd17_ttmdivshr"
+    ]
+   ],
+   "unit_consistent": false,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": ""
+ },
+ {
+  "id": "CAND_C_2",
+  "question_type": "Q6_Accumulation",
+  "expr": "zscore(ts_mean(winsorize(subtract(fnd17_cftrendgr, fnd17_revtrendgr), std=3), 60))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 4,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_cftrendgr",
+    "fnd17_revtrendgr"
+   ],
+   "field_truth_ok": true,
+   "windows": [
+    [
+     "ts_mean",
+     60
+    ]
+   ],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 4
+   },
+   "subtract_legs": [
+    [
+     "fnd17_cftrendgr",
+     "fnd17_revtrendgr"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 5,
+  "acs": [
+   3,
+   2
+  ],
+  "covs": [
+   0.6108,
+   0.7834
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise",
+   "ts_mean_smooth",
+   "winsorize_tail"
+  ],
+  "_skel": "zscore(ts_mean(winsorize(subtract(fnd17_cftrendgr,fnd17_revtrendgr),std=NUM),NUM))"
+ },
+ {
+  "id": "CAND_C_3",
+  "question_type": "Q6_Accumulation",
+  "expr": "zscore(ts_decay_linear(subtract(fnd17_qtotce, fnd17_qtotce2), 60))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 3,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_qtotce",
+    "fnd17_qtotce2"
+   ],
+   "field_truth_ok": true,
+   "windows": [
+    [
+     "ts_decay_linear",
+     60
+    ]
+   ],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 3
+   },
+   "subtract_legs": [
+    [
+     "fnd17_qtotce",
+     "fnd17_qtotce2"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 6,
+  "acs": [
+   2,
+   4
+  ],
+  "covs": [
+   0.9366,
+   0.9086
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise",
+   "ts_mean_smooth"
+  ]
+ },
+ {
+  "id": "CAND_D_0",
+  "question_type": "Q7_Relative",
+  "expr": "group_zscore(ts_backfill(subtract(fnd17_ttmintcov, fnd17_ptmintcov), 120), subindustry)",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "group_zscore",
+   "operator_count": 3,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_ptmintcov",
+    "fnd17_ttmintcov"
+   ],
+   "field_truth_ok": true,
+   "windows": [
+    [
+     "ts_backfill",
+     120
+    ]
+   ],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 3
+   },
+   "subtract_legs": [
+    [
+     "fnd17_ttmintcov",
+     "fnd17_ptmintcov"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 1,
+  "acs": [
+   0,
+   1
+  ],
+  "covs": [
+   0.6415,
+   0.6489
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise",
+   "group_zscore_neutral",
+   "ts_backfill_staleness"
+  ],
+  "_skel": "group_zscore(ts_backfill(subtract(fnd17_ttmintcov,fnd17_ptmintcov),NUM),subindustry)"
+ },
+ {
+  "id": "CAND_D_1",
+  "question_type": "Q7_Relative",
+  "expr": "group_zscore(subtract(fnd17_qtotd2eq, fnd17_qtotd2eq2), subindustry)",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "group_zscore",
+   "operator_count": 2,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_qtotd2eq",
+    "fnd17_qtotd2eq2"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 2
+   },
+   "subtract_legs": [
+    [
+     "fnd17_qtotd2eq",
+     "fnd17_qtotd2eq2"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 3,
+  "acs": [
+   1,
+   2
+  ],
+  "covs": [
+   0.8982,
+   0.8722
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise",
+   "group_zscore_neutral"
+  ]
+ },
+ {
+  "id": "CAND_D_2",
+  "question_type": "Q8_Essence",
+  "expr": "zscore(winsorize(subtract(fnd17_ghcspemtt, fnd17_ttmnichg), std=3))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 3,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_ghcspemtt",
+    "fnd17_ttmnichg"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 3
+   },
+   "subtract_legs": [
+    [
+     "fnd17_ghcspemtt",
+     "fnd17_ttmnichg"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 0,
+  "acs": [
+   0,
+   0
+  ],
+  "covs": [
+   0.9059,
+   0.9059
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise",
+   "winsorize_tail"
+  ]
+ },
+ {
+  "id": "CAND_D_3",
+  "question_type": "Q8_Essence",
+  "expr": "zscore(subtract(fnd17_arevchg, fnd17_nichngyr))",
+  "ok": true,
+  "issues": [],
+  "checks": {
+   "syntax_ok": true,
+   "top_level": "zscore",
+   "operator_count": 2,
+   "field_count": 2,
+   "operator_count_ok": true,
+   "field_count_ok": true,
+   "top_level_zero_mean_ok": true,
+   "top_level_profile": {
+    "zero_mean": true,
+    "strictly_positive": false
+   },
+   "banned_ops": [],
+   "multiply_legs_ok": true,
+   "pv_clean": true,
+   "fields_used": [
+    "fnd17_arevchg",
+    "fnd17_nichngyr"
+   ],
+   "field_truth_ok": true,
+   "windows": [],
+   "window_ok": true,
+   "dimension_audit": {
+    "is_valid": true,
+    "issues": [],
+    "operator_count": 2
+   },
+   "subtract_legs": [
+    [
+     "fnd17_arevchg",
+     "fnd17_nichngyr"
+    ]
+   ],
+   "unit_consistent": true,
+   "engine_redteam": {
+    "verdict": "PASS",
+    "issues": []
+   }
+  },
+  "fields": [],
+  "agent": "",
+  "sum_ac": 0,
+  "acs": [
+   0,
+   0
+  ],
+  "covs": [
+   0.8961,
+   0.9266
+  ],
+  "families": [
+   "cross_section_zscore",
+   "delta_surprise"
+  ],
+  "_skel": "zscore(subtract(fnd17_arevchg,fnd17_nichngyr))"
+ }
+]

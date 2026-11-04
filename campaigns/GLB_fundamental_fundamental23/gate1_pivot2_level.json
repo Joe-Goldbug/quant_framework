@@ -1,0 +1,68 @@
+{
+  "wave": "pivot2_level_family",
+  "seed_id": "GLB23_PIVOT2_LEVEL",
+  "region": "GLB",
+  "universe": "MINVOL10M",
+  "delay": 1,
+  "category": "fundamental",
+  "dataset": "fundamental23",
+  "hypothesis": "GLB fnd23 LEVEL topology pivot. The ONLY signal with Sh>=1.58 AND margin>=10bps is vR1aLRoG (EBIT/ROA YoY, Sh1.71/Fit1.17/Mgn26.9bps) but PC 0.72+ (YoY-delta family lock) + EMEA/APAC sub-gate. The LEVEL family (group_rank(divide(flow, anchor), sector) WITHOUT ts_delta) is a DIFFERENT formula family — ProdCorr is formula-family locked (memory: GLB fnd23 ProdCorr floor). EMEA/APAC structural weakness is fundamental23 quarterly-field coverage; SUBINDUSTRY neut may help PC but hurts EMEA. Test LEVEL across COUNTRY/INDUSTRY/MARKET/SECTOR/SUBINDUSTRY neuts + group_rank vs group_zscore + different anchors (TA, Rev). Control: id8 YoY-delta EBIT/TA (expect PC 0.72+).",
+  "items": [
+    {
+      "id": 1,
+      "type": "ebit_roa_level_sector",
+      "neutralization": "SECTOR",
+      "expression": "group_rank(divide(fnd23_ebit, add(fnd23_tot_assets,1)), sector)",
+      "optimize_reason": "P1 EBIT/TA level @sector (best Sharpe base per GLB memory). 2 fields 3 op. Direct LEVEL vs vR1aLRoG YoY-delta."
+    },
+    {
+      "id": 2,
+      "type": "ebit_roa_level_industry",
+      "neutralization": "INDUSTRY",
+      "expression": "group_rank(divide(fnd23_ebit, add(fnd23_tot_assets,1)), industry)",
+      "optimize_reason": "P2 EBIT/TA level @industry (wider groups -> less over-neutralization). 2 fields 3 op."
+    },
+    {
+      "id": 3,
+      "type": "ebit_roa_level_subindustry",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(divide(fnd23_ebit, add(fnd23_tot_assets,1)), subindustry)",
+      "optimize_reason": "P3 EBIT/TA level @subindustry (matches settings neut, may over-neutralize but best PC chance). 2 fields 3 op."
+    },
+    {
+      "id": 4,
+      "type": "ebit_roa_level_country",
+      "neutralization": "COUNTRY",
+      "expression": "group_rank(divide(fnd23_ebit, add(fnd23_tot_assets,1)), country)",
+      "optimize_reason": "P4 EBIT/TA level @country (memory: COUNTRY neut +0.11 ProdCorr killer for YoY family; test if LEVEL differs). 2 fields 3 op."
+    },
+    {
+      "id": 5,
+      "type": "ebit_roa_level_market",
+      "neutralization": "MARKET",
+      "expression": "group_rank(divide(fnd23_ebit, add(fnd23_tot_assets,1)), market)",
+      "optimize_reason": "P5 EBIT/TA level @market (widest groups, minimal neutralization). 2 fields 3 op."
+    },
+    {
+      "id": 6,
+      "type": "ni_roa_level_sector",
+      "neutralization": "SECTOR",
+      "expression": "group_rank(divide(fnd23_net_income, add(fnd23_tot_assets,1)), sector)",
+      "optimize_reason": "P6 NI/TA level (profitability control). 2 fields 3 op. Expected crowded (quality factor)."
+    },
+    {
+      "id": 7,
+      "type": "ebit_margin_level_sector",
+      "neutralization": "SECTOR",
+      "expression": "group_rank(divide(fnd23_ebit, add(sales_revenue_total,1)), sector)",
+      "optimize_reason": "P7 EBIT/Rev level (margin level). 2 fields 3 op. Revenue anchor vs assets."
+    },
+    {
+      "id": 8,
+      "type": "ebit_roa_yoy_control",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_rank(ts_delta(divide(fnd23_ebit, add(fnd23_tot_assets,1)), 252), sector)",
+      "optimize_reason": "P8 YoY-delta CONTROL (vR1aLRoG formula family). Expected PC 0.72+, Sh~1.7, Mgn~27bps. Proves LEVEL vs DELTA PC lever."
+    }
+  ]
+}

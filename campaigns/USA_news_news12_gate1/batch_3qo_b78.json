@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B78_S1_GLOBAL_RANK_XAR_D8",
+      "expression": "ts_decay_linear(power(subtract(rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11)), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 10 ops: Global rank across all 1000 stocks on xArOYGYp (Fitness 0.89). Eliminates 6-stock micro-bucket noise, concentrating capital on genuine news outliers."
+    },
+    {
+      "id": 2,
+      "type": "B78_S2_GLOBAL_RANK_XAR_D6",
+      "expression": "ts_decay_linear(power(subtract(rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11)), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 10 ops: Global rank on xArOYGYp with outer decay 6. Faster decay preserves higher Sharpe, targeting Sharpe >= 1.58 and Fitness >= 1.00."
+    },
+    {
+      "id": 3,
+      "type": "B78_S3_GLOBAL_RANK_D5W_CHAMPION",
+      "expression": "power(subtract(rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11)), 0.5), 5)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 9 ops: Global rank applied directly to d5WkjPmJ (Sharpe 1.58). Evaluates if removing subindustry bucket constraints lifts Returns from 4.34% to 5.0%."
+    },
+    {
+      "id": 4,
+      "type": "B78_S4_GLOBAL_RANK_D5W_OUT3",
+      "expression": "ts_decay_linear(power(subtract(rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11)), 0.5), 5), 3)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 10 ops: Global rank on d5WkjPmJ with light 3-day smoothing. Dampens turnover while preserving 1.58 Sharpe."
+    },
+    {
+      "id": 5,
+      "type": "B78_S5_SUBIND_D5W_OUT2",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 2)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: Precision bridge: outer decay 2 on d5WkjPmJ (Sharpe 1.58). Explores boundary between decay 0 (TO 20.3%) and decay 4 (TO 14.7%)."
+    },
+    {
+      "id": 6,
+      "type": "B78_S6_SUBIND_D5W_OUT3",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 5), 3)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 10 ops: Precision bridge: outer decay 3 on d5WkjPmJ."
+    },
+    {
+      "id": 7,
+      "type": "B78_S7_GLOBAL_RANK_POW7_OUT6",
+      "expression": "ts_decay_linear(power(subtract(rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11)), 0.5), 7), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 10 ops: Full market 7th power tail magnification + outer decay 6. Directly targets maximum conviction outliers across the entire universe."
+    },
+    {
+      "id": 8,
+      "type": "B78_S8_GLOBAL_RANK_WPQ_8OPS",
+      "expression": "ts_decay_linear(subtract(rank(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2)))), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 8 ops: Power Pool compliant 8-operator formula with global rank. Eliminates subindustry noise in wpQKJ1K5, targeting Sharpe >= 1.58 with 0 FAILS."
+    }
+  ]
+}

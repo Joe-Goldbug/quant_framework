@@ -1,0 +1,115 @@
+{
+  "crowding_profile": {
+    "field_total": 10,
+    "alpha_count_known": 10,
+    "tier_counts": {
+      "COLD": 5,
+      "WARM": 2,
+      "HOT": 3,
+      "UNKNOWN": 0
+    }
+  },
+  "pairing_candidates": [
+    {
+      "main_anchor": "oth296_received_time",
+      "main_anchor_alpha_count": 11.0,
+      "main_anchor_alpha_pct": 0.1,
+      "main_anchor_coverage": 0.745,
+      "normalizer": "oth296_wqreceivetime",
+      "normalizer_coverage": 0.826,
+      "normalizer_alpha_pct": 0.0
+    },
+    {
+      "main_anchor": "oth296_topic_count",
+      "main_anchor_alpha_count": 13.0,
+      "main_anchor_alpha_pct": 0.2,
+      "main_anchor_coverage": 0.745,
+      "normalizer": "oth296_wqreceivetime",
+      "normalizer_coverage": 0.826,
+      "normalizer_alpha_pct": 0.0
+    },
+    {
+      "main_anchor": "oth296_prob_ntr",
+      "main_anchor_alpha_count": 22.0,
+      "main_anchor_alpha_pct": 0.3,
+      "main_anchor_coverage": 0.745,
+      "normalizer": "oth296_wqreceivetime",
+      "normalizer_coverage": 0.826,
+      "normalizer_alpha_pct": 0.0
+    },
+    {
+      "main_anchor": "oth296_word_count",
+      "main_anchor_alpha_count": 27.0,
+      "main_anchor_alpha_pct": 0.4,
+      "main_anchor_coverage": 0.745,
+      "normalizer": "oth296_wqreceivetime",
+      "normalizer_coverage": 0.826,
+      "normalizer_alpha_pct": 0.0
+    }
+  ],
+  "report": {
+    "total": 14,
+    "kept": 10,
+    "rejected": 4,
+    "survival_ratio": 0.714,
+    "min_required": 10,
+    "should_reject_all": false,
+    "profiler": {
+      "field_total": 10,
+      "alpha_count_known": 10,
+      "tier_counts": {
+        "COLD": 5,
+        "WARM": 2,
+        "HOT": 3,
+        "UNKNOWN": 0
+      }
+    }
+  },
+  "rejected": [
+    {
+      "id": "SEED_13",
+      "fields_used": [
+        "oth296_wqreceivetime",
+        "oth296_received_time"
+      ],
+      "expression": "subtract(vec_avg(oth296_wqreceivetime), vec_avg(oth296_received_time))",
+      "issues": [
+        "缺少高覆盖度总量归一锚 (要求 coverage >= 0.80)"
+      ]
+    },
+    {
+      "id": "SEED_14",
+      "fields_used": [
+        "oth296_wqreceivetime",
+        "oth296_received_time"
+      ],
+      "expression": "subtract(vec_max(oth296_wqreceivetime), vec_max(oth296_received_time))",
+      "issues": [
+        "缺少高覆盖度总量归一锚 (要求 coverage >= 0.80)"
+      ]
+    },
+    {
+      "id": "SEED_15",
+      "fields_used": [
+        "oth296_wqreceivetime",
+        "oth296_received_time"
+      ],
+      "expression": "divide(subtract(vec_avg(oth296_wqreceivetime), vec_avg(oth296_received_time)), vec_count(oth296_wqreceivetime))",
+      "issues": [
+        "缺少高覆盖度总量归一锚 (要求 coverage >= 0.80)"
+      ]
+    },
+    {
+      "id": "SEED_16",
+      "fields_used": [
+        "oth296_sentiment",
+        "oth296_wqreceivetime",
+        "oth296_received_time"
+      ],
+      "expression": "multiply(subtract(vec_avg(oth296_wqreceivetime), vec_avg(oth296_received_time)), vec_avg(oth296_sentiment))",
+      "issues": [
+        "缺少高覆盖度总量归一锚 (要求 coverage >= 0.80)"
+      ]
+    }
+  ]
+}

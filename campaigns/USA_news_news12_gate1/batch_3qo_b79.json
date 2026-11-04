@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B79_S1_REL_GATE20_IN7_OUT6",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), if_else(news_relevance_score_2 > 0.2, sqrt(news_relevance_score_2), 0))), 7), subindustry), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 11 ops: Relevance threshold gating (> 0.2) + 7-day prime PEAD inner decay + 6-day outer smoothing. Eliminates 60% routine noise, targeting Sharpe >= 1.60 and Fitness >= 1.00."
+    },
+    {
+      "id": 2,
+      "type": "B79_S2_REL_GATE20_IN5_OUT6",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), if_else(news_relevance_score_2 > 0.2, sqrt(news_relevance_score_2), 0))), 5), subindustry), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 11 ops: Relevance gating (> 0.2) with 5-day sharp inner decay. Focuses purely on 1-week reaction."
+    },
+    {
+      "id": 3,
+      "type": "B79_S3_REL_GATE20_IN7_OUT8",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), if_else(news_relevance_score_2 > 0.2, sqrt(news_relevance_score_2), 0))), 7), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 11 ops: Relevance gating (> 0.2) with deeper outer decay 8. Slashes turnover toward 11.5% while gating protects Sharpe."
+    },
+    {
+      "id": 4,
+      "type": "B79_S4_IN7_OUT6_NOGATE",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 7), subindustry), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 10 ops: Pure inner decay ablation: reduces inner decay from 11d to 7d, removing stale news drag on Sharpe."
+    },
+    {
+      "id": 5,
+      "type": "B79_S5_IN5_OUT6_NOGATE",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 5), subindustry), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 10 ops: 5-day inner decay + 6-day outer decay."
+    },
+    {
+      "id": 6,
+      "type": "B79_S6_IN6_OUT7_NOGATE",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 6), subindustry), 0.5), 5), 7)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 10 ops: Symmetric decay coupling: 6-day inner decay + 7-day outer decay."
+    },
+    {
+      "id": 7,
+      "type": "B79_S7_REL_GATE15_IN6_OUT6",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), if_else(news_relevance_score_2 > 0.15, sqrt(news_relevance_score_2), 0))), 6), subindustry), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 11 ops: Gentler gating threshold (> 0.15) with 6-day inner decay + 6-day outer decay."
+    },
+    {
+      "id": 8,
+      "type": "B79_S8_REL_GATE20_POW7_OUT6",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), if_else(news_relevance_score_2 > 0.2, sqrt(news_relevance_score_2), 0))), 7), subindustry), 0.5), 7), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 11 ops: 7th power tail magnification + relevance gating (> 0.2). Maximum conviction on verified primary catalysts."
+    }
+  ]
+}

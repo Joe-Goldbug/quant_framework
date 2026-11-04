@@ -1,0 +1,81 @@
+{
+  "id": "88RgeN6o",
+  "alpha_id": "88RgeN6o",
+  "region": "GLB",
+  "universe": "MINVOL10M",
+  "delay": 1,
+  "category": "fundamental",
+  "dataset_id": "fundamental23",
+  "expression": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), industry)",
+  "code": "group_rank(ts_delta(divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets), 252), industry)",
+
+  "decomposition": {
+    "core_anchor": "divide(add(fnd23_net_income, fnd23_ofc), fnd23_tot_assets)",
+    "core_anchor_fields": ["fnd23_net_income", "fnd23_ofc", "fnd23_tot_assets"],
+    "core_anchor_operator_count": 2,
+    "core_anchor_semantics": "分子 = 净利润 + 经营现金流净额，是'应计利润 + 现金实现'的合成盈利质量流；分母 = 总资产，做规模归一。整体度量单位资产上'账面利润与现金创造'的联合强度，其同比变化即盈余质量的结构性漂移。",
+    "outer_shell": "group_rank(ts_delta({CORE}, 252), industry)",
+    "outer_shell_layers": {
+      "temporal": "ts_delta(..., 252) — 一年同比差分，匹配季度财报的低频更新，天然压住换手",
+      "cross_sectional": "group_rank(..., industry) — 行业横截面百分位，剥离行业会计口径差异"
+    },
+    "outer_shell_operator_count": 2,
+    "total_operator_count": 4,
+    "field_count": 3,
+    "neutralization_setting": "SUBINDUSTRY"
+  },
+
+  "economic_mechanism": "经营现金流净额与应计利润剪刀差除以总资产，捕捉盈余质量异动",
+  "economic_mechanism_extended": "应计异象（Sloan 1996）：利润中未被现金实现的部分（应计）具有更低的持续性与更高的反转概率。以 (NI + CFO)/TA 作为'利润-现金联合强度'的规模归一化度量，其 252 日同比变化刻画企业盈余质量的结构性改善或恶化；行业截面排序剥离会计口径与行业周期差异，做多质量改善、做空质量恶化。",
+
+  "metrics": {
+    "sharpe": 1.75,
+    "fitness": 1.14,
+    "turnover": 0.0526,
+    "returns": null,
+    "margin": 0.002024,
+    "margin_bps": 20.24,
+    "prod_corr": 0.7231,
+    "sub_universe_sharpe": null
+  },
+
+  "ra": {
+    "failed_ra_count": 2,
+    "ra_failed_checks": [
+      "LOW_GLB_EMEA_SHARPE",
+      "LOW_GLB_APAC_SHARPE"
+    ]
+  },
+
+  "checks": {
+    "failed": [
+      "PROD-0.7231>0.7阈值",
+      "EMEA Sharpe of 0.63 is below cutoff of 1.",
+      "APAC Sharpe of 0.92 is below cutoff of 1.",
+      "Cluster Test Sharpe 0.94 is below cutoff of 1.58."
+    ],
+    "warning": [
+      {"name": "LOW_GLB_EMEA_SHARPE", "value": 0.63, "limit": 1.0},
+      {"name": "LOW_GLB_APAC_SHARPE", "value": 0.92, "limit": 1.0},
+      {"name": "CLUSTER_TEST", "value": 0.94, "limit": 1.58},
+      {"name": "SELF_CORRELATION", "value": 0.7231, "limit": 0.70}
+    ]
+  },
+
+  "diagnosis": {
+    "symptoms": [
+      "prod_corr_overflow: 0.7231 >= 0.70，与生产库共线性过高，Cluster Sharpe 仅 0.94",
+      "regional_imbalance: EMEA 0.63 / APAC 0.92，GLB 全域信号在 EMEA 会计口径下失效",
+      "turnover_floor_risk: 5.26% 仅贴 5.0% 下限，任何平滑都会击穿生产门禁下限"
+    ],
+    "root_cause_hypothesis": "EMEA 弱势高度疑似跨国会计口径异质性（IFRS vs 本地 GAAP 的应计确认差异）污染了 industry 截面排序；同时 industry 分组与生产库既有基本面因子高度重叠，导致 ProdCorr 超限。",
+    "prescriptions": [
+      "以 country 分组替代 industry 分组，把会计口径差异吸收进组内，专治 EMEA/APAC 区域夏普",
+      "在时序差分后、截面中性化前注入 winsorize(std=3) 与 signed_power(0.5) 凹压缩，压尾部与集中度",
+      "换入同源冷门应计字段（营运资本变动、应收、税项准备、资本开支）打破共线性",
+      "奥卡姆剪枝：压缩至 3~5 算子，检验纯骨架的样本外泛化"
+    ]
+  },
+
+  "times": 0
+}

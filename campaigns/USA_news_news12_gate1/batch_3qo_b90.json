@@ -1,0 +1,79 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "neutralization": "STATISTICAL",
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "prob_rank_bin1_10d_img_news",
+    "news_relevance_score_2"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "B90_S1_XARQ_D13_GOLDEN",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 11 ops: xArqLNKp with sim decay 13. Sits precisely between decay 12 (TO 13.02%) and decay 14 (TO 12.17%), pinning turnover to ~12.55% right at the 12.5% denominator floor."
+    },
+    {
+      "id": 2,
+      "type": "B90_S2_XARQ_IN9_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 9), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 11 ops: Inner 9d decay alignment. Matches 10d forward model horizon, reducing signal staleness to boost Returns from 4.34% to >= 4.55%."
+    },
+    {
+      "id": 3,
+      "type": "B90_S3_XARQ_IN9_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 9), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 11 ops: Inner 9d decay + Sim decay 13. Synergizes 9d event responsiveness with decay 13 turnover dampening to achieve Returns >= 4.50% and TO ~12.6%."
+    },
+    {
+      "id": 4,
+      "type": "B90_S4_XARQ_PWR4_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 11 ops: Power 4.0 sentiment variant on xArqLNKp at decay 12. Power 4.0 demonstrated higher Sharpe in B89 (1.63 vs 1.62), testing if decay 12 pushes Sharpe to >= 1.68."
+    },
+    {
+      "id": 5,
+      "type": "B90_S5_XARQ_PWR4_IN9_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 9), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 11 ops: Power 4.0 sentiment + Inner 9d decay at decay 12. Simultaneously optimizes signal SNR (Sharpe) and horizon alignment (Returns)."
+    },
+    {
+      "id": 6,
+      "type": "B90_S6_XARQ_PWR4_IN9_D13",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 9), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 13,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 11 ops: The All-In Golden Synthesis. Fuses Power 4.0, Inner 9d decay, and Decay 13 turnover floor locking for maximum Fitness."
+    },
+    {
+      "id": 7,
+      "type": "B90_S7_XARQ_TRUNC020_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3.0), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 12,
+      "truncation": 0.02,
+      "optimize_reason": "Slot 7: 11 ops: Tighter 2.0% truncation limit. Dampens idiosyncratic volatility from extreme single-stock news spikes, boosting portfolio Sharpe."
+    },
+    {
+      "id": 8,
+      "type": "B90_S8_XARQ_WINS27_D12",
+      "expression": "ts_decay_linear(group_neutralize(power(subtract(group_rank(ts_decay_linear(multiply(power(mean_sentiment_score_transfer, 4.5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=2.7), sqrt(news_relevance_score_2))), 11), subindustry), 0.5), 3), subindustry), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 11 ops: Winsorize std=2.7 on xArqLNKp. Compresses tail turnover toward 12.5% without incurring the return penalty of std=2.2."
+    }
+  ]
+}

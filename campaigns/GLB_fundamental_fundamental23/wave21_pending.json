@@ -1,0 +1,16 @@
+{
+  "wave": 21,
+  "location": "https://api.worldquantbrain.com/simulations/4rfeovbJV4QV9RCXA61xsZa",
+  "expressions": [
+    "group_rank(signed_power(multiply(add(ts_delta(fnd23_intfvm_ppgs, 252), ts_delta(fnd23_intfvm_ppgs, 126)), divide(fnd23_intfvalld1_rltr, fnd23_intfvalld1_letq)), 0.5), industry)",
+    "group_rank(signed_power(add(ts_delta(divide(fnd23_intfvalld1_prgs, fnd23_intfvalld1_letq), 252), ts_delta(divide(fnd23_intfvalld1_prgs, fnd23_intfvalld1_letq), 126)), 0.5), industry)",
+    "trade_when(ts_delta(fnd23_intfvm_ppgs, 126) != 0, group_rank(signed_power(multiply(add(ts_delta(fnd23_intfvm_ppgs, 252), ts_delta(fnd23_intfvm_ppgs, 126)), divide(fnd23_intfvalld1_rltr, fnd23_intfvalld1_letq)), 0.5), subindustry), -1)",
+    "trade_when(ts_delta(fnd23_intfvalld1_prgs, 126) != 0, group_rank(signed_power(add(ts_delta(divide(fnd23_intfvalld1_prgs, fnd23_intfvalld1_letq), 252), ts_delta(divide(fnd23_intfvalld1_prgs, fnd23_intfvalld1_letq), 126)), 0.5), subindustry), -1)"
+  ],
+  "settings": {
+    "region": "GLB",
+    "universe": "MINVOL10M",
+    "delay": 1,
+    "neutralization": "COUNTRY"
+  }
+}

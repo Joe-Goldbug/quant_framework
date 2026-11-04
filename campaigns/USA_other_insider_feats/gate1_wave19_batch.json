@@ -1,0 +1,84 @@
+{
+  "wave": 19,
+  "seed_id": "GATE1_WAVE19",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "other",
+  "parent_alpha": "j2Y32V9j",
+  "hypothesis": "Step#2+ surgical on mother j2Y32V9j (Sh 1.02 / Fit 0.78 / 2Y 0.68 / Margin 13.24bps / CLUSTER 0.66): 1) Iron-Law-B outer shell group_rank -> group_zscore / group_neutralize (magnitude retention); 2) trade_when state-freeze shells for 2Y Sharpe revival (event-sparse insider data); 3) paired-horizon probes N=10/16 around verified plateau 5/8; 4) CLUSTER-targeting cold-field swap #1 (buy_sell_tx_count_ratio_top5_60d_filled, alpha_count=0). Mother settings kept: decay=4, truncation=0.025, nanHandling=ON.",
+  "items": [
+    {
+      "id": "w19a_gz8",
+      "neutralization": "INDUSTRY",
+      "expression": "group_zscore(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "铁律B直接替换：外层 group_rank -> group_zscore，保留尾部幅度，预期同时抬 Margin 与 Sharpe；算子数不变（6）。"
+    },
+    {
+      "id": "w19a_gn8",
+      "neutralization": "INDUSTRY",
+      "expression": "group_neutralize(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "铁律B备选壳：group_neutralize 保留连续分布原始幅度，与 gz8 构成幅度保留双壳对照。"
+    },
+    {
+      "id": "w19a_gz10",
+      "neutralization": "INDUSTRY",
+      "expression": "group_zscore(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "双窗口成对验证：围绕已验证高原 5/8 向上探 N=10，检验参数高原是否延续（单窗尖峰=过拟合一票否决）。"
+    },
+    {
+      "id": "w19a_gz16",
+      "neutralization": "INDUSTRY",
+      "expression": "group_zscore(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),16), subindustry)",
+      "optimize_reason": "双窗口成对验证：2N=16 探针，与 gz8 构成 8/16 对，验证 arg_max 窗口在两倍周期下的时序韧性。"
+    },
+    {
+      "id": "w19a_gz_tsmean10",
+      "neutralization": "INDUSTRY",
+      "expression": "group_zscore(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "P0oZQxpq 证据迁移：ts_mean(10) 同骨架 Margin 15.22bps/TO 7.5%，叠加铁律B幅度保留壳，检验 Margin 上行空间。"
+    },
+    {
+      "id": "w19a_gz_coldtx",
+      "neutralization": "INDUSTRY",
+      "expression": "group_zscore(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(buy_sell_tx_count_ratio_top5_60d_filled)),8), subindustry)",
+      "optimize_reason": "CLUSTER_TEST 病灶靶向：第三通道替换为极冷字段 buy_sell_tx_count_ratio_top5_60d_filled（alpha_count=0，笔数比口径，商业语义同源：top5 内部人买卖强度），主骨架 60d-250d 信念差不动。"
+    },
+    {
+      "id": "w19a_tw_vol",
+      "neutralization": "INDUSTRY",
+      "expression": "group_zscore(trade_when(ts_delta(vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled),5)!=0, multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)), -1), subindustry)",
+      "optimize_reason": "2Y Sharpe 病灶靶向（状态冻结壳）：insider 事件稀疏，仅当 top20 买卖量比通道更新时调仓、否则冻结持仓，预期 TO 降至 6~9% 同时抬 2Y/Margin；条件锚定在体积通道（第三通道）上，避免对整个 core 做 ts_delta 的双重计价。"
+    },
+    {
+      "id": "w19a_tw_core",
+      "neutralization": "INDUSTRY",
+      "expression": "group_zscore(trade_when(ts_delta(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),5)!=0, multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)), -1), subindustry)",
+      "optimize_reason": "用户处方的字面实现：trade_when(ts_delta(core,5)!=0, core, -1)，与 tw_vol 对照冻结触发面的宽窄差异；本条为实验位（AST 节点较多），若胜出需在 func2 用窄条件版收敛。"
+    },
+    {
+      "id": "w19b_gz8_subnz",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_zscore(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "冠军台双中性化存活验证（设置层）：同一冠军骨架在 SUBINDUSTRY 设置中性化下是否存活，表达式与 w19a_gz8 完全一致。"
+    },
+    {
+      "id": "w19b_gz_tsmean10_subnz",
+      "neutralization": "SUBINDUSTRY",
+      "expression": "group_zscore(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "平滑壳 × 更细中性化交叉验证：ts_mean(10)+group_zscore 在 SUBINDUSTRY 设置下的稳健性。"
+    },
+    {
+      "id": "w19c_gz8_slow",
+      "neutralization": "SLOW",
+      "expression": "group_zscore(ts_arg_max(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),8), subindustry)",
+      "optimize_reason": "冠军台双中性化存活验证（SLOW）：Wave 4bisect 曾证实 subtract-only @ SLOW 可用，验证完整共振骨架 @ SLOW。"
+    },
+    {
+      "id": "w19c_gz_tsmean10_slow",
+      "neutralization": "SLOW",
+      "expression": "group_zscore(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_top5_60d_filled),vec_avg(buy_sell_ratio_top5_250d_filled)),vec_avg(top20_buy_to_sell_volume_ratio_lookback_10_filled)),10), subindustry)",
+      "optimize_reason": "平滑壳 @ SLOW：ts_mean(10)+group_zscore 在 SLOW 中性化下的存活测试。"
+    }
+  ]
+}

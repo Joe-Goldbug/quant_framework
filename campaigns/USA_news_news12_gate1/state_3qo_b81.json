@@ -1,0 +1,70 @@
+{
+  "location": "https://api.worldquantbrain.com/simulations/4l8TXu6Pa4Eu8O517yjg8dfz",
+  "submitted_at": 1793086543,
+  "items": [
+    {
+      "id": 1,
+      "type": "B81_S1_SYM_SENT_XAR_OUT6",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(multiply(abs(add(mean_sentiment_score_transfer, -0.5)), sqrt(news_relevance_score_2)), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), 11), subindustry), 0.5), 5), 6)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 1: 11 ops: Unlocks the short side! Both good news (sent=0.9) and bad news (sent=0.1) receive equal high conviction (|sent-0.5|=0.4), multiplying prob_rank. Activates catastrophic bad-news shorts, eliminating the 2020 short crash and boosting Returns towards 5.5%+."
+    },
+    {
+      "id": 2,
+      "type": "B81_S2_SYM_SENT_POW2_D5W_CHAMPION",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(power(abs(add(mean_sentiment_score_transfer, -0.5)), 2), sqrt(news_relevance_score_2)), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), 11), subindustry), 0.5), 5)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 2: 11 ops: Power 2 on |sent-0.5| provides quadratic conviction for extreme news, applied directly to the Sharpe 1.58 champion d5WkjPmJ."
+    },
+    {
+      "id": 3,
+      "type": "B81_S3_SYM_SENT_LIN_D5W_CHAMPION",
+      "expression": "power(subtract(group_rank(ts_decay_linear(multiply(multiply(abs(add(mean_sentiment_score_transfer, -0.5)), sqrt(news_relevance_score_2)), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), 11), subindustry), 0.5), 5)",
+      "decay": 16,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 3: 10 ops: Linear conviction (|sent-0.5|) preserves subtle news tone, applied to d5WkjPmJ."
+    },
+    {
+      "id": 4,
+      "type": "B81_S4_SYM_SENT_XAR_OUT4",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(multiply(abs(add(mean_sentiment_score_transfer, -0.5)), sqrt(news_relevance_score_2)), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), 11), subindustry), 0.5), 5), 4)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 4: 11 ops: Light outer decay 4 balances turnover (~14.5%) with immediate alpha capture."
+    },
+    {
+      "id": 5,
+      "type": "B81_S5_SYM_SENT_WPQ_SHELL_9OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(multiply(abs(add(mean_sentiment_score_transfer, -0.5)), sqrt(news_relevance_score_2)), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 5: 9 ops: Single-layer outer smoothing (no inner decay), eliminating the 34-day lag. Symmetrically shorting bad news in the wpQKJ1K5 shell."
+    },
+    {
+      "id": 6,
+      "type": "B81_S6_SYM_SENT_WPQ_POW3_10OPS",
+      "expression": "ts_decay_linear(power(subtract(group_rank(multiply(multiply(abs(add(mean_sentiment_score_transfer, -0.5)), sqrt(news_relevance_score_2)), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), subindustry), 0.5), 3), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 6: 10 ops: Tail-power 3 on symmetric wpQKJ1K5 shell."
+    },
+    {
+      "id": 7,
+      "type": "B81_S7_SYM_SENT_WPQ_POW2_CONV_10OPS",
+      "expression": "ts_decay_linear(subtract(group_rank(multiply(multiply(power(abs(add(mean_sentiment_score_transfer, -0.5)), 2), sqrt(news_relevance_score_2)), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), subindustry), 0.5), 10)",
+      "decay": 12,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 7: 10 ops: Quadratic sentiment conviction in wpQKJ1K5 single-layer shell."
+    },
+    {
+      "id": 8,
+      "type": "B81_S8_SYM_SENT_XAR_OUT8",
+      "expression": "ts_decay_linear(power(subtract(group_rank(ts_decay_linear(multiply(multiply(abs(add(mean_sentiment_score_transfer, -0.5)), sqrt(news_relevance_score_2)), winsorize(prob_rank_bin1_10d_img_news, std=3.0)), 11), subindustry), 0.5), 5), 8)",
+      "decay": 15,
+      "truncation": 0.025,
+      "optimize_reason": "Slot 8: 11 ops: Direct 1-to-1 symmetric replacement on the Fitness 0.89 record holder xArOYGYp."
+    }
+  ]
+}

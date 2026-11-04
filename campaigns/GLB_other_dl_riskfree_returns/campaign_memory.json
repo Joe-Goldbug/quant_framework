@@ -1,0 +1,68 @@
+{
+  "good_alphas": [
+    {
+      "alpha_id": "N1NAbJ1e",
+      "role": "CHAMPION",
+      "seed_id": "SEED_01_TAIL_ASYM_5Q60D",
+      "expression": "group_neutralize(ts_decay_linear(subtract(probability_label4_5quantile_60day_ohlcv_img_2, probability_label0_5quantile_60day_ohlcv_img), 24), subindustry)",
+      "settings": {"region": "GLB", "universe": "MINVOL1M", "delay": 1, "neutralization": "COUNTRY", "decay": 0, "truncation": 0.025},
+      "metrics": {"sharpe": 2.98, "fitness": 2.95, "turnover": 0.066, "margin_bps": 37.5, "prod_corr": 0.8793},
+      "checks": {"fail": 0, "warning": ["MATCHES_THEMES"], "cluster_test": "PASS", "amer": "PASS", "emea": "PASS", "apac": "PASS"},
+      "champion_score": 2.13,
+      "operator_count": 3
+    },
+    {
+      "alpha_id": "VkxO7Nqw",
+      "role": "HIGHEST_SHARPE_VARIANT",
+      "seed_id": "SEED_01_TAIL_ASYM_4Q20D",
+      "expression": "group_neutralize(ts_decay_linear(subtract(probability_label3_4quantile_20day_ohlcv_img, probability_label0_4quantile_20day_ohlcv_img), 8), subindustry)",
+      "settings": {"region": "GLB", "universe": "MINVOL1M", "delay": 1, "neutralization": "COUNTRY", "decay": 0, "truncation": 0.025},
+      "metrics": {"sharpe": 4.16, "fitness": 4.24, "turnover": 0.141, "margin_bps": 20.8, "prod_corr": 0.9179},
+      "checks": {"fail": 0, "warning": ["MATCHES_THEMES"], "cluster_test": "PASS"},
+      "champion_score": 1.78,
+      "operator_count": 3
+    },
+    {
+      "alpha_id": "d5Wdjag2",
+      "role": "HIGHEST_FITNESS_VARIANT",
+      "seed_id": "SEED_01_TAIL_ASYM_5Q5D",
+      "expression": "group_neutralize(ts_decay_linear(subtract(probability_label4_5quantile_5day_ohlcv_img, probability_label0_5quantile_5day_ohlcv_img), 8), subindustry)",
+      "settings": {"region": "GLB", "universe": "MINVOL1M", "delay": 1, "neutralization": "COUNTRY", "decay": 0, "truncation": 0.025},
+      "metrics": {"sharpe": 4.13, "fitness": 4.33, "turnover": 0.144, "margin_bps": 22.0, "prod_corr": 0.9231},
+      "checks": {"fail": 0, "warning": ["MATCHES_THEMES"], "cluster_test": "PASS", "amer": "PASS", "emea": "PASS", "apac": "PASS"},
+      "champion_score": 1.74,
+      "operator_count": 3
+    },
+    {
+      "alpha_id": "3qozpkq6",
+      "role": "REFERENCE",
+      "seed_id": "SEED_01_TAIL_ASYM_5Q60D",
+      "expression": "group_neutralize(ts_decay_linear(subtract(probability_label4_5quantile_60day_ohlcv_img_2, probability_label0_5quantile_60day_ohlcv_img), 8), subindustry)",
+      "settings": {"region": "GLB", "universe": "MINVOL1M", "delay": 1, "neutralization": "COUNTRY", "decay": 0, "truncation": 0.025},
+      "metrics": {"sharpe": 3.38, "fitness": 3.38, "turnover": 0.134, "margin_bps": 20.0, "prod_corr": 0.9009},
+      "checks": {"fail": 0, "warning": ["MATCHES_THEMES"]},
+      "champion_score": 1.68,
+      "operator_count": 3
+    }
+  ],
+  "falsified": [
+    {"hypothesis": "肩部 vs 深度尾部 log-odds (SEED_01 原始主信号)", "reason": "ProdCorr 0.875~0.879 且 AMER 子夏普天花板 0.99，区域与相关性双卡死", "best_sharpe": 2.0},
+    {"hypothesis": "一阶差分 / 时序偏离骨架", "reason": "换手 89%~115%、Margin 0.3~0.8bps，经济性结构性失败", "best_sharpe": 1.54},
+    {"hypothesis": "分布曲率 P2-0.5(P0+P4)", "reason": "Sharpe 仅 0.28~0.45 信号强度不足；PC 0.937 说明仍未脱开收益水平", "best_sharpe": 0.45},
+    {"hypothesis": "hump 状态冻结算子", "reason": "平台判为非法算子，整批 ERROR", "best_sharpe": null}
+  ],
+  "history_save": [
+    {"stage": "stage1_round1", "alphas": 8, "note": "10 骨架双窗口；ts_mean/ts_decay_linear 构成参数高原"},
+    {"stage": "stage2_neutralization_matrix", "alphas": 16, "note": "COUNTRY 中性化修复 EMEA/APAC，Sharpe 1.61→2.00"},
+    {"stage": "stage3_amer_ceiling", "alphas": 12, "note": "凹压缩/decay/短窗均无法突破 AMER 0.99"},
+    {"stage": "stage4_tail_asymmetry", "alphas": 12, "note": "尾部分布不对称，Sharpe 最高 4.16，0 FAIL"},
+    {"stage": "stage5_prodcorr_frontier", "alphas": 21, "note": "去相关前沿：水平0.90→序数贴现0.86→去均值0.83→离散序数比0.80→变化+贴现0.74；PC与Margin硬对抗，0.65不可达"}
+  ],
+  "prodcorr_frontier": [
+    {"alpha_id": "O0Aor2e1", "type": "水平+序数贴现", "sharpe": 2.56, "fitness": 2.62, "turnover": 0.06, "margin_bps": 44.1, "prod_corr": 0.8615, "warning": ["CLUSTER_TEST 1.55", "MATCHES_THEMES"]},
+    {"alpha_id": "LLMkN9v2", "type": "去自身120日均值", "sharpe": 3.33, "fitness": 2.34, "turnover": 0.159, "margin_bps": 9.9, "prod_corr": 0.8342, "warning": ["MATCHES_THEMES"]},
+    {"alpha_id": "2rAJjQbP", "type": "离散序数比 5桶/2桶 24d", "sharpe": 2.21, "fitness": 1.67, "turnover": 0.098, "margin_bps": 14.4, "prod_corr": 0.8, "warning": ["CLUSTER_TEST 1.09", "MATCHES_THEMES"]},
+    {"alpha_id": "58EMj301", "type": "离散序数比 5桶/2桶 8d", "sharpe": 2.51, "fitness": 1.48, "turnover": 0.208, "margin_bps": 6.9, "prod_corr": 0.8046, "warning": ["CLUSTER_TEST 1.16", "MATCHES_THEMES"]},
+    {"alpha_id": "P0ov2ZVE", "type": "20日变化+序数贴现", "sharpe": 2.19, "fitness": 1.16, "turnover": 0.207, "margin_bps": 5.6, "prod_corr": 0.7395, "warning": ["AMER 0.91", "CLUSTER_TEST 1.21", "LOW_2Y_SHARPE 1.40"]}
+  ]
+}

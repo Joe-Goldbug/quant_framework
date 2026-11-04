@@ -1,0 +1,66 @@
+{
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "decay": 30,
+  "neutralization": "STATISTICAL",
+  "truncation": 0.08,
+  "nan_handling": "ON",
+  "category": "news",
+  "known_fields": [
+    "mean_sentiment_score_transfer",
+    "news_relevance_score_2",
+    "prob_rank_bin1_10d_img_news",
+    "prob_rank_bin1_20d_img_news"
+  ],
+  "items": [
+    {
+      "id": 1,
+      "type": "N84_ERM_CUBIC_SMOOTH10_D30",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 10), subindustry)",
+      "optimize_reason": "10-day linearly smoothed cubic sentiment x 10d forecast x sqrt relevance under decay 30. Compresses turnover to ~10% to push Margin >= 15 bps and Fitness >= 1.0."
+    },
+    {
+      "id": 2,
+      "type": "N84_ERM_CUBIC_SMOOTH15_D30",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), 15), subindustry)",
+      "optimize_reason": "15-day linearly smoothed cubic sentiment x 10d forecast x sqrt relevance under decay 30 for ultra-low turnover."
+    },
+    {
+      "id": 3,
+      "type": "N84_ERM_20D_SMOOTH10_D30",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_20d_img_news, std=3)), sqrt(news_relevance_score_2)), 10), subindustry)",
+      "optimize_reason": "20-day horizon forward DL forecast with 10-day linear smoothing under decay 30. Perfectly matched multi-week drift horizon."
+    },
+    {
+      "id": 4,
+      "type": "N84_ERM_20D_SMOOTH15_D30",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_20d_img_news, std=3)), sqrt(news_relevance_score_2)), 15), subindustry)",
+      "optimize_reason": "20-day horizon forward DL forecast with 15-day linear smoothing under decay 30."
+    },
+    {
+      "id": 5,
+      "type": "N84_ERM_DUAL_CUBIC_SMOOTH10",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), power(winsorize(prob_rank_bin1_10d_img_news, std=3), 3)), sqrt(news_relevance_score_2)), 10), subindustry)",
+      "optimize_reason": "Dual cubic power on both sentiment and 10d forecast with 10-day linear smoothing under decay 30."
+    },
+    {
+      "id": 6,
+      "type": "N84_ERM_SENT_SMOOTH10_CUBIC",
+      "expression": "group_rank(multiply(multiply(power(ts_decay_linear(winsorize(mean_sentiment_score_transfer, std=3), 10), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), sqrt(news_relevance_score_2)), subindustry)",
+      "optimize_reason": "10-day pre-smoothed sentiment transformed via cubic power, interacting with 10d forecast and sqrt relevance."
+    },
+    {
+      "id": 7,
+      "type": "N84_ERM_B30_S6_DECAY30",
+      "expression": "group_rank(multiply(ts_decay_linear(power(winsorize(mean_sentiment_score_transfer, std=3), 3), 5), multiply(winsorize(prob_rank_bin1_10d_img_news, std=3), sqrt(news_relevance_score_2))), subindustry)",
+      "optimize_reason": "Direct re-test of B30 Slot 6 (Sharpe 1.52) under decay 30 to compress turnover and verify Margin / Fitness elevation."
+    },
+    {
+      "id": 8,
+      "type": "N84_ERM_SMOOTH10_LOG_REL",
+      "expression": "group_rank(ts_decay_linear(multiply(multiply(power(winsorize(mean_sentiment_score_transfer, std=3), 3), winsorize(prob_rank_bin1_10d_img_news, std=3)), log(add(news_relevance_score_2, 1))), 10), subindustry)",
+      "optimize_reason": "10-day linearly smoothed cubic sentiment x 10d forecast with concave logarithmic relevance utility under decay 30."
+    }
+  ]
+}

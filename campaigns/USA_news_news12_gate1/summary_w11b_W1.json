@@ -1,0 +1,431 @@
+{
+ "direction": "W1",
+ "direction_name": "主批 8 处方 (INDUSTRY/d6)",
+ "hypothesis": "mLeneWjW 的缺口 = LOW_FITNESS(0.41) + HIGH_TURNOVER(114.6%) + CLUSTER(1.54<1.58) + MATCHES_THEMES. 豁免规律 (|Sh|>=1 & TO<=70% => fail 降 warning; 26/26 fail=[] 行无 MATCHES_THEMES) 指明战略: 先用 bf 短窗/池化把 TO 压过 70% 且保 Sh>=1.0 拿掉 fail, 再以 winsorize/异常分离/新鲜门攻 CLUSTER 1.58, 双压力分子保 Ret 攻 Fit. 8 处方覆盖: H1 (槽1/2/3/4/5/8), H2 (槽7/8), H3 (槽3/5/6), H4 (W2 母本对照).",
+ "settings": {
+  "neutralization": "INDUSTRY",
+  "universe": "TOP1000",
+  "decay": 6,
+  "truncation": 0.025,
+  "region": "USA",
+  "delay": 1,
+  "nan_handling": "ON"
+ },
+ "rows": [
+  {
+   "slot": 1,
+   "role": "RX",
+   "type": "BF2_FRESHGATE",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+   "alpha_id": "RRAOO6vg",
+   "sharpe": 1.47,
+   "fitness": 0.42,
+   "turnover": 0.8371,
+   "returns": 0.0681,
+   "ret_over_to": 0.0813522876597778,
+   "drawdown": 0.0524,
+   "margin_bps": 1.6300000000000001,
+   "longCount": 383,
+   "shortCount": 377,
+   "sub_sharpe": 1.41,
+   "two_year_sharpe": 1.49,
+   "inv_sharpe": 1.4,
+   "rn_sharpe": 1.95,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 2,
+   "role": "RX",
+   "type": "BF3_FRESHGATE",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 3))), 0)",
+   "alpha_id": "3qjKKVOZ",
+   "sharpe": 0.87,
+   "fitness": 0.25,
+   "turnover": 0.4056,
+   "returns": 0.0336,
+   "ret_over_to": 0.08284023668639053,
+   "drawdown": 0.0866,
+   "margin_bps": 1.66,
+   "longCount": 514,
+   "shortCount": 511,
+   "sub_sharpe": 0.94,
+   "two_year_sharpe": 0.52,
+   "inv_sharpe": 0.86,
+   "rn_sharpe": 1.14,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 3,
+   "role": "RX",
+   "type": "DFLC1_BF2",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 1), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+   "alpha_id": "WjLZZeRd",
+   "sharpe": 0.9,
+   "fitness": 0.26,
+   "turnover": 0.4055,
+   "returns": 0.0345,
+   "ret_over_to": 0.08508014796547472,
+   "drawdown": 0.0843,
+   "margin_bps": 1.7000000000000002,
+   "longCount": 513,
+   "shortCount": 510,
+   "sub_sharpe": 0.91,
+   "two_year_sharpe": 0.59,
+   "inv_sharpe": 0.9,
+   "rn_sharpe": 1.18,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 4,
+   "role": "RX",
+   "type": "EXPDECAY20_F09",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_exp_window(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20, factor=0.9))), 0)",
+   "alpha_id": "MP0EE3nk",
+   "sharpe": 1.06,
+   "fitness": 0.33,
+   "turnover": 0.4601,
+   "returns": 0.0433,
+   "ret_over_to": 0.09410997609215388,
+   "drawdown": 0.064,
+   "margin_bps": 1.88,
+   "longCount": 510,
+   "shortCount": 517,
+   "sub_sharpe": 0.93,
+   "two_year_sharpe": 1.02,
+   "inv_sharpe": 1.0,
+   "rn_sharpe": 1.44,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 5,
+   "role": "RX",
+   "type": "WINSORIZE_BF2",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+   "alpha_id": "wp9ddbAY",
+   "sharpe": 1.49,
+   "fitness": 0.43,
+   "turnover": 0.8366,
+   "returns": 0.0693,
+   "ret_over_to": 0.08283528568013387,
+   "drawdown": 0.0516,
+   "margin_bps": 1.66,
+   "longCount": 383,
+   "shortCount": 377,
+   "sub_sharpe": 1.42,
+   "two_year_sharpe": 1.53,
+   "inv_sharpe": 1.43,
+   "rn_sharpe": 1.98,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 6,
+   "role": "RX",
+   "type": "ANOMALY_D3",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(subtract(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), ts_mean(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20)))), 0)",
+   "alpha_id": "2rjggmx5",
+   "sharpe": 1.37,
+   "fitness": 0.32,
+   "turnover": 1.0589,
+   "returns": 0.0571,
+   "ret_over_to": 0.0539238832750968,
+   "drawdown": 0.0538,
+   "margin_bps": 1.0799999999999998,
+   "longCount": 308,
+   "shortCount": 311,
+   "sub_sharpe": 1.54,
+   "two_year_sharpe": 2.37,
+   "inv_sharpe": 1.37,
+   "rn_sharpe": 1.52,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 7,
+   "role": "RX",
+   "type": "DUAL_NATIVE",
+   "expression": "reverse(rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap)))",
+   "alpha_id": "zqrxxbEG",
+   "sharpe": 1.44,
+   "fitness": 0.4,
+   "turnover": 1.2051,
+   "returns": 0.0907,
+   "ret_over_to": 0.07526346361297817,
+   "drawdown": 0.0639,
+   "margin_bps": 1.4999999999999998,
+   "longCount": 289,
+   "shortCount": 289,
+   "sub_sharpe": 0.94,
+   "two_year_sharpe": 1.64,
+   "inv_sharpe": 1.22,
+   "rn_sharpe": 1.98,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "HIGH_TURNOVER"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  },
+  {
+   "slot": 8,
+   "role": "RX",
+   "type": "POOLED_NETRATIO",
+   "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(divide(ts_sum(subtract(news_eod_close, news_ton_last), 20), ts_sum(abs(subtract(news_eod_close, news_ton_last)), 20)))), 0)",
+   "alpha_id": "RRAOO6og",
+   "sharpe": 0.01,
+   "fitness": 0.0,
+   "turnover": 0.1382,
+   "returns": 0.0004,
+   "ret_over_to": 0.0028943560057887122,
+   "drawdown": 0.1406,
+   "margin_bps": 0.060000000000000005,
+   "longCount": 513,
+   "shortCount": 513,
+   "sub_sharpe": -0.22,
+   "two_year_sharpe": -0.47,
+   "inv_sharpe": -0.02,
+   "rn_sharpe": -0.15,
+   "ra_failed": true,
+   "ra_failed_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "fail_checks": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "LOW_SUB_UNIVERSE_SHARPE",
+    "LOW_2Y_SHARPE"
+   ],
+   "warning_checks": [
+    "CLUSTER_TEST",
+    "MATCHES_THEMES"
+   ]
+  }
+ ],
+ "gate": {
+  "step1": {
+   "should_prune": false,
+   "max_abs_sharpe": 1.49,
+   "qualified_count": 5,
+   "qualified_seeds": [
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+     "sharpe": 1.47,
+     "metrics": {
+      "sharpe": 1.47,
+      "fitness": 0.42,
+      "turnover": 0.8371,
+      "returns": 0.0681,
+      "drawdown": 0.0524,
+      "margin": 0.000163,
+      "longCount": 383,
+      "shortCount": 377,
+      "pnl": 6793608,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.41,
+      "two_year_sharpe": 1.49,
+      "investability_sharpe": 1.4,
+      "investability_fitness": 0.47,
+      "risk_neutralized_sharpe": 1.95
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_decay_exp_window(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20, factor=0.9))), 0)",
+     "sharpe": 1.06,
+     "metrics": {
+      "sharpe": 1.06,
+      "fitness": 0.33,
+      "turnover": 0.4601,
+      "returns": 0.0433,
+      "drawdown": 0.064,
+      "margin": 0.000188,
+      "longCount": 510,
+      "shortCount": 517,
+      "pnl": 4326159,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 0.93,
+      "two_year_sharpe": 1.02,
+      "investability_sharpe": 1.0,
+      "investability_fitness": 0.32,
+      "risk_neutralized_sharpe": 1.44
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(ts_backfill(divide(winsorize(subtract(news_eod_close, news_ton_last), std=2), add(vec_count(high_price_excursion_stddev), 1)), 2))), 0)",
+     "sharpe": 1.49,
+     "metrics": {
+      "sharpe": 1.49,
+      "fitness": 0.43,
+      "turnover": 0.8366,
+      "returns": 0.0693,
+      "drawdown": 0.0516,
+      "margin": 0.000166,
+      "longCount": 383,
+      "shortCount": 377,
+      "pnl": 6915615,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.42,
+      "two_year_sharpe": 1.53,
+      "investability_sharpe": 1.43,
+      "investability_fitness": 0.48,
+      "risk_neutralized_sharpe": 1.98
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "trade_when(less(days_from_last_change(vec_count(high_price_excursion_stddev)), 2), reverse(rank(subtract(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), ts_mean(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev), 1)), 20)))), 0)",
+     "sharpe": 1.37,
+     "metrics": {
+      "sharpe": 1.37,
+      "fitness": 0.32,
+      "turnover": 1.0589,
+      "returns": 0.0571,
+      "drawdown": 0.0538,
+      "margin": 0.000108,
+      "longCount": 308,
+      "shortCount": 311,
+      "pnl": 5702656,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 1.54,
+      "two_year_sharpe": 2.37,
+      "investability_sharpe": 1.37,
+      "investability_fitness": 0.4,
+      "risk_neutralized_sharpe": 1.52
+     },
+     "status": "STEP1_PASSED"
+    },
+    {
+     "expression": "reverse(rank(divide(add(subtract(news_eod_close, news_ton_last), subtract(news_eod_close, news_eod_vwap)), news_eod_vwap)))",
+     "sharpe": 1.44,
+     "metrics": {
+      "sharpe": 1.44,
+      "fitness": 0.4,
+      "turnover": 1.2051,
+      "returns": 0.0907,
+      "drawdown": 0.0639,
+      "margin": 0.00015,
+      "longCount": 289,
+      "shortCount": 289,
+      "pnl": 9047753,
+      "bookSize": 20000000,
+      "startDate": "2014-01-01",
+      "sub_universe_sharpe": 0.94,
+      "two_year_sharpe": 1.64,
+      "investability_sharpe": 1.22,
+      "investability_fitness": 0.38,
+      "risk_neutralized_sharpe": 1.98
+     },
+     "status": "STEP1_PASSED"
+    }
+   ],
+   "message": "【Step 1 通过】捕获 5 条达标种子 (最高 |Sharpe| = 1.49)"
+  },
+  "step2_count": 0,
+  "final_count": 0,
+  "step2": [],
+  "final": []
+ }
+}

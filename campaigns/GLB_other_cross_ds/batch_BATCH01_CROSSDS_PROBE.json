@@ -1,0 +1,108 @@
+{
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "category": "other",
+  "task_tag": "BATCH01_CROSSDS_PROBE",
+  "note": "跨数据集互补通道探针: 3 个候选数据集单通道基线 + 4 种融合拓扑, 用于测量 2014-2016 数据可用性、EMEA 截面与 Prod 多样性",
+  "known_fields": [
+    "negative_score_maximum_value",
+    "oth327_sirc_lev",
+    "oth327_sirc_sl",
+    "oth635_sentiment",
+    "oth424_divyld",
+    "dividend_growth_factor_score"
+  ],
+  "items": [
+    {
+      "slot": 1,
+      "expression": "group_rank(ts_mean(vec_avg(oth327_sirc_lev), 250), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "单通道基线: 利率久期敏感度慢变量截面排序, 检验 other327 是否在 2014-2016 有数据 (填坑前提) 及其自身极性"
+    },
+    {
+      "slot": 2,
+      "expression": "group_rank(ts_mean(vec_avg(oth635_sentiment), 250), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "单通道基线: 路透新闻神经情绪 250 日均值, 检验 100% 时间覆盖与 EMEA 截面强度"
+    },
+    {
+      "slot": 3,
+      "expression": "group_rank(ts_mean(oth424_divyld, 250), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "单通道基线: 高股息收益率的防御性溢价, 欧洲高股息市场应有更强 EMEA 截面"
+    },
+    {
+      "slot": 4,
+      "expression": "group_rank(ts_mean(dividend_growth_factor_score, 250), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "单通道基线: 股息增长 ML 概率, 慢变信号, 检验其在 MINVOL1M 的可用性"
+    },
+    {
+      "slot": 5,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(vec_avg(oth327_sirc_lev), 250)), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "原始量纲叠加: 新闻负向峰值 + 利率敏感度, 检验 NaN 为 0 时能否在 2014-2016 由第二通道独立成像"
+    },
+    {
+      "slot": 6,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(vec_avg(oth635_sentiment), 250)), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "原始量纲叠加: 两代新闻情绪同族合成 (AI 新闻 + 路透), 检验路透 -1~1 尺度是否被 AI 0~1 尺度吞没"
+    },
+    {
+      "slot": 7,
+      "expression": "group_rank(add(ts_mean(negative_score_maximum_value, 250), ts_mean(oth424_divyld, 250)), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "原始量纲叠加: 新闻负向峰值 + 股息率, 检验股息通道对 2014-2016 空窗的填补能力"
+    },
+    {
+      "slot": 8,
+      "expression": "group_rank(add(rank(ts_mean(negative_score_maximum_value, 250)), rank(ts_mean(vec_avg(oth327_sirc_lev), 250))), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "双通道独立秩标准化 50/50: 消除量纲差, 两通道各贡献一半截面信息, 优先降 Prod Corr"
+    },
+    {
+      "slot": 9,
+      "expression": "group_rank(add(rank(ts_mean(negative_score_maximum_value, 250)), rank(ts_mean(vec_avg(oth635_sentiment), 250))), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "双通道独立秩标准化 50/50: AI 新闻情绪 x 路透神经情绪, 同族异构源, 检验相关性是否被稀释"
+    },
+    {
+      "slot": 10,
+      "expression": "group_rank(add(rank(ts_mean(negative_score_maximum_value, 250)), rank(ts_mean(oth424_divyld, 250))), subindustry)",
+      "decay": 0,
+      "neutralization": "COUNTRY",
+      "truncation": 0.025,
+      "nan": "ON",
+      "optimize_reason": "双通道独立秩标准化 50/50: 新闻情绪 x 股息率, 基本面-情绪正交组合, 目标击穿 0.65 Prod Corr"
+    }
+  ]
+}

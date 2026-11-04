@@ -1,0 +1,97 @@
+========================================================================
+修正后：ts_rank 窗口分布（全部行）
+========================================================================
+ts_rank 窗口出现次数: {60: 1, 100: 1, 120: 5, 250: 68, 500: 4}
+ts_backfill 窗口出现次数: {2: 26, 3: 20, 5: 4, 20: 4, 60: 49, 120: 49, 250: 9}
+
+========================================================================
+3. Turnover 机理（修正版）
+========================================================================
+ts_rank(X,250)                                 n= 68 TO: mean=0.570 med=0.403 p10=0.081 p25=0.103 p75=1.124 p90=1.228 | Sh: mean=0.64 med=0.61 max=1.58
+ts_rank(其他窗口)                                  n= 11 TO: mean=1.039 med=1.181 p10=0.520 p25=1.125 p75=1.230 p90=1.291 | Sh: mean=1.29 med=1.41 max=1.57
+rank(X) only (无 ts_rank)                       n=212 TO: mean=0.810 med=0.842 p10=0.202 p25=0.397 p75=1.206 p90=1.369 | Sh: mean=0.82 med=1.04 max=1.69
+ts_backfill(任意窗口)                              n=151 TO: mean=0.578 med=0.406 p10=0.228 p25=0.371 p75=0.816 p90=1.197 | Sh: mean=0.82 med=0.88 max=1.65
+无 ts_rank 且无 ts_backfill                       n=199 TO: mean=0.945 med=1.150 p10=0.153 p25=0.498 p75=1.265 p90=1.401 | Sh: mean=0.63 med=0.70 max=1.69
+
+-- ts_rank250 输入是否预平滑（首参含 ts_mean/ts_decay/ts_sum/ts_delta/ts_backfill/ts_std）--
+ts_rank250 + 预平滑输入                             n= 36 TO: mean=0.245 med=0.106 p10=0.054 p25=0.086 p75=0.379 p90=0.769 | Sh: mean=0.50 med=0.46 max=1.57
+ts_rank250 + 裸输入(无预平滑)                         n= 32 TO: mean=0.935 med=1.124 p10=0.377 p25=0.591 p75=1.214 p90=1.257 | Sh: mean=0.81 med=1.10 max=1.58
+
+-- rank-only 输入是否预平滑 --
+rank + 预平滑/backfill 输入                         n=112 TO: mean=0.672 med=0.715 p10=0.133 p25=0.300 p75=1.131 p90=1.233 | Sh: mean=0.91 med=1.06 max=1.69
+rank + 裸输入                                     n=100 TO: mean=0.964 med=1.146 p10=0.252 p25=0.525 p75=1.285 p90=1.410 | Sh: mean=0.71 med=1.03 max=1.59
+
+-- ts_rank 窗口细分 --
+ts_rank(...,60)                                n=  1 TO: mean=1.181 med=1.181 p10=1.181 p25=1.181 p75=1.181 p90=1.181 | Sh: mean=1.41 med=1.41 max=1.41
+ts_rank(...,100)                               n=  1 TO: mean=0.520 med=0.520 p10=0.520 p25=0.520 p75=0.520 p90=0.520 | Sh: mean=0.87 med=0.87 max=0.87
+ts_rank(...,120)                               n=  5 TO: mean=1.200 med=1.224 p10=1.125 p25=1.130 p75=1.230 p90=1.292 | Sh: mean=1.45 med=1.45 max=1.57
+ts_rank(...,250)                               n= 68 TO: mean=0.570 med=0.403 p10=0.081 p25=0.103 p75=1.124 p90=1.228 | Sh: mean=0.64 med=0.61 max=1.58
+ts_rank(...,500)                               n=  4 TO: mean=0.933 med=1.227 p10=0.083 p25=1.129 p75=1.291 p90=1.291 | Sh: mean=1.16 med=1.41 max=1.53
+
+-- ts_backfill 窗口细分 --
+ts_backfill(...,2)                             n= 26 TO: mean=0.647 med=0.762 p10=0.235 p25=0.400 p75=0.837 p90=0.857 | Sh: mean=1.15 med=1.27 max=1.49
+ts_backfill(...,3)                             n= 20 TO: mean=0.533 med=0.595 p10=0.370 p25=0.406 p75=0.687 p90=0.697 | Sh: mean=0.58 med=0.76 max=1.20
+ts_backfill(...,5)                             n=  4 TO: mean=0.471 med=0.530 p10=0.375 p25=0.439 p75=0.541 p90=0.541 | Sh: mean=0.86 med=0.99 max=1.10
+ts_backfill(...,20)                            n=  4 TO: mean=0.396 med=0.404 p10=0.371 p25=0.377 p75=0.433 p90=0.433 | Sh: mean=0.82 med=0.79 max=1.06
+ts_backfill(...,60)                            n= 47 TO: mean=0.371 med=0.376 p10=0.147 p25=0.355 p75=0.401 p90=0.448 | Sh: mean=0.64 med=0.73 max=1.19
+ts_backfill(...,120)                           n= 48 TO: mean=0.788 med=0.925 p10=0.262 p25=0.398 p75=1.201 p90=1.257 | Sh: mean=0.95 med=1.07 max=1.65
+ts_backfill(...,250)                           n=  7 TO: mean=0.443 med=0.345 p10=0.084 p25=0.107 p75=0.780 p90=1.201 | Sh: mean=0.49 med=0.33 max=1.61
+
+-- 同字段族内对比（控制字段）：ts_rank250 vs rank-only vs backfill --
+amplitude    | ts_rank250 n=31 TOmed=0.121 TOmean=0.346 Shmax=1.35 | rank n=22 TOmed=0.586 TOmean=0.708 Shmax=1.44 | backfill n=29 TOmed=0.374 TOmean=0.407 Shmax=1.19
+excursion    | ts_rank250 n=34 TOmed=1.039 TOmean=0.760 Shmax=1.58 | rank n=136 TOmed=0.762 TOmean=0.728 Shmax=1.69 | backfill n=100 TOmed=0.418 TOmean=0.634 Shmax=1.65
+vwap_close   | ts_rank250 n=34 TOmed=1.083 TOmean=0.801 Shmax=1.58 | rank n=156 TOmed=0.889 TOmean=0.842 Shmax=1.69 | backfill n=97 TOmed=0.608 TOmean=0.689 Shmax=1.65
+ret          | ts_rank250 n=2 TOmed=0.088 TOmean=0.064 Shmax=0.48 | rank n=5 TOmed=0.134 TOmean=0.577 Shmax=1.44 | backfill n=0
+
+-- amplitude 比率信号 divide(max_up, add(max_up, max_dn)) 的输出层对照 --
+amplitude ratio 全部 (51)                        n= 51 TO: mean=0.602 med=0.378 p10=0.197 p25=0.366 p75=1.124 p90=1.290 | Sh: mean=0.82 med=0.98 max=1.37
+amplitude ratio + raw/other                    n=  6 TO: mean=1.072 med=1.272 p10=0.193 p25=1.167 p75=1.290 p90=1.299 | Sh: mean=0.90 med=1.13 max=1.37
+amplitude ratio + rank                         n= 11 TO: mean=0.459 med=0.247 p10=0.171 p25=0.202 p75=0.586 p90=1.124 | Sh: mean=0.53 med=0.44 max=1.17
+amplitude ratio + ts_backfill                  n= 20 TO: mean=0.437 med=0.375 p10=0.367 p25=0.371 p75=0.378 p90=0.742 | Sh: mean=0.92 med=1.10 max=1.19
+amplitude ratio + ts_rank_other                n=  3 TO: mean=1.034 med=1.291 p10=0.520 p25=0.520 p75=1.292 p90=1.292 | Sh: mean=1.15 med=1.27 max=1.32
+amplitude ratio + ts_rank250                   n= 11 TO: mean=0.673 med=0.520 p10=0.147 p25=0.197 p75=1.214 p90=1.288 | Sh: mean=0.79 med=0.98 max=1.35
+
+========================================================================
+4. 低 TO 区 [10%,40%] 与 amplitude bf 覆盖（修正版）
+========================================================================
+低 TO 行数: 99 / 416
+amplitude      n= 36 maxSh=1.19 (TO=0.375 CL=1.15) medSh=0.70
+excursion      n= 64 maxSh=1.19 (TO=0.375 CL=1.15) medSh=0.54
+vwap_close     n= 45 maxSh=0.94 (TO=0.397 CL=0.82) medSh=0.55
+other          n=  3 maxSh=0.78 (TO=0.391 CL=0.77) medSh=0.12
+ret            n=  3 maxSh=0.51 (TO=0.132 CL=-0.36) medSh=0.26
+
+-- amplitude 行 bf 覆盖（结果文件）--
+amplitude 行数: 108
+amplitude bf 分布: {120: 2, 20: 3, 250: 1, 5: 1, 60: 22, 'NO_BF': 79}
+amplitude 按 bf 表现:
+  bf=120    n=  2 TOmed=0.372 Shmax=1.10 Shmed=1.10
+  bf=20     n=  3 TOmed=0.377 Shmax=1.06 Shmed=0.79
+  bf=250    n=  1 TOmed=0.371 Shmax=1.10 Shmed=1.10
+  bf=5      n=  1 TOmed=0.530 Shmax=1.10 Shmed=1.10
+  bf=60     n= 22 TOmed=0.375 Shmax=1.19 Shmed=0.86
+  bf=NO_BF  n= 79 TOmed=1.006 Shmax=1.44 Shmed=0.58
+
+-- amplitude bf 覆盖（提交文件 batch_*.json，去重表达式）--
+提交文件中 amplitude 去重表达式数: 89
+提交文件 amplitude bf 分布: {120: 1, 20: 1, 250: 1, 5: 1, 60: 18, 'NO_BF': 67}
+提交文件全部 452 条 bf 分布: {120: 49, 2: 27, 20: 4, 250: 9, 3: 20, 5: 4, 60: 52, 'NO_BF': 297}
+
+========================================================================
+5. 目标区 Sh>=1.63 & TO<=25% 与准目标行
+========================================================================
+Sh>=1.5 行数: 30, 其 TO 分布:
+  TO min=1.127 p10=1.131 med=1.201 max=1.276
+  Sh>=1.5 且 TO<=0.5: 0 行
+
+-- CL>=1.58 的行（零警告候选）--
+n=0
+
+-- 每字段族 best-Sh 行的 TO --
+amplitude    best Sh=1.44 @ TO=1.270 CL=1.13 | reverse(rank(multiply(news_max_up_amt, subtract(news_eod_close, news_eod_vwap))))
+excursion    best Sh=1.69 @ TO=1.253 CL=1.38 | reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev)
+other        best Sh=1.32 @ TO=1.401 CL=1.2 | reverse(rank(divide(subtract(vec_avg(main_session_closing_price), vec_avg(main_session_vwap_from_news)), vec_a
+ret          best Sh=1.44 @ TO=1.268 CL=1.18 | reverse(rank(multiply(news_max_up_ret, subtract(news_eod_close, news_eod_vwap))))
+vwap_close   best Sh=1.69 @ TO=1.253 CL=1.38 | reverse(rank(divide(divide(subtract(news_eod_close, news_ton_last), add(vec_count(high_price_excursion_stddev)
+
+done

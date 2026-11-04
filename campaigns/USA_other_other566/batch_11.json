@@ -1,0 +1,87 @@
+{
+  "batch": 11,
+  "family": "no_tsm_mean_amplitude_preserving_turnover_levers",
+  "hypothesis": "波次 11: 依据 B01-B09 的实证诊断重写结构。F1: ts_mean(x,26) 是本战役最大的信号杀手 —— b1_m1(ts_mean26)=Sh0.66 vs b7_t1(无 ts_mean)=Sh1.18 且平台 0 FAIL, 因为本数据集是逐日重训的预测输出, 26 日平均恰好抹掉了承载 alpha 的修正信息。F2: trade_when 门控恒真 (b7_t1/b7_t2/b7_t6 指标逐位相同), 说明模型每日重发预测, 真正起作用的是「去掉 ts_mean」而非门控本身。F3: Margin 是硬约束且是算术恒等式 margin_bps = returns/turnover*20, 故 margin>=10bps 等价于 returns>=0.5*turnover —— 唯一出路是降换手。F4: 同一核心上 group_zscore(Sh0.81/Mgn7.46/RNS1.30) > group_rank > group_neutralize, 印证铁律 B 的幅度保留。F5: hump 是平台自带的换手限制器 ('Limits amount and magnitude of changes in input'), 是在不牺牲信号的前提下降换手的正路工具。本波 8 槽位全部剥离 ts_mean, 以 group_zscore 为主外层, 用 hump / ts_decay_linear 作为换手杠杆, 并把置信腿从 group_rank(prob) 换成裸 prob (减少一个算子) 与 ts_zscore(prob) (保留连续幅度) 两路对照。",
+  "items": [
+    {
+      "id": "w11_gz_plain",
+      "expr": "group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry)",
+      "ops": 2,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "F1+F4 核心: 剥离 ts_mean 的 group_zscore 版。预期在 b1_m4 (Sh0.81) 基础上因去掉 26 日平滑而显著提 Sharpe, 且保留幅度使 Margin 维持 7bps+ 水平。"
+    },
+    {
+      "id": "w11_gz_rank",
+      "expr": "group_rank(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), subindustry)",
+      "ops": 2,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "F1 最小对照: 完全去掉 ts_mean 的 group_rank 版, 与 w11_gz_plain 配对以隔离外层选择的影响 (同骨架、同字段、同置信腿)。"
+    },
+    {
+      "id": "w11_gz_neutral",
+      "expr": "group_neutralize(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), subindustry)",
+      "ops": 2,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "F4 第三点: 同一骨架的 group_neutralize 版, 验证幅度保留排序 (zscore > rank > neutralize) 在剥离 ts_mean 后是否依然成立。"
+    },
+    {
+      "id": "w11_gz_hump",
+      "expr": "group_zscore(hump(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 0.01), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "F3+F5: hump 是平台自带换手限制器, 直接压 turnover 而非抹掉信号。预期 turnover 从 10.5% 降至 6-8%, 使 returns/turnover 比率上升, Margin 有望突破 10bps 死线。"
+    },
+    {
+      "id": "w11_gz_decay_lin",
+      "expr": "group_zscore(ts_decay_linear(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "F5 替代杠杆: ts_decay_linear(5) 线性衰减比 ts_mean(26) 温和得多, 是「轻平滑 vs 强平滑」的中间档, 用于确认最优平滑强度在 1(不平滑)与 26 之间。"
+    },
+    {
+      "id": "w11_gz_zret",
+      "expr": "group_zscore(multiply(ts_zscore(oth566_r20marsi_ret, 60), oth566_r20marsi_prob_5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "F1+F3: 对预测水平自身做 60 日标准化后再乘裸置信度。这在不抹掉水平信息的前提下剥离了模型的慢漂移 (宏观 regime), 同时保留截面幅度。"
+    },
+    {
+      "id": "w11_gz_p3",
+      "expr": "group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_3), industry)",
+      "ops": 2,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_3"
+      ],
+      "why": "置信腿替换检验: 用 3 日桶的置信度 (4 用户/4 alpha) 替代 5 日桶 (1 用户/1 alpha), 检验信念加权结构对信念口径的敏感性, 同时略微提 ProdCorr 分母熵。"
+    },
+    {
+      "id": "w11_gz_l3r5",
+      "expr": "group_zscore(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ],
+      "why": "跨模型复制检验: 把 B1 的胜出结构 (标准化方向 x 行业内置信秩) 搬到 Level3 5 日模型 (32 用户/40 alpha 但用的是置信腿 1 用户/1 alpha), 剥离 ts_mean 后验证该结构是否普适而非 R20MaRsi 个例。"
+    }
+  ]
+}

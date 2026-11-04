@@ -1,0 +1,61 @@
+{
+  "batch_id": "FND23_PROBE_P1_FRESHNESS_AND_EDGE",
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "category": "fundamental",
+  "simulation_only": true,
+  "items": [
+    {
+      "slot_id": "Slot 1",
+      "slot_role": "P1_STATIC_MARGIN_LEVEL",
+      "expression": "group_zscore(winsorize(fnd23_icsm_m_mpns, std=3), industry)",
+      "fields_used": [
+        "fnd23_icsm_m_mpns"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "净利率水平的行业内标准化。Net Profit Margin 是已算好的比率（cov .92, uc=0 完全蓝海），无规模偏差、无分母构造风险，理论上不会触发 CONCENTRATED_WEIGHT。若 Sharpe 仍接近 0，说明 fundamental23 字段在回测期内是静态快照而非日频刷新。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 2,
+        "used_fields": [
+          "fnd23_icsm_m_mpns"
+        ]
+      }
+    },
+    {
+      "slot_id": "Slot 2",
+      "slot_role": "P2_MARGIN_CHANGE_60D",
+      "expression": "group_zscore(winsorize(ts_delta(fnd23_icsm_m_mpns, 60), std=3), industry)",
+      "fields_used": [
+        "fnd23_icsm_m_mpns"
+      ],
+      "counterparty": "被动指数与噪声交易者",
+      "economic_mechanism": "净利率的 60 日变化。P1 与 P2 的差值就是「字段刷新频率」的判决性证据：P2 >> P1 意味着字段在窗口内反复更新（日频 point-in-time）；P2 ≈ P1 或更低意味着字段是季报快照、变化只在财报日跳变。这是决定 fundamental23 是否值得全量投入的关键探针。",
+      "optimize_reason": "检验该构造能否同时满足平台全部门禁（零 fail 且零实质性 warning）",
+      "technical_audit": {
+        "passed": true,
+        "operator_count": 3,
+        "used_fields": [
+          "fnd23_icsm_m_mpns"
+        ]
+      }
+    }
+  ],
+  "known_fields": {
+    "fnd23_icsm_m_mpns": {
+      "domain": "unbounded",
+      "sparse_zero": false,
+      "meaning": "fnd23_icsm_m_mpns 基本面字段（语义见候选清单）"
+    }
+  },
+  "settings": {
+    "decay": 0,
+    "neutralization": "STATISTICAL",
+    "truncation": 0.025,
+    "nanHandling": "ON",
+    "pasteurization": "ON",
+    "unitHandling": "VERIFY"
+  }
+}
