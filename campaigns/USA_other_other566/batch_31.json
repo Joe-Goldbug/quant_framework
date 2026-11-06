@@ -1,0 +1,96 @@
+{
+  "batch": 31,
+  "family": "tail_only_book_corrected_nan_filter",
+  "hypothesis": "波次 31: 波次 30 的 H4/H7 (只押双侧尾部) 返回空账本 (TO 0.0), 根因是我自己的表达式缺陷: add() 默认 filter=false 会传播 NaN, 而右尾 (>=+0.02) 与左尾 (<=-0.02) 互斥 —— 任何股票必在一侧是 NaN, 相加即全 NaN, 账本空。改用 add(..., filter=true) 让 NaN 视为 0 后再求和, 尾部选股假设才第一次被真正检验。同时波次 30 证明: 不含换手控制的结构换手必然冲到 84~114%, 因此本轮全部装回种子的 tvr=0.12 框架, 使唯一变量变成「尾部硬截断 vs 连续加权」。经济学假设: Labs 图1 显示预测值高度堆积在 0 附近 (模型说「没事发生」), 真实 alpha 集中在 |value|>0.015 的双侧尾部; 中位区标的既无信息又天天变动, 是最纯粹的换手税来源。硬截断应同时(a)抬 R/TO 与(b)降换手, 这是 signed_power 软压缩做不到的。",
+  "settings": {
+    "neutralization": "INDUSTRY",
+    "decay": 0,
+    "truncation": 0.08
+  },
+  "items": [
+    {
+      "id": "Vkx0bAL8",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(add(right_tail(oth566_r20marsi_ret, minimum=0.015), left_tail(oth566_r20marsi_ret, maximum=-0.015), filter=true), rank(oth566_r20marsi_prob_5)), target_tvr=0.12), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "alpha_id": "Vkx0bAL8"
+    },
+    {
+      "id": "N1NVlYGL",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(add(right_tail(oth566_r20marsi_ret, minimum=0.025), left_tail(oth566_r20marsi_ret, maximum=-0.025), filter=true), rank(oth566_r20marsi_prob_5)), target_tvr=0.12), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "alpha_id": "N1NVlYGL"
+    },
+    {
+      "id": "mLo6WEWp",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(add(right_tail(oth566_r20marsi_ret, minimum=0.01), left_tail(oth566_r20marsi_ret, maximum=-0.01), filter=true), rank(oth566_r20marsi_prob_5)), target_tvr=0.12), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "alpha_id": "mLo6WEWp"
+    },
+    {
+      "id": "vR12XWXd",
+      "expr": "group_zscore(hump(multiply(add(right_tail(oth566_r20marsi_ret, minimum=0.015), left_tail(oth566_r20marsi_ret, maximum=-0.015), filter=true), rank(oth566_r20marsi_prob_5)), hump=0.01), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "alpha_id": "vR12XWXd"
+    },
+    {
+      "id": "KPJrMWMz",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(add(right_tail(oth566_r20marsi_ret, minimum=0.015), left_tail(oth566_r20marsi_ret, maximum=-0.015), filter=true), rank(oth566_r20marsi_prob_5)), target_tvr=0.12), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "alpha_id": "KPJrMWMz"
+    },
+    {
+      "id": "j2Y8KqkQ",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(add(right_tail(oth566_r20marsi_ret, minimum=0.015), left_tail(oth566_r20marsi_ret, maximum=-0.015), filter=true), signed_power(rank(oth566_r20marsi_prob_5), 2)), target_tvr=0.12), subindustry)",
+      "ops": 8,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "alpha_id": "j2Y8KqkQ"
+    },
+    {
+      "id": "9qxWON5V",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(add(right_tail(oth566_r20marsi_ret, minimum=0.015), left_tail(oth566_r20marsi_ret, maximum=-0.015), filter=true), group_rank(oth566_r20marsi_label_5, subindustry)), target_tvr=0.12), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "alpha_id": "9qxWON5V"
+    },
+    {
+      "id": "N1NVlYdX",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(add(right_tail(oth566_r20marsi_ret, minimum=0.015), left_tail(oth566_r20marsi_ret, maximum=-0.015), filter=true), rank(oth566_r20marsi_prob_5)), target_tvr=0.12), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "alpha_id": "N1NVlYdX"
+    }
+  ],
+  "_reconstructed_from": "batch_31_result.json (original batch_31.json was overwritten; expressions+settings recovered verbatim from the saved simulation payloads)",
+  "original_item_ids": {
+    "w31_tail015_tvr12": null
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "batch": 22,
+  "family": "signed_power_centered_rank_book_shape",
+  "hypothesis": "波次 22: 使用**本战役从未试过的账本形状杠杆** —— 对**中心化秩**做 signed_power。同事战役的 alpha 显示 signed_power(subtract(group_rank(<核>), 0.5), 2.25) 可达 **Margin 14.09bps** (TO 6.45%, Fit 0.72) —— 那是全平台可见的、把单位换手收益翻倍的结构。机理: group_rank 映射到 [0,1], 0.5 即横截面中位数; 减去 0.5 中心化后, signed_power(v, p>1) **放大偏离中位数的幅度并保留符号** ⇒ 权重剖面变成「中间区域仓位极小、两端仓位大」。预测分布的中间区域正是「模型说没发生什么」的地方, 在那里交易纯属成本, 故 PnL/交易上升 ⇒ margin_bps = returns/turnover*20 上升。这与波次 21 的 quantile(gaussian) 是同一假设(尾部集中) 的更强形式: quantile 重排秩的分布, signed_power 锐化中心化秩的幅度。本波 8 槽位把该形状套到本战役三条已验证的腿上 (r20marsi 连续腿 / 2 日期腿 / L3 订单簿腿), 并在 tvr 0.08~0.15 区间扫描, 目标是把 R/TO 从当前的 ~0.43 推到 0.50 以上, 同时守住 Sharpe >= 1.414 (Mgn>=10 与 Fit>=1.0 联立的必要条件)。",
+  "items": [
+    {
+      "id": "w22_sp_core_t08_p225",
+      "expr": "signed_power(subtract(group_rank(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.08), subindustry), 0.5), 2.25)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "r20marsi 核 x tvr=0.08 x p=2.25: 目标 R/TO >= 0.50 (Mgn>=10) 且 Sh>=1.58 (T=10% 处的必要条件)。用 INDUSTRY (r20marsi 腿在 INDUSTRY 下收益未被削)。"
+    },
+    {
+      "id": "w22_sp_core_t10_p225",
+      "expr": "signed_power(subtract(group_rank(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.1), subindustry), 0.5), 2.25)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "r20marsi 核 x tvr=0.10 x p=2.25: 换手略高一点换取 Sharpe, 与上一槽配对定位最优点。"
+    },
+    {
+      "id": "w22_sp_core_t12_p225",
+      "expr": "signed_power(subtract(group_rank(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), subindustry), 0.5), 2.25)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "r20marsi 核 x tvr=0.12 x p=2.25 @ STATISTICAL: 该腿在 STATISTICAL 下 Sharpe 最高 (1.27), 检验「高 Sharpe 底座 + 幅度锐化」能否同时达标。"
+    },
+    {
+      "id": "w22_sp_core_t10_p3",
+      "expr": "signed_power(subtract(group_rank(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.1), subindustry), 0.5), 3.0)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "r20marsi 核 x tvr=0.10 x p=3.0: 更强的尾部集中。经济含义: 只在模型最有把握的两端建仓, 中间区域完全不交易 ⇒ 换手与成本进一步下降。"
+    },
+    {
+      "id": "w22_sp_ret2_t12_p225",
+      "expr": "signed_power(subtract(group_rank(ts_target_tvr_decay(multiply(oth566_return, group_rank(oth566_prob_2, industry)), target_tvr=0.12), subindustry), 0.5), 2.25)",
+      "ops": 6,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "2 日期腿 x tvr=0.12 x p=2.25 @ INDUSTRY: 该腿 R/TO 最高 (波次 21 的 quantile 版已达 Mgn 8.61), signed_power 应能把它推过 10bps。"
+    },
+    {
+      "id": "w22_sp_ret2_t10_p225",
+      "expr": "signed_power(subtract(group_rank(ts_target_tvr_decay(multiply(oth566_return, group_rank(oth566_prob_2, industry)), target_tvr=0.1), subindustry), 0.5), 2.25)",
+      "ops": 6,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "2 日期腿 x tvr=0.10 x p=2.25: 更低换手的工作点, 检验 R/TO 是否继续上升。"
+    },
+    {
+      "id": "w22_sp_l3_t12_p225",
+      "expr": "signed_power(subtract(group_rank(ts_target_tvr_decay(multiply(ts_zscore(oth566_l3r5_label, 60), oth566_l3r5_prob), target_tvr=0.12), subindustry), 0.5), 2.25)",
+      "ops": 6,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "L3 订单簿腿 x tvr=0.12 x p=2.25: 该腿绝对收益最高 (R 6.22%), 若 R/TO 也高则最可能过 Mgn 线。"
+    },
+    {
+      "id": "w22_sp_p3_core_dexp20",
+      "expr": "signed_power(subtract(group_rank(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), subindustry), 0.5), 3.0)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "高 Sharpe 底座 + 幅度锐化: 58Egq5l1 (dexp20 @STATISTICAL) 是全战役平台门 0-FAIL 的最高 Sharpe (1.63 / 2Y 2.43), 但 Mgn 仅 1.12。若 signed_power 能把它的 R/TO 抬到 0.5 (即 R 需从 3.83% 升到 ~34% —— 极难), 至少可测出该底座上幅度锐化的边际效应; 若 R 升到 6-8% 则 Mgn 可达 2-3bps, 仍是全战役最高。"
+    }
+  ]
+}

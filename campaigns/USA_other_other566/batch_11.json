@@ -35,13 +35,13 @@
     },
     {
       "id": "w11_gz_hump",
-      "expr": "group_zscore(hump(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 0.01), industry)",
+      "expr": "group_zscore(hump(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5)), industry)",
       "ops": 3,
       "fields": [
         "oth566_r20marsi_ret",
         "oth566_r20marsi_prob_5"
       ],
-      "why": "F3+F5: hump 是平台自带换手限制器, 直接压 turnover 而非抹掉信号。预期 turnover 从 10.5% 降至 6-8%, 使 returns/turnover 比率上升, Margin 有望突破 10bps 死线。"
+      "why": "F3+F5: hump 是平台自带换手限制器 ('Limits amount and magnitude of changes in input'), 直接压 turnover 而非抹掉信号。注意: 平台对 hump 只接受 1 个位置参数 (hump(x) 或 hump(x, hump=0.01)), 传 hump(x, 0.01) 会被平台以 'Invalid number of inputs : 2, should be exactly 1 input(s)' 拒绝 —— 本槽已改为单参数形式。"
     },
     {
       "id": "w11_gz_decay_lin",

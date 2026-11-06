@@ -1,0 +1,116 @@
+{
+  "batch": 25,
+  "family": "rootcause_reconstruction_seed_kqNgXQqd",
+  "hypothesis": "波次 25: 种子 kqNgXQqd 四大根因修复。R1: prob 腿一律 rank()/group_rank(subindustry) 映射 [0,1] 保号, 主信号 winsorize(group_zscore(...,subindustry),std=3) 防爆尾。R2: 流水线反转为 先 ts_zscore 边际突破 -> 慢速 tvr 平滑 -> 后 subindustry 中性化, 修复 2017/2019/2021 离散度塌缩回撤。R3: target_tvr 0.04~0.05 (TO 3.5~5.5%, Margin 3x+); signed_power(z,1.5/2.0) 作用于最终零均值账本, 尾部聚焦抬 Returns 破 Fitness 0.125 分母瓶颈。R4: ts_zscore 二阶动态 + 正交腿 (label_5 / label_2 / multil3_prob_pattern / l2r5res_prob) 替换弱 prob_5, 破 386 个存量共线簇。代数设计点: R=6%/TO=4.5% -> Mgn=26.7bps, Fit=1.65*sqrt(0.06/0.125)=1.14, 需 R/TO=1.33 (战役前最佳 0.52), 赌注在边际突破+尾部聚焦。",
+  "settings": {
+    "decay": 0,
+    "neutralization": "STATISTICAL",
+    "truncation": 0.08
+  },
+  "items": [
+    {
+      "id": "w25_zs40_p5_t04",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(winsorize(group_zscore(ts_zscore(oth566_r20marsi_ret, 40), subindustry), std=3.0), rank(oth566_r20marsi_prob_5)), target_tvr=0.04), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "全流水线基准: ts_zscore(40) 边际突破 x rank(prob_5) 保号信念, tvr0.04 压 TO~3.5%, subindustry 双中性化。R1+R2+R3 完全体。",
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08
+    },
+    {
+      "id": "w25_zs40_p5_t04_sp15",
+      "expr": "signed_power(group_zscore(ts_target_tvr_decay(multiply(winsorize(group_zscore(ts_zscore(oth566_r20marsi_ret, 40), subindustry), std=3.0), rank(oth566_r20marsi_prob_5)), target_tvr=0.04), subindustry), 1.5)",
+      "ops": 8,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "R3 尾部聚焦: 对最终零均值账本 signed_power(1.5) 放大双侧高确信尾部仓位, 不加换手抬 Returns, 直攻 Fitness>=1.05 与 Mgn>=15bps。",
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08
+    },
+    {
+      "id": "w25_zs40_l5_t04",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(winsorize(group_zscore(ts_zscore(oth566_r20marsi_ret, 40), subindustry), std=3.0), group_rank(oth566_r20marsi_label_5, subindustry)), target_tvr=0.04), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_label_5"
+      ],
+      "why": "R4 正交腿: r20marsi_label_5 (avg Sh 0.95, 仅 8 alpha) 替换 prob_5 (avg Sh 0.50)。同族 5 日标签信念, 语义一致但存量簇远小, 攻 Cluster>=1.60。",
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08
+    },
+    {
+      "id": "w25_zs40_mlpp_t045",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(winsorize(group_zscore(ts_zscore(oth566_r20marsi_ret, 40), subindustry), std=3.0), rank(oth566_multil3_prob_pattern)), target_tvr=0.045), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_multil3_prob_pattern"
+      ],
+      "why": "R4 最正交腿: multil3_prob_pattern (avg Sh 1.05, 仅 2 alpha, slow 主题) 是形态置信度, 与 R20MaRsi 技术指标路线信息源不同, 最大化簇脱敏。",
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08
+    },
+    {
+      "id": "w25_zs40_vol_t05",
+      "expr": "group_zscore(ts_target_tvr_decay(divide(winsorize(group_zscore(ts_zscore(oth566_r20marsi_ret, 40), subindustry), std=3.0), ts_std_dev(returns, 20)), target_tvr=0.05), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "returns"
+      ],
+      "why": "R2 风险平价: 以 20 日实现波动率缩放边际突破, 直接压制 2017/2019/2021 低波/逼空 regime 的回撤 (目标 DD<=2.8%); 去掉 prob_5 腿换取波动率自适应仓位。",
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08
+    },
+    {
+      "id": "w25_avdiff40_p5_t04",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(ts_av_diff(oth566_r20marsi_ret, 40), rank(oth566_r20marsi_prob_5)), target_tvr=0.04), subindustry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "R2 对照: ts_av_diff = x - ts_mean(x,40), 无 std 归一的边际突破, 保留幅度信息 (铁律B); 与 w25_zs40_p5_t04 配对隔离「std 归一 vs 裸差分」。",
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08
+    },
+    {
+      "id": "w25_zs20_lb2_t045",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(winsorize(group_zscore(ts_zscore(oth566_r20marsi_ret, 20), subindustry), std=3.0), group_rank(oth566_label_2, subindustry)), target_tvr=0.045), subindustry)",
+      "ops": 7,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_label_2"
+      ],
+      "why": "R4 短窗腿: label_2 (2 日预测标签, avg Sh 1.09, 12 alpha) 提供最短 horizon 信念, 与 ts_zscore(20) 短窗边际突破同尺度共振; 检验窗口匹配假说。",
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08
+    },
+    {
+      "id": "w25_zs60_l2res_t05_sp2",
+      "expr": "signed_power(group_zscore(ts_target_tvr_decay(multiply(winsorize(group_zscore(ts_zscore(oth566_r20marsi_ret, 60), subindustry), std=3.0), rank(oth566_l2r5res_prob)), target_tvr=0.05), subindustry), 2.0)",
+      "ops": 8,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_l2r5res_prob"
+      ],
+      "why": "R3+R4 极限档: ts_zscore(60) 长窗突破 x l2r5res_prob (avg Sh 0.85, 仅 1 alpha) x signed_power(2.0) 强尾部聚焦, tvr0.05。探 R/TO 上限的边界槽位。",
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08
+    }
+  ]
+}

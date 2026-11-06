@@ -1,0 +1,87 @@
+{
+  "batch": 32,
+  "family": "cross_dataset_slow_fundamental_anchor_plus_chart_momentum_tilt",
+  "hypothesis": "波次 32: 首次引入**跨一个数据集**的字段, 目标是同时攻破 Fitness>=1.05 与 Margin>=15bps 这两条在同一数据集内部被证明互斥的门禁。\n\n【为什么跨数据集是唯一出路】243 个同源回测槽位的实测显示: margin_bps = 20*Returns/Turnover, 且在本信号族内 Sharpe^2*(R/TO) 近似为常数 (最大 7.9), 故 Fitness 上限锁死在 0.63; 而门禁 4+5 (Returns>=5.5% 且 Margin>=15) 在代数上强制 Turnover<=7.33%, 即要求 R/TO>=0.75, 而 oth566 单一信号源 243 次测量从未超过 0.605 (那一点 Sharpe 仅 0.25)。**根因是 oth566 是 1~5 日高频图像预测, 它的收益必须靠高换手兑现, R/TO 被物理属性锁死**。要突破只能引入一个「换手率极低、信息半衰期以月/季计」的慢速信息源, 由它承担组合的持仓与 Carry(慢速腿的主导权重使总换手由慢速腿决定), 而 oth566 仅作为轻仓择时倾斜。\n\n【经济学假设 A: 自身历史估值锚 (Self-referential valuation anchor)】\n字段 diff_current_vs_hist_price_ratio_earnings = 当前远期 P/E 减去该股自身过去 12 个月远期 P/E 的中位数 (正=相对自己变贵)。\n1. 经济含义: 估值倍数的均值回复 (Campbell & Shiller 1988; Asness, Moskowitz & Pedersen 2013)。一家公司相对**自身历史估值中枢**的偏离, 比相对全市场截面便宜/昂贵更能剔除行业结构性差异与成长阶段差异 —— 同一只票在不同年份的合理倍数不同, 但「比自己过去 12 个月中位数贵 20%」是一个可比、平稳、无量纲的量。\n2. 换手属性: 锚是 12 个月滚动中位数, 月度级别才显著移动; 分子是远期 P/E 也随盈利预期缓慢漂移。因此该腿的日换手极低 (预期 2%~5%), 是天然的 Margin 载体。\n3. 为何必须进截面: 单看倍数高低会把「结构性高估值成长股」永久做空, 所以必须做 group_zscore 中性化, 且必须配合下文 B 的催化确认。\n\n【经济学假设 B: 分析师修正漂移 (Revision momentum / PEAD)】\n字段 highest_estimate_change_quarterly_eps_30d_long = 过去 30 天最高季度 EPS 预估的变动率。\n1. 经济含义: 盈余公告后漂移与修正漂移 (Bernard & Thomas 1989; Chan, Jegadeesh & Lakonishok 1996)。分析师预期是**粘性**的, 修正沿同一方向连续发生, 价格对修正的吸收是渐进的 → 修正本身就是可交易的、跨越 1~3 个月的动量。\n2. 与 A 的互补性: A 是「便宜」的静态状态 (value), B 是「正在被向上重估」的动态事件 (catalyst)。价值与修正动量在时序上负相关 (Asness et al. 2013 的 value-momentum 负相关现象), 组合可提高单位风险收益; 更关键的是 B 的半衰期以月计, 与 A 同为慢速腿, **两腿都不会把换手推高**, 这是 Margin 门禁的关键。\n3. 为何用 30 天而非 1 天修正: 日频修正以噪音为主 (单家券商跳变), 30 天窗口是漂移文献的标准构造区间, 且自动把换手压到月度级别。\n\n【经济学假设 C: 图表动能作为轻仓倾斜 (oth566 的角色)】\n字段 oth566_r20marsi_ret = 基于 20 日均线 + RSI 图表的图像模型对收益的预测, 本质是散户视觉交易者对价格形态的解读。\n1. 经济含义: 视觉显著性形态 (趋势启动/突破) 会吸引注意力驱动的资金流 (Barber & Odean 2008 注意力效应), 在短期内自我实现 → 提供 1~5 日的方向性倾斜。\n2. 为什么只能轻仓 (权重 0.2~0.5 对慢速腿): 它的换手是 13.9% (tvr=0.12), 若主导组合则 R/TO 被锁死在 0.22~0.48, Margin 门禁必然失败。作为倾斜, 它只贡献很小一部分总换手, 却能给慢速价值锚提供「入场时机/催化确认」—— 便宜但价格形态正在恶化的票不加仓, 便宜且形态转强的票加仓。\n3. 与 Labs 诊断的呼应: 该字段截面离散度在 2017/2019/2021 塌缩, 正是种子三年回撤的来源; 由慢速估值锚主导后, 这三年的截面漂移被价值状态吸收, 不再直接转成价格暴露。\n\n【本轮 8 槽设计】\n全部 2~3 个字段, op<=11。变量分三组: (a) 慢速腿构成: 估值+修正双锚 (VR) vs 仅估值 (V) vs 仅修正 (R); (b) oth566 倾斜权重 w = 0 / 0.20 / 0.30 / 0.50; (c) 换手控制 tvr=0.05 / 0.03, 以及追加 hump=0.01 不交易带。\nVR_only (w=0) 是 Margin 上限探针: 若纯慢速双锚的 R/TO 都到不了 0.75, 则整个跨数据集路线在该字段组合下也被否证。",
+  "items": [
+    {
+      "id": "w32_VR_only_t05",
+      "expr": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), target_tvr=0.05), industry)",
+      "ops": 7,
+      "fields": ["diff_current_vs_hist_price_ratio_earnings", "highest_estimate_change_quarterly_eps_30d_long"],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "纯慢速双锚, oth566 权重=0。这是 Margin 门禁的上限探针: 只由估值自锚与修正漂移构成的组合, 换手天然最低。若它的 R/TO 仍 <0.75, 说明即使换成纯基本面慢速信号, 在本宇宙也到不了 15bps, 跨数据集路线需换字段族。同时它是判断「oth566 倾斜是加分还是减分」的基线。"
+    },
+    {
+      "id": "w32_VR_w20_t05",
+      "expr": "group_zscore(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.2, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+      "ops": 9,
+      "fields": ["diff_current_vs_hist_price_ratio_earnings", "highest_estimate_change_quarterly_eps_30d_long", "oth566_r20marsi_ret"],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "oth566 倾斜权重 0.20 (相对慢速腿合计 1.0, 即约 1:5)。经济上是「便宜的、且正在被向上修正的票, 若图表形态也转强则加仓」。权重刻意压低: 目的不是让 oth566 贡献收益, 而是让它贡献择时, 而把总换手留给慢速腿控制。"
+    },
+    {
+      "id": "w32_VR_w30_t05",
+      "expr": "group_zscore(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+      "ops": 9,
+      "fields": ["diff_current_vs_hist_price_ratio_earnings", "highest_estimate_change_quarterly_eps_30d_long", "oth566_r20marsi_ret"],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "倾斜权重 0.30 (约 1:3.3), 本轮的中心工作点。文献上 value 与 1~3 个月动量在等风险配置下互补性最强, 0.3 的倾斜大致对应「择时对组合风险的贡献约 15%~20%」, 既能提供确认信号又不接管换手。"
+    },
+    {
+      "id": "w32_VR_w50_t05",
+      "expr": "group_zscore(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.5, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+      "ops": 9,
+      "fields": ["diff_current_vs_hist_price_ratio_earnings", "highest_estimate_change_quarterly_eps_30d_long", "oth566_r20marsi_ret"],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "倾斜权重 0.50 (约 1:2), 权重扫描的上界。检验「oth566 的择时价值是否随权重单调上升」: 若 Sharpe 在 0.5 处高于 0.3, 说明图表腿的信息确实独立于基本面双锚, 后续应继续加权重并改用 hump 弥补换手; 若 Sharpe 下降或 Margin 崩到 15bps 以下, 则倾斜权重应回到 0.2~0.3。"
+    },
+    {
+      "id": "w32_V_w30_t05",
+      "expr": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+      "ops": 7,
+      "fields": ["diff_current_vs_hist_price_ratio_earnings", "oth566_r20marsi_ret"],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "单慢速锚(估值) + 0.30 倾斜。与 VR_w30 的唯一差别是去掉修正漂移腿, 用于分离两条慢速腿各自的贡献: 若 V_w30 的 Sharpe 明显低于 VR_w30, 说明修正漂移提供了真正独立的信息; 若两者接近, 则说明 30 天修正与估值自锚高度共线 (都反映盈利预期的变化), 可删掉一个字段降低复杂度。"
+    },
+    {
+      "id": "w32_R_w30_t05",
+      "expr": "group_zscore(ts_target_tvr_decay(add(rank(highest_estimate_change_quarterly_eps_30d_long), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+      "ops": 7,
+      "fields": ["highest_estimate_change_quarterly_eps_30d_long", "oth566_r20marsi_ret"],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "单慢速锚(修正漂移) + 0.30 倾斜, 与 V_w30 构成对照。修正漂移是 2014-2024 美股最稳健的异象之一, 且在 2021 散户逼空年仍有效 (与估值锚不同, 它不依赖倍数回归), 因此它若单独表现更好, 说明本宇宙的慢速 Carry 应押在预期修正而非估值水平上。"
+    },
+    {
+      "id": "w32_VR_w30_t03",
+      "expr": "group_zscore(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.03), industry)",
+      "ops": 9,
+      "fields": ["diff_current_vs_hist_price_ratio_earnings", "highest_estimate_change_quarterly_eps_30d_long", "oth566_r20marsi_ret"],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "与 VR_w30 同结构, 仅把目标换手从 5% 降到 3%。门禁 4+5 要求 Turnover<=7.33%, 而 R/TO>=0.75 才给 15bps, 因此 3% 换手需 Returns>=2.25% 才守住 Margin。此槽是 Margin/Returns 权衡曲线上的严格点: 若 Margin 上到 15 但 Returns 跌破 5.5%, 则门禁 4 与 5 在慢速腿上也存在内部矛盾。"
+    },
+    {
+      "id": "w32_VR_w30_hump",
+      "expr": "group_zscore(hump(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.05), hump=0.01), industry)",
+      "ops": 10,
+      "fields": ["diff_current_vs_hist_price_ratio_earnings", "highest_estimate_change_quarterly_eps_30d_long", "oth566_r20marsi_ret"],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "在 VR_w30 之后追加 hump=0.01 不交易带。这是实现落差(implementation shortfall)优化的标准做法: 只有当目标权重变动超过 1% 才交易, 因此削减的是**噪音交易**而非有效仓位, 理论上可以在 Returns 几乎不变的前提下压低 Turnover, 直接把 R/TO 与 Margin 推上去。与 ts_target_tvr_decay 的区别在于后者靠**等比缩小仓位**达标 (Returns 与 Turnover 同比例下降, R/TO 不变, 已在波次 26 被实测证明无效), 而 hump 靠**不交易**达标 (R/TO 上升)。"
+    }
+  ]
+}

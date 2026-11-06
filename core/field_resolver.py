@@ -61,18 +61,33 @@ class DatasetFieldResolver:
             if parsed:
                 return parsed
 
-        # 3. 优先级三: 本地知识库目标区域精确匹配 (knowledge_base/fields/{region}/{dataset_id}.json)
+        # 3. 优先级三: 本地知识库目标区域精确与别名匹配 (knowledge_base/fields/{region}/{dataset_id}.json)
+        cand_ds_names = [dataset_id]
+        if dataset_id.startswith("oth") and not dataset_id.startswith("other"):
+            cand_ds_names.append(f"other{dataset_id[3:]}")
+        elif dataset_id.startswith("other"):
+            cand_ds_names.append(f"oth{dataset_id[5:]}")
+        if dataset_id.startswith("fnd"):
+            cand_ds_names.append(f"fundamental{dataset_id[3:]}")
+        elif dataset_id.startswith("fundamental"):
+            cand_ds_names.append(f"fnd{dataset_id[11:]}")
+        if dataset_id.startswith("nws"):
+            cand_ds_names.append(f"news{dataset_id[3:]}")
+        elif dataset_id.startswith("news"):
+            cand_ds_names.append(f"nws{dataset_id[4:]}")
+
         search_roots = [self.kb_root]
         if self.default_kb_root != self.kb_root:
             search_roots.append(self.default_kb_root)
 
-        for s_root in search_roots:
-            target_path = os.path.join(s_root, region, f"{dataset_id}.json")
-            if os.path.exists(target_path):
-                parsed = self._parse_file(target_path)
-                if parsed:
-                    print(f"✅ [FieldResolver] 精确匹配本地字段知识库: {region}/{dataset_id} (共 {len(parsed)} 字段)")
-                    return parsed
+        for c_ds in cand_ds_names:
+            for s_root in search_roots:
+                target_path = os.path.join(s_root, region, f"{c_ds}.json")
+                if os.path.exists(target_path):
+                    parsed = self._parse_file(target_path)
+                    if parsed:
+                        print(f"✅ [FieldResolver] 匹配本地字段知识库: {region}/{c_ds} (共 {len(parsed)} 字段)")
+                        return parsed
 
         # 4. 优先级四: 跨区域同源继承 (Cross-Region Inheritance)
         # 例如: GLB/EUR/ASI 请求 fundamental23，由于财务指标在各市场本质同构，可从已缓存的 USA 继承
@@ -81,27 +96,29 @@ class DatasetFieldResolver:
             for cand in candidate_regions:
                 if cand == region:
                     continue
-                for s_root in search_roots:
-                    cand_path = os.path.join(s_root, cand, f"{dataset_id}.json")
-                    if os.path.exists(cand_path):
-                        parsed = self._parse_file(cand_path)
-                        if parsed:
-                            print(f"🌐 [FieldResolver] 目标区域 '{region}' 缺少字段画像，已触发跨区域同源继承 (从 {cand}/{dataset_id} 载入 {len(parsed)} 个特征)！")
-                            # 自动为当前区域落盘缓存，避免二次查找
-                            self._save_cache(region, dataset_id, parsed)
-                            return parsed
+                for c_ds in cand_ds_names:
+                    for s_root in search_roots:
+                        cand_path = os.path.join(s_root, cand, f"{c_ds}.json")
+                        if os.path.exists(cand_path):
+                            parsed = self._parse_file(cand_path)
+                            if parsed:
+                                print(f"🌐 [FieldResolver] 目标区域 '{region}' 缺少字段画像，已触发跨区域同源继承 (从 {cand}/{c_ds} 载入 {len(parsed)} 个特征)！")
+                                # 自动为当前区域落盘缓存，避免二次查找
+                                self._save_cache(region, dataset_id, parsed)
+                                return parsed
 
         # 5. 优先级五: 全局搜索任意子目录下同名 dataset_id.json
-        for s_root in search_roots:
-            if os.path.exists(s_root):
-                for root, _, files in os.walk(s_root):
-                    if f"{dataset_id}.json" in files:
-                        found_path = os.path.join(root, f"{dataset_id}.json")
-                        parsed = self._parse_file(found_path)
-                        if parsed:
-                            print(f"🔍 [FieldResolver] 在全局字段库中定位到同名画像: {found_path} (共 {len(parsed)} 字段)")
-                            self._save_cache(region, dataset_id, parsed)
-                            return parsed
+        for c_ds in cand_ds_names:
+            for s_root in search_roots:
+                if os.path.exists(s_root):
+                    for root, _, files in os.walk(s_root):
+                        if f"{c_ds}.json" in files:
+                            found_path = os.path.join(root, f"{c_ds}.json")
+                            parsed = self._parse_file(found_path)
+                            if parsed:
+                                print(f"🔍 [FieldResolver] 在全局字段库中定位到同名画像: {found_path} (共 {len(parsed)} 字段)")
+                                self._save_cache(region, dataset_id, parsed)
+                                return parsed
 
         # 6. 物理熔断: 严禁生成伪造字段或将假字段写入缓存污染知识库
         raise FileNotFoundError(

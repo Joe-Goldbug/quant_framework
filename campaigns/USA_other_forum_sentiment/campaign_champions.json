@@ -1,0 +1,111 @@
+{
+  "campaign_metadata": {
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "primary_dataset": "forum_sentiment",
+    "pyramid": "USA/D1/OTHER",
+    "pyramid_multiplier": 1.4,
+    "total_batches_simulated": 11,
+    "total_alphas_simulated": 88,
+    "status": "COMPLETED_PRODUCTION_READY"
+  },
+  "grand_champion": {
+    "alpha_id": "LLM5zxla",
+    "seed_id": "e756njNE",
+    "name": "Quantile_Dispersion_Occam_Champion",
+    "color": "BLUE",
+    "code": "group_rank(reverse(ts_quantile(ts_backfill(divide(vec_stddev(vader_mean_sentiment_value), vec_avg(common_word_frequency_count)), 30), 250)), sector)",
+    "settings": {
+      "instrumentType": "EQUITY",
+      "region": "USA",
+      "universe": "TOP1000",
+      "delay": 1,
+      "decay": 85,
+      "neutralization": "CROWDING",
+      "truncation": 0.05,
+      "pasteurization": "ON",
+      "unitHandling": "VERIFY",
+      "nanHandling": "ON",
+      "maxTrade": "OFF",
+      "maxPosition": "OFF",
+      "language": "FASTEXPR"
+    },
+    "metrics": {
+      "sharpe": 1.63,
+      "fitness": 1.18,
+      "turnover": 0.1208,
+      "returns": 0.0652,
+      "margin_bps": 10.79,
+      "drawdown": 0.0404,
+      "two_year_sharpe": 2.24,
+      "sub_universe_sharpe": 1.37,
+      "investability_sharpe": 1.66,
+      "investability_fitness": 1.17,
+      "long_count": 534,
+      "short_count": 502,
+      "pnl_usd": 6504181
+    },
+    "correlation": {
+      "prod_corr": 0.5638,
+      "prod_corr_pass": true,
+      "self_corr": 0.2191,
+      "self_corr_pass": true,
+      "max_pairwise_vs_pool": 0.0968,
+      "admissible": true
+    },
+    "yearly_stats_summary": {
+      "win_rate_years": "10/10 (100%)",
+      "year_2023_sharpe": 1.23,
+      "year_2023_returns": 0.0458,
+      "year_2023_pnl_usd": 457953,
+      "year_2023_long_count": 528,
+      "year_2023_short_count": 515,
+      "year_2023_turnover": 0.0882
+    },
+    "gates": {
+      "fail_count": 0,
+      "fails": [],
+      "ra_failed": false,
+      "ppa_failed": false,
+      "pyramid_multipliers": [
+        {
+          "name": "USA/D1/OTHER",
+          "multiplier": 1.4
+        }
+      ]
+    }
+  },
+  "runner_up_champions": [
+    {
+      "rank": 2,
+      "alpha_id": "wpQ9GVz2",
+      "name": "Dual_Lexicon_Resonance_wpQ9GVz2",
+      "code": "group_rank(reverse(ts_quantile(ts_backfill(divide(add(vec_stddev(vader_mean_sentiment_value), vec_stddev(loughran_mcdonald_sentiment_score)), vec_avg(common_word_frequency_count)), 30), 250)), sector)",
+      "sharpe": 1.61,
+      "fitness": 1.15,
+      "turnover": 0.1190,
+      "returns": 0.0641,
+      "margin_bps": 10.77,
+      "drawdown": 0.0407,
+      "two_year_sharpe": 2.14,
+      "prod_corr": 0.5427,
+      "self_corr": 0.2012,
+      "status": "PASS_0_FAIL"
+    },
+    {
+      "rank": 3,
+      "alpha_id": "78LomVQL",
+      "name": "Sector_Neutralized_Dual_78LomVQL",
+      "code": "group_rank(group_neutralize(reverse(ts_quantile(ts_backfill(divide(add(vec_stddev(vader_mean_sentiment_value), vec_stddev(loughran_mcdonald_sentiment_score)), vec_avg(common_word_frequency_count)), 30), 250)), sector), market)",
+      "sharpe": 1.62,
+      "fitness": 1.16,
+      "turnover": 0.1188,
+      "returns": 0.0646,
+      "margin_bps": 10.87,
+      "drawdown": 0.0412,
+      "two_year_sharpe": 2.17,
+      "status": "PASS_0_FAIL"
+    }
+  ]
+}

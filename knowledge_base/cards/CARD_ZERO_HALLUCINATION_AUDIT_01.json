@@ -1,0 +1,15 @@
+{
+  "card_id": "CARD_ZERO_HALLUCINATION_AUDIT_01",
+  "tag": "zero_hallucination_api_audit",
+  "domain": "audit_and_verification",
+  "title": "真实 API 穿透审计与逐年表现零幻觉协议 (Zero-Hallucination Audit)",
+  "one_line": "汇报逐年数据必须真实调用并解析 /recordsets/yearly-stats 与 is.checks JSON；严禁插值估算与文本幻觉，硬性断言 0 FAIL 且 2023 Sharpe >= +0.50。",
+  "symptom": "汇报模块在未拉取平台底层 yearly-stats 时，仅凭全样本指标主观臆测逐年全胜 (例如将 2023 真实为 -0.17 且存在 1 FAIL 的变体虚假汇报为 2023 Sharpe +0.74、0 FAIL)，引发致命研究误导与生产事故。",
+  "rules": [
+    "硬门禁断言：只有当 /alphas/{id} 接口返回的 is.sharpe >= 1.58、is.fitness >= 1.00 且 is.checks 数组中所有项 result != 'FAIL' (即 fail_num == 0) 时，才允许在报告中标记为 PASS / 可提交。",
+    "逐年数据强制取证：输出任何逐年表格前，必须真实调用并解析 /alphas/{id}/recordsets/yearly-stats 接口 JSON，严禁任何估算或插值。",
+    "压力测试年硬性要求：对于 2023 等数据发生跃迁的年份，真实 Sharpe 必须 >= +0.50，多空持仓必须保持对称 (如 |Long - Short| < 30)，换手率稳定，严禁单边偏斜。",
+    "相关性准入验证：正式入池前必须调用 check_self_correlation 与 pool_check 接口，确保 self_corr < 0.70、prod_corr < 0.70 且与候选池最大相关性 < 0.40。"
+  ],
+  "prescription_recipe": "严格编写 Python 脚本解析 API 返回值，真实穿透审计 LLM5zxla：全样本 Sharpe 1.63，Fitness 1.18，checks.fail = [] (0 FAIL)，2023 真实 Sharpe +1.23，10 年真实 PnL 全正，相关性自审计完全过门。"
+}

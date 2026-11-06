@@ -1,0 +1,87 @@
+{
+  "batch": 12,
+  "family": "turnover_lever_attack_on_margin_deadline",
+  "hypothesis": "波次 12: 只攻 Margin 死线这一个约束。E3 的算术恒等式 margin_bps = returns/turnover*20 表明 margin>=10bps 等价于 returns>=0.5*turnover, 所以只要在保住收益的前提下把换手压下来, Margin 就能过线。E1/E2 已锁定冠军核心 = multiply(r20marsi_ret, r20marsi_prob_5) + group_zscore 外层 (Sh0.81/Mgn7.46bps/RNS1.30)。本波 8 槽位固定该核心, 只换唯一的换手杠杆, 构成受控实验: (a) ts_target_tvr_decay 显式目标换手 target_tvr=0.15/0.10 (平台自带的 'Tune ts_decay to have a turnover equal to a certain target', 且本仓库已有生产 alpha 用 target_tvr=0.20); (b) ts_decay_exp_window 指数衰减 (几何权重而非平坦平均, 比 ts_mean(26) 温和得多); (c) ts_decay_linear 线性衰减; (d) hump 单参数形式 (平台对 hump 只接受 1 个位置参数, hump(x,0.01) 会被拒); (e) 换置信腿 (prob_3) 与换方向腿 (oth566_return + prob_2) 的稳健性对照。预期: 若某杠杆在 Sharpe 保持 >=1.2 的前提下把 turnover 从 10.5% 压到 <=6%, Margin 即突破 10bps。",
+  "items": [
+    {
+      "id": "w12_tvr15",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "换手杠杆 (a): 显式把换手目标设为 15%。若 Sharpe 保住而 returns/turnover 比值上升, Margin 过线。"
+    },
+    {
+      "id": "w12_tvr10",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.10), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "换手杠杆 (a) 更激进档: target_tvr=10%, 与 15% 配对以定位最优点。"
+    },
+    {
+      "id": "w12_dexp10",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 10, factor=0.5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "换手杠杆 (b): 指数衰减 (10 日, factor 0.5)。几何权重保留了近期信号的相对优势, 而 ts_mean(26) 是平坦平均。"
+    },
+    {
+      "id": "w12_dexp20",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "换手杠杆 (b) 长窗档: 20 日 factor 0.7, 与 10 日档配对做窗口/衰减强度双维扫描。"
+    },
+    {
+      "id": "w12_dlin10",
+      "expr": "group_zscore(ts_decay_linear(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 10), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "换手杠杆 (c): 线性衰减 10 日, 作为指数衰减的对照 (几何 vs 线性权重)。"
+    },
+    {
+      "id": "w12_hump1",
+      "expr": "group_zscore(hump(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5)), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "why": "换手杠杆 (d): hump 单参数形式。平台对 hump 只接受 1 个位置参数 —— 双参数形式已被平台以 'Invalid number of inputs : 2' 拒绝, 本槽改用单参数。"
+    },
+    {
+      "id": "w12_p3_tvr15",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_3), target_tvr=0.15), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_3"
+      ],
+      "why": "稳健性对照: 把置信腿从 prob_5 (1 用户) 换成 prob_3 (4 用户) 后再施加最优换手杠杆, 检验结果不依赖特定信念口径。"
+    },
+    {
+      "id": "w12_ret2_tvr15",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_return, group_rank(oth566_prob_2, industry)), target_tvr=0.15), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ],
+      "why": "跨模型稳健性对照: 换方向腿为 2 日期的 oth566_return (39 用户) + 2 日置信 (1 用户), 检验同一机制在另一预测期限上是否同样成立 —— 若成立则机制普适, 若不成立则 other566 的 alpha 高度依赖 20 日期限。"
+    }
+  ]
+}

@@ -47,6 +47,8 @@ class FieldCrowdingProfiler:
         self._pct: Dict[str, float] = {}
         self._alpha_count: Dict[str, float] = {}
         self._coverage: Dict[str, float] = {}
+        self.min_anchor_coverage: float = MIN_ANCHOR_COVERAGE
+        self.min_normalizer_coverage: float = MIN_NORMALIZER_COVERAGE
         self._build()
 
     # ---------------- 基础解析 ----------------
@@ -92,6 +94,20 @@ class FieldCrowdingProfiler:
             rank = bisect.bisect_left(sorted_acs, ac) / float(n)
             self._pct[name] = round(rank, 4)
 
+        # 自适应归一锚与主锚覆盖率门槛 (防止在另类/非美数据集上因无 >= 0.80 字段导致全军覆没)
+        all_covs = sorted(self._coverage.values())
+        if all_covs:
+            high_cov_count = sum(1 for c in all_covs if c >= MIN_NORMALIZER_COVERAGE)
+            if high_cov_count < 2:
+                # 覆盖率前 25% 分位数 (75th percentile)
+                pct_75_idx = min(int(len(all_covs) * 0.75), len(all_covs) - 1)
+                pct_75_cov = all_covs[pct_75_idx]
+                self.min_normalizer_coverage = max(0.40, pct_75_cov)
+                # 若主锚固定门槛超过中位数，也动态同步下调
+                med_cov = all_covs[len(all_covs) // 2]
+                if self.min_anchor_coverage > med_cov:
+                    self.min_anchor_coverage = max(0.15, round(med_cov * 0.8, 2))
+
     @property
     def has_crowding_data(self) -> bool:
         """数据集中是否存在任何 alpha_count 画像 (全部缺失时无法执行铁律 A 校验)"""
@@ -119,11 +135,11 @@ class FieldCrowdingProfiler:
 
     def is_cold_anchor(self, name: str) -> bool:
         """主锚候选: 低拥挤 (后 40%) 且覆盖率达标"""
-        return self.tier(name) == "COLD" and self.coverage(name) >= MIN_ANCHOR_COVERAGE
+        return self.tier(name) == "COLD" and self.coverage(name) >= self.min_anchor_coverage
 
     def is_scale_anchor(self, name: str) -> bool:
         """归一锚候选: 高覆盖度内生总量字段"""
-        return self.coverage(name) >= MIN_NORMALIZER_COVERAGE
+        return self.coverage(name) >= self.min_normalizer_coverage
 
     def role_hint(self, name: str) -> str:
         cold = self.is_cold_anchor(name)
@@ -161,12 +177,12 @@ class FieldCrowdingProfiler:
             hot_in_use = [f for f in used if self.tier(f) == "HOT"]
             issues.append(
                 "缺少低拥挤度主锚字段 (要求 coverage >= %.2f 且 alpha_count 位于数据集后 40%%)"
-                % MIN_ANCHOR_COVERAGE
+                % self.min_anchor_coverage
                 + ("；当前全是拥挤热点: %s" % hot_in_use if hot_in_use else "")
             )
         if normalizer is None:
             issues.append(
-                "缺少高覆盖度总量归一锚 (要求 coverage >= %.2f)" % MIN_NORMALIZER_COVERAGE
+                "缺少高覆盖度总量归一锚 (要求 coverage >= %.2f)" % self.min_normalizer_coverage
             )
 
         cold_pct = self.percentile(cold_anchor) if cold_anchor else None
@@ -218,11 +234,11 @@ class FieldCrowdingProfiler:
         ]
         scales = [n for n in self._pct if self.is_scale_anchor(n)]
 
-        # 主锚优先: 覆盖率处于 0.25~0.85 的细分业务流 (过高的覆盖率往往是大路货总量字段)
+        # 主锚优先: 覆盖率处于 min_anchor_coverage~0.85 的细分业务流 (过高的覆盖率往往是大路货总量字段)
         def _cold_rank(n):
             cov = self.coverage(n)
             pct = self.percentile(n) or 0.0
-            in_band = 0 if MIN_ANCHOR_COVERAGE <= cov <= 0.85 else 1
+            in_band = 0 if self.min_anchor_coverage <= cov <= max(0.85, self.min_normalizer_coverage) else 1
             return (in_band, pct, abs(cov - 0.5))
 
         # 归一锚优先: 覆盖率最高、且本身被广泛使用 (alpha_pct 高) 的内生总量字段

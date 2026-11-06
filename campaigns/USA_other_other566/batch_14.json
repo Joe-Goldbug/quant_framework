@@ -1,0 +1,95 @@
+{
+  "batch": 14,
+  "family": "revision_channel_without_tsm_mean",
+  "hypothesis": "波次 14: 重新检验「预测修正」通道 —— 波次 2 对该机制的否定结论无效, 因为那 8 个槽位全部裹了 ts_mean(26), 而波次 11 已证明 ts_mean 在本数据集是信号杀手 (n=54 meanSh 0.292 vs n=8 meanSh 0.836)。更关键的是算术诊断: fitness = sharpe*sqrt(returns/max(turnover,0.125)), 要 fitness>=1.0 且 sharpe>=1.58, 在 turnover=12.5% 时需要 returns>=31% (年化), 对 1000 成分股的多空组合不可达 ⇒ **真正的死线是 Fitness 而非 Margin**, 必须提升收益本身而非继续压换手。而在本数据集里唯一能大幅提升收益且降低换手的通道就是**预测修正 (ts_delta)**: 模型观点的意外变化是信息冲击的机器代理, 修正量的收益/换手比远高于水平值 (水平值每天重发, 修正量只在观点真正变动时非零)。本波 8 槽位: (a) ts_delta 在 1/3/5/10 日窗口上的原始修正 × 置信度; (b) ts_rank 尺度自由化的修正 (只保留修正的相对次序, 抑制极端修正值主导); (c) ts_zscore 尺度自由化的修正; (d) 以**修正量**为条件的 trade_when 门控 (与波次 7 对水平量门控不同, 此处门控可以真正触发); (e) L5 深订单簿模型的修正复制 (跨模型稳健性); (f) 2 日期限模型 (oth566_return + prob_2) 的修正复制; (g) decay=0 对照。",
+  "items": [
+    {
+      "id": "w14_rev1",
+      "expr": "group_zscore(multiply(ts_delta(oth566_r20marsi_ret, 1), oth566_r20marsi_prob_5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "修正通道 (a) 最快档: 1 日修正 × 5 日置信度, group_zscore 外层保留幅度。预期收益/换手比最高。"
+    },
+    {
+      "id": "w14_rev3",
+      "expr": "group_zscore(multiply(ts_delta(oth566_r20marsi_ret, 3), oth566_r20marsi_prob_5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "修正通道 (a) 3 日档: 与 1 日/5 日配对, 定位信息冲击被市场吸收的速度。"
+    },
+    {
+      "id": "w14_rev5",
+      "expr": "group_zscore(multiply(ts_delta(oth566_r20marsi_ret, 5), oth566_r20marsi_prob_5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "修正通道 (a) 5 日档: 波次 2 的 b2_r5 在 ts_mean(26) 包裹下只有 Sh 0.xx, 本槽剥离该包裹后重测。"
+    },
+    {
+      "id": "w14_rev10",
+      "expr": "group_zscore(multiply(ts_delta(oth566_r20marsi_ret, 10), oth566_r20marsi_prob_5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "修正通道 (a) 10 日档: 最长修正窗口, 捕捉被市场缓慢吸收的持久观点变化。"
+    },
+    {
+      "id": "w14_rev_rank",
+      "expr": "group_zscore(multiply(ts_rank(ts_delta(oth566_r20marsi_ret, 5), 120), oth566_r20marsi_prob_5), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "修正通道 (b) 尺度自由化: ts_rank 把修正量转成 120 日内的相对次序, 抑制个别极端修正值主导, 同时保留方向信息。"
+    },
+    {
+      "id": "w14_rev_z",
+      "expr": "group_zscore(multiply(ts_zscore(ts_delta(oth566_r20marsi_ret, 5), 60), oth566_r20marsi_prob_5), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "修正通道 (c) 尺度自由化: ts_zscore 定心定标修正量, 与 ts_rank 版配对 (次序 vs 标准分)。"
+    },
+    {
+      "id": "w14_rev_l5",
+      "expr": "group_zscore(multiply(ts_delta(oth566_l5r20gasfculr_ret, 5), group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_l5r20gasfculr_prob_pattern"
+      ],
+      "decay": 0,
+      "why": "修正通道 (e) 跨模型复制: 把同一机制搬到 Level5 深订单簿模型 (与 R20MaRsi 信息集完全正交)。若两者都出信号, 说明「修正即信息冲击」是数据集层面的普遍机制而非单模型偶然。"
+    },
+    {
+      "id": "w14_rev_gate",
+      "expr": "group_zscore(trade_when(not_equal(ts_delta(oth566_r20marsi_ret, 1), 0), multiply(ts_delta(oth566_r20marsi_ret, 1), oth566_r20marsi_prob_5), -1), industry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "修正通道 (d) 门控: 以修正量本身为条件 —— 预测未变动时冻结持仓。与波次 7 的水平门控不同, 此处条件可在修正序列上真正触发, 预期把换手压到 10-15% 且保住收益。"
+    }
+  ]
+}

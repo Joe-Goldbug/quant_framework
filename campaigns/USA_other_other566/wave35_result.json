@@ -1,0 +1,28 @@
+{
+  "wave": 35,
+  "multisim": "1hUCqh1B4jSa53kGBF1D9U",
+  "date_completed": "2026-11-06",
+  "settings": {"neutralization": "STATISTICAL", "decay": 0, "truncation": 0.08, "universe": "TOP1000"},
+  "slots": [
+    {"slot": 1, "tag": "composite_tvr12", "alpha_id": "2rAXnAmw", "sharpe": 1.20, "fitness": 0.55, "turnover": 0.1264, "returns": 0.0262, "drawdown": 0.0428, "margin_bps": 4.15, "two_year_sharpe": 1.76, "sub_universe_sharpe": 0.68, "cluster": 0.82, "n_fail": 2, "verdict": "KILL", "reason": "三杠杆复合互相拖累 — Sh 从 1.27 降到 1.20，但 Cluster 压到 0.82；证明 signed_power(0.5) 与 Sharpe 是 tradeoff"},
+    {"slot": 2, "tag": "composite_tvr10", "alpha_id": "xAr2mrbp", "sharpe": 1.12, "fitness": 0.49, "turnover": 0.1095, "returns": 0.0242, "drawdown": 0.037, "margin_bps": 4.42, "two_year_sharpe": 1.69, "sub_universe_sharpe": 0.66, "cluster": 0.70, "n_fail": 2, "verdict": "KILL", "reason": "tvr=0.10 档 Sh 继续降到 1.12，Cluster 0.70"},
+    {"slot": 3, "tag": "composite_tvr08", "alpha_id": "3qoknojQ", "sharpe": 0.91, "fitness": 0.36, "turnover": 0.0930, "returns": 0.0193, "drawdown": 0.0362, "margin_bps": 4.15, "two_year_sharpe": 1.22, "sub_universe_sharpe": 0.52, "cluster": 0.44, "n_fail": 3, "verdict": "KILL", "reason": "tvr=0.08 档 Sharpe 死透 (0.91)，但 Cluster 0.44 是战役最低 — 证明 signed_power(0.5) 是 Cluster-Sharpe tradeoff 工具"},
+    {"slot": 4, "tag": "prob2_consensus_noTailShrink", "alpha_id": "e75Vq56g", "sharpe": 1.22, "fitness": 0.57, "turnover": 0.1373, "returns": 0.030, "drawdown": 0.0486, "margin_bps": 4.37, "two_year_sharpe": 1.88, "sub_universe_sharpe": 0.68, "cluster": 0.92, "n_fail": 2, "verdict": "NEUTRAL", "reason": "prob^2 + consensus 不带 tail_shrink — Sh 1.22 / Cluster 0.92，证明 signed_power(0.5) 才是 Cluster 压低主因"},
+    {"slot": 5, "tag": "consensus_tailShrink_noProb2", "alpha_id": "GrWK3WgG", "sharpe": 1.23, "fitness": 0.57, "turnover": 0.1260, "returns": 0.0268, "drawdown": 0.0429, "margin_bps": 4.25, "two_year_sharpe": 1.83, "sub_universe_sharpe": 0.72, "cluster": 0.92, "n_fail": 2, "verdict": "NEUTRAL", "reason": "consensus + tail_shrink 不带 prob^2 — Sh 1.23 / Cluster 0.92，prob^2 主要贡献 2Y Sharpe 而非 Cluster"},
+    {"slot": 6, "tag": "prob_pattern_cold", "alpha_id": "d5W3lWKv", "sharpe": -1.41, "fitness": -0.69, "turnover": 0.1393, "returns": -0.0329, "drawdown": 0.3384, "margin_bps": -4.72, "two_year_sharpe": -1.70, "sub_universe_sharpe": -0.94, "cluster": -1.05, "n_fail": 4, "verdict": "KEEP_REVERSED", "reason": "★关键发现★ l5r20gasfculr_prob_pattern Sharpe -1.41 是强反向信号 — reverse 后直接 +1.41！可能成为破 1.58 门的新腿"},
+    {"slot": 7, "tag": "multil3_prob_pattern", "alpha_id": "LLMmlMMa", "sharpe": -1.21, "fitness": -0.54, "turnover": 0.1405, "returns": -0.0278, "drawdown": 0.2868, "margin_bps": -3.96, "two_year_sharpe": -1.65, "sub_universe_sharpe": -0.61, "cluster": -0.87, "n_fail": 3, "verdict": "KEEP_REVERSED", "reason": "multil3_prob_pattern Sharpe -1.21 同向反向信号 — reverse 后 +1.21"},
+    {"slot": 8, "tag": "prob_power3", "alpha_id": "0mYNKYYp", "sharpe": 1.26, "fitness": 0.58, "turnover": 0.1444, "returns": 0.0311, "drawdown": 0.0529, "margin_bps": 4.31, "two_year_sharpe": 1.98, "sub_universe_sharpe": 0.66, "cluster": 0.87, "n_fail": 3, "verdict": "KEEP_AUX", "reason": "2Y Sharpe 1.98 全战役最高；但 Sub-Universe 0.66 < 0.67 卡线 FAIL。prob^3 比 prob^2 的 2Y 更高 (1.98 vs 1.95) 但边际递减"}
+  ],
+  "critical_discovery": {
+    "finding": "oth566_l5r20gasfculr_prob_pattern 和 oth566_multil3_prob_pattern 都是强反向信号",
+    "sharpe_negative": [-1.41, -1.21],
+    "sharpe_if_reversed": [+1.41, +1.21],
+    "implication": "reverse(prob_pattern) 可能是战役最强的单字段腿，且 0u/0a 用户极低拥挤",
+    "next_direction": "wave36 主攻 reverse(prob_pattern) × r20marsi_ret 复合结构"
+  },
+  "falsified_mechanisms": [
+    "三杠杆乘性复合 (prob^2 + signed_power(0.5) + consensus_7030) — 互相拖累",
+    "signed_power(0.5) 作 Cluster 压低器 — 与 Sharpe 强 tradeoff",
+    "tvr<0.12 进一步压换手 — Sharpe 同步下降 (0.10→1.12, 0.08→0.91)"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "wave": 48,
+  "theme": "settings-axis sweep on news-calm champion nc_w18 (A1Vv1xxg): decay 12/16, truncation 0.05, and combo",
+  "constraints": "same code as champion, settings-only deltas; >=2 exprs per multisim batch requirement satisfied by pairing",
+  "expressions": [
+    {
+      "tag": "nc18_d12",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)",
+      "settings": {"decay": 12},
+      "note": "decay 8->12: Wave31 law says decay 4->8 adds +0.8~1.2bps Margin with no 2Y side effect; probe 12 on the news-calm core."
+    },
+    {
+      "tag": "nc18_d16",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)",
+      "settings": {"decay": 16},
+      "note": "decay 16 probe: diminishing returns / smoothing drag boundary."
+    },
+    {
+      "tag": "nc18_t05",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)",
+      "settings": {"truncation": 0.05},
+      "note": "truncation 0.025->0.05: allows more concentrated tail weights, targets Returns/Margin/CLUSTER lift; watch CONCENTRATED_WEIGHT check."
+    },
+    {
+      "tag": "nc18_d12_t05",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)",
+      "settings": {"decay": 12, "truncation": 0.05},
+      "note": "combo of both settings levers."
+    },
+    {
+      "tag": "nc18_t01",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)",
+      "settings": {"truncation": 0.01},
+      "note": "truncation 0.01: stricter cap, diversification extreme — direction control for the truncation axis."
+    },
+    {
+      "tag": "nc16_d12",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 16), subindustry), 0.5), 2)",
+      "settings": {"decay": 12},
+      "note": "w16 (island member, PC 0.6906) x decay12: second-best island point with the best settings lever."
+    }
+  ]
+}

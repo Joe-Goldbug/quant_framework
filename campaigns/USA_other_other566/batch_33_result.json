@@ -1,0 +1,589 @@
+{
+  "batch": 33,
+  "alpha_results": [
+    {
+      "alpha_id": "A1VQGZpe",
+      "item_id": "x33_slow_only_t03",
+      "code": "group_zscore(ts_target_tvr_decay(subtract(0.5, rank(diff_current_vs_hist_pe_ratio)), target_tvr=0.03), subindustry)",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "nanHandling": "ON",
+        "language": "FASTEXPR"
+      },
+      "metrics": {
+        "sharpe": 0.89,
+        "fitness": 0.38,
+        "turnover": 0.0746,
+        "returns": 0.0226,
+        "drawdown": 0.0499,
+        "margin": 0.000606,
+        "sub_universe_sharpe": 0.72,
+        "two_year_sharpe": 1.24,
+        "cluster_test": 0.55,
+        "longCount": 500,
+        "shortCount": 500,
+        "pnl": 0,
+        "bookSize": 20000000
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "limit": 1.58,
+            "value": 0.89
+          },
+          {
+            "name": "LOW_FITNESS",
+            "limit": 1.58,
+            "value": 0.89
+          },
+          {
+            "name": "LOW_2Y_SHARPE",
+            "limit": 1.58,
+            "value": 0.89
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": 0.55,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.38,
+            "limit": 1.0
+          },
+          {
+            "name": "LOW_2Y_SHARPE",
+            "value": 1.24,
+            "limit": 1.58
+          }
+        ]
+      }
+    },
+    {
+      "alpha_id": "LLM5Gav2",
+      "item_id": "x33_c05_t03",
+      "code": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_pe_ratio)), multiply(0.5, subtract(rank(oth566_r20marsi_ret), 0.5))), target_tvr=0.03), subindustry)",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "nanHandling": "ON",
+        "language": "FASTEXPR"
+      },
+      "metrics": {
+        "sharpe": 0.77,
+        "fitness": 0.3,
+        "turnover": 0.0712,
+        "returns": 0.0186,
+        "drawdown": 0.0532,
+        "margin": 0.000521,
+        "sub_universe_sharpe": 0.56,
+        "two_year_sharpe": 1.22,
+        "cluster_test": 0.42,
+        "longCount": 500,
+        "shortCount": 500,
+        "pnl": 0,
+        "bookSize": 20000000
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "limit": 1.58,
+            "value": 0.77
+          },
+          {
+            "name": "LOW_FITNESS",
+            "limit": 1.58,
+            "value": 0.77
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "limit": 1.58,
+            "value": 0.77
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": 0.42,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.3,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 1.22,
+            "limit": 1.58
+          }
+        ]
+      }
+    },
+    {
+      "alpha_id": "A1VQGZAR",
+      "item_id": "x33_c10_t03",
+      "code": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_pe_ratio)), multiply(1.0, subtract(rank(oth566_r20marsi_ret), 0.5))), target_tvr=0.03), subindustry)",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "nanHandling": "ON",
+        "language": "FASTEXPR"
+      },
+      "metrics": {
+        "sharpe": 0.71,
+        "fitness": 0.26,
+        "turnover": 0.0688,
+        "returns": 0.0167,
+        "drawdown": 0.0507,
+        "margin": 0.000485,
+        "sub_universe_sharpe": 0.53,
+        "two_year_sharpe": 1.07,
+        "cluster_test": 0.27,
+        "longCount": 500,
+        "shortCount": 500,
+        "pnl": 0,
+        "bookSize": 20000000
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "limit": 1.58,
+            "value": 0.71
+          },
+          {
+            "name": "LOW_FITNESS",
+            "limit": 1.58,
+            "value": 0.71
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "limit": 1.58,
+            "value": 0.71
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": 0.27,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.26,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 1.07,
+            "limit": 1.58
+          }
+        ]
+      }
+    },
+    {
+      "alpha_id": "RREAmQgn",
+      "item_id": "x33_c20_t03",
+      "code": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_pe_ratio)), multiply(2.0, subtract(rank(oth566_r20marsi_ret), 0.5))), target_tvr=0.03), subindustry)",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "nanHandling": "ON",
+        "language": "FASTEXPR"
+      },
+      "metrics": {
+        "sharpe": 0.6,
+        "fitness": 0.2,
+        "turnover": 0.0656,
+        "returns": 0.0136,
+        "drawdown": 0.0536,
+        "margin": 0.000414,
+        "sub_universe_sharpe": 0.38,
+        "two_year_sharpe": 0.77,
+        "cluster_test": 0.16,
+        "longCount": 500,
+        "shortCount": 500,
+        "pnl": 0,
+        "bookSize": 20000000
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "limit": 1.58,
+            "value": 0.6
+          },
+          {
+            "name": "LOW_FITNESS",
+            "limit": 1.58,
+            "value": 0.6
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "limit": 1.58,
+            "value": 0.6
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": 0.16,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.2,
+            "limit": 1.0
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 0.77,
+            "limit": 1.58
+          }
+        ]
+      }
+    },
+    {
+      "alpha_id": "VkxdGjWY",
+      "item_id": "x33_c10_tvrfast_t03",
+      "code": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_pe_ratio)), multiply(1.0, subtract(rank(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08)), 0.5))), target_tvr=0.03), subindustry)",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "nanHandling": "ON",
+        "language": "FASTEXPR"
+      },
+      "metrics": {
+        "sharpe": 0.39,
+        "fitness": 0.1,
+        "turnover": 0.0641,
+        "returns": 0.0088,
+        "drawdown": 0.0511,
+        "margin": 0.000275,
+        "sub_universe_sharpe": 0.07,
+        "two_year_sharpe": -0.19,
+        "cluster_test": -0.18,
+        "longCount": 500,
+        "shortCount": 500,
+        "pnl": 0,
+        "bookSize": 20000000
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "limit": 1.58,
+            "value": 0.39
+          },
+          {
+            "name": "LOW_FITNESS",
+            "limit": 1.58,
+            "value": 0.39
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "limit": 1.58,
+            "value": 0.39
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "limit": 1.58,
+            "value": 0.39
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": -0.18,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.1,
+            "limit": 1.0
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "value": 0.07,
+            "limit": 0.2
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": -0.19,
+            "limit": 1.58
+          }
+        ]
+      }
+    },
+    {
+      "alpha_id": "WjOLAQ5G",
+      "item_id": "x33_c10_tvrfast_t05",
+      "code": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_pe_ratio)), multiply(1.0, subtract(rank(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08)), 0.5))), target_tvr=0.05), subindustry)",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "nanHandling": "ON",
+        "language": "FASTEXPR"
+      },
+      "metrics": {
+        "sharpe": 0.62,
+        "fitness": 0.21,
+        "turnover": 0.0821,
+        "returns": 0.0142,
+        "drawdown": 0.0518,
+        "margin": 0.000345,
+        "sub_universe_sharpe": 0.05,
+        "two_year_sharpe": 0.14,
+        "cluster_test": 0.07,
+        "longCount": 500,
+        "shortCount": 500,
+        "pnl": 0,
+        "bookSize": 20000000
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "limit": 1.58,
+            "value": 0.62
+          },
+          {
+            "name": "LOW_FITNESS",
+            "limit": 1.58,
+            "value": 0.62
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "limit": 1.58,
+            "value": 0.62
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "limit": 1.58,
+            "value": 0.62
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": 0.07,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.21,
+            "limit": 1.0
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "value": 0.05,
+            "limit": 0.2
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 0.14,
+            "limit": 1.58
+          }
+        ]
+      }
+    },
+    {
+      "alpha_id": "YP1xvKeM",
+      "item_id": "x33_pee_c10_t03",
+      "code": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(1.0, subtract(rank(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08)), 0.5))), target_tvr=0.03), subindustry)",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "nanHandling": "ON",
+        "language": "FASTEXPR"
+      },
+      "metrics": {
+        "sharpe": 0.37,
+        "fitness": 0.1,
+        "turnover": 0.0643,
+        "returns": 0.0084,
+        "drawdown": 0.0508,
+        "margin": 0.000262,
+        "sub_universe_sharpe": 0.13,
+        "two_year_sharpe": -0.17,
+        "cluster_test": -0.22,
+        "longCount": 500,
+        "shortCount": 500,
+        "pnl": 0,
+        "bookSize": 20000000
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "limit": 1.58,
+            "value": 0.37
+          },
+          {
+            "name": "LOW_FITNESS",
+            "limit": 1.58,
+            "value": 0.37
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "limit": 1.58,
+            "value": 0.37
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "limit": 1.58,
+            "value": 0.37
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": -0.22,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.1,
+            "limit": 1.0
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "value": 0.13,
+            "limit": 0.2
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": -0.17,
+            "limit": 1.58
+          }
+        ]
+      }
+    },
+    {
+      "alpha_id": "2rAjpzYx",
+      "item_id": "x33_ey_c10_t03",
+      "code": "group_zscore(ts_target_tvr_decay(add(subtract(rank(earnings_yield_industry_percentile_fy1), 0.5), multiply(1.0, subtract(rank(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08)), 0.5))), target_tvr=0.03), subindustry)",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "STATISTICAL",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "nanHandling": "ON",
+        "language": "FASTEXPR"
+      },
+      "metrics": {
+        "sharpe": 0.2,
+        "fitness": 0.04,
+        "turnover": 0.0644,
+        "returns": 0.0046,
+        "drawdown": 0.0818,
+        "margin": 0.000143,
+        "sub_universe_sharpe": -0.28,
+        "two_year_sharpe": 0.52,
+        "cluster_test": -0.34,
+        "longCount": 500,
+        "shortCount": 500,
+        "pnl": 0,
+        "bookSize": 20000000
+      },
+      "checks": {
+        "fail": [
+          {
+            "name": "LOW_SHARPE",
+            "limit": 1.58,
+            "value": 0.2
+          },
+          {
+            "name": "LOW_FITNESS",
+            "limit": 1.58,
+            "value": 0.2
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "limit": 1.58,
+            "value": 0.2
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "limit": 1.58,
+            "value": 0.2
+          }
+        ],
+        "warning": [
+          {
+            "name": "CLUSTER_TEST",
+            "value": -0.34,
+            "limit": 1.58
+          },
+          {
+            "name": "LOW_FITNESS",
+            "value": 0.04,
+            "limit": 1.0
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "value": -0.28,
+            "limit": 0.2
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "value": 0.52,
+            "limit": 1.58
+          }
+        ]
+      }
+    }
+  ]
+}

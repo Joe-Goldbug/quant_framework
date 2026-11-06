@@ -1,0 +1,28 @@
+{
+  "wave": 36,
+  "multisim": "2w3TJn5454npcF8E8cg09YV",
+  "date_completed": "2026-11-06",
+  "settings": {"neutralization": "STATISTICAL", "decay": 0, "truncation": 0.08, "universe": "TOP1000"},
+  "form": "rank(reverse(x)) — reverse 必须被 rank 包裹否则单位冲突整批 CANCELLED",
+  "slots": [
+    {"slot": 1, "tag": "rev_l5culr_solo", "alpha_id": "78LvxgVZ", "sharpe": 0.42, "fitness": 0.11, "turnover": 0.1306, "returns": 0.0095, "drawdown": 0.0815, "margin_bps": 1.45, "two_year_sharpe": 1.34, "sub_universe_sharpe": 0.42, "cluster": 0.05, "n_fail": 3, "verdict": "KILL", "reason": "rank(reverse(prob_pattern)) 单独 Sharpe 0.42 — 反转信号需要乘 ret 才有意义，单独不可行"},
+    {"slot": 2, "tag": "rev_multil3_solo", "alpha_id": "E568qoA9", "sharpe": 0.24, "fitness": 0.05, "turnover": 0.1299, "returns": 0.0054, "drawdown": 0.0519, "margin_bps": 0.83, "two_year_sharpe": 0.45, "sub_universe_sharpe": 0.14, "cluster": 0.10, "n_fail": 3, "verdict": "KILL", "reason": "同上 — multil3 单独反转 0.24 更弱"},
+    {"slot": 3, "tag": "rev_l3multi_solo", "alpha_id": "KPJ5nxe8", "sharpe": -0.31, "fitness": -0.07, "turnover": 0.1349, "returns": -0.0073, "drawdown": 0.1139, "margin_bps": -1.09, "two_year_sharpe": 0.01, "sub_universe_sharpe": 0.09, "cluster": 0.10, "n_fail": 3, "verdict": "KILL", "reason": "l3r20gasfmulti_prob_pattern 反转是负信号 — 此字段与其他两个 prob_pattern 方向相反"},
+    {"slot": 4, "tag": "rev_l5_x_ret", "alpha_id": "npvenw0a", "sharpe": 1.38, "fitness": 0.66, "turnover": 0.1403, "returns": 0.0319, "drawdown": 0.0432, "margin_bps": 4.55, "two_year_sharpe": 1.58, "sub_universe_sharpe": 0.96, "cluster": 1.02, "n_fail": 0, "verdict": "CHAMPION", "reason": "★新冠军★ ret × rank(reverse(l5culr_prob_pattern)) — Sh 1.38/Fit 0.66/Mgn 4.55/SubU 0.96，全指标碾压母本 kqNgXQqd (1.27/0.59/4.37/0.72)。0 FAIL，WARNING 仅 LOW_SHARPE/LOW_FITNESS/CLUSTER_TEST/MATCHES_COMPETITION"},
+    {"slot": 5, "tag": "rev_l5_x_ret_x_prob2", "alpha_id": "vR1p5a0Q", "sharpe": 1.34, "fitness": 0.63, "turnover": 0.1437, "returns": 0.0316, "drawdown": 0.043, "margin_bps": 4.40, "two_year_sharpe": 1.65, "sub_universe_sharpe": 0.89, "cluster": 1.01, "n_fail": 0, "verdict": "KEEP", "reason": "prob^2 叠加把 2Y Sharpe 从 1.58 推到 1.65（越线）但 Sh/Fit 略降。备选 — 若需保 2Y 则选它"},
+    {"slot": 6, "tag": "rev_3patterns_eq", "alpha_id": "88REOgg7", "sharpe": 0.19, "fitness": 0.03, "turnover": 0.1341, "returns": 0.0043, "drawdown": 0.0847, "margin_bps": 0.64, "two_year_sharpe": 0.59, "sub_universe_sharpe": 0.30, "cluster": 0.10, "n_fail": 3, "verdict": "KILL", "reason": "三个 prob_pattern 反转等权和 — 因 l3multi 反转是负信号拖累整体"},
+    {"slot": 7, "tag": "rev_l5_plus_consensus", "alpha_id": "MPYeb99L", "sharpe": 1.21, "fitness": 0.56, "turnover": 0.1348, "returns": 0.0287, "drawdown": 0.0376, "margin_bps": 4.25, "two_year_sharpe": 2.25, "sub_universe_sharpe": 0.83, "cluster": 0.83, "n_fail": 2, "verdict": "KEEP_AUX", "reason": "2Y Sharpe 2.25 全战役最高，但 Sh 1.21 + Fit 0.56 不达标。consensus 第三腿叠加 rev_l5 单独（而非 ret×rev_l5）稀释了 Sharpe"},
+    {"slot": 8, "tag": "rev_l5_plus_2day", "alpha_id": "qMLYneeV", "sharpe": 0.45, "fitness": 0.13, "turnover": 0.1306, "returns": 0.0103, "drawdown": 0.0782, "margin_bps": 1.58, "two_year_sharpe": 1.41, "sub_universe_sharpe": 0.44, "cluster": 0.07, "n_fail": 3, "verdict": "KILL", "reason": "rev_l5 + 2 日腿 — 2 日腿与反转信念没有协同"}
+  ],
+  "critical_findings": [
+    "★ prob_pattern 反转必须用 rank(reverse(...)) 形态且必须乘到 ret 上 — 单独反转或加性复合都不可行",
+    "★ ret × rank(reverse(l5culr_prob_pattern)) 击败母本：Sh +0.11 / Fit +0.07 / Mgn +0.18 / SubU +0.24 / FAIL -2",
+    "prob_pattern 反转与 prob_5^2 是可叠加杠杆：2Y 1.58→1.65",
+    "consensus 第三腿如果用加性 rev_l5 而非乘性会稀释 Sharpe 但抬 2Y — 这是不同的机制族"
+  ],
+  "champion_candidates": [
+    {"alpha_id": "npvenw0a", "priority": 1, "reason": "0 FAIL + 全指标优于母本"},
+    {"alpha_id": "vR1p5a0Q", "priority": 2, "reason": "0 FAIL + 2Y 越线"},
+    {"alpha_id": "MPYeb99L", "priority": 3, "reason": "2Y 2.25 全战役最高但 FAIL 2"}
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "batch": 21,
+  "family": "book_shape_operators_to_raise_returns_per_turnover",
+  "hypothesis": "波次 21: 攻击 **收益/换手比** —— 这是 Mgn>=10bps 的直接定义 (margin_bps = returns/turnover*20), 也是全战役唯一还没被真正攻击的量。波次 18/19 已证明: 无论怎么平滑, returns 都被锁在 2.3%~6.2% 而 Sharpe 随换手上升 ⇒ **单位换手的收益不会靠平滑提高**。要提高它必须改变**账本的权重形状**。本战役 21 个波次只用过 group_rank / group_zscore / group_neutralize 三种外层, 它们产生的权重剖面都近似均匀 —— 而 PnL/交易 的大小正取决于权重**集中度**。BRAIN 自带的 `quantile(x, \"gaussian\")` 正是为此设计 (把尾部拉长、中间压缩: 中间区域的预测接近中性, 在那里交易纯属成本), 它是 BRAIN 实践中最常用的 Sharpe 杠杆, 在本战役**从未用过**。本波 8 槽位: (a) 冠军核 (r20marsi 腿) 配 quantile 外层, 在两个 tvr 工作点上; (b) 高 Sharpe 端 dexp20 核配 quantile (Sharpe 1.63 / 2Y 2.45 是全战役最高, 若 quantile 能提 returns 则 Mgn 有望过线); (c) 2 日期腿在它偏好的 INDUSTRY 中性化下配 quantile (该腿 R/TO 最高); (d) truncation 放宽到 0.20 的集中度探针。",
+  "items": [
+    {
+      "id": "w21_q_tvr12",
+      "expr": "quantile(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), driver=\"gaussian\")",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(a) quantile 外层 @ tvr=0.12 (STATISTICAL, 当前 Fitness 峰 Sh1.27/Fit0.59): 若尾部拉长能提高 PnL/交易, 则 returns 上升 ⇒ Mgn 与 Fit 同时改善。这是本波最核心的假设。"
+    },
+    {
+      "id": "w21_q_tvr08",
+      "expr": "quantile(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.08), driver=\"gaussian\")",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(a) quantile 外层 @ tvr=0.08 (Margin 侧): 与上一槽配对定位 quantile 的收益。"
+    },
+    {
+      "id": "w21_q_dexp20",
+      "expr": "quantile(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), driver=\"gaussian\")",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(b) quantile 外层 @ dexp20 高 Sharpe 核 (Sh 1.63 / 2Y 2.45, 0 FAIL): 若 quantile 把收益集中到强信号上, 该核的 Mgn 有望从 1.12 跃升。"
+    },
+    {
+      "id": "w21_q_dexp15",
+      "expr": "quantile(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 15, factor=0.6), driver=\"gaussian\")",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(b) quantile 外层 @ dexp15 核 (Sh 1.62, TO 61.0%): 与 dexp20 版配对。"
+    },
+    {
+      "id": "w21_q_ret2_tvr15_ind",
+      "expr": "quantile(ts_target_tvr_decay(multiply(oth566_return, group_rank(oth566_prob_2, industry)), target_tvr=0.15), driver=\"gaussian\")",
+      "ops": 4,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "(c) 2 日期腿 + quantile + INDUSTRY 中性化: 该腿在 INDUSTRY 下 R/TO 最高 (w12_ret2_tvr15: R 4.84% / TO 12.0% / Mgn 8.03), 且 STATISTICAL 会削掉它的收益 ⇒ 用它偏好的中性化。"
+    },
+    {
+      "id": "w21_q_ret2_tvr12_ind",
+      "expr": "quantile(ts_target_tvr_decay(multiply(oth566_return, group_rank(oth566_prob_2, industry)), target_tvr=0.12), driver=\"gaussian\")",
+      "ops": 4,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "(c) 2 日期腿 + quantile + INDUSTRY @ tvr=0.12: 换手更低的工作点, 目标 R/TO >= 0.5。"
+    },
+    {
+      "id": "w21_q_l3_dexp20",
+      "expr": "quantile(ts_decay_exp_window(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), 20, factor=0.7), driver=\"gaussian\")",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(d) L3 订单簿腿 + quantile: 该腿绝对收益最高 (R 6.22%), 若 quantile 能保住其高收益并改善 R/TO, 它是最可能过 Mgn 线的结构。"
+    },
+    {
+      "id": "w21_dexp20_trunc20",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.2,
+      "why": "(d) 集中度探针: truncation 从 0.08 放宽到 0.20, 允许更集中的账本 ⇒ 每笔交易的 PnL 更大 ⇒ 单位换手收益上升。与 quantile 是两条不同的集中度路径。"
+    }
+  ]
+}

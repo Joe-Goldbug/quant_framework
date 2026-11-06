@@ -1,0 +1,86 @@
+{
+  "wave": 50,
+  "verdict": "WAVE50_REWRITE_CLASS_FALSIFIED",
+  "verdict_revision": {
+    "previous_verdict": "R3_MECHANISM_FALSIFIED / 结构性穷尽确认 / 停止爬山",
+    "revised_at_gmt8": "2026-11-05 01:10:57",
+    "trigger": "① 独立窗口 handoff_crosscheck_2026-11-05.json 的 C1~C6 挑战；② 后台任务 88L4Cu 的 Wave 50 production correlation 最终回传",
+    "ruling": "原结论过度外推，予以降级。Wave 50 的 8 条全部属于同一类干预（相对化 / 中心化 / 长锚替换 / 时序标准化分母 / 外部归一化 / 回归残差后处理），每一条都同时改变了 belief 腿的幅度与符号结构，且无同批种子对照 B0、无一条 Sh>=1.12。因此观测到的是『打散零值结块』与『破坏信号』的混淆效应，只能证伪这一类改写，不能推出『R3 机制本身证伪』，更不能推出『结构性穷尽』。按任务书停止条件（连续 3 波无真进步方可停止），Wave 50 仅为第 1 波，停止判定在协议上不成立，是否继续须由用户裁定。",
+    "self_criticism": "这正是交接书 R1/R2 批评过的认知模式：用单一族动作走到墙角后宣布数据对穷尽。主窗口在给出『结构性不可达』时重复了该模式。"
+  },
+  "baseline": {
+    "alpha_id": "LLMNRnkL",
+    "PC_recalibrated": 0.662,
+    "PC_handoff": 0.6316,
+    "CS_recalculated": 0.6173,
+    "CS_handoff": 0.6605,
+    "rebase_note": "CS 门槛由 0.6605 下降为 0.6173，降幅 100% 来自 PC 口径校准（合规，任务书允许），但方向是放宽；后续每一波表格必须显式标注『threshold re-based to 0.6173 on 2026-11-05 PC calibration』，禁止与历史 0.6605 账本混用。"
+  },
+  "true_progress_criteria": "CS>0.6173 且 PC<=0.66 且 |L-S|<50 且 Sh>=1.12（四者同时）。C3 新增硬前置 Sh>=1.12：W50-04 以 Sh 0.44 / 2Y 0.03 / CLST 0.01 取得 |L-S|=2，W50-07 以 Sh 0.45 取得 |L-S|=5，证明孤立使用 |L-S| 判据会选中『对称噪声』。",
+  "wave50_hard_facts": {
+    "multisim_id": "1rGaQwdRn4k4bgmbc1QLX6H",
+    "n": 8,
+    "ra_failed": "8/8 true",
+    "Sh_range": "0.41~0.89 (基线 1.12)",
+    "two_year_range": "0.03~0.53 (基线 0.91)",
+    "Fit_range": "0.14~0.43 (基线 0.60)",
+    "RN_range": "0.04~0.54 (基线 0.82)",
+    "CLST_range": "0.01~0.51 (基线 0.51)",
+    "L_minus_S_range": "2~80 (基线 84)",
+    "constraints_compliance": "op 5~8 (<=11)、字段 2~3、外部数据集 0 或 1、INDUSTRY / decay 8 / trunc 0.025 / TOP1000 / D1 / pasteurization ON / nan_handling ON，全部合规；未修改任何 .py 源码"
+  },
+  "pc_measurement_final": {
+    "task": "88L4Cu",
+    "duration": "42m55s",
+    "completed_at_gmt8": "2026-11-05 01:08",
+    "method": "正式 check_correlation(alpha_id, 'production', 0.7)，平台单账户单并发锁逐条轮询，每条外层超时 300s",
+    "success": "1/8",
+    "timeouts": "7/8 (W50-01/02/03/04/05/07/08 均 TimeoutError；平台侧 PC 计算超过 300s 未就绪)",
+    "only_success": {
+      "tag": "W50-06",
+      "alpha_id": "wpQb2EL2",
+      "mechanism": "ts_backfill 补广度（把无内部人交易窗口用历史值填充，激活零值标的）",
+      "PC": 0.7568,
+      "PC_vs_baseline": "+0.0948 (0.662 -> 0.7568)",
+      "PC_gate": "已破 0.70 门，passes_check=false",
+      "CS": 0.2755,
+      "CS_vs_baseline": "0.2755 << 0.6173",
+      "poll_detail": "第 352 次查询 / 449s 才返回，说明 300s 外层超时是本次 7 条失败的直接工程原因，而非 PC 不存在"
+    },
+    "table_file": "gate1_wave50_table_20261105.json (8 行，PC/CS 缺失处显式为 null)",
+    "interpretation": "唯一拿到 PC 的候选恰是『抬覆盖 / 激活无事件标的』类，其 PC 从基线 0.662 抬到 0.7568，比 49 波任何『花 PC 余量』的杠杆都更费余量。机制假设（单条证据、未验证）：无事件标的被激活后截面排序主要由行业/规模共性驱动，与生产组合的暴露对齐，从而抬高 prod correlation。此证据仍属『抬覆盖』类，不是『保幅打散』类，不能替代 C2 要求的决定性实验。",
+    "status": "PC 表未补齐（裁定点 C 仅完成 1/8）。但这 8 条全部不合格的判定不依赖 PC：Sh 全部 < 1.12 已由 C3 硬前置排除；唯一有 PC 的候选 CS 0.2755 远低于基线且 PC 破门。"
+  },
+  "crosscheck_adjudication": {
+    "source": "handoff_crosscheck_2026-11-05.json (独立窗口，未重跑回测)",
+    "C1": "接受修正。/correlations/prod 并非『全部空 body』：独立窗口 00:20:48 一次拿到 4 个 PC（0.662 / 0.6848 / 0.6936 / 0.6957），空 body 是逐 alpha 瞬时计算态。这 4 个应记同日同端点 L1 可比基线，不得整体降级为 L2。",
+    "C2": "接受，结论按 verdict_revision 降级。决定性实验『能否在保住 Sh>=1.12 的前提下把 |L-S| 压到 <50』本波未做（8 条同时改幅度与符号、无 B0 同批种子对照）。",
+    "C3": "接受，已写入 true_progress_criteria 的 Sh>=1.12 硬前置。",
+    "C4": "接受。『改目标为 ra_failed 可提交、不必追 0 WARNING』与用户最终目标 0 FAIL + 0 WARNING 全绿冲突，属用户裁定事项，已从结论降级为 user_ruling_required 选项，不得表述为已达成结论。",
+    "C5": "接受，rebase_note 已显式记录，后续波次表格须标注重基。",
+    "C6": "接受。补充工程纪律：跨所有窗口同一时刻只允许一个 correlation 轮询进程，避免争用平台单账户 in-flight 槽位（本波 88L4Cu 与 W15g3r 曾互锁 8 分钟）。"
+  },
+  "falsified_scope": "仅以下这一类 belief 腿改写被本波证伪：长周期锚差分、divide 相对化、时序波动率归一、ts_zscore 中心化、vec_count 事件密度、ts_backfill 补广度、adv20 解耦分母、s_log_1p + regression_neut 后处理。共同缺陷 = 抹掉或稀释 20d-60d 短窗口差分对『事件脉冲幅度 + 相对零基准方向』的保真。",
+  "not_established": [
+    "零值结块本身是信息载体（仅为假说，混淆效应未分离）",
+    "所有打破 ties 的改写都会毁信号 / 抬 PC",
+    "该数据族在给定约束下结构性穷尽、全绿不可达",
+    "按任务书协议应当停止爬山（仅第 1 波无进展）"
+  ],
+  "user_ruling_required": [
+    "A 接受停止、转数据族：选有价格 / 每股量纲的期频数据集（analyst / fundamental），divide(F, close) 才具经济归一化含义，可同时解 CONCENTRATED_WEIGHT 与 Fitness 天花板。",
+    "B 跑 Wave 51 诊断波（推荐用于分离混淆）：按 handoff_crosscheck 草稿，加入 B0 同批种子对照 + 保幅打散型干预（ts_av_diff / 带防除零的 guarded divide / vec_range / vec_stddev / 平滑先行 / 1% 幅度保持型 dither），专门判别『改法太猛』还是『R3 假设错』。判据须加 Sh>=1.12 硬前置。8 条、真实回测、逐条经济学假设。",
+    "C 先补齐 PC 表再定：把 7 条超时 alpha 的外层超时从 300s 放宽到 >=600s 重拉（W50-06 实测需 449s），预计约 1 小时；不烧回测配额，只补全记账。",
+    "D 放宽约束（需明确授权）：允许 STATISTICAL 中性化 / 字段数 >3 多事件源 ensemble / 更长窗口；或依 C4 由用户自行决定是否把目标改为 ra_failed 可提交口径。此项不得由 Agent 代为裁定。"
+  ],
+  "hard_formula_reference": "Fit = Sh*sqrt(Ret/max(TO,0.125)) 与 Mgn_bps ≈ 19.84*Ret/TO 在本战役逐位复现；TO 6.4~7.3% 全在 12.5% 免罚线下，Sh>=1.58 且 Fit>=1.0 联立要求 Ret>=5.01%（种子 3.56%）；Margin 门不 bind；真硬门为 2Y 0.91->1.58 与 CLUSTER 0.51->1.58。此为客观门槛，不随结论降级而改变。",
+  "evidence_files": [
+    "gate1_wave50_batch.json",
+    "gate1_wave50_result_1793809498.json",
+    "gate1_wave50_table_20261105.json",
+    "step0_calibration_2026-11-05.json",
+    "step0_pc_LLMNRnkL_20261105.json",
+    "step0_pc_N1NVqZYg_20261105.json",
+    "handoff_crosscheck_2026-11-05.json"
+  ]
+}

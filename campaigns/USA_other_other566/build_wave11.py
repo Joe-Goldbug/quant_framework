@@ -86,9 +86,9 @@ W11 = {
   {"id": "w11_gz_neutral", "expr": f"group_neutralize(multiply({R_RET}, {R_P5}), subindustry)",
    "ops": 2, "fields": [R_RET, R_P5],
    "why": "F4 第三点: 同一骨架的 group_neutralize 版, 验证幅度保留排序 (zscore > rank > neutralize) 在剥离 ts_mean 后是否依然成立。"},
-  {"id": "w11_gz_hump", "expr": f"group_zscore(hump(multiply({R_RET}, {R_P5}), 0.01), industry)",
+  {"id": "w11_gz_hump", "expr": f"group_zscore(hump(multiply({R_RET}, {R_P5})), industry)",
    "ops": 3, "fields": [R_RET, R_P5],
-   "why": "F3+F5: hump 是平台自带换手限制器, 直接压 turnover 而非抹掉信号。预期 turnover 从 10.5% 降至 6-8%, 使 returns/turnover 比率上升, Margin 有望突破 10bps 死线。"},
+   "why": "F3+F5: hump 是平台自带换手限制器 ('Limits amount and magnitude of changes in input'), 直接压 turnover 而非抹掉信号。注意: 平台对 hump 只接受 1 个位置参数 (hump(x) 或 hump(x, hump=0.01)), 传 hump(x, 0.01) 会被平台以 'Invalid number of inputs : 2, should be exactly 1 input(s)' 拒绝 —— 本槽已改为单参数形式。"},
   {"id": "w11_gz_decay_lin", "expr": f"group_zscore(ts_decay_linear(multiply({R_RET}, {R_P5}), 5), industry)",
    "ops": 3, "fields": [R_RET, R_P5],
    "why": "F5 替代杠杆: ts_decay_linear(5) 线性衰减比 ts_mean(26) 温和得多, 是「轻平滑 vs 强平滑」的中间档, 用于确认最优平滑强度在 1(不平滑)与 26 之间。"},
@@ -146,7 +146,8 @@ W12 = {
    "why": "共识叠加 (笔数口径): 用「买入笔数/卖出笔数」而非金额, 捕捉内部人行为的频率维度 (多次小额买入的累积意图), 与订单簿多期限模型共识。"},
   {"id": "x10_ins_only", "expr": f"group_zscore(ts_mean(ts_zscore({I_BS60}, 60), 26), industry)",
    "ops": 3, "fields": ["insider_feats:buy_sell_ratio_all_60d_filled"],
-   "why": "纯内部人基线 (单字段, 供对照): 测量该冷源在 USA/D1/TOP1000 自身的 Sharpe/Margin 基线, 作为上述所有跨数据集组合的增量归因基准。这是本波唯一的单字段槽位 —— 它是基线对照而非候选 alpha。"},
+   "is_baseline_control": True,
+   "why": "纯内部人基线 (单字段, **对照组而非候选 alpha**): 测量该冷源在 USA/D1/TOP1000 自身的 Sharpe/Margin 基线, 作为上述所有跨数据集组合的增量归因基准。它是本波唯一的单字段槽位 —— 用户要求的 2~3 字段约束适用于候选 alpha, 此槽按设计仅作基线读数。实测结果 Sharpe -0.10 (内部人信号在本区域单独不可用)。"},
  ]}
 
 if __name__ == "__main__":

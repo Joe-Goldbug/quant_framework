@@ -1,0 +1,93 @@
+{
+  "batch": 27,
+  "family": "cross_dataset_w26_leg_with_turnover_lever",
+  "hypothesis": "波次 27: 波次 26 的失败是**结构遗漏**而非跨数据集思路失败 —— 我漏掉了 ts_target_tvr_decay, 导致 8 槽位换手冲到 87-90%, Margin 塌到 0.03-0.07bps。波次 26 同时证明了 other685 的腿有真信号: PE-vs-历史腿得 Sh 1.45 / 2Y 2.43 (战役次高)。本波做两件事: (a) 把波次 26 胜出腿套回种子的换手杠杆 (ts_target_tvr_decay, 战役已证是唯一不杀本数据集信号的平滑算子); (b) 用 3 个单字段 other685 基线槽**判定慢腿本身的价值上限** —— 若基线 Sh>0.9 且 TO<15%, 则慢腿可作为独立收益流叠加 (真正抬高 R 而不动 TO, 这正是 R/TO>=0.75 唯一可能的路径); 若基线<=0 (如 cfroi_3 的 -0.20), 则慢腿只能作为快腿的权重, 不能作为加法项。经济学: 分析师预期修正与现金流估值是慢速、基本面驱动、信息源与订单簿形态正交; 订单簿预测是快速、微观结构驱动。两者的**时间尺度互补**正是理论上前者能在不抬换手的前提下抬高组合期望收益的原因。",
+  "settings": {
+    "neutralization": "STATISTICAL",
+    "decay": 0,
+    "truncation": 0.08
+  },
+  "items": [
+    {
+      "id": "x27_base_ey",
+      "expr": "group_zscore(earnings_yield_smartest_fy1, subindustry)",
+      "ops": 2,
+      "fields": [
+        "other685:earnings_yield_smartest_fy1"
+      ],
+      "is_baseline_control": true,
+      "why": "纯慢腿基线 1: SmartEstimate 盈利收益率 (E/P, FY1)。价值因子在美股长期有效, 且季度更新 => 低换手。本槽测量: 慢腿的独立 Sharpe 与 R/TO。若 Sh>=0.9 且 R/TO>=0.15, 它就是 other566 缺的那条腿。"
+    },
+    {
+      "id": "x27_base_pehist",
+      "expr": "group_zscore(diff_current_vs_hist_pe_ratio, subindustry)",
+      "ops": 2,
+      "fields": [
+        "other685:diff_current_vs_hist_pe_ratio"
+      ],
+      "is_baseline_control": true,
+      "why": "纯慢腿基线 2: 当前 P/E 减历史中位 P/E (正=相对历史变贵)。均值回复速度中等。本槽测量其独立 Sharpe/TO/2Y —— 波次 26 中它是权重形态下表现最好的腿 (Sh 1.45 / 2Y 2.43), 需确认其自身强度。"
+    },
+    {
+      "id": "x27_base_grow",
+      "expr": "group_zscore(smartest_growth_next_vs_this_year_earnings, subindustry)",
+      "ops": 2,
+      "fields": [
+        "other685:smartest_growth_next_vs_this_year_earnings"
+      ],
+      "is_baseline_control": true,
+      "why": "纯慢腿基线 3: SmartEstimate 下一财年 vs 本财年盈利增长 (分析师预期修正)。分析师上修是经典的信息含量事件且更新频率低 (季度), 是本波假设中最理想的「慢而强」腿。"
+    },
+    {
+      "id": "x27_pehist_tvr08",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, rank(diff_current_vs_hist_pe_ratio)), target_tvr=0.08), subindustry)",
+      "ops": 4,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:diff_current_vs_hist_pe_ratio"
+      ],
+      "why": "波次 26 胜出腿 (qMLEXov1) + 换手杠杆 tvr=0.08: 与种子同构, 只把 prob_5 腿换成 PE-vs-历史腿。预期 TO 降到 8-10%; 检验 R 能否在 TO 下降时保持 (若 R 仍 2.5-3%, 则 R/TO 0.3+, Margin 6-7bps, 突破种子 4.37)。"
+    },
+    {
+      "id": "x27_pehist_tvr12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, rank(diff_current_vs_hist_pe_ratio)), target_tvr=0.12), subindustry)",
+      "ops": 4,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:diff_current_vs_hist_pe_ratio"
+      ],
+      "why": "同腿 tvr=0.12 (种子自身换手档): 与 x27_pehist_tvr08 构成换手配对, 分离「换手」与「腿替换」两个效应。本槽是种子的**最小差异对照** (只换腿), 因此任何指标变化都可干净归因于 other685 的 PE-vs-历史腿。"
+    },
+    {
+      "id": "x27_pehist_inner_zs",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(group_zscore(oth566_r20marsi_ret, subindustry), rank(diff_current_vs_hist_pe_ratio)), target_tvr=0.08), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:diff_current_vs_hist_pe_ratio"
+      ],
+      "why": "内层加 subindustry zscore 版: 波次 26 的结构 (内层 group_zscore) 配换手杠杆, 检验子行业异方差处理(Labs 图6/图7: 高波子行业预测幅度远大于低波) 是否与换手杠杆叠加有效。"
+    },
+    {
+      "id": "x27_add_pehist",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(diff_current_vs_hist_pe_ratio, subindustry)), subindustry)",
+      "ops": 4,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:diff_current_vs_hist_pe_ratio"
+      ],
+      "why": "加法机制 (关键槽): 慢腿作为**独立收益流**叠加, 而非权重。经济含义: 订单簿捕捉未来 20 日的微观结构定价, PE-vs-历史捕捉基本面估值的均值回复, 两者时间尺度不同 ⇒ 收益相关低 ⇒ 组合 Sharpe 可超各自分量而换手只由快腿决定。这是 R/TO>=0.75 的唯一理论路径 (慢腿抬 R 而几乎不抬 TO)。"
+    },
+    {
+      "id": "x27_3f_value_rev",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(multiply(oth566_r20marsi_ret, rank(earnings_yield_smartest_fy1)), rank(diff_current_vs_hist_pe_ratio)), target_tvr=0.08), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:earnings_yield_smartest_fy1",
+        "other685:diff_current_vs_hist_pe_ratio"
+      ],
+      "why": "三字段双慢腿加权: 快腿 x 绝对估值 (E/P 水平) x 相对历史估值 (PE vs 历史中位)。经济含义: 订单簿信号只在「基本面便宜」且「估值未相对自身历史膨胀」时兑现 —— 前者筛质地, 后者筛均值回复空间。两腿均经 rank 保号, 不翻转快腿方向。"
+    }
+  ]
+}

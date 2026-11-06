@@ -32,7 +32,30 @@
 - **若存在离群值或持仓过分集中 (CW 违规)**：施加 `winsorize(std=3)` + `s_log_1p` 凹函数压缩或 `signed_power(·, 0.5)`。
 
 ### 3. 冗余节点剪枝 (Parsimonious Pruning)
-- 剔除对夏普或 Margin 无边际贡献的深层装潢算子，将 AST 算子总数严格精简至 $\le 6$ 个以内，大幅提升样本外泛化能力与 Champion Score 效用评分。
+- 剔除对夏普或 Margin 无边际贡献的深层装潢算子，将 AST 算子总数严格精简至 $\le 7$ 个以内，大幅提升样本外泛化能力与 Champion Score 效用评分。
+
+### 4. 高缺失/零值膨胀另类字段的时序算子映射法则 (ts_quantile 黄金范式 - 2026-11-05 实证)
+- **零值膨胀/高缺失字段严禁裸用 `ts_zscore`**：在非正态、含大量 0 值尖峰或阶段性断流（如社交情绪、事件驱动、另类文本 Vector 字段）的数据上，低活跃标的的滚动标准差 $\sigma_d \to 0$。此时使用参数化的 `ts_zscore(x, d)` 会因除以趋近于 0 的分母产生极端离群奇点（Zero-Variance Denominator Explosion），严重污染多空边界并迫使后续设置极高 Decay，扼杀信号弹性（造成 2015/2018 年失血）；
+- **标准范式（黄金算子替换）**：对于有偏、长尾或零值集中的非 PV 另类数据，**强制使用非参数高斯分位数算子 `ts_quantile(x, d)`** 替代 `ts_zscore(x, d)`；
+- **数学优势**：`ts_quantile(x, d, driver='gaussian') = \Phi^{-1}(\text{ts\_rank}(x, d))`，全程不除以 $\sigma_d$，彻底杜绝除零发散，同时保留非线性高斯尾部权重，并在高缺失期（如 2023 年 60% NaN）自动将断流僵尸股归零居中；
+- **实战铁证**：在 `e756njNE` 战役中，仅将 `ts_zscore(..., 250)` 替换为 `ts_quantile(..., 250)` 并精简冗余字段，全样本 Sharpe 从 1.49 跃升至 1.63，2023 年 Sharpe 从 -1.02 飙升至 +1.23，10 年 100% 全胜。
+
+### 5. 截面中性化单算子与 AST 奥卡姆剃刀定律 (Less is More)
+- **禁止冗余冲突的双层排序结构**：严禁编写类似 `group_rank(group_neutralize(X, sector), market)` 的冲突嵌套（破坏行业内零和平衡，浪费算子配额且拉低 Cluster Test Sharpe 至 1.08）。直接使用单算子 `group_rank(X, sector)` 或 `group_rank(X, subindustry)`，组内一步到位完成标准化与多空对称分配；
+- **禁止异质稀疏字段裸加 (No Blind add())**：叠加第 2/3 个字段前核验覆盖密度与同源性。若单分子 + 单分母（2 字段、7 算子）信噪比更高，坚决保留低复杂度 AST，拒绝为了凑字段数而引入噪音。
+
+### 6. Fitness 算术底线 (12.5% Turnover Floor) 换手释放法则
+- `Fitness = Sharpe * sqrt(|Returns| / max(Turnover, 0.125))`；
+- 当种子 Alpha 的 Turnover < 12.5%（如 9%）时，分母锁死为 0.125。此时严禁盲目加大平滑（严禁盲目增大 Decay 或 ts_backfill 窗口），而应通过缩短 ts_backfill（如 60 -> 30）或引入时序分位算子，将换手释放至 **`10.5% ~ 12.5%` 黄金免罚区间**，最大化分子 Returns 与 Sharpe。
+
+### 7. 反过拟合红线与自然时序窗口冻结规范 (Anti-Curve-Fitting)
+- 严禁将时间窗口拉长至跨年非常规值（如 500 天超长窗）；跨数据稳态混算会导致特定年份（如 2023）重新崩溃为负；
+- 时序算子窗口严格锚定自然日历周期：短期回填 5/10/20~30，中长期基线 60/120/250（**绝对禁止 > 250 天**）。
+
+### 8. 真实 API 审计与零幻觉协议 (Zero-Hallucination Audit)
+- **硬门禁断言**：只有当 `/alphas/{id}` 接口返回 `is.sharpe >= 1.58`、`is.fitness >= 1.0` 且 `is.checks` 数组中所有项 `"result" != "FAIL"` 时，才允许在报告中标记为 PASS / 可提交；
+- **逐年数据强制取证**：汇报逐年表现前必须真实调用并解析 `/alphas/{id}/recordsets/yearly-stats` 接口 JSON，严禁对任何年份进行估算或插值；
+- **压力测试年硬性要求**：压力测试年份（如 2023）真实 Sharpe 必须 $\ge +0.50$，多空持仓严格对称均衡。
 
 ---
 

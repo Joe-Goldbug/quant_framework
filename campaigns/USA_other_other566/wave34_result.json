@@ -1,0 +1,29 @@
+{
+  "wave": 34,
+  "multisim": "3g9mkw1K156p9qmcTLF7qPj",
+  "date_completed": "2026-11-06",
+  "settings": {"neutralization": "STATISTICAL", "decay": 0, "truncation": 0.08},
+  "slots": [
+    {"slot": 1, "tag": "momentum_orth", "alpha_id": "omEJzwwv", "sharpe": 1.26, "fitness": 0.59, "turnover": 0.1391, "returns": 0.0301, "drawdown": 0.0479, "margin_bps": 4.33, "two_year_sharpe": 1.18, "sub_universe_sharpe": 0.71, "cluster": 0.94, "n_fail": 0, "n_warn": 7, "verdict": "KILL", "reason": "2Y Sharpe 从母本 1.86 恶化到 1.18；剥离价格动量同时杀掉了远期 IR，说明 other566 信号与动量残差化不兼容"},
+    {"slot": 2, "tag": "vol_parity", "alpha_id": "58EA673n", "sharpe": 1.10, "fitness": 0.46, "turnover": 0.1489, "returns": 0.0262, "drawdown": 0.0691, "margin_bps": 3.52, "two_year_sharpe": 1.25, "sub_universe_sharpe": 0.77, "cluster": 1.02, "n_fail": 0, "n_warn": 7, "verdict": "KILL", "reason": "波动率缩放同步杀 Sharpe/Fit/Mgn，且 drawdown 从 4.89% 放大到 6.91% — 风险平价在本数据集是反向杠杆"},
+    {"slot": 3, "tag": "hump", "alpha_id": "npvezkYz", "sharpe": 1.17, "fitness": 0.39, "turnover": 0.2593, "returns": 0.0283, "drawdown": 0.0727, "margin_bps": 2.18, "two_year_sharpe": 1.25, "sub_universe_sharpe": 0.61, "cluster": 0.90, "n_fail": 4, "n_warn": 4, "verdict": "KILL", "reason": "hump 把信号脉冲的升降沿都延长 → 换手翻倍 (13.9→25.9%) 且 Margin 腰斩 (4.37→2.18bps)，不是平滑工具而是换手放大器"},
+    {"slot": 4, "tag": "tail_shrink_p05", "alpha_id": "d5W378gK", "sharpe": 1.26, "fitness": 0.58, "turnover": 0.1285, "returns": 0.0273, "drawdown": 0.0411, "margin_bps": 4.25, "two_year_sharpe": 1.72, "sub_universe_sharpe": 0.78, "cluster": 0.89, "n_fail": 0, "n_warn": 5, "verdict": "KEEP_AUX", "reason": "Cluster 0.89 全波最低 + dd 4.11% 全波最低 + TO 12.85% < 母本 13.93%；Sh/Fit/Mgn 不降。不解决主病但是优秀的 Cluster/dd 压低器"},
+    {"slot": 5, "tag": "label5_x_prob", "alpha_id": "3qok6Y3O", "sharpe": 0.93, "fitness": 0.39, "turnover": 0.1404, "returns": 0.0241, "drawdown": 0.0768, "margin_bps": 3.43, "two_year_sharpe": 1.42, "sub_universe_sharpe": 0.84, "cluster": 1.00, "n_fail": 3, "n_warn": 5, "verdict": "KILL", "reason": "label_5 离散标签秩不含置信度幅度信息，仅携带桶序；信念腿必须用 prob 类"},
+    {"slot": 6, "tag": "consensus_2leg_eq", "alpha_id": "58EA679n", "sharpe": 1.24, "fitness": 0.59, "turnover": 0.1372, "returns": 0.0307, "drawdown": 0.0440, "margin_bps": 4.47, "two_year_sharpe": 1.94, "sub_universe_sharpe": 0.65, "cluster": 0.99, "n_fail": 3, "n_warn": 5, "verdict": "KEEP", "reason": "Margin 4.47 (新高) + 2Y 1.94 (新高)；但 Sub-Universe 0.65 < 0.66 卡线 FAIL"},
+    {"slot": 7, "tag": "consensus_2leg_7030", "alpha_id": "GrWK8063", "sharpe": 1.25, "fitness": 0.59, "turnover": 0.1365, "returns": 0.0306, "drawdown": 0.0476, "margin_bps": 4.48, "two_year_sharpe": 1.89, "sub_universe_sharpe": 0.69, "cluster": 0.98, "n_fail": 2, "n_warn": 4, "verdict": "KEEP", "reason": "Margin 4.48 (全战役新高) + 2Y 1.89 + Sub-Universe 0.69 救回通过；7030 加权是 Sub-Universe 与 Margin 的甜点"},
+    {"slot": 8, "tag": "prob_power2", "alpha_id": "omEJzwv6", "sharpe": 1.26, "fitness": 0.59, "turnover": 0.1414, "returns": 0.0305, "drawdown": 0.0492, "margin_bps": 4.32, "two_year_sharpe": 1.95, "sub_universe_sharpe": 0.70, "cluster": 0.91, "n_fail": 0, "n_warn": 5, "verdict": "KEEP", "reason": "2Y Sharpe 1.95 全波最高；Cluster 0.91；0 FAIL；Sh/Fit 不降。信念平方自动收缩低信念死重"},
+    {"slot": 9, "tag": "anchor_2day_quantile", "alpha_id": "RRElaZYe", "sharpe": 1.08, "fitness": 0.49, "turnover": 0.1417, "returns": 0.0289, "drawdown": 0.0449, "margin_bps": 4.08, "two_year_sharpe": 1.75, "sub_universe_sharpe": 0.55, "cluster": 1.04, "n_fail": 3, "n_warn": 5, "verdict": "KILL", "reason": "2日腿 + quantile 形态弱于 20日腿，Sub-Universe 0.55 也崩"},
+    {"slot": 10, "tag": "consensus_2leg_volscaled", "alpha_id": "O0AMmwm1", "sharpe": 1.16, "fitness": 0.52, "turnover": 0.1395, "returns": 0.0283, "drawdown": 0.0502, "margin_bps": 4.05, "two_year_sharpe": 1.56, "sub_universe_sharpe": 0.68, "cluster": 1.13, "n_fail": 3, "n_warn": 6, "verdict": "KILL", "reason": "vol_parity 在共识组合里仍然拖后腿；2Y 1.56 比 eq/7030 都低"}
+  ],
+  "kept_mechanisms": [
+    "prob_power2 (信念平方): 2Y Sharpe 1.86→1.95, Cluster 0.95→0.91, 0 FAIL",
+    "signed_power(z, 0.5) (尾部收缩): Cluster 0.95→0.89, dd 4.89%→4.11%, TO 13.93%→12.85%",
+    "consensus_2leg_7030 (20日腿70% + 2日腿30% 先各自 group_zscore 再加，外层 tvr): Mgn 4.37→4.48, 2Y 1.86→1.89, Sub-Universe 通过"
+  ],
+  "falsified_mechanisms": [
+    "vector_neut (动量剥离): 杀 2Y Sharpe",
+    "vol_parity (波动率缩放): 杀 Sharpe + 放大 drawdown",
+    "hump(0.003): 换手翻倍 + Margin 腰斩",
+    "label_5 离散标签作信念权重: Sh 暴跌 0.93"
+  ]
+}

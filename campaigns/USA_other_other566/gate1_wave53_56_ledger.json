@@ -1,0 +1,29 @@
+{
+  "note": "All rows: USA/TOP1000/delay1/STATISTICAL/decay0/trunc0.08, FASTEXPR. fit = sharpe*sqrt(returns/max(turnover,0.125)); margin_bps = 20*returns/turnover.",
+  "tvr_axis": [
+    {"alpha_id": "1YNW5LYR", "wave": 52, "expr": "quantile(tvr(multiply(r20ret, prob5),0.15), gaussian)", "sharpe": 1.38, "fitness": 0.63, "turnover": 0.1705, "returns": 0.0354, "margin_bps": 4.15, "cluster": 1.22, "two_year": 1.66},
+    {"alpha_id": "YP1aZAvR", "wave": 53, "expr": "quantile(tvr(multiply(r20ret, prob5),0.18), gaussian)", "sharpe": 1.40, "fitness": 0.59, "turnover": 0.2013, "returns": 0.0362, "margin_bps": 3.59, "cluster": 1.27, "two_year": 1.70},
+    {"alpha_id": "vR1A0mjd", "wave": 53, "expr": "quantile(tvr(multiply(r20ret, prob5),0.20), gaussian)", "sharpe": 1.39, "fitness": 0.56, "turnover": 0.2217, "returns": 0.0361, "margin_bps": 3.26, "cluster": 1.29, "two_year": 1.71}
+  ],
+  "shape_axis": [
+    {"alpha_id": "3qo0dAl0", "param": "gaussian sigma=0.7", "sharpe": 1.38, "fitness": 0.63, "turnover": 0.1705},
+    {"alpha_id": "N1NPMOQX", "param": "gaussian sigma=1.5", "sharpe": 1.38, "fitness": 0.63, "turnover": 0.1705},
+    {"alpha_id": "bl6ap9Rp", "param": "gaussian sigma=2.0", "sharpe": 1.38, "fitness": 0.63, "turnover": 0.1705},
+    {"alpha_id": "RREeXrV1", "param": "cauchy driver", "sharpe": 0.77, "fitness": 0.26, "turnover": 0.3232}
+  ],
+  "shape_axis_verdict": "quantile sigma is a NO-OP (0.7/1.5/2.0 give bit-identical metrics to sigma=1.0) because quantile ranks first and sigma does not change the ordering. cauchy is harmful (TO 32%, Sharpe 0.77).",
+  "blend_search": [
+    {"alpha_id": "YP1aZAbw", "wave": 53, "legs": "r20 1.0 | l5 0.30 | ret2 0.00", "sharpe": 1.49, "fitness": 0.71, "turnover": 0.1714, "returns": 0.0388, "margin_bps": 4.53, "cluster": 1.49, "two_year": 2.06, "sub_universe": 0.81, "pc": 0.5591},
+    {"alpha_id": "leAaJZV5", "wave": 54, "legs": "r20 1.0 | l5 0.15 | ret2 0.00", "sharpe": 1.46, "fitness": 0.69, "turnover": 0.1716, "returns": 0.038, "margin_bps": 4.43, "cluster": 1.40, "two_year": 1.93},
+    {"alpha_id": "omEaQel5", "wave": 54, "legs": "r20 1.0 | l5 0.40 | ret2 0.00", "sharpe": 1.48, "fitness": 0.70, "turnover": 0.171, "returns": 0.0384, "margin_bps": 4.50, "cluster": 1.51, "two_year": 2.09},
+    {"alpha_id": "A1VxqdPg", "wave": 54, "legs": "r20 1.0 | l5 0.50 | ret2 0.00", "sharpe": 1.46, "fitness": 0.69, "turnover": 0.1705, "returns": 0.0377, "margin_bps": 4.42, "cluster": 1.53, "two_year": 2.11, "note": "sub-universe 0.76 vs 0.77 -> FAIL"},
+    {"alpha_id": "O0AWKvZ7", "wave": 54, "legs": "r20 1.0 | l5 0.30 | ret2 0.15", "sharpe": 1.56, "fitness": 0.76, "turnover": 0.1715, "returns": 0.0411, "margin_bps": 4.80, "cluster": "PASS", "two_year": 2.14, "sub_universe": 0.86},
+    {"alpha_id": "VkxNKoPM", "wave": 54, "legs": "r20 1.0 | l5 0.30 | ret2 0.30", "sharpe": 1.61, "fitness": 0.80, "turnover": 0.1714, "returns": 0.0428, "margin_bps": 5.00, "cluster": "PASS", "two_year": 2.20, "sub_universe": 0.90, "fail": ["LOW_FITNESS"]},
+    {"alpha_id": "3qo0YWdz", "wave": 55, "legs": "r20 1.0 | l5 0.30 | ret2 0.50", "sharpe": 1.65, "fitness": 0.84, "turnover": 0.1711, "returns": 0.0444, "margin_bps": 5.19, "cluster": "PASS", "two_year": 2.27, "sub_universe": 0.94},
+    {"alpha_id": "Jje80Lle", "wave": 55, "legs": "r20 1.0 | l5 0.30 | ret2 0.70", "sharpe": 1.68, "fitness": 0.87, "turnover": 0.1708, "returns": 0.0453, "margin_bps": 5.30, "cluster": "PASS", "two_year": 2.30, "sub_universe": 0.96, "drawdown": 0.0400, "fail": ["LOW_FITNESS"]},
+    {"alpha_id": "kqNak5kd", "wave": 55, "legs": "r20 1.0 | l5 0.30 | ret2 0.30, NO prob filter", "sharpe": 1.64, "fitness": 0.82, "turnover": 0.1714, "returns": 0.0432, "margin_bps": 5.04, "cluster": "PASS", "two_year": 2.23},
+    {"alpha_id": "1YNWV5VX", "wave": 55, "legs": "3-leg + r20marsi_label_5 rank 0.01", "sharpe": 1.55, "fitness": 0.77, "turnover": 0.1732, "returns": 0.0424, "margin_bps": 4.89, "cluster": "PASS", "two_year": 2.14},
+    {"alpha_id": "78LYqVqQ", "wave": 55, "legs": "3-leg + diff_current_vs_hist_pe_ratio rank 0.02", "sharpe": 0.85, "fitness": 0.30, "turnover": 0.1765, "returns": 0.0226, "margin_bps": 2.56, "note": "DEAD - cross-dataset fundamental leg at this scale destroys the blend"}
+  ],
+  "key_finding": "Sh^2*Margin, which never exceeded 7.9 across the 258 alpha single-signal campaign, rises to 14.96 at Jje80Lle. The apparent 'structural constant' was a single-source artifact: blending independent forecast models (different chart encodings and horizons) raises both Sharpe and returns-per-turnover at the same turnover target."
+}

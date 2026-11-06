@@ -1,0 +1,21 @@
+{
+  "wave": 34,
+  "date": "2026-11-06",
+  "parent": "kqNgXQqd",
+  "parent_metrics": {"sharpe": 1.27, "fitness": 0.59, "turnover": 0.1393, "returns": 0.0304, "margin_bps": 4.37, "two_year_sharpe": 1.86, "cluster": 0.95, "prod_corr": 0.5052},
+  "settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.08, "pasteurization": "ON", "nan_handling": "ON", "unit_handling": "VERIFY", "max_trade": "OFF"},
+  "hypothesis": "258 prior slots only reshuffled other566 fields + a weak other685 P/E leg. Never tested: PV-based orthogonalization (vector_neut vs momentum), risk-parity vol scaling, hump turnover control, tail-shrink (p<1), cold label fields, and properly-scaled 2-leg consensus (prior consensus died on ts_mean + 200x scale mismatch).",
+  "ts_target_tvr_decay_note": "python margin_bps == 20*returns/turnover verified on 4 alphas; frontier so far caps fitness at 0.63",
+  "expressions": [
+    {"slot": 1, "tag": "momentum_orth", "expr": "group_zscore(ts_target_tvr_decay(vector_neut(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), ts_delta(close, 20)), target_tvr=0.12), industry)", "reason": "剥离过去20日价格变化可解释的成分，只留图表模型新增信息；应同时提升IR与压低ProdCorr"},
+    {"slot": 2, "tag": "vol_parity", "expr": "group_zscore(ts_target_tvr_decay(divide(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), add(ts_std_dev(returns, 60), 0.001)), target_tvr=0.12), industry)", "reason": "按60日已实现波动做风险平价加权，压低高波股权重；经典提升IR手段，此前从未测试"},
+    {"slot": 3, "tag": "hump", "expr": "group_zscore(hump(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), hump=0.003), industry)", "reason": "hump只忽略小额仓位变动、保留大额信念切换，与ts_mean的信息涂抹机制不同，是降换手保IR的正宗工具"},
+    {"slot": 4, "tag": "tail_shrink_p05", "expr": "signed_power(group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry), 0.5)", "reason": "历史证据显示集中极端尾部反而降Sharpe(1.01)，说明可靠信号在中段；p=0.5收缩尾部应提IR"},
+    {"slot": 5, "tag": "label5_x_prob", "expr": "group_zscore(ts_target_tvr_decay(multiply(subtract(oth566_r20marsi_label_5, 3), oth566_r20marsi_prob_5), target_tvr=0.12), industry)", "reason": "用5桶离散标签替代连续幅度预测，字段拥挤度5u/8a远低于ret的71u/90a；离散化天然抗离群并降ProdCorr"},
+    {"slot": 6, "tag": "consensus_2leg_eq", "expr": "group_zscore(ts_target_tvr_decay(add(group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry), group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry)), target_tvr=0.12), industry)", "reason": "20日腿(Sh1.27/R3.0%)与2日腿(Sh0.96/R5.4%)先各自截面标准化后再等权相加，再统一外层tvr平滑——修正历史共识槽的200倍尺度错配与ts_mean涂抹双重错误"},
+    {"slot": 7, "tag": "consensus_2leg_7030", "expr": "group_zscore(ts_target_tvr_decay(add(group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry), multiply(0.4286, group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry))), target_tvr=0.12), industry)", "reason": "风险预算70/30偏向高IR的20日腿，验证共识权重的最优点，避免等权被低IR腿拖累"},
+    {"slot": 8, "tag": "prob_power2", "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, signed_power(oth566_r20marsi_prob_5, 2)), target_tvr=0.12), industry)", "reason": "置信度平方强化高信念样本、自动压缩低信念死重，检验信念弹性是否比线性加权更优"},
+    {"slot": 9, "tag": "anchor_2day_quantile", "expr": "quantile(ts_target_tvr_decay(multiply(oth566_return, group_rank(oth566_prob_2, industry)), target_tvr=0.12), driver=\"gaussian\")", "reason": "已复现的Fitness最高锚(Fit0.63)，用于本批一致性校准与新结构的相对基准"},
+    {"slot": 10, "tag": "consensus_2leg_volscaled", "expr": "group_zscore(ts_target_tvr_decay(add(group_zscore(divide(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), add(ts_std_dev(returns, 60), 0.001)), industry), group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry)), target_tvr=0.12), industry)", "reason": "共识腿再叠加风险平价：20日腿先除波动再加2日腿，检验两个独立杠杆是否可乘性叠加"}
+  ]
+}

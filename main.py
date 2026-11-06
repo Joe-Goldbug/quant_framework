@@ -38,12 +38,20 @@ if sys.platform == "win32":
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from quant_framework.core.agy_client import GeminiClient, VirtualSession
-from quant_framework.core.func_call_corrector import ASTSandboxCorrector
-from quant_framework.core.dimension_rules import DimensionAuditor
-from quant_framework.core.gatekeeper import Gatekeeper
-from quant_framework.core.rag_memory import RAGMemoryEngine
-from quant_framework.core.sim_runner import SimBatchRunner, get_brain_module
+try:
+    from quant_framework.core.agy_client import GeminiClient, VirtualSession
+    from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+    from quant_framework.core.dimension_rules import DimensionAuditor
+    from quant_framework.core.gatekeeper import Gatekeeper
+    from quant_framework.core.rag_memory import RAGMemoryEngine
+    from quant_framework.core.sim_runner import SimBatchRunner, get_brain_module
+except (ModuleNotFoundError, ImportError):
+    from core.agy_client import GeminiClient, VirtualSession
+    from core.func_call_corrector import ASTSandboxCorrector
+    from core.dimension_rules import DimensionAuditor
+    from core.gatekeeper import Gatekeeper
+    from core.rag_memory import RAGMemoryEngine
+    from core.sim_runner import SimBatchRunner, get_brain_module
 
 try:
     from quant_framework.core.crowding_pairing import FieldCrowdingProfiler, enforce_stage0_pairing
@@ -627,9 +635,37 @@ class AegisPipelineController:
             "  * 结合 group_neutralize(..., subindustry) 消除行业暴露风险。\n"
         )
 
-        # ---------------- 铁律 B 硬配额 + 双窗口成对探针指令 ----------------
+        # ---------------- 场景路由: 老兵精修 (手术刀) vs 战场 A (开拓) ----------------
+        # 母本已在历史区间验证 (|Sharpe| >= 1.2) 时，铁律 B 的 rank 配额与 N/2N 双窗口拆解会直接斩断母本骨架，
+        # 必须切换到精修模式: 骨架锁定 + 经济学通道变异 + 控制槽 + 相对改进验收。
         event_driven = self.category in EVENT_DRIVEN_CATEGORIES
-        ironlaw_directive = SwarmAuditor.build_directive(self.parallelism, event_driven=event_driven)
+        _parent_expr = parent_alpha.get("expression", "") if isinstance(parent_alpha, dict) else ""
+        _parent_metrics = parent_alpha.get("metrics", {}) if isinstance(parent_alpha, dict) else {}
+        if not isinstance(_parent_metrics, dict):
+            _parent_metrics = {}
+        _parent_sharpe = 0.0
+        if isinstance(parent_alpha, dict):
+            try:
+                _parent_sharpe = abs(float(parent_alpha.get("sharpe") or _parent_metrics.get("sharpe") or 0.0))
+            except (TypeError, ValueError):
+                _parent_sharpe = 0.0
+        surgery_mode = bool(_parent_expr) and _parent_sharpe >= 1.2
+        protected_skeleton = SwarmAuditor.extract_skeleton_ops(_parent_expr) if surgery_mode else []
+        route_mode = SwarmAuditor.MODE_REFINEMENT if surgery_mode else SwarmAuditor.MODE_EXPLORATION
+        if surgery_mode:
+            print(
+                f"🔬 [场景路由] 母本 |Sharpe|={_parent_sharpe:.2f} >= 1.2 → 切换「老兵精修 (手术刀) 模式」；"
+                f"骨架锁定 = {protected_skeleton}，铁律 B 的 rank 配额与 N/2N 拆解本批停用。"
+            )
+
+        # ---------------- 铁律 B 硬配额 + 双窗口成对探针指令 (仅战场 A) ----------------
+        ironlaw_directive = SwarmAuditor.build_directive(
+            self.parallelism,
+            event_driven=event_driven,
+            mode=route_mode,
+            protected_ops=protected_skeleton,
+            parent_expression=_parent_expr,
+        )
         pairing = seed.get("pairing") or {}
         pairing_note = ""
         if pairing.get("is_asymmetric"):
@@ -732,14 +768,59 @@ class AegisPipelineController:
 
             p_fails = parent_alpha.get("fails", []) if parent_alpha else []
             p_warnings = parent_alpha.get("warnings", []) if parent_alpha else []
+
+            # 提取母本黄金体检档案 (包含 10年年度夏普、最近24个月月度夏普、告警项与失败项)
+            from core.sim_runner import SimBatchRunner
+            golden_result = SimBatchRunner.extract_golden_alpha_result(parent_alpha) if parent_alpha else {}
+            yearly_sharpe_list = golden_result.get("yearly_sharpe", [])
+            monthly_sharpe_list = golden_result.get("last_24_monthly_sharpe", [])
+            p_warn = golden_result.get("warn", p_warnings)
+            p_fail = golden_result.get("fail", p_fails)
+            pc_val = golden_result.get("pc")
+            sc_val = golden_result.get("sc")
+
+            yearly_sharpe_str = " | ".join(f"{yr}: {sh}" for yr, sh in yearly_sharpe_list) if yearly_sharpe_list else "无"
+            monthly_sharpe_str = " | ".join(f"{m}: {sh}" for m, sh in monthly_sharpe_list[-12:]) if monthly_sharpe_list else "无"
+            
+            golden_profile_str = (
+                f"\n📊 【母本回测黄金体检档案 (Golden Result)】:\n"
+                f"- 10年年度夏普分布 (Yearly Sharpe): {yearly_sharpe_str}\n"
+                f"- 最近12个月月度夏普 (Monthly Sharpe): {monthly_sharpe_str}\n"
+                f"- 平台审查告警 (Warnings): {p_warn}\n"
+                f"- 平台审查失败 (Fails): {p_fail}\n"
+                f"- 生产库相关性 (ProdCorr): {pc_val if pc_val is not None else '未测'} | 自相关性 (SelfCorr): {sc_val if sc_val is not None else '未测'}\n"
+            )
+
+            # 动态格式化 LanceDB 原子化 QA 知识
+            qa_insights_str = ""
+            try:
+                from core.qa_rag_tool import format_qa_for_prompt
+                qa_insights_str = format_qa_for_prompt(verdict.get("qa_prescriptions", []))
+            except Exception:
+                pass
+
+            if surgery_mode:
+                mission_line = (
+                    f"- 🩺 【场景路由 = 老兵精修】母本 |Sharpe|={_parent_sharpe:.2f} 已是局部极值，本轮目标不是全绿，"
+                    f"而是按母本病灶选一条轴做单点相对改进 (Margin 升 >= 20% / Turnover 降 >= 20%『仅当母本换手 > 30%』/ ProdCorr 降 >= 0.05)，"
+                    f"且 |Sharpe| 不得低于母本。\n"
+                    f"- 🚫 严禁拆解骨架 {protected_skeleton}；LOW_SHARPE / CLUSTER_TEST 等由骨架本身决定的平台告警，本轮不必强制清零。\n"
+                )
+            else:
+                mission_line = (
+                    "- 🎯 【全绿冲刺使命】: 必须对症下药将 Fails 与 Warnings 一并彻底清零（实现 0 FAIL + 0 WARNING 的 ALL PASS 状态）！\n"
+                )
+
             stage_guidance = (
                 f"【阶段科研使命: Step #{step} 基于回测病灶的靶向因子工程 (Diagnostic-Driven Engineering)】:\n"
                 f"- 核心母本已证实存在显著信号！母本实测体检指标：Sharpe={p_sharpe:.2f}, Fitness={p_fit:.2f}, Turnover={p_turn:.2%}, Margin={p_margin:.2f}bps | Fails={p_fails} | Warnings={p_warnings}。\n"
-                f"- 🎯 【全绿冲刺使命】: 必须对症下药将 Fails 与 Warnings 一并彻底清零（实现 0 FAIL + 0 WARNING 的 ALL PASS 状态）！\n"
+                f"{golden_profile_str}\n"
+                f"{mission_line}"
                 f"- 🩺 【法医确诊病灶】: {symptoms_str}\n"
                 f"- 💡 【专家推荐算子工具箱 (供参考，Agent 可基于因果逻辑自主选用平台合法算子)】: {allowed_mutations_str}\n"
                 f"- 📋 【靶向 Tier-2 处方指引】:\n{rag_prescriptions_str}\n"
-                f"{polarity_warning}"
+                + (f"\n{qa_insights_str}\n" if qa_insights_str else "")
+                + f"{polarity_warning}"
                 f"- 请严格根据确诊病灶对症下药（50% 探索新拓扑 + 50% 针对母本病灶精修），绝不盲目堆叠非线性算子！\n"
             )
             output_schema_instruction = (
@@ -772,29 +853,72 @@ class AegisPipelineController:
                 + "🔥" * 35 + "\n"
             )
 
-        prompt = (
-            f"基于主信号核心 '{core_expr}' 生成 {self.parallelism} 条群体变体。\n"
-            f"当前演化轮次: Step #{step}\n"
-            f"主信号假说内涵: {seed_mech}\n"
-            f"目标区域: {self.region} | 股票池: {self.universe} | 预测延迟: Delay {self.delay} | 类别: {self.category}\n\n"
+        # Step >= 2 或存在达标母本时: 下放同源冷门字段备选池 (Top-10 Low-Crowding Alternatives)
+        alt_candidates_str = ""
+        alt_candidates_list = []
+        if step >= 2 or parent_alpha is not None:
+            all_fields = list(fields_dict.keys())
+            core_used = set(used_field_names)
+            valid_candidates = [
+                fn for fn in all_fields
+                if fn not in core_used and fields_dict.get(fn, {}).get("coverage", 1.0) >= 0.20
+            ]
+            valid_candidates.sort(
+                key=lambda fn: fields_dict.get(fn, {}).get("coverage", 0) / (1 + math.log1p(fields_dict.get(fn, {}).get("alpha_count", 0))),
+                reverse=True
+            )
+            top10_alts = valid_candidates[:10]
+            for fn in top10_alts:
+                f_meta = fields_dict.get(fn, {})
+                alt_candidates_list.append({
+                    "name": fn,
+                    "type": f_meta.get("type", "MATRIX"),
+                    "description": f_meta.get("description", "无描述"),
+                    "coverage": round(f_meta.get("coverage", 1.0), 3),
+                    "alpha_count": int(f_meta.get("alpha_count", 0)),
+                    "semantic_role": f_meta.get("semantic_role", "Signal_Flow")
+                })
+            if alt_candidates_list:
+                alt_candidates_str = (
+                    f"【同源冷门字段备选池 (Top-10 Low-Crowding Alternatives)】:\n"
+                    f"若母本存在 ProdCorr >= 0.65、CLUSTER 告警或拥挤瓶颈，在 Step >= 2 允许直接将原主锚平替为以下同源冷门字段:\n"
+                    f"{json.dumps(alt_candidates_list, ensure_ascii=False, indent=1)}\n\n"
+                )
+
+        prompt_parts = [
+            f"基于主信号核心 '{core_expr}' 生成 {self.parallelism} 条群体变体。\n",
+            f"当前演化轮次: Step #{step}\n",
+            f"主信号假说内涵: {seed_mech}\n",
+            f"目标区域: {self.region} | 股票池: {self.universe} | 预测延迟: Delay {self.delay} | 类别: {self.category}\n\n",
             f"{op_constraint_directive}\n"
-            + (f"{golden_shot_directive}\n" if golden_shot_directive else "")
-            + f"{stage_guidance}\n"
-            f"【核心字段物理画像】:\n{json.dumps(core_fields_meta, ensure_ascii=False, indent=1)}\n\n"
-            f"{frequency_guidance}\n"
-            f"{ironlaw_directive}\n"
-            f"{pairing_note}"
-            f"【区域动态高阶中性化白名单】:\n{neut_list}\n\n"
-            + (f"【四级金字塔经验手册 (纯算子规则)】:\n{pyramid_kb}\n\n" if pyramid_kb else "")
-            + (f"【当前探索灵感启发】:\n{inspiration}\n\n" if inspiration else "")
-            + (f"【Top-5 历史最优标杆】:\n{json.dumps(top5, ensure_ascii=False, indent=1)}\n\n" if top5 else "")
-            + (f"【母本最优参考】: {json.dumps(parent_alpha, ensure_ascii=False)}\n\n" if parent_alpha else "")
-            + (f"【采样历史候选】:\n{json.dumps(random20, ensure_ascii=False, indent=1)}\n\n" if random20 else "")
-            + f"{output_schema_instruction}"
-        )
+        ]
+        if golden_shot_directive:
+            prompt_parts.append(f"{golden_shot_directive}\n")
+        prompt_parts.append(f"{stage_guidance}\n")
+        prompt_parts.append(f"【核心字段物理画像】:\n{json.dumps(core_fields_meta, ensure_ascii=False, indent=1)}\n\n")
+        prompt_parts.append(f"{frequency_guidance}\n")
+        prompt_parts.append(f"{ironlaw_directive}\n")
+        if pairing_note:
+            prompt_parts.append(f"{pairing_note}")
+        if alt_candidates_str:
+            prompt_parts.append(f"{alt_candidates_str}")
+        prompt_parts.append(f"【区域动态高阶中性化白名单】:\n{neut_list}\n\n")
+        if pyramid_kb:
+            prompt_parts.append(f"【四级金字塔经验手册 (纯算子规则)】:\n{pyramid_kb}\n\n")
+        if inspiration:
+            prompt_parts.append(f"【当前探索灵感启发】:\n{inspiration}\n\n")
+        if top5:
+            prompt_parts.append(f"【Top-5 历史最优标杆】:\n{json.dumps(top5, ensure_ascii=False, indent=1)}\n\n")
+        if parent_alpha:
+            prompt_parts.append(f"【母本最优参考】: {json.dumps(parent_alpha, ensure_ascii=False)}\n\n")
+        if random20:
+            prompt_parts.append(f"【采样历史候选】:\n{json.dumps(random20, ensure_ascii=False, indent=1)}\n\n")
+        prompt_parts.append(f"{output_schema_instruction}")
+        prompt = "".join(prompt_parts)
         context = {
             "core_expr": core_expr,
             "core_fields": core_fields_meta,
+            "alt_candidates": alt_candidates_list,
             "neutralizations": neut_list,
             "parallelism": self.parallelism,
             "parent_id": parent_id,
@@ -827,6 +951,10 @@ class AegisPipelineController:
                 variants,
                 step=step,
                 parallelism=self.parallelism,
+                event_driven=event_driven,
+                mode=route_mode,
+                parent_expression=_parent_expr,
+                protected_ops=protected_skeleton,
                 strict=(step <= 1 and not mock_env)
             )
         except (ValueError, PermissionError, RuntimeError) as e:
@@ -845,7 +973,7 @@ class AegisPipelineController:
             pass
         return variants
 
-    def load_or_fetch_targeted_seed(self, alpha_id: str) -> Optional[dict]:
+    async def load_or_fetch_targeted_seed(self, alpha_id: str) -> Optional[dict]:
         """为情况二 (已有种子 Alpha) 载入母本全景画像与体检病灶"""
         # 1. 尝试从本地指定路径或缓存载入
         possible_paths = [
@@ -869,6 +997,7 @@ class AegisPipelineController:
                                 "metrics": data.get("metrics", {}),
                                 "ra": data.get("ra", {}),
                                 "checks": data.get("checks", {}),
+                                "yearly_stats": data.get("yearly_stats", []),
                                 "times": 0
                             }
                 except Exception:
@@ -878,16 +1007,32 @@ class AegisPipelineController:
         bm = get_brain_module()
         if bm and hasattr(bm, "get_alpha_details"):
             try:
-                details = bm.get_alpha_details(alpha_id)
-                if details and (details.get("code") or details.get("expression")):
+                import inspect
+                async def _call_api(fn, *args, **kwargs):
+                    if inspect.iscoroutinefunction(fn):
+                        return await fn(*args, **kwargs)
+                    val = fn(*args, **kwargs)
+                    if inspect.iscoroutine(val):
+                        return await val
+                    return val
+
+                details = await _call_api(bm.get_alpha_details, alpha_id)
+                if details and isinstance(details, dict) and (details.get("code") or details.get("expression")):
                     print(f"🌐 [SeedResolver] 从 WorldQuant Brain 成功同步 Alpha {alpha_id} 详情！")
+                    y_records = []
+                    if hasattr(bm, "get_alpha_yearly_stats"):
+                        try:
+                            y_records = await _call_api(bm.get_alpha_yearly_stats, alpha_id) or []
+                        except Exception:
+                            pass
                     return {
                         "id": alpha_id,
                         "expression": details.get("code") or details.get("expression"),
                         "economic_mechanism": f"针对已有母本 {alpha_id} 的靶向攻坚",
-                        "metrics": details.get("metrics", {}),
+                        "metrics": details.get("metrics") or details.get("is") or {},
                         "ra": details.get("ra", {}),
-                        "checks": details.get("checks", {}),
+                        "checks": details.get("checks") or (details.get("is", {}).get("checks")) or {},
+                        "yearly_stats": y_records or details.get("yearly_stats", []),
                         "times": 0
                     }
             except Exception as e:
@@ -1076,7 +1221,7 @@ class AegisPipelineController:
             # 模式二：靶向母本优化 (Targeted Warm-Start Mode)
             targeted_seed = next((s for s in pool.get("signals", []) if s.get("id") == self.targeted_alpha_id), None)
             if not targeted_seed:
-                targeted_seed = self.load_or_fetch_targeted_seed(self.targeted_alpha_id)
+                targeted_seed = await self.load_or_fetch_targeted_seed(self.targeted_alpha_id)
                 if targeted_seed:
                     pool.setdefault("signals", []).insert(0, targeted_seed)
                     self.save_signals_pool(pool)
@@ -1131,6 +1276,8 @@ class AegisPipelineController:
                 p_margin_bps = float(seed.get("metrics", {}).get("margin_bps", 0.0)) if "margin_bps" in seed.get("metrics", {}) else float(seed.get("metrics", {}).get("margin", 0.0)) * 10000.0
                 parsed_init_chk = Gatekeeper.parse_brain_checks(seed)
                 init_parent = {
+                    "id": seed.get("id"),
+                    "alpha_id": seed.get("id"),
                     "expression": seed["expression"],
                     "sharpe": p_sh,
                     "fitness": p_fit,
@@ -1139,6 +1286,7 @@ class AegisPipelineController:
                     "metrics": seed.get("metrics", {}),
                     "ra": seed.get("ra", {}),
                     "checks": seed.get("checks", {}),
+                    "yearly_stats": seed.get("yearly_stats", []),
                     "fail_count": parsed_init_chk["fail_count"],
                     "fails": parsed_init_chk["fails"],
                     "warning_count": len(parsed_init_chk["warnings"]),
@@ -1211,10 +1359,14 @@ class AegisPipelineController:
                     except Exception:
                         stage0_op_count = 1
 
+                    has_parent_flag = bool(seed_best_parent is not None)
+                    effective_step = max(step, 2) if has_parent_flag else step
+
                     with open(batch_path, 'w', encoding='utf-8') as f:
                         json.dump({
                             "seed_id": seed_id,
-                            "step": step,
+                            "step": effective_step,
+                            "has_parent": has_parent_flag,
                             "region": self.region,
                             "universe": self.universe,
                             "delay": self.delay,
@@ -1828,7 +1980,8 @@ if __name__ == "__main__":
     parser.add_argument("--alpha-id", default=None, help="目标优化的已有 Alpha ID (情况二)")
     parser.add_argument("--model", default="Gemini 3.8 Flash (High)")
     parser.add_argument("--parallelism", type=int, default=20)
-    parser.add_argument("--generate-seeds", action="store_true", help="强制生成阶段 0 主信号储备池")
+    parser.add_argument("--generate-seeds", action="store_true", help="强制生成阶段 0 主信号储备池 (生成后自动继续推进回测流水线)")
+    parser.add_argument("--seeds-only", action="store_true", help="仅生成阶段 0 主信号储备池后退出")
     parser.add_argument("--mock-only", action="store_true", help="强制仅使用高保真白盒规则引擎 (毫秒级响应，仅限单元测试)")
     parser.add_argument("--backend", default="builtin", choices=["builtin", "subagent", "ipc", "file", "llm_api", "agy", "mock"], help="智能体执行后端: builtin (AI工具内置Agent, 默认0依赖) | llm_api | agy | mock")
     parser.add_argument("--fields-file", default=None, help="显式指定字段元数据画像 JSON 文件路径")
@@ -1892,7 +2045,7 @@ if __name__ == "__main__":
         max_operator_count=args.max_operator_count
     )
 
-    if args.generate_seeds:
+    if args.generate_seeds or getattr(args, "seeds_only", False):
         # 当显式指定重新生成种子时，若非断点恢复阶段，方清理旧响应缓存
         tasks_dir = controller.client.tasks_dir or os.path.join(controller.base_dir, ".agent_tasks")
         for f in [f"resp_aegis-seed-synthesizer_stage0_{controller.dataset_id}.json",
@@ -1905,5 +2058,8 @@ if __name__ == "__main__":
                 except Exception:
                     pass
         controller.synthesize_stage0_seeds(count=20)
-    else:
-        asyncio.run(controller.run_pipeline_loop())
+        if getattr(args, "seeds_only", False):
+            print("✅ 阶段 0 种子生成完毕 (--seeds-only)，平稳停机。")
+            sys.exit(0)
+
+    asyncio.run(controller.run_pipeline_loop())

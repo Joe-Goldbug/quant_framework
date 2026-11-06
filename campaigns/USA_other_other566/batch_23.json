@@ -1,0 +1,111 @@
+{
+  "batch": 23,
+  "family": "short_exp_decay_at_low_turnover_to_lift_sharpe",
+  "hypothesis": "波次 23: 最终收敛波。22 个波次后前沿清晰地裂成两半且互不相交: 高 Sharpe 端 (dexp15/dexp20/quantile-dexp: Sh 1.59~1.65, 2Y 2.26~2.45, 0 平台 FAIL, 但 TO 53%~68% ⇒ Mgn 仅 1.1~1.4bps); 高收益/换手端 (tvr05/tvr10/ret2: R/TO 0.43~0.52 ⇒ Mgn 8.6~10.4bps, 但 Sh 只有 0.66~1.00)。原因是代数: 在 STATISTICAL 下 returns 几乎是常数 (~2.3%~4.6%), 所以任何降换手的平滑都同比降 Margin, 而保 Sharpe 的 exp-decay 家族必然高换手。唯一可行格是 T≈8%~12% 且 R≥4%~6% 且 **Sh≥1.58** —— 现有该换手区间最好 Sharpe 仅 ~1.01, 缺口约 0.6。本波 8 槽位用**短窗几何衰减** (ts_decay_exp_window, window 3/5/8, 中等 factor) 攻击这个缺口: 波次 11 已证明与 ts_mean 的关键区别是**短窗几何平滑不会抹掉修正信息** (ts_mean(26) 杀信号, 而 exp-decay 保 Sharpe 1.62), 短窗 exp-decay 有望在不显著抬高换手的前提下保住高 Sharpe 端的信息优势。并把已在两侧都验证过的账本形状杠杆 (quantile / signed_power 中心化秩) 套到低换手端。",
+  "items": [
+    {
+      "id": "w23_dexp5_core",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 5, factor=0.5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "短窗几何衰减 (5, 0.5) @ STATISTICAL: 目标是在 TO 8-14% 区间保住 Sh>=1.5。若成立, 叠加 quantile 即可逼近全格。"
+    },
+    {
+      "id": "w23_dexp8_core",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 8, factor=0.5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "短窗几何衰减 (8, 0.5) @ STATISTICAL: 与 5 日档配对做窗口扫描。"
+    },
+    {
+      "id": "w23_dexp8_core_ind",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 8, factor=0.5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "短窗 exp-decay (8, 0.5) @ INDUSTRY: 中性化对照 —— r20marsi 腿在两者的偏好不同 (STATISTICAL 抬 Sharpe, INDUSTRY 抬 returns)。"
+    },
+    {
+      "id": "w23_q_dexp8_core",
+      "expr": "quantile(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 8, factor=0.5), driver=\"gaussian\")",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "短窗 exp-decay + quantile 账本形状: 波次 21 证明 quantile 抬 Fitness (0.62) 与 R/TO; 叠加短窗平滑检验两者是否可乘。"
+    },
+    {
+      "id": "w23_sp_dexp8_core",
+      "expr": "signed_power(subtract(group_rank(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 8, factor=0.5), subindustry), 0.5), 2.25)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "短窗 exp-decay + signed_power 中心化秩: 波次 22 的 signed_power 把 R/TO 推到 0.41 (TO 9.6%), 距 0.50 只差一步。"
+    },
+    {
+      "id": "w23_dexp5_ret2",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_return, group_rank(oth566_prob_2, industry)), 5, factor=0.5), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "2 日期腿 (R/TO 最高) + 短窗 exp-decay @ INDUSTRY: 该腿是唯一 R/TO 接近 0.5 的结构, 若短窗平滑能把它 Sharpe 抬到 1.4 以上即可全格达标。"
+    },
+    {
+      "id": "w23_q_dexp5_ret2",
+      "expr": "quantile(ts_decay_exp_window(multiply(oth566_return, group_rank(oth566_prob_2, industry)), 5, factor=0.5), driver=\"gaussian\")",
+      "ops": 4,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "2 日期腿 + 短窗 exp-decay + quantile: 把波次 21 的 R/TO 提升 (0.430) 与波次 19 的 Sharpe 提升 (dexp 家族) 在同一条腿上合并。"
+    },
+    {
+      "id": "w23_q_dexp3_core",
+      "expr": "quantile(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 3, factor=0.5), driver=\"gaussian\")",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "INDUSTRY",
+      "truncation": 0.08,
+      "why": "最短窗 (3, 0.5) + quantile: 窗口的极端档, 换手应最低 (Mgn 侧), 检验 Sharpe 是否仍能保持。"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "wave": 35,
+  "date": "2026-11-06",
+  "parent": "GrWK8063 (wave34 consensus_2leg_7030)",
+  "multisim_correct": "1hUCqh1B4jSa53kGBF1D9U",
+  "multisim_failed_typo": "4vMIY6ftE4zzaFlYNmJVsxM",
+  "multisim_wrong_universe_TOP3000": "2Ka1ul4GI4ybcqcBoSayonk",
+  "note": "第一次提交误用 universe=TOP3000；第二次提交 slot 6 字段名 `oth566_r20marsi_prob_pattern` 不存在导致整批 CANCELLED；已修正为 `oth566_l5r20gasfculr_prob_pattern` 第三次提交。",
+  "settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.08, "pasteurization": "ON", "nan_handling": "ON", "unit_handling": "VERIFY", "max_trade": "OFF"},
+  "hypothesis": "wave34 识别出 3 个独立有效杠杆 (prob^2 / signed_power(z,0.5) / consensus_2leg_7030)，wave35 乘性叠加并扫描 tvr 三档；同时探测仅存的未探冷源字段族 *_prob_pattern。",
+  "expressions": [
+    {"slot": 1, "tag": "composite_tvr12", "expr": "signed_power(group_zscore(ts_target_tvr_decay(add(group_zscore(multiply(oth566_r20marsi_ret, signed_power(oth566_r20marsi_prob_5, 2)), industry), multiply(0.4286, group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry))), target_tvr=0.12), industry), 0.5)", "reason": "三杠杆乘性叠加 tvr=0.12 — prob^2 提 2Y+压 Cluster + consensus_7030 提 Mgn+保 Sub-Univ + signed_power(0.5) 再压 Cluster+dd"},
+    {"slot": 2, "tag": "composite_tvr10", "expr": "signed_power(group_zscore(ts_target_tvr_decay(add(group_zscore(multiply(oth566_r20marsi_ret, signed_power(oth566_r20marsi_prob_5, 2)), industry), multiply(0.4286, group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry))), target_tvr=0.10), industry), 0.5)", "reason": "同骨架 tvr=0.10 — 压 TO 等比抬 R/TO"},
+    {"slot": 3, "tag": "composite_tvr08", "expr": "signed_power(group_zscore(ts_target_tvr_decay(add(group_zscore(multiply(oth566_r20marsi_ret, signed_power(oth566_r20marsi_prob_5, 2)), industry), multiply(0.4286, group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry))), target_tvr=0.08), industry), 0.5)", "reason": "同骨架 tvr=0.08 — 进一步压 TO 探测 R/TO 上界"},
+    {"slot": 4, "tag": "prob2_consensus_noTailShrink", "expr": "group_zscore(ts_target_tvr_decay(add(group_zscore(multiply(oth566_r20marsi_ret, signed_power(oth566_r20marsi_prob_5, 2)), industry), multiply(0.4286, group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry))), target_tvr=0.12), industry)", "reason": "分离贡献 — prob^2 + consensus 但不带 signed_power(0.5)，测量 tail_shrink 的边际 Cluster 贡献"},
+    {"slot": 5, "tag": "consensus_tailShrink_noProb2", "expr": "signed_power(group_zscore(ts_target_tvr_decay(add(group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry), multiply(0.4286, group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry))), target_tvr=0.12), industry), 0.5)", "reason": "分离贡献 — consensus + tail_shrink 但不带 prob^2，测量 prob^2 的边际 2Y/Cluster 贡献"},
+    {"slot": 6, "tag": "prob_pattern_cold", "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_l5r20gasfculr_prob_pattern), target_tvr=0.12), industry)", "reason": "冷源探测 — l5r20gasfculr_prob_pattern 0u/0a 全战役未触（字段名曾误写为 r20marsi_prob_pattern 导致整批 CANCELLED，已修正）"},
+    {"slot": 7, "tag": "multil3_prob_pattern", "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_multil3_prob_pattern), target_tvr=0.12), industry)", "reason": "跨模型形态信念 — multil3 是另一模型，其 prob_pattern 与 r20marsi 的形态信念可能正交"},
+    {"slot": 8, "tag": "prob_power3", "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, signed_power(oth566_r20marsi_prob_5, 3)), target_tvr=0.12), industry)", "reason": "信念弹性上界 — 若 prob^2 提 2Y，prob^3 应更激进收缩低信念；探测信念弹性曲线的边际收益"}
+  ]
+}

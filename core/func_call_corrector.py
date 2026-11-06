@@ -56,9 +56,27 @@ class ASTSandboxCorrector:
         self.db_path = db_path or os.path.join(os.path.dirname(__file__), "..", "alphas_record.db")
         self._init_db()
 
+    def _get_connection(self) -> sqlite3.Connection:
+        """获取开启 WAL 模式与高容忍 Timeout 的 SQLite 连接"""
+        try:
+            from quant_framework.core.concurrency_utils import get_sqlite_wal_connection
+            return get_sqlite_wal_connection(self.db_path)
+        except Exception:
+            try:
+                from core.concurrency_utils import get_sqlite_wal_connection
+                return get_sqlite_wal_connection(self.db_path)
+            except Exception:
+                conn = sqlite3.connect(self.db_path, timeout=15.0)
+                try:
+                    conn.execute("PRAGMA journal_mode=WAL;")
+                    conn.execute("PRAGMA busy_timeout=15000;")
+                except Exception:
+                    pass
+                return conn
+
     def _init_db(self):
         """初始化指纹与骨架数据库"""
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS alpha_fingerprints (
@@ -145,7 +163,7 @@ class ASTSandboxCorrector:
 
     def remove_records(self, expressions: list, region: str, universe: str, delay: int, neutralization: str = "NONE"):
         """从指纹库中回滚未成功回测的表达式 (防止未完成/已取消任务污染指纹库导致假性去重拦截)"""
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
         hashes = [self.compute_fingerprint(self.correct_expression(e), region, universe, delay, neutralization) for e in expressions]
         cursor.executemany("DELETE FROM alpha_fingerprints WHERE md5_hash = ?", [(h,) for h in hashes])
@@ -154,7 +172,7 @@ class ASTSandboxCorrector:
 
     def record_batch(self, expressions: list, region: str, universe: str, delay: int, neutralization: str = "NONE", batch_id: str = None):
         """将已完成成功回测的表达式显式写入数据库"""
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
         corrected_exprs = [self.correct_expression(x) for x in expressions]
         skeletons = [self.get_canonical_skeleton(x) for x in corrected_exprs]
@@ -172,19 +190,20 @@ class ASTSandboxCorrector:
         conn.commit()
         conn.close()
 
-    def check_and_record_batch(self, expressions: list, region: str, universe: str, delay: int, neutralization: str = "NONE", batch_id: str = None, record: bool = True) -> list:
+    def check_and_record_batch(self, expressions: list, region: str, universe: str, delay: int, neutralization: str = "NONE", batch_id: str = None, record: bool = True, max_hist_count: int = 8, is_exploit_or_step2: bool = False) -> list:
         """
         双层防重门禁 (Exact MD5 + Skeleton Hash 熔断)
         """
-        conn = sqlite3.connect(self.db_path)
+        conn = self._get_connection()
         cursor = conn.cursor()
 
         corrected_exprs = [self.correct_expression(x) for x in expressions]
         skeletons = [self.get_canonical_skeleton(x) for x in corrected_exprs]
         skeleton_hashes = [self.compute_skeleton_hash(s) for s in skeletons]
 
-        # 1. 批次内部骨架多样性门禁：支持弹性容量缩放 (8槽限2条，20槽限4条，防同质化微调)
-        max_allowed_per_skel = max(2, int(len(expressions) * 0.20))
+        # 1. 批次内部骨架多样性门禁：支持弹性容量缩放 (8槽限2条，20槽限4条；精修/exploit阶段放宽至60%对齐SwarmAuditor)
+        ratio_cap = 0.60 if is_exploit_or_step2 else 0.20
+        max_allowed_per_skel = max(2, int(len(expressions) * ratio_cap))
         skeleton_freq: Dict[str, List[int]] = {}
         for idx, s_str in enumerate(skeletons):
             skeleton_freq.setdefault(s_str, []).append(idx + 1)
@@ -205,26 +224,28 @@ class ASTSandboxCorrector:
         duplicates = []
         new_records = []
         for expr, skel, skel_hash in zip(corrected_exprs, skeletons, skeleton_hashes):
-            # 2.1 跨批次骨架频次核查：若该拓扑骨架在历史回测中已测试 >= 4 次，直接熔断
+            # 2.1 跨批次骨架频次核查：若该拓扑骨架在相同中性化下历史回测中已测试 >= max_hist_count (>= 8) 次，直接熔断
             # 若提供了 batch_id，排除当前批次自身的旧记录 (支持幂等重跑与断点恢复)
-            if batch_id:
-                cursor.execute(
-                    "SELECT COUNT(*) FROM alpha_fingerprints WHERE skeleton_hash = ? AND region = ? AND universe = ? AND (batch_id != ? OR batch_id IS NULL)", 
-                    (skel_hash, region, universe, batch_id)
-                )
-            else:
-                cursor.execute(
-                    "SELECT COUNT(*) FROM alpha_fingerprints WHERE skeleton_hash = ? AND region = ? AND universe = ?", 
-                    (skel_hash, region, universe)
-                )
-            hist_count = cursor.fetchone()[0]
-            if hist_count >= 4:
-                conn.close()
-                raise ValueError(
-                    f"【跨批次骨架耗尽熔断】该算子+字段骨架在历史回测中已累计微调测试 {hist_count} 次 (>= 4 次上限)！\n"
-                    f"违规骨架: [{skel}]\n"
-                    f"系统硬性禁止继续修改数字窗口调参！必须更换底层数据集字段或改变算子拓扑结构！"
-                )
+            # 若处于 step >= 2 的母本精修阶段，豁免骨架熔断以支持参数精调
+            if not is_exploit_or_step2:
+                if batch_id:
+                    cursor.execute(
+                        "SELECT COUNT(*) FROM alpha_fingerprints WHERE skeleton_hash = ? AND region = ? AND universe = ? AND (neutralization = ? OR neutralization IS NULL) AND (batch_id != ? OR batch_id IS NULL)", 
+                        (skel_hash, region, universe, neutralization, batch_id)
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT COUNT(*) FROM alpha_fingerprints WHERE skeleton_hash = ? AND region = ? AND universe = ? AND (neutralization = ? OR neutralization IS NULL)", 
+                        (skel_hash, region, universe, neutralization)
+                    )
+                hist_count = cursor.fetchone()[0]
+                if hist_count >= max_hist_count:
+                    conn.close()
+                    raise ValueError(
+                        f"【跨批次骨架耗尽熔断】该算子+字段骨架在中性化 [{neutralization}] 下已累计微调测试 {hist_count} 次 (>= {max_hist_count} 次上限)！\n"
+                        f"违规骨架: [{skel}]\n"
+                        f"系统硬性禁止继续修改数字窗口调参！必须更换底层数据集字段、更换中性化维度或改变算子拓扑结构！"
+                    )
 
             # 2.2 精确 MD5 组合查重
             h = self.compute_fingerprint(expr, region, universe, delay, neutralization)

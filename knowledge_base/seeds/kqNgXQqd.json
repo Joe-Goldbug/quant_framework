@@ -1,0 +1,75 @@
+{
+  "id": "kqNgXQqd",
+  "alpha_id": "kqNgXQqd",
+  "expression": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret,oth566_r20marsi_prob_5),target_tvr=0.12),industry)",
+  "economic_mechanism": "R20MaRsi machine learning predicted return modulated by 5-day return probability confidence, smoothed with target turnover decay 0.12 and neutralized by cross-sectional industry z-score.",
+  "expected_polarity": 1,
+  "fields_used": [
+    "oth566_r20marsi_ret",
+    "oth566_r20marsi_prob_5"
+  ],
+  "metrics": {
+    "sharpe": 1.27,
+    "fitness": 0.59,
+    "turnover": 0.1393,
+    "returns": 0.0304,
+    "drawdown": 0.0489,
+    "margin": 0.000437,
+    "margin_bps": 4.37,
+    "two_year_sharpe": 1.86,
+    "cluster_test": 0.95
+  },
+  "ra": {
+    "failed_ra_count": 3,
+    "failed_ppa_count": 0,
+    "ra_failed": true,
+    "ppa_failed": false,
+    "ra_failed_checks": [
+      "LOW_SHARPE",
+      "LOW_FITNESS",
+      "CLUSTER_TEST"
+    ],
+    "pyramid_short": "other"
+  },
+  "checks": {
+    "fail": [],
+    "warning": [
+      {
+        "name": "LOW_SHARPE",
+        "value": 1.27,
+        "limit": 1.58
+      },
+      {
+        "name": "LOW_FITNESS",
+        "value": 0.59,
+        "limit": 1.00
+      },
+      {
+        "name": "CLUSTER_TEST",
+        "value": 0.95,
+        "limit": 1.58
+      }
+    ],
+    "pass": [
+      "LOW_TURNOVER",
+      "HIGH_TURNOVER",
+      "LOW_2Y_SHARPE"
+    ]
+  },
+  "yearly_stats": [
+    {"year": 2014, "sharpe": 3.04},
+    {"year": 2015, "sharpe": 2.72},
+    {"year": 2016, "sharpe": 1.64},
+    {"year": 2017, "sharpe": 0.11},
+    {"year": 2018, "sharpe": 0.66},
+    {"year": 2019, "sharpe": -0.81},
+    {"year": 2020, "sharpe": 2.05},
+    {"year": 2021, "sharpe": 0.00},
+    {"year": 2022, "sharpe": 1.84},
+    {"year": 2023, "sharpe": 1.87}
+  ],
+  "prod_corr": 0.65,
+  "pcorr": 0.65,
+  "prod_corr_verified": true,
+  "times": 0
+}

@@ -1,0 +1,501 @@
+{
+ "campaign_metadata": {
+  "region": "USA",
+  "universe": "TOP1000",
+  "delay": 1,
+  "dataset": "other566",
+  "theme": "USA/D1 TOP1000 Theme",
+  "pyramid": "USA/D1/OTHER",
+  "pyramid_multiplier": 1.4,
+  "user_theme_multiplier": 2.0,
+  "python_theme_multiplier": 3.0,
+  "neutralization": "INDUSTRY",
+  "truncation": 0.08,
+  "pasteurization": "ON",
+  "nan_handling": "ON",
+  "total_batches_simulated": 35,
+  "total_alphas_simulated": 281,
+  "status": "NO_PRODUCTION_PASS",
+  "champion": {
+   "alpha_id": "kqNgXQqd",
+   "champion_score": 0.5703,
+   "selection_rule": "strict abs-max prod corr < 0.65, then Champion_Score"
+  },
+  "champion_note": "Absolute-correlation audit changed the ranking: every higher-margin variant of this seed carries one production alpha at |corr| = 0.68-0.73 in the NEGATIVE tail, while the platform's reported 'max_correlation' only looks at the positive side. Under the strict ProdCorr < 0.65 requirement only kqNgXQqd qualifies (abs max 0.5052).",
+  "correlation_audit_finding": {
+   "statement": "platform prod 'max_correlation' can understate true max |corr| by up to 0.11",
+   "evidence": {
+    "kqNgXQqd_statistical": {
+     "max": 0.5052,
+     "min": -0.4705,
+     "abs_max": 0.5052
+    },
+    "E568aJjP_sector": {
+     "max": 0.6477,
+     "min": -0.7093,
+     "abs_max": 0.7093
+    },
+    "xArbWY9p_crowding": {
+     "max": 0.6227,
+     "min": -0.7334,
+     "abs_max": 0.7334
+    },
+    "wpQ2zzJ5_reversion_momentum": {
+     "max": 0.6712,
+     "min": -0.6821,
+     "abs_max": 0.6821
+    }
+   },
+   "action": "champion selection must use abs_max, not the reported max"
+  }
+ },
+ "gates": {
+  "final_sharpe": 1.58,
+  "final_fitness": 1.0,
+  "final_margin_bps": 10.0,
+  "turnover_range": [
+   0.05,
+   0.5
+  ],
+  "prod_corr_max": 0.7,
+  "self_corr_max": 0.7
+ },
+ "n_step1": 65,
+ "n_zero_fail": 55,
+ "n_platform_pass": 8,
+ "n_production_pass": 0,
+ "platform_gate_passers": [
+  {
+   "alpha_id": "58EgOP31",
+   "batch": 21,
+   "item_id": "w21_q_dexp20",
+   "code": "quantile(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), driver=\"gaussian\")",
+   "sharpe": 1.65,
+   "fitness": 0.4,
+   "margin_bps": 1.2,
+   "turnover_pct": 67.61,
+   "two_year_sharpe": 2.3,
+   "cluster_test": 1.05,
+   "prod_corr": 0.6267,
+   "self_corr": 0.18768955431498285,
+   "champion_score": 0.039,
+   "aegis_gate_blocked_by": [
+    "Fitness 0.4 < 1.0",
+    "Margin 1.2 < 10.0 bps",
+    "Turnover 0.6761 outside [5%,50%]"
+   ],
+   "negative_tail_corr": "UNVERIFIED - platform reported max only"
+  },
+  {
+   "alpha_id": "kqNgXQqd",
+   "batch": 17,
+   "item_id": "w17_neu_stat_t12",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+   "sharpe": 1.27,
+   "fitness": 0.59,
+   "margin_bps": 4.37,
+   "turnover_pct": 13.930000000000001,
+   "two_year_sharpe": 1.86,
+   "cluster_test": 0.95,
+   "prod_corr": 0.5052,
+   "self_corr": 0.14924064595524275,
+   "champion_score": 0.5703,
+   "aegis_gate_blocked_by": [
+    "Sharpe 1.27 < 1.58",
+    "Fitness 0.59 < 1.0",
+    "Margin 4.37 < 10.0 bps"
+   ],
+   "negative_tail_corr": "UNVERIFIED - platform reported max only"
+  },
+  {
+   "alpha_id": "kqNgXQqd",
+   "batch": 18,
+   "item_id": "w18_stat_tvr12",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+   "sharpe": 1.27,
+   "fitness": 0.59,
+   "margin_bps": 4.37,
+   "turnover_pct": 13.930000000000001,
+   "two_year_sharpe": 1.86,
+   "cluster_test": 0.95,
+   "prod_corr": 0.5052,
+   "self_corr": 0.14924064595524275,
+   "champion_score": 0.5703,
+   "aegis_gate_blocked_by": [
+    "Sharpe 1.27 < 1.58",
+    "Fitness 0.59 < 1.0",
+    "Margin 4.37 < 10.0 bps"
+   ],
+   "negative_tail_corr": "UNVERIFIED - platform reported max only"
+  },
+  {
+   "alpha_id": "9qxEwv02",
+   "batch": 28,
+   "item_id": "x28_mult_negpe_tvr12",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, rank(reverse(diff_current_vs_hist_pe_ratio))), target_tvr=0.12), subindustry)",
+   "sharpe": 1.22,
+   "fitness": 0.52,
+   "margin_bps": 3.64,
+   "turnover_pct": 15.509999999999998,
+   "two_year_sharpe": 1.33,
+   "cluster_test": 0.7,
+   "prod_corr": 0.5512,
+   "self_corr": 0.1754,
+   "champion_score": 0.3742,
+   "aegis_gate_blocked_by": [
+    "Sharpe 1.22 < 1.58",
+    "Fitness 0.52 < 1.0",
+    "Margin 3.64 < 10.0 bps"
+   ],
+   "negative_tail_corr": "UNVERIFIED - platform reported max only"
+  },
+  {
+   "alpha_id": "vR1OLqgA",
+   "batch": 28,
+   "item_id": "x28_add_negpe",
+   "code": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(reverse(diff_current_vs_hist_pe_ratio), subindustry)), subindustry)",
+   "sharpe": 1.07,
+   "fitness": 0.5,
+   "margin_bps": 5.07,
+   "turnover_pct": 10.83,
+   "two_year_sharpe": 1.23,
+   "cluster_test": 0.56,
+   "prod_corr": 0.5901,
+   "self_corr": 0.2696,
+   "champion_score": 0.4444,
+   "aegis_gate_blocked_by": [
+    "Sharpe 1.07 < 1.58",
+    "Fitness 0.5 < 1.0",
+    "Margin 5.07 < 10.0 bps"
+   ],
+   "negative_tail_corr": "UNVERIFIED - platform reported max only"
+  },
+  {
+   "alpha_id": "akKVno8W",
+   "batch": 30,
+   "item_id": "x30_slow1_diff_current_vs_hist_p",
+   "code": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(reverse(diff_current_vs_hist_price_ratio_earnings), subindustry)), subindustry)",
+   "sharpe": 1.05,
+   "fitness": 0.49,
+   "margin_bps": 5.01,
+   "turnover_pct": 10.8,
+   "two_year_sharpe": 1.3,
+   "cluster_test": 0.6,
+   "prod_corr": 0.5643,
+   "self_corr": 0.2716,
+   "champion_score": 0.4305,
+   "aegis_gate_blocked_by": [
+    "Sharpe 1.05 < 1.58",
+    "Fitness 0.49 < 1.0",
+    "Margin 5.01 < 10.0 bps"
+   ],
+   "negative_tail_corr": "UNVERIFIED - platform reported max only"
+  },
+  {
+   "alpha_id": "1YNZEMrJ",
+   "batch": 13,
+   "item_id": "w13_d0_tvr15",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), industry)",
+   "sharpe": 1.0,
+   "fitness": 0.55,
+   "margin_bps": 6.0,
+   "turnover_pct": 15.58,
+   "two_year_sharpe": 1.16,
+   "cluster_test": 1.1,
+   "prod_corr": 0.6246,
+   "self_corr": 0.18348363497234982,
+   "champion_score": 0.5289,
+   "aegis_gate_blocked_by": [
+    "Sharpe 1.0 < 1.58",
+    "Fitness 0.55 < 1.0",
+    "Margin 6.0 < 10.0 bps"
+   ],
+   "negative_tail_corr": "UNVERIFIED - platform reported max only"
+  },
+  {
+   "alpha_id": "mLo6OXLx",
+   "batch": 15,
+   "item_id": "w15_tvr12_d0",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+   "sharpe": 1.0,
+   "fitness": 0.61,
+   "margin_bps": 7.39,
+   "turnover_pct": 12.46,
+   "two_year_sharpe": 1.38,
+   "cluster_test": 1.12,
+   "prod_corr": 0.6477,
+   "self_corr": 0.1892279628353081,
+   "champion_score": 0.6232,
+   "aegis_gate_blocked_by": [
+    "Sharpe 1.0 < 1.58",
+    "Fitness 0.61 < 1.0",
+    "Margin 7.39 < 10.0 bps"
+   ],
+   "prod_corr_abs_max_verified": 0.7093,
+   "downgraded_by_abs_corr": true,
+   "note": "same alpha family as E568aJjP (SECTOR/INDUSTRY); verified negative tail -0.7093 breaches |corr|<0.70 and <0.65"
+  }
+ ],
+ "best_candidate": {
+  "alpha_id": "mLo6OXLx",
+  "batch": 15,
+  "item_id": "w15_tvr12_d0",
+  "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+  "op_count": 3,
+  "n_fields": 2,
+  "metrics": {
+   "sharpe": 1.0,
+   "fitness": 0.61,
+   "margin_bps": 7.39,
+   "turnover_pct": 12.46,
+   "returns": 0.046,
+   "drawdown": 0.0784,
+   "two_year_sharpe": 1.38,
+   "sub_universe_sharpe": 0.7,
+   "cluster_test": 1.12
+  },
+  "correlation": {
+   "prod_corr": 0.6477,
+   "self_corr": 0.1892279628353081
+  },
+  "gates": {
+   "production_pass": false,
+   "blocked_by": [
+    "Sharpe 1.0 < 1.58",
+    "Fitness 0.61 < 1.0",
+    "Margin 7.39 < 10.0 bps"
+   ],
+   "platform_fails": [],
+   "warnings": [
+    "LOW_SHARPE",
+    "LOW_FITNESS",
+    "CLUSTER_TEST",
+    "LOW_2Y_SHARPE"
+   ]
+  },
+  "champion_score": 0.6232
+ },
+ "runner_ups": [
+  {
+   "rank": 1,
+   "alpha_id": "kqNgXQqd",
+   "batch": 17,
+   "item_id": "w17_neu_stat_t12",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+   "sharpe": 1.27,
+   "fitness": 0.59,
+   "margin_bps": 4.37,
+   "turnover_pct": 13.930000000000001,
+   "two_year_sharpe": 1.86,
+   "cluster_test": 0.95,
+   "prod_corr": 0.5052,
+   "self_corr": 0.14924064595524275,
+   "champion_score": 0.5703,
+   "blocked_by": [
+    "Sharpe 1.27 < 1.58",
+    "Fitness 0.59 < 1.0",
+    "Margin 4.37 < 10.0 bps"
+   ]
+  },
+  {
+   "rank": 2,
+   "alpha_id": "kqNgXQqd",
+   "batch": 18,
+   "item_id": "w18_stat_tvr12",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+   "sharpe": 1.27,
+   "fitness": 0.59,
+   "margin_bps": 4.37,
+   "turnover_pct": 13.930000000000001,
+   "two_year_sharpe": 1.86,
+   "cluster_test": 0.95,
+   "prod_corr": 0.5052,
+   "self_corr": 0.14924064595524275,
+   "champion_score": 0.5703,
+   "blocked_by": [
+    "Sharpe 1.27 < 1.58",
+    "Fitness 0.59 < 1.0",
+    "Margin 4.37 < 10.0 bps"
+   ]
+  },
+  {
+   "rank": 3,
+   "alpha_id": "1YNZEMrJ",
+   "batch": 13,
+   "item_id": "w13_d0_tvr15",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), industry)",
+   "sharpe": 1.0,
+   "fitness": 0.55,
+   "margin_bps": 6.0,
+   "turnover_pct": 15.58,
+   "two_year_sharpe": 1.16,
+   "cluster_test": 1.1,
+   "prod_corr": 0.6246,
+   "self_corr": 0.18348363497234982,
+   "champion_score": 0.5289,
+   "blocked_by": [
+    "Sharpe 1.0 < 1.58",
+    "Fitness 0.55 < 1.0",
+    "Margin 6.0 < 10.0 bps"
+   ]
+  },
+  {
+   "rank": 4,
+   "alpha_id": "vR1OLqgA",
+   "batch": 28,
+   "item_id": "x28_add_negpe",
+   "code": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(reverse(diff_current_vs_hist_pe_ratio), subindustry)), subindustry)",
+   "sharpe": 1.07,
+   "fitness": 0.5,
+   "margin_bps": 5.07,
+   "turnover_pct": 10.83,
+   "two_year_sharpe": 1.23,
+   "cluster_test": 0.56,
+   "prod_corr": 0.5901,
+   "self_corr": 0.2696,
+   "champion_score": 0.4444,
+   "blocked_by": [
+    "Sharpe 1.07 < 1.58",
+    "Fitness 0.5 < 1.0",
+    "Margin 5.07 < 10.0 bps"
+   ]
+  },
+  {
+   "rank": 5,
+   "alpha_id": "akKVno8W",
+   "batch": 30,
+   "item_id": "x30_slow1_diff_current_vs_hist_p",
+   "code": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(reverse(diff_current_vs_hist_price_ratio_earnings), subindustry)), subindustry)",
+   "sharpe": 1.05,
+   "fitness": 0.49,
+   "margin_bps": 5.01,
+   "turnover_pct": 10.8,
+   "two_year_sharpe": 1.3,
+   "cluster_test": 0.6,
+   "prod_corr": 0.5643,
+   "self_corr": 0.2716,
+   "champion_score": 0.4305,
+   "blocked_by": [
+    "Sharpe 1.05 < 1.58",
+    "Fitness 0.49 < 1.0",
+    "Margin 5.01 < 10.0 bps"
+   ]
+  },
+  {
+   "rank": 6,
+   "alpha_id": "9qxEwv02",
+   "batch": 28,
+   "item_id": "x28_mult_negpe_tvr12",
+   "code": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, rank(reverse(diff_current_vs_hist_pe_ratio))), target_tvr=0.12), subindustry)",
+   "sharpe": 1.22,
+   "fitness": 0.52,
+   "margin_bps": 3.64,
+   "turnover_pct": 15.509999999999998,
+   "two_year_sharpe": 1.33,
+   "cluster_test": 0.7,
+   "prod_corr": 0.5512,
+   "self_corr": 0.1754,
+   "champion_score": 0.3742,
+   "blocked_by": [
+    "Sharpe 1.22 < 1.58",
+    "Fitness 0.52 < 1.0",
+    "Margin 3.64 < 10.0 bps"
+   ]
+  },
+  {
+   "rank": 7,
+   "alpha_id": "58EgOP31",
+   "batch": 21,
+   "item_id": "w21_q_dexp20",
+   "code": "quantile(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), driver=\"gaussian\")",
+   "sharpe": 1.65,
+   "fitness": 0.4,
+   "margin_bps": 1.2,
+   "turnover_pct": 67.61,
+   "two_year_sharpe": 2.3,
+   "cluster_test": 1.05,
+   "prod_corr": 0.6267,
+   "self_corr": 0.18768955431498285,
+   "champion_score": 0.039,
+   "blocked_by": [
+    "Fitness 0.4 < 1.0",
+    "Margin 1.2 < 10.0 bps",
+    "Turnover 0.6761 outside [5%,50%]"
+   ]
+  },
+  {
+   "rank": 8,
+   "alpha_id": "d5W1lzjx",
+   "batch": 19,
+   "item_id": "w19_ret2_dexp20",
+   "code": "group_zscore(ts_decay_exp_window(multiply(oth566_return, group_rank(oth566_prob_2, industry)), 20, factor=0.7), industry)",
+   "sharpe": 1.73,
+   "fitness": 0.41,
+   "margin_bps": 1.14,
+   "turnover_pct": 73.09,
+   "two_year_sharpe": 2.2,
+   "cluster_test": 1.6,
+   "prod_corr": 0.6466,
+   "self_corr": 0.23888753666216564,
+   "champion_score": 0.0263,
+   "blocked_by": [
+    "Fitness 0.41 < 1.0",
+    "Margin 1.14 < 10.0 bps",
+    "Turnover 0.7309 outside [5%,50%]",
+    "platform_fail=2 (['LOW_FITNESS', 'HIGH_TURNOVER'])"
+   ]
+  },
+  {
+   "rank": 9,
+   "alpha_id": "vR12Kzmd",
+   "batch": 7,
+   "item_id": "b7_t1",
+   "code": "group_rank(trade_when(not_equal(ts_delta(oth566_r20marsi_ret, 1), 0), multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), -1), subindustry)",
+   "sharpe": 1.18,
+   "fitness": 0.35,
+   "margin_bps": 1.78,
+   "turnover_pct": 46.54,
+   "two_year_sharpe": 1.39,
+   "cluster_test": 1.33,
+   "prod_corr": null,
+   "self_corr": null,
+   "champion_score": 0.0,
+   "blocked_by": [
+    "Sharpe 1.18 < 1.58",
+    "Fitness 0.35 < 1.0",
+    "Margin 1.78 < 10.0 bps"
+   ]
+  }
+ ],
+ "wave34_35": {
+  "hypotheses_tested": [
+   "PV momentum orthogonalization (vector_neut vs 20d price change)",
+   "risk-parity vol scaling (divide by ts_std_dev(returns,60))",
+   "hump turnover control (hump=0.003, no ts_mean shell)",
+   "tail shrink signed_power(p=0.5)",
+   "cold label x confidence (r20marsi_label_5 x prob_5)",
+   "properly-scaled 2-leg consensus (equal / 70-30 / vol-scaled)",
+   "confidence power 2",
+   "time-series self-relative normalization (ts_quantile / ts_rank / ts_zscore @ 60/120/250)",
+   "full neutralization map (SECTOR / CROWDING / REVERSION_AND_MOMENTUM / FAST / SLOW_AND_FAST)"
+  ],
+  "outcome": "ALL FALSIFIED - every construction variant collapses into the Sharpe 1.19-1.27 / R 2.6-3.1% / TO 13-14% band",
+  "neutralization_map": "STAT gives IR (Sh 1.27, R 3.04%, Mgn 4.37, 2Y 1.86); SECTOR gives unit-turnover profit (Sh 1.00, R 4.60%, Mgn 7.39, 2Y 1.38) - same frontier, different points",
+  "best_fitness_reached": 0.61,
+  "best_sharpe_reached": 1.27,
+  "best_margin_reached_bps": 7.39,
+  "new_zero_fail_alphas": [
+   "omEJzwwv",
+   "58EA673n",
+   "d5W378gK",
+   "omEJzwv6",
+   "O0AMm3jJ",
+   "E568aJjP",
+   "xArbWY9p",
+   "wpQ2zzJ5",
+   "Xg9vlQvm"
+  ],
+  "champion": "kqNgXQqd",
+  "champion_score": 0.5703
+ }
+}

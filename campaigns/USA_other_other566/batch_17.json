@@ -1,0 +1,111 @@
+{
+  "batch": 17,
+  "family": "neutralization_sweep_on_champion_core",
+  "hypothesis": "波次 17: 扫描**平台 neutralization 设置** —— 这是 16 个波次里从未动过的最大杠杆, 全部 alpha 都用了 AEGIS 默认的 INDUSTRY。平台对 USA/D1/TOP1000 提供 NONE / MARKET / SECTOR / INDUSTRY / SUBINDUSTRY / STATISTICAL / CROWDING / FAST / SLOW / REVERSION_AND_MOMENTUM / SLOW_AND_FAST。这不是装饰性参数: 中性化是在**形成多空组合之前**剥离市场/行业 beta, 因此它同时改变 realized returns、Sharpe、换手与 Margin。我们的 alpha 是机器学习预测, 其原始输出天然带有很大的市场/行业 beta 成分 —— 一个对所有股票都预测「涨」的模型不提供横截面区分度却贡献 beta; 而本数据集的预测模型极可能是行业条件性的 (订单簿形态与行业流动性结构强相关), 这使 INDUSTRY 中性化可能**误杀了真实的行业内信息**。SUBINDUSTRY 或 STATISTICAL 剥得更干净 ⇒ 横截面区分度更纯 ⇒ Sharpe 上升; NONE / MARKET 保留方向性 beta ⇒ 若模型有真实择时能力则 returns 上升 ⇒ Margin 上升 (margin_bps = returns/turnover*20)。本波在两个关键工作点各扫一半菜单 (tvr=0.12 Fitness 峰 / tvr=0.08 Margin 峰), 外加两个 truncation 探针。",
+  "items": [
+    {
+      "id": "w17_neu_none_t12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "NONE",
+      "truncation": 0.08,
+      "why": "完全不做 beta 中性化: 保留模型的市场择时与行业方向成分。若模型有真实择时能力, returns 上升 → Margin 上升; 若没有, Sharpe 崩塌即为判据。"
+    },
+    {
+      "id": "w17_neu_market_t12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "MARKET",
+      "truncation": 0.08,
+      "why": "只剥离市场 beta, 保留行业结构: 检验行业条件性预测是否是真信息。"
+    },
+    {
+      "id": "w17_neu_subind_t12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "剥离到细分行业: 横截面区分度最纯, 预期 Sharpe 上升 (若信号确实是选股而非选行业)。"
+    },
+    {
+      "id": "w17_neu_stat_t12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "统计中性化 (本仓库 proven_templates 的分析师模板最佳设置): 用统计方法而非固定分组剥离共同因子, 预期更贴合模型的真实因子结构。"
+    },
+    {
+      "id": "w17_neu_none_t08",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.08), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "NONE",
+      "truncation": 0.08,
+      "why": "NONE @ tvr=0.08 (Margin 峰工作点): 若 NONE 能把 returns 抬上去, Margin 有望突破 10bps。"
+    },
+    {
+      "id": "w17_neu_subind_t08",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.08), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "SUBINDUSTRY",
+      "truncation": 0.08,
+      "why": "SUBINDUSTRY @ tvr=0.08 (Margin 峰工作点): 更纯的横截面 + 更低换手, 与 NONE 对照以确定收益来源。"
+    },
+    {
+      "id": "w17_neu_none_t12_tr004",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "NONE",
+      "truncation": 0.04,
+      "why": "truncation 探针: 截尾收紧到 0.04, 检验集中持仓是否是 NONE 下收益的拖累项。"
+    },
+    {
+      "id": "w17_neu_market_t08",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.08), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "MARKET",
+      "truncation": 0.08,
+      "why": "MARKET @ tvr=0.08: 第三个中性化口径在 Margin 工作点上的读数, 与 NONE/SUBINDUSTRY 构成三点对照。"
+    }
+  ]
+}

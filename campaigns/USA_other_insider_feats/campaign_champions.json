@@ -7,57 +7,215 @@
     "truncation": 0.025,
     "nan_handling": "ON",
     "primary_dataset": "insider_feats (Global Insider Transaction Features)",
-    "total_batches_simulated": 41,
-    "lineage": "SEED_04 -> Wave16/17 plateau (j2Y32V9j) -> Wave21 (j2YAbw6W 1.27/2Y1.60) -> Wave25 STATISTICAL (PC 0.6222, Margin 崩, 被用户禁令撤销) -> Wave30/31 冷门字段轮 (笔数比源 PC 0.6316) -> Wave34/35 双层嵌套秩 (PC 0.5728 历史最低) -> Wave36 插值带 (dr26_d8 双达标) -> Wave37 联合体 (CLUSTER-PC 对偶证实) -> Wave38~41 PM处方验证轮 (rank化证伪, 幅度尾部幂次新王 YP1bEqmM, 三轴梯度图闭合)",
-    "status": "DUAL_PASS_FRONTIER_FULL_GREEN_NOT_REACHED_PM_PRESCRIPTION_REFUTED",
-    "verdict": "Margin>=10 & ProdCorr<0.70 双达标新王 YP1bEqmM（Sh 1.15/Fit 0.66/2Y 0.97/CLST 0.53/Mgn 12.1/PC 0.6848，全维度压制 LLMNRnkL）。但 0 FAIL + 0 WARNING 全绿未达成：Sh 1.15/1.58、Fit 0.66/1.0、2Y 0.97/1.58、CLUSTER 0.53/1.58 四门在 PC<0.70 约束下无杠杆可动。Wave38~41 将外部 PM 处方（rank 化消零结块/group_neutralize/ts_ir 信噪比/尾部幂次/250d 基线）全部实证裁决，并把窗口-幂次-信念源三轴梯度图闭合到 PC 边界（w20/p2 = 唯一双达标点）。",
+    "total_batches_simulated": 49,
+    "lineage": "SEED_04 -> Wave16/17 plateau (j2Y32V9j) -> Wave21 (j2YAbw6W 1.27/2Y1.60) -> Wave25 STATISTICAL (PC 0.6222, Margin 崩, 被用户禁令撤销) -> Wave30/31 冷门字段轮 (笔数比源 PC 0.6316) -> Wave34/35 双层嵌套秩 (PC 0.5728 历史最低) -> Wave36 插值带 (dr26_d8 双达标) -> Wave37 联合体 (CLUSTER-PC 对偶证实) -> Wave38~41 PM处方验证轮 (rank化证伪, 幅度尾部幂次新王 YP1bEqmM, 三轴梯度图闭合) -> Wave42~44 跨数据集解锁 (轧空/新闻族勘察, 新闻平静度新大陆) -> Wave45~46 PC剃刀微带扫描 (w14~18双达标岛, 新王 A1Vv1xxg) -> Wave47~49 设置轴收口 (decay-PC 梯度闭合, truncation 不 bind, 最终王 N1NVqZYg = w18/p2.25/d8)",
+    "status": "DUAL_PASS_FRONTIER_CLOSED_FULL_GREEN_NOT_REACHED",
+    "verdict": "跨数据集新闻平静核三轴 (窗口18/幂次2.25/decay8) 全部顶到 PC<0.70 门边界, 帕累托前沿闭合: wpQbLPO2 (d10) PC 恰 0.7000 FAIL, QPvKlRGp (d12) 0.7091, gJeZ1G5l (d16) 更高。全绿四门缺口: Sh +0.42/Fit +0.31/2Y +0.66/CLST +0.85 — 在 2~3 字段 + 单外部数据集 + PC<0.70 约束下 insider×ai_news 对已结构性穷尽 (49 波 ~350 条表达式)。",
     "frontier_claim": "insider_feats 数据族在 2~3 字段 + <=10 op + INDUSTRY 中性化约束下已真穷尽：CLUSTER-PC 对偶 + Sharpe 天花板为结构性约束，表达式层与设置层均无未测杠杆。下一步唯一路径 = 转数据族（emotion/news/sentiment event source）。",
-    "generated_at": "2026-11-04"
+    "generated_at": "2026-11-04",
+    "checks_calibration_2026-11-05": {
+      "trigger": "Handoff Step 0 强制前置：校准 checks 口径",
+      "channel": "D:/brain-mcp 直连 Python，单一已认证会话",
+      "endpoint_checks": "GET {base}/alphas/{id} -> is.checks[]",
+      "endpoint_pc": "GET {base}/alphas/{id}/correlations/prod -> histogram.max",
+      "pulled_at_gmt8": "2026-11-05 00:15:55",
+      "evidence_file": "step0_calibration_2026-11-05.json",
+      "conclusion": "口径漂移确认，但根因不是端点混用。同一端点同一会话重拉仍分两套快照：LLMNRnkL/bl6bQ0Jp 为 preliminary（pending=6、检查项名 LOW_2Y_SHARPE、MATCHES_THEMES=PASS、fail=[]）；W39 起为 submission-level（pending=4、改名 IS_LADDER_SHARPE、MATCHES_THEMES=WARNING、明确 FAIL）。触发条件是 alpha 是否走过 check_correlation/提交前检查流程。",
+      "hard_evidence": "bl6bQ0Jp Sh 1.31、PC 0.8142 已破门，却因 PROD_CORRELATION 仍为 PENDING 而记 fail=[]。",
+      "pc_data_gap": "【已按 C1 修正 2026-11-05 01:10】原记『7 个 alpha 全部空 body、PC 无法实时复现、一律降为 L2』不成立。独立窗口 00:20:48 在同一端点一次拿到 4 个 PC（LLMNRnkL 0.662 / YP1bEqmM 0.6848 / A1Vv1xxg 0.6936 / N1NVqZYg 0.6957），仅 QPvKlRGp / gJeZ1G5l / bl6bQ0Jp 为 pending（200 + Retry-After:1.0 + 空 body）。空 body 是逐 alpha 瞬时计算态，非端点故障；这 4 个记为同日同端点 L1 可比基线，其余 3 个仍为 L2 历史证据。证据 handoff_crosscheck_2026-11-05.json。",
+      "ruling": "fail_count 禁止跨代比较。唯一权威判据 = ra.ra_failed（_slim_checks 输出）。CLUSTER_TEST 与 MATCHES_THEMES 在平台 ra_failed 口径中只计 warning，不影响可提交性；仅当用户要求 0 WARNING 全绿时才需 CLUSTER>=1.58。",
+      "extra_finding": "QPvKlRGp 实测另有 CONCENTRATED_WEIGHT FAIL，原档案漏记。",
+      "pc_recalibration": {
+        "method": "正式 check_correlation(alpha_id, 'production', 0.7)，秒回（直接 GET 首次为空 body 属瞬时计算态，非端点故障）",
+        "pulled_at_gmt8": "2026-11-05 00:25:04",
+        "LLMNRnkL": {"handoff_value": 0.6316, "recalibrated_value": 0.662, "passes_check": true},
+        "N1NVqZYg": {"handoff_value": 0.6957, "recalibrated_value": 0.6957, "passes_check": true},
+        "impact": "主基座 PC 由 0.6316 上修到 0.662，PC<0.70 余量由 0.0684 缩到 0.0380，且已突破用户设定的 0.66 安全边际 0.002。CS 基线由 0.6605 重算为 0.6173（0.60*ln(11.13)*(1-0.662^2)*(1-0.04*6)）。N1NVqZYg CS 0.4971 不变。结论方向不变（种子仍优于新王），但劣化幅度由 -24.7% 修正为 -19.5%。",
+        "source_conflict_policy": "两个读数并列保留，不取平均。0.6316 视为历史快照（生产 alpha 池随时间变化或早期口径），0.662 为本次统一端点实测，后续 CS/预算判定一律用 0.662。证据文件 step0_pc_LLMNRnkL_20261105.json / step0_pc_N1NVqZYg_20261105.json"
+      }
+    },
+    "rebase_2026-11-05": {
+      "primary_anchor": "LLMNRnkL",
+      "reason": "Champion_Score 复核：0.6173 (LLMNRnkL, 按重拉 PC=0.662 重算) > 0.5243 (YP1bEqmM) > 0.5225 (A1Vv1xxg) > 0.4971 (N1NVqZYg)，后 5 代新王全部劣于种子，CS 单调劣化 -19.5%。handoff 原记 0.6605/-24.7% 基于 PC 0.6316，已按 Step 0 重拉值修正；其余 alpha 的 CS 沿用历史 PC（L2 证据），待统一重拉。",
+      "cs_formula": "Fitness * ln(Margin_bps) * (1 - PC^2) * (1 - 0.04 * OpCount)",
+      "hard_budget": "PC <= 0.66 安全边际（主基座当前 0.662 已略超，须先挣余量）；真进步 = CS>0.6173 且 PC<=0.66 且 |L-S|<50 三者同时",
+      "main_root_cause": "R3 belief 腿稀疏零值结块（49 波从未真正触碰）；先挣 PC 余量再花余量。【Wave 50 后限定 2026-11-05】该诊断仍是待检验假说，未被证实也未被证伪：Wave 50 的 8 条改写同时破坏了幅度与符号，混淆效应未分离；决定性实验（保住 Sh>=1.12 的前提下把 |L-S| 压到 <50）尚未执行。",
+      "deprecated": ["N1NVqZYg 作为优化起点", "双达标 + 面板逐项占优的字典序比较（删除了复杂度与相关性惩罚）"]
+    },
+    "wave50_verdict_2026-11-05": {
+      "verdict": "WAVE50_REWRITE_CLASS_FALSIFIED（原『R3 机制证伪 / 结构性穷尽 / 停止爬山』已于 2026-11-05 01:10 降级撤销）",
+      "verdict_scope": "仅证伪 8 条同类改写（相对化/中心化/长锚/时序标准化/外部归一化/后处理，均同时破坏 belief 腿幅度与符号）。无 B0 同批种子对照、无一条 Sh>=1.12，属混淆效应，不能外推到 R3 机制本身或结构性穷尽。按任务书停止条件（连续 3 波），Wave 50 仅第 1 波，停止判定不成立，待用户裁定。依据 handoff_crosscheck_2026-11-05.json C2/C3/C4。",
+      "batch": "gate1_wave50_batch.json (8 条, op 5~8, 字段 2~3, 外部数据集 0 或 1)",
+      "multisim_id": "1rGaQwdRn4k4bgmbc1QLX6H",
+      "result": "8/8 全部 ra_failed=true。Sh 0.41~0.89 (基线 1.12) / 2Y 0.03~0.53 (0.91) / Fit 0.14~0.43 (0.60) / RN 0.04~0.54 (0.82) / CLST 0.01~0.51 (0.51)。",
+      "key_observation": "|L-S| 由 84 收窄到 2~80，证明零值结块确被缓解，但性能同步崩塌 —— 零值结块不是噪声，而是稀疏事件信号的信息载体。R3/PM 处方证伪。",
+      "new_root_cause": "insider 信号强度依赖 20d-60d 短窗口差分对事件脉冲幅度与符号的保真；相对化/中心化/长周期锚/流动性归一化都把无事件标的摊进截面，按覆盖倍数稀释信噪比。ts_zscore 更抹掉买卖比相对零基准的方向，导致 2Y 0.03、CLST 0.01。",
+      "pc_independent_ruling": "真进步三条件不可能同时满足：满足 |L-S|<50 的 4 条，即使取理论最优 PC=0，CS 上界仅 0.15~0.27 << 基线 0.6173；CS 上界能超基线的两条 (W50-01 0.6210 / W50-06 0.6447) |L-S|=68 且仍须 PC=0。故 PC 数据缺口不阻塞判定。",
+      "structural_conclusion": "【撤销】原结论『全绿不可达 / 两条路均已穷尽』属过度外推，已撤回。保留的客观门槛：Fit=Sh*sqrt(Ret/max(TO,0.125)) 与 Mgn≈19.84*Ret/TO 逐位复现；TO<12.5% 下 Sh>=1.58 且 Fit>=1.0 需 Ret>=5.01%（种子 3.56%），真硬门为 2Y 0.91->1.58 与 CLUSTER 0.51->1.58。门槛本身不因结论降级而改变。",
+      "pc_final": {
+        "task": "88L4Cu",
+        "duration": "42m55s",
+        "completed_at_gmt8": "2026-11-05 01:08",
+        "success": "1/8",
+        "timeouts": "7/8 外层 300s TimeoutError（平台侧单并发，PC 计算未就绪）",
+        "only_result": "W50-06 wpQb2EL2 (ts_backfill 补广度) PC=0.7568 已破 0.70 门、CS=0.2755；相对基线 PC 0.662 抬升 +0.0948，比 49 波任何花余量杠杆更费余量。该条轮询 352 次 / 449s 才返回，说明 300s 超时是失败的直接工程原因。",
+        "interpretation_scope": "单条证据、假设级：抬覆盖 / 激活无事件标的可能抬高 prod correlation。此条仍属『抬覆盖』类，不是『保幅打散』类，不能替代决定性实验。",
+        "table": "gate1_wave50_table_20261105.json（8 行，PC/CS 缺失处为 null）；裁定点 C 仅完成 1/8，PC 表未补齐。"
+      },
+      "true_progress_criteria_amended": "CS>0.6173 且 PC<=0.66 且 |L-S|<50 且 Sh>=1.12（新增硬前置，防对称噪声靠 L/S 平衡骗过判据）。CS 阈值 0.6605->0.6173 系 PC 校准重基，后续每波表格须显式注明。",
+      "migration": "① 转有价格量纲的期频数据族 (analyst/fundamental)，divide(F, close) 才有经济归一化含义；② 放宽用户禁令 (STATISTICAL / 字段数>3 / 长窗口)——需用户授权；③ 在低 PC 独立数据族从零搜索；④ Wave 51 诊断波（B0 同批种子对照 + 保幅打散型干预）分离混淆效应。",
+      "requires_user_ruling": "『改目标为 ra_failed=false 可提交、不必追 0 WARNING』已按 C4 从结论移出：用户最终目标始终为 0 FAIL + 0 WARNING 全绿，放宽目标属用户裁定事项，Agent 不得代为决定。待选：A 停止转族 / B 跑 Wave 51 / C 补 PC 表 / D 放宽约束。",
+      "evidence": ["gate1_wave50_result_1793809498.json", "gate1_wave50_table_20261105.json", "gate1_wave50_verdict_20261105.json", "handoff_crosscheck_2026-11-05.json"]
+    }
   },
   "grand_champion": {
-    "alpha_id": "YP1bEqmM",
-    "slot": "w39_champ_tailpow (w32d8_allbel_w20 + 幅度尾部幂次)",
-    "code": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20), subindustry), 0.5), 2)",
-    "operator_count": 10,
-    "data_fields": ["buy_sell_tx_count_ratio_all_20d_filled (cov 0.8833, ac=0)", "buy_sell_tx_count_ratio_all_60d_filled (cov 0.8833, ac=0)", "top20_buy_to_sell_txn_ratio_lookback_60_filled (cov 0.8833, ac=0)"],
-    "settings": {"neutralization": "INDUSTRY", "decay": 8, "truncation": 0.025, "pasteurization": "ON", "nan_handling": "ON", "universe": "TOP1000", "delay": 1},
-    "metrics": {
-      "sharpe": 1.15, "fitness": 0.66, "two_year_sharpe": 0.97, "returns": 0.0407,
-      "turnover": 0.0673, "margin_bps": 12.1, "drawdown": 0.0624, "sub_universe_sharpe": 1.07, "risk_neutralized_sharpe": 0.82
+    "alpha_id": "N1NVqZYg",
+    "champion_score": 0.4971,
+    "champion_disputed": true,
+    "dispute_note": "2026-11-05 CS 复核（已按 Step 0 PC 校准重算）：0.4971 < 种子 LLMNRnkL 0.6173（-19.5%）。原记 0.6605 / -24.7% 基于 PC 0.6316，已作废。复杂度 6->11 op 换来的 Sh +0.04 / 2Y +0.01 均为噪声级；Fit +0.09 几乎全部来自 Ret 3.56->4.38%；PC<0.70 余量 0.0380->0.0043 被吃掉 8.8 倍（原记 0.0684->0.0043 / 16 倍同步修正）；L/S 失衡 84->184 根因反而恶化。结论方向不变（种子仍优于新王）。降级为『外部新闻腿有效但吃 PC 余量』的证据存档，不再作为优化起点。",
+    "slot": "w47 nc18_p225 (news-calm core, w18, p2.25, decay8)",
+    "code": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),reverse(ts_mean(negative_score_average_value_3,20))),18),subindustry),0.5),2.25)",
+    "operator_count": 11,
+    "data_fields": [
+      "buy_sell_tx_count_ratio_all_20d_filled (cov 0.8833, ac=0)",
+      "buy_sell_tx_count_ratio_all_60d_filled (cov 0.8833, ac=0)",
+      "negative_score_average_value_3 (ai_news_scores, cov 1.0, ac=0)"
+    ],
+    "settings": {
+      "neutralization": "INDUSTRY",
+      "decay": 8,
+      "truncation": 0.025,
+      "pasteurization": "ON",
+      "nan_handling": "ON",
+      "universe": "TOP1000",
+      "delay": 1
     },
-    "correlation": {"prod_corr": 0.6848, "prod_corr_pass": true, "self_corr_verified": false},
-    "champion_score": null,
-    "economics": "冠军核（全队列买卖笔数比 20d 相对 60d 基线的广度信念动量 × top20 60d 笔数强度确认）叠加居中尾部幂次 signed_power(group_rank-0.5, 2)：资金向子行业内信号尾部前后 15% 集中，压缩中间零值噪音股权重。Ret 3.56%→4.07%、Margin 11.13→12.1bps、CLUSTER 0.51→0.53、PC 0.6316→0.6848（仍过 0.70 门）。",
+    "metrics": {
+      "sharpe": 1.16,
+      "fitness": 0.69,
+      "two_year_sharpe": 0.92,
+      "returns": 0.0438,
+      "turnover": 0.0726,
+      "margin_bps": 12.1,
+      "drawdown": 0.0548,
+      "sub_universe_sharpe": 1.12,
+      "risk_neutralized_sharpe": 0.8
+    },
+    "correlation": {
+      "prod_corr": 0.6957,
+      "prod_corr_pass": true
+    },
+    "economics": "内部人知情增持动量（全队列买卖笔数比 20d 相对 60d 基线偏移）× 负面新闻平静度（reverse(ts_mean(negative,20))）。经济假设：内部人在负面新闻平静期买入 = 恐慌未定价的最干净知情信号（新闻流安静时内部人买入信息含量最高，与知情者逆向于共识文献一致）。尾部幂次 p2.25 把资金集中到子行业信号尾部。跨数据集两字段族（insider_feats × ai_news_scores）。",
     "gates": {
+      "snapshot_level": "submission_level (post check_correlation)",
+      "authoritative_criterion": "ra.ra_failed",
+      "calibration_note": "2026-11-05 Step 0 统一端点重拉：本 alpha 的 2Y 检查项实际名为 IS_LADDER_SHARPE（非 LOW_2Y_SHARPE）；此 fail_count 属 submission-level 口径，禁止与 LLMNRnkL / bl6bQ0Jp 的 preliminary 口径（fail=[]、pending=6）跨代比较。",
       "fail_count": 3,
-      "fails": [["LOW_SHARPE", 1.15, 1.58], ["LOW_FITNESS", 0.66, 1.0], ["LOW_2Y_SHARPE", 0.97, 1.58]],
-      "warnings": [["CLUSTER_TEST", 0.53, 1.58], ["MATCHES_THEMES"]],
-      "passed_notable": ["PROD_CORRELATION (0.6848)", "MARGIN >= 10 bps (12.1)", "LOW_TURNOVER (6.73%)", "CONCENTRATED_WEIGHT", "LOW_SUB_UNIVERSE_SHARPE", "MATCHES_PYRAMID"]
+      "fails": [
+        [
+          "LOW_SHARPE",
+          1.16,
+          1.58
+        ],
+        [
+          "LOW_FITNESS",
+          0.69,
+          1.0
+        ],
+        [
+          "IS_LADDER_SHARPE",
+          0.92,
+          1.58
+        ]
+      ],
+      "warnings": [
+        [
+          "CLUSTER_TEST",
+          0.73,
+          1.58
+        ],
+        [
+          "MATCHES_THEMES"
+        ]
+      ],
+      "passed_notable": [
+        "PROD_CORRELATION (0.6957)",
+        "MARGIN >= 10 bps (12.1)",
+        "LOW_TURNOVER (7.26%)",
+        "CONCENTRATED_WEIGHT",
+        "LOW_SUB_UNIVERSE_SHARPE"
+      ]
     }
   },
   "runner_ups": [
-    {"alpha_id": "LLMNRnkL", "note": "原冠军（无尾部幂次）, Sh 1.12/2Y 0.91/Fit 0.60/Mgn 11.13/PC 0.6316/CLST 0.51 — 被 YP1bEqmM 全维度压制, 降级为 runner-up", "champion_score": 0.6605},
-    {"alpha_id": "MPYazVMn", "note": "tp2_w40, Sh 1.23/Fit 0.71/Mgn 15.7/CLST 0.79 — 性能最强但 PC 0.7987 被拦", "champion_score": null},
-    {"alpha_id": "Xg9bM77x", "note": "tp2_w35, Sh 1.25/Fit 0.73/Mgn 15.2/CLST 0.69 — PC 0.7729 被拦", "champion_score": null},
-    {"alpha_id": "bl6bzAXZ", "note": "tp2_w60, Mgn 17.4bps 历史次高/CLST 0.76 — PC 0.8179 被拦", "champion_score": null},
-    {"alpha_id": "zq38ek81", "note": "tp2_w40_top5conf, 2Y 1.19 可准入族最高/Mgn 16.9/CLST 0.73 — PC 0.7902 被拦", "champion_score": null},
-    {"alpha_id": "d5WbvjOg", "note": "tp2_p2.5, PC 0.7038 距门仅 0.0038 — 幂次轴增益(Sh 1.15/Fit 0.67)不抵越线风险", "champion_score": null},
-    {"alpha_id": "xAr3wXZb", "note": "同骨架 decay4 版, Sh 1.12/2Y 0.97/Fit 0.60/Mgn 10.28/PC 0.6316, CS 0.6387", "champion_score": 0.6387},
-    {"alpha_id": "bl6bQ0Jp", "note": "量比信念×top5笔数比确认@decay8, Sh 1.31/Mgn 18.61/2Y 1.09/CLUSTER 0.81 但 PC 0.8142 — 指标最强但 PC 被禁令拦截", "champion_score": null},
-    {"alpha_id": "RREbZ0ka", "note": "并行轨道 @CROWDING, PC 0.6986/Mgn 27.36 — 用户禁令『严禁中性化强度去相关』拦截，仅存档", "champion_score": null}
+    {
+      "alpha_id": "wpQbLPO2",
+      "note": "p2@w18@decay10, Sh 1.16/2Y 0.91/Mgn 12.3/DD 5.37 — PC 恰好 0.7000 passes_check=false, 帕累托边界存档",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "gJeZ1G5l",
+      "note": "p2.25@w18@decay16, Sh 1.19/Fit 0.72/Mgn 14.1/DD 5.17 — 性能全场最强但 PC 被 decay 轴破门",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "QPvKlRGp",
+      "note": "p2@w18@decay12, Sh 1.19/Fit 0.71/Mgn 12.7 — PC 0.7091 被拦",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "RRE6rVGd",
+      "note": "p2.5@w18@decay12, Sh 1.18/Fit 0.71/Mgn 13.3 — PC 预期 0.71+",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "A1Vv1xxg",
+      "note": "p2@w18@decay8 (前王), Sh 1.16/2Y 0.91/Fit 0.68/CLST 0.73/Mgn 11.8/PC 0.6936 — 被 N1NVqZYg 全维压制",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "MPY3P66r",
+      "note": "nleg10, CLST 0.84 历史最高 — PC 0.7521 阵亡",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "omEW12Qk",
+      "note": "p2@w15@d8, PC 0.6987 双达标, Sh 1.09/CLST 0.75",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "YP1bEqmM",
+      "note": "insider 单族王 (top20txn60conf 腿), Sh 1.15/Fit 0.66/Mgn 12.1/PC 0.6848",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "LLMNRnkL",
+      "note": "2026-11-05 恢复为主基座（唯一出发点）：Sh 1.12/2Y 0.91/Fit 0.60/Ret 3.56%/TO 6.41%/Mgn 11.13bps/DD 5.82%/Sub 0.98/RN 0.82/CLST 0.51/L/S 549/465/op 6（函数调用口径为 7）。PC 历史值 0.6316，2026-11-05 正式 check_correlation 重拉为 0.662（passes_check=true）。三字段全部 insider_feats、alphaCount=0、cov 0.8833，未用跨数据集配额。Step 0 实测为 preliminary 快照：fail=[]、pending=6。",
+      "champion_score": 0.6173
+    },
+    {
+      "alpha_id": "bl6bQ0Jp",
+      "note": "insider 单族性能最强 Sh 1.31/Fit 0.76/2Y 1.09/Mgn 18.61/L/S 554/456 — 但 PC 0.8142 破门。Step 0 关键证据：其 fail=[] 属 preliminary 口径（PROD_CORRELATION 仍 PENDING 未解析），不可与 W39 之后的 submission-level fail 计数比较。不可作基座。",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "9qxj3eE1",
+      "note": "x_shortmo (rsk59_short_momentum 原始方向), Ret 6.85%/Mgn 19.9bps 全战役最高 — Sh 0.89/DD 16.96%",
+      "champion_score": null
+    }
   ],
   "key_findings": [
-    "【Wave38~41 PM处方判决】rank 化消零结块假说证伪：subtract(rank,rank) 全家 Sh 0.61~0.79 且 L/S 失衡恶化（592/427）——截面 rank 抹掉事件脉冲幅度，铁律B（幅度保留）双向确证",
-    "【Wave38】group_neutralize 壳第 5 次证毒（Sh 0.31）；ts_ir 不在 104 算子白名单（ts_mean/ts_std_dev 语义改写后幅度版 Sh 0.51、rank 版 0.78）",
-    "【Wave39】幅度版尾部幂次 signed_power(group_rank(core,subindustry)-0.5, 2) 是唯一有效移植：+0.5pp Returns/+1.0bps Margin/+0.06 Fit/+0.02 CLUSTER；在 rank 核上无效（0.63 vs 消融 0.61）",
-    "【Wave40~41 窗口-PC 梯度（尾部幂次核）】w20→0.6848/12.1bps, w25→(~0.72)/12.5, w30→/13.6, w35→0.7729/15.2, w40→0.7987/15.7, w60→0.8179/17.4 —— 窗口拉长 Margin/CLUSTER/Sharpe(至w35) 齐涨但 PC 单调破门",
-    "【Wave40~41 幂次-PC 梯度】p1.5→0.6848侧低, p2→0.6848, p2.5→0.7038(仅超0.0038), p3→0.7177 —— 幂次↑权重集中度↑→PC↑",
-    "【Wave41 信念源轴】top5 笔数比置信腿抬 PC（w20: 0.6848→0.7565; w40: 0.7987→0.7902 仅微降）——Wave31 信念源论题在 top20→top5 方向证伪, top20_txn_60 腿不可替换",
-    "vec_max ≡ vec_avg（组内单调变换不变序，group_rank 输出逐位相同）；双层秩壳+尾部幂次互斥（CLST 0.32）；ts_decay_linear 替 ts_mean 在幅度核上是纯损失（Sh 1.06/0.98）",
-    "双层嵌套秩 group_rank(group_rank(core,industry),subindustry) 是新去相关器：PC 0.8178→0.5728（历史最低），@INDUSTRY 与 @SUBINDUSTRY 效果一致（结构本身致效）",
-    "CLUSTER-PC 对偶：字段拥挤度与 CLUSTER_TEST 正相关（量比腿 0.82~1.04）、与 PC 负相关（笔数比腿 0.13~0.68），两门在字段层锁死；混合腿（联合体）实测 PC 仍被量比腿主导（0.78~0.85）",
-    "SUBINDUSTRY 设置对笔数比骨架是毒药（Sh 1.1→0.5~0.7），与量比骨架行为相反",
-    "decay 4→8 稳定 +0.8~1.2bps Margin 且无 2Y 副作用",
-    "lookback_20 近端确认腿在笔数比骨架上是 Sharpe 毒药（三次实测 0.58~0.76）"
+    "【Wave47~49 设置轴收口】decay-PC 梯度: d8 0.6957 -> d10 0.7000(恰 FAIL)/0.7016 -> d12 0.7091 -> d16 更高。PC<0.70 门下 decay 收敛于 8。窗口/幂次/decay 三轴全部顶到 PC 门边界（w18/p2.25/d8 = N1NVqZYg 帕累托最优）。",
+    "【Wave48 truncation 轴不 bind】group_rank+signed_power((x-0.5),2) 输出权重上限 ~0.25/Σ, 单股权重远低于 1%, truncation 0.01/0.025/0.05 结果逐位相同 — 对秩外壳结构 truncation 无效。",
+    "【Wave47 假设判决】量比信念换血在新闻核上 CLUSTER 未抬升 (0.70 vs 0.73) 且 L/S 失衡恶化 (591/427), H6 证伪; 双重平静 (水平低×波动低) Sh 0.68 证伪; ts_decay_exp_window 外层核毁灭 (-0.26); ts_decay_linear 2Y 1.00 全场最高但 Mgn 9.4 破门; 250d 长锚 0.98 弱。",
+    "【算子陷阱第4次】ts_min/ts_max 不在 104 算子白名单 — 深平静假设用 reverse(ts_mean)×reverse(ts_std_dev) 双平静重构。前科: vec_last/negate/ts_ir。",
+    "【Wave42~44 跨数据集解锁判决】朴素幅度乘积全灭(外部腿尺度方差淹没内部人信号, Sh 0.37~0.55)；唯一幸存 rsk59_short_momentum 原始方向(知情双多: 内部人增持×空头加码, Sh 0.89/Ret 6.85%/Mgn 19.9 但 DD 16.96)；经典轧空方向(reverse)更弱(0.68)",
+    "【Wave44 新闻平静度假设】内部人增持 × reverse(负新闻密度) = 最干净知情信号: leAvoO5N Sh 1.18/CLST 0.73/Fit 0.69/DD 5.21 — 跨数据集新大陆, 而 正面新闻确认(0.55)/负面新闻共振(0.54)/分歧度(0.62) 全灭",
+    "【Wave45~46 双达标岛】insider信念动量×新闻平静核的窗口微带 w14~w18 全部双达标: PC 梯度 w10 0.6914→w14 0.6953→w15 0.6987→w16 0.6906→w18 0.6936→w20 0.7204→w25 0.7670; 新王 A1Vv1xxg(w18) 8项5项超 insider 单族王",
+    "【nleg 平滑度轴】新闻腿 ts_mean 10→CLST 0.84 历史最高但 PC 0.7521; 20→平衡; 30→CLST 0.69 衰减 — CLST-PC 对偶在新闻腿内部同样成立",
+    "【双层秩壳×尾部幂次互斥】第 2 次确证(news 核 CLST 0.46), 且 news 核上双层秩壳不降 PC 多少(推测被幂次抵消)",
+    "【Wave38~41 PM处方判决】rank 化消零结块假说证伪（铁律B 双向确证）; 幅度版尾部幂次是唯一有效移植; ts_ir 不在算子白名单; negate 不在白名单(用 reverse)",
+    "【梯度图闭合】窗口/幂次/信念源三轴全部单调指向 PC; PC<0.70 双达标前沿=w14~w18 新闻平静岛 + w20 insider 单族点",
+    "全绿四门仍差: Sh 1.16/1.58(+0.42), Fit 0.68/1.0(+0.32), 2Y 0.91/1.58(+0.67), CLST 0.73/1.58(+0.85)"
   ]
 }

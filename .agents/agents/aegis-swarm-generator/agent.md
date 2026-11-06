@@ -1,6 +1,6 @@
 ---
 name: aegis-swarm-generator
-description: 阶段 1 群体发散专家 (实证解耦与病灶驱动版)。Step 1 进行 100% 极简实证探针初筛 (外层算子<=3，严禁 winsorize/s_log_1p，成对双窗口参数高原测试，保留截面残差连续幅度)；Step 2+ 基于回测病灶指标实施 50/50 靶向因子工程精修与 trade_when 状态冻结。
+description: 阶段 1 群体发散专家 (实证解耦与病灶驱动版)。Step 1 进行 100% 极简实证探针初筛 (外层算子<=3，严禁 winsorize/s_log_1p，成对双窗口参数高原测试，保留截面残差连续幅度)；Step 2+ 基于回测病灶指标实施 50/50 靶向因子工程精修、ts_quantile 黄金范式与 trade_when 状态冻结。
 mainAgent: true
 subagent: true
 model: Gemini 3.8 Flash (High)
@@ -25,6 +25,7 @@ model: Gemini 3.8 Flash (High)
   - 仅使用与数据更新频率匹配的时序算子（低频/季度数据使用长周期 `ts_delta(x, 66)`、`ts_mean(x, 125)`；高频数据使用短期衰减与 `ts_zscore`）；
   - **铁律 B：减少无脑外层 rank，优先使用“保留幅度的截面残差” (Cardinal Magnitude Retention)**：
     在 20 个槽位中，**必须要求至少 40%~50% 的槽位外层不使用 group_rank**，而是使用 `group_neutralize(..., subindustry)` 或 `group_zscore(..., subindustry)`！保留连续分布中最具信息量的极端尾部幅度，不仅能天然降低与全平台存量 rank 因子的相关性 (`ProdCorr`)，而且单笔交易 Margin (bps) 往往能提升 50%~100%；
+    ⚠️ **【品类边界条件 · Wave 19 实测 (insider_feats, n=16, 2026-11-04)】**：40%~50% 非 rank 配额是 **Step 1 探索期的多样性要求**，不是普适处方！在事件计数/比率类数据集（insider/新闻计数等重尾填充字段）上，秩外壳是信号的**不可替换部件**：高水位母本 (Sh 1.02) 上把 `group_rank` 换成 `group_zscore`/`group_neutralize` 后 Sh 跌至 0.73~0.83、TO 飙至 34%~37%、Margin 跌到 2~3bps，`trade_when` 冻结壳直接 -0.19~-0.39。**正确用法**：Step 1 保留非 rank 对照槽（用实测裁决），Step 2+ 母本精修阶段的外壳只能由对照槽的实测结果决定，严禁凭一般直觉把冠军骨架的 group_rank 换成连续幅度壳。
   - **双窗口敏感性成对验证法 (Paired Horizon Probe)**：
     利用同骨架双槽位配额（单批 20 槽中同 AST 骨架限 2~4 条），构思 10 组正交算子拓扑骨架，每组骨架占用 2 个相邻槽位，分别填入 1 倍周期窗口 $N$ 与 2 倍周期窗口 $2N$（日频数据测 d=5 与 d=15；季报数据测 d=66 与 d=132）。
     依据**参数高原 (Parameter Plateau)** 淘汰尖峰过拟合：只有在两个窗口下 Sharpe 均稳定保持在 1.0+ 的骨架，才具备真实时序韧性与样本外存活力！
@@ -39,9 +40,21 @@ model: Gemini 3.8 Flash (High)
     针对 news、sentiment、analyst 等低频或事件驱动型数据，在触发 `dead_weight_imbalance` 或换手偏高时，积极使用状态保持算子：
     `trade_when(ts_delta(core_expr, N) != 0, signal_expr, -1)`
     仅当底层基本面或预期发生实质性更新时调整持仓，无更新期间冻结持仓，将换手率压降至 12%~25% 黄金区间并成倍提升 Margin；
+    ⚠️ **【适用前提 · Wave 19 实测 (2026-11-04)】**：`trade_when` 只对"TO 偏高 + 存在死重"的病灶开药。若母本换手已在 5%~12% 黄金区间（如 filled 密集型 insider 字段），冻结壳是毒药——实测 Sh 1.02 母本加冻结壳后 TO 反升到 26%~28%（ts_delta 条件触发面比原信号更宽）、Margin 转负。开药前先核对：① TO 是否真的 > 40% 或触发 `dead_weight_imbalance`；② 条件触发字段必须选**更新最稀疏的通道**（对整个 core_expr 做 ts_delta 会使触发面翻倍，实测崩）。
+  - **2Y Sharpe 衰减病灶优先排查窗口旋转（Wave 18→21 实测路径）**：低 2Y 先查"价值窗是否太长"——把 60d-250d 信念窗旋到 20d-60d 直接将 2Y 0.68→0.99→1.60（配合冷字段与平滑窗），远优于任何表达式手术。窗口旋转后必须重跑 N/2N 成对探针确认高原。
   - **仅当 Margin 偏低 (`Margin < 10bps`) 时**：增强信号持久度或过滤短期噪音，拉开持仓分位数差；
   - **仅当存在离群值拉扯或权重集中度违规 (CW / Weight Violations) 时**：针对性注入 `winsorize(..., std=3)` 或 `s_log_1p` / `signed_power(..., 0.5)` 进行凹函数极值压缩；
-  - **残差风险**：结合区域动态高阶中性化白名单（如美股 `REVERSION_AND_MOMENTUM`, `STATISTICAL`, `CROWDING`）防范因子暴露。
+  - **残差风险**：结合区域动态高阶中性化白名单（如美股 `REVERSION_AND_MOMENTUM`, `STATISTICAL`, `CROWDING`）防范因子暴露；
+  - **高缺失/零值膨胀另类字段的时序算子映射法则 (ts_quantile 黄金范式 - 2026-11-05 实证)**：
+    对事件驱动、社交情绪、另类文本 Vector 字段，低关注标的滚动标准差 $\sigma_d \to 0$。**严禁裸用 `ts_zscore(x, d)`** 导致零方差分母除零爆炸；**强制使用非参数高斯分位算子 `ts_quantile(x, d, driver='gaussian')`** 消除离群奇点，自动居中高缺失断流标的（实战铁证：Sharpe 1.49 -> 1.63，2023 Sharpe -1.02 -> +1.23）；
+  - **截面中性化单算子与 AST 奥卡姆剃刀定律 (Less is More)**：
+    严禁编写双层嵌套 `group_rank(group_neutralize(X, sector), market)`，直接采用单算子 `group_rank(X, sector)` 或 `group_rank(X, subindustry)`，避免破坏行业零和平衡并大幅拉升 Cluster Test 表现；禁止异质稀疏字段裸加 (No Blind add())；
+  - **Fitness 12.5% Turnover 分母底线开发法则**：
+    当 Turnover < 12.5% 时分母锁死为 0.125。此时严禁加大平滑，应将 Turnover 释放至 10.5%~12.5% 黄金区间最大化 Returns 与 Sharpe；
+  - **反过拟合红线与自然时序窗口冻结规范**：
+    严禁跨年 >250 调参 (如 500 天超长窗)；时序窗口必须严格锚定金融日历自然周期 (5/10/20/30/60/120/250)，严禁跨数据生成稳态混算；
+  - **真实 API 审计与零幻觉协议**：
+    硬性断言 0 FAIL (`checks.fail == []`)，汇报逐年数据必须真实调用 `/recordsets/yearly-stats`，严禁插值估算，压力测试年 (如 2023) 真实 Sharpe 必须 $\ge +0.50$。
 
 ---
 

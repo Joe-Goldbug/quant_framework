@@ -1,0 +1,147 @@
+{
+  "wave": 51,
+  "anchor": "LLMNRnkL (seed); CS baseline re-based to 0.6173 on 2026-11-05 PC calibration (0.6316 -> 0.662)",
+  "generated_at_gmt8": "2026-11-05 01:15",
+  "objective": "User directive: strictly economics-grounded hypotheses; 2<=data_fields<=3; op<=11; design target = alpha passing ALL thresholds (Sh>=1.58 / Fit>=1.0 / 2Y>=1.58 / CLST>=1.58 / PC<0.70 / Mgn>=10bps, 0 FAIL + 0 WARNING).",
+  "design_principle": "Wave 50 changed the belief leg's AMPLITUDE and SIGN in all 8 slots (relativization / centering / long-anchor replacement / ts-std denominator / external normalization / regression residual). This wave keeps the seed's pulse amplitude and sign intact, and introduces FOUR ORTHOGONAL, literature-grounded economic mechanisms instead of eight variants of one rewrite. A same-batch seed control B0 is mandatory (absent in Wave 50).",
+  "hard_constraints": {
+    "data_fields": "2 <= n <= 3 distinct field IDs",
+    "op_count": "<= 11 (caliber: total FASTEXPR function-call occurrences including repeats; same as Wave 50 batch)",
+    "external_datasets": 0,
+    "settings": "INDUSTRY / decay 8 / truncation 0.025 / TOP1000 / delay 1 / pasteurization ON / nan_handling ON / unit_handling VERIFY / FASTEXPR",
+    "forbidden": ["SLOW/STATISTICAL/CROWDING neutralization", "cross-sectional rank to kill ties", "group_neutralize shell", "trade_when gate", "bare divide (W50-02 NaN defect)", "script-generated / templated formulas"],
+    "no_py_source_modified": true,
+    "no_duplicate_submission": "gate1_wave51_* did not exist at generation time; verified by Glob"
+  },
+  "feasibility_assessment_honest": {
+    "verdict": "Single-wave full-green is NOT empirically supported. This is a DESIGN TARGET, not a forecast.",
+    "evidence": "50 waves / ~350 expressions on USA/TOP1000/D1 insider_feats. Best-ever: Sh 1.31 (bl6bQ0Jp, but PC 0.8142 blown), Fit 0.76, CLST 0.84, 2Y 1.60 (only in a window-rotation variant that broke other gates). Seed: Sh 1.12 / Fit 0.60 / 2Y 0.91 / CLST 0.51 / PC 0.662 / Mgn 11.13.",
+    "gaps_to_full_green": "Sh needs +41%, CLST +210%, 2Y +74%, Fit +67%, while PC headroom is only 0.038 (0.662 -> 0.70). Fitness denominator is locked at 0.125 since TO 6.4% << 12.5% penalty-free line, so Fit>=1.0 requires Ret>=5% at Sh=1.58.",
+    "why_run_anyway": "Every mechanism that lifts Ret/Fit in this campaign also lifts PC (R2 self-lock). The only unexplored route to full green is a mechanism that EARNS PC headroom while raising signal quality. H3/H4/H5/H7 are exactly such mechanisms (time-series own-history anomaly and trade-direction asymmetry are far more orthogonal to the platform's cross-sectional factor zoo than a level difference). B0 makes the wave decisive regardless of outcome.",
+    "expected_vs_measured": "The 'expected' field below is a pre-registered directional hypothesis to be FALSIFIED by the actual backtest. No claim of passing thresholds is made before results are fetched."
+  },
+  "preflight": {
+    "fields_verified_via": "get_datafields(EQUITY, USA, D1, TOP1000, dataset_id=insider_feats, filter_sharpe=False) -> 118 fields",
+    "operators_verified_via": "D:/brain_cli/wqb_cli/brain-kb/operators/ALL_OPERATORS.md (104 operators, snapshot 2026-09-16)",
+    "verified_field_ids": [
+      "buy_sell_tx_count_ratio_all_20d_filled (VECTOR cov 0.8833 alphaCount=0)",
+      "buy_sell_tx_count_ratio_all_60d_filled (VECTOR cov 0.8833 alphaCount=0)",
+      "top20_buy_to_sell_txn_ratio_lookback_60_filled (VECTOR cov 0.8833 alphaCount=0)"
+    ],
+    "verified_operators_used": ["group_rank", "ts_mean", "ts_av_diff", "multiply", "subtract", "signed_power", "vec_avg", "vec_stddev", "max"],
+    "absent_never_used": ["vec_last", "negate", "ts_ir", "ts_min", "ts_max", "divide"],
+    "cancel_risk_review": "All 9 operators are on the 104 whitelist. max(x,y) has >=2 inputs. signed_power preserves sign for negative inputs. ts_av_diff / ts_mean lookbacks are integers. vec_stddev takes a VECTOR field. No bare divide (W50-02 NaN ejection), no external dataset, no cross-sectional rank. group_rank(...,subindustry) shell and the exact settings were proven runnable by Wave 50."
+  },
+  "expressions": [
+    {
+      "tag": "B0_seed_control",
+      "expr": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+      "data_fields": 3,
+      "external_datasets": 0,
+      "op_count": 7,
+      "op_list": ["group_rank", "ts_mean", "multiply", "subtract", "vec_avg", "vec_avg", "vec_avg"],
+      "economics": "CONTROL. Exact reproduction of LLMNRnkL in the same batch. Wave 50 had no same-batch control, so a platform-snapshot/time effect could not be separated from a signal effect - critical here because PC was just proven time-varying and checks grading proven to drift. Not a champion candidate.",
+      "expected": "Sh ~1.12, PC ~0.662, L/S ~549/465. Any drift >0.05 in Sh or >0.02 in PC invalidates cross-wave comparison for this batch.",
+      "falsification": "If B0 departs materially from the archived seed, all W51 deltas must be recomputed against B0 rather than the archive.",
+      "pc_budget": "neutral (reference)",
+      "threshold_target": "baseline calibration"
+    },
+    {
+      "tag": "H1_seed_tail_p225",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry),0.5),2.25)",
+      "data_fields": 3,
+      "external_datasets": 0,
+      "op_count": 9,
+      "op_list": ["signed_power", "subtract", "group_rank", "ts_mean", "multiply", "subtract", "vec_avg", "vec_avg", "vec_avg"],
+      "economics": "Inherit the ONLY verified free lunch in the campaign. After the industry-rank shell, the centered rank has a symmetric distribution but information is concentrated in the tails (strong conviction names). A sign-preserving convex tail re-weighting (p=2.25, the empirically free p2->2.25 step) raises Returns and Fitness WITHOUT changing the economic signal, the neutralisation, or the field set. Deliberately the lowest-risk candidate: the core is byte-identical to the seed.",
+      "expected": "Ret and Fit up; Sh roughly flat; CLST at least unchanged; PC may rise slightly but p=2.25 stayed inside budget historically (only p>=3 broke PC).",
+      "falsification": "If Fit <= B0 Fit or PC > 0.70, the tail free lunch does not transfer to this anchor and the whole Ret/Fit axis is closed.",
+      "pc_budget": "spend (small)",
+      "threshold_target": "Fit>=1.0, Mgn>=10bps"
+    },
+    {
+      "tag": "H2_belief_convex",
+      "expr": "group_rank(ts_mean(multiply(signed_power(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),2),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+      "data_fields": 3,
+      "external_datasets": 0,
+      "op_count": 8,
+      "op_list": ["group_rank", "ts_mean", "multiply", "signed_power", "subtract", "vec_avg", "vec_avg", "vec_avg"],
+      "economics": "Convexity of information shocks. A single extreme insider-buy cluster (e.g. 10:1 buy/sell in 20d vs 60d) carries far more private information than several mild 2:1 episodes of the same cumulative size (discrete-event information, not a diffusion). signed_power(belief,2) is sign-preserving, so it AMPLIFIES extreme pulses and COMPRESSES near-zero noise while keeping the seed's amplitude shell, confirmation leg and sign convention intact. Unlike Wave 50, nothing is centered, divided or standardized across the cross section.",
+      "expected": "Sh / 2Y / CLST up via higher signal-to-noise; |L-S| narrows because near-zero ties are compressed while informative tails survive; Ret up.",
+      "falsification": "If Sh < B0 or |L-S| widens beyond B0, convexity is not the binding constraint and pulse amplitude must be left linear.",
+      "pc_budget": "earn (suppresses noise-driven common exposure)",
+      "threshold_target": "Sh>=1.58, 2Y>=1.58, CLST>=1.58"
+    },
+    {
+      "tag": "H3_opportunistic",
+      "expr": "group_rank(ts_mean(multiply(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),250),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+      "data_fields": 2,
+      "external_datasets": 0,
+      "op_count": 6,
+      "op_list": ["group_rank", "ts_mean", "multiply", "ts_av_diff", "vec_avg", "vec_avg"],
+      "economics": "Cohen, Malloy & Pomorski (2012) 'Decoding Inside Information': routine insiders (who trade on a regular calendar) have NO predictive power, while opportunistic insiders (who trade irregularly relative to their own history) earn significant abnormal returns. ts_av_diff(A20,250) is exactly 'today's 20d buy/sell intensity minus this stock's own 250d mean'. It is a TIME-SERIES own-history deviation, NOT the cross-sectional rank that W38 falsified, so it preserves amplitude and sign (Iron Law B). It simultaneously resolves R3's zero-tie block: a historically-active-but-quiet-today name emits a negative non-zero value instead of a zero tie.",
+      "expected": "Sh / 2Y / CLST up; |L-S| narrows; PC DOWN because own-history anomaly is far more orthogonal to the platform's cross-sectional factor zoo than a level difference (this is the headroom-earning move the handoff demanded before any spending).",
+      "falsification": "If Sh < 1.12 or PC > B0 PC, the opportunistic/routine distinction does not exist in this field's construction (e.g. 'filled' already smoothed the event timing).",
+      "pc_budget": "earn (primary headroom generator)",
+      "threshold_target": "Sh>=1.58, CLST>=1.58, PC<0.70"
+    },
+    {
+      "tag": "H4_opportunistic_tail",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),250),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry),0.5),2.25)",
+      "data_fields": 2,
+      "external_datasets": 0,
+      "op_count": 8,
+      "op_list": ["signed_power", "subtract", "group_rank", "ts_mean", "multiply", "ts_av_diff", "vec_avg", "vec_avg"],
+      "economics": "Pre-registered sequencing test of R2: FIRST earn PC headroom with the H3 opportunistic signal, THEN spend a little of it on the verified tail-power free lunch to buy Ret/Fit. The handoff says the previous agent did this in reverse and self-locked. This pair isolates whether earning headroom first actually unlocks the Fitness gate.",
+      "expected": "Fit and Ret above H3 and above B0; PC still <= 0.66; Sh >= H3.",
+      "falsification": "If PC(H4) > 0.70 or Fit(H4) <= Fit(H3), the 'earn then spend' sequence is invalid and no spending axis may be used on this anchor.",
+      "pc_budget": "spend (only after H3 earns)",
+      "threshold_target": "Fit>=1.0, Ret>=5%, PC<0.70"
+    },
+    {
+      "tag": "H5_information_asymmetry",
+      "expr": "group_rank(ts_mean(multiply(max(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),60),multiply(0.35,ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),60))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+      "data_fields": 2,
+      "external_datasets": 0,
+      "op_count": 10,
+      "op_list": ["group_rank", "ts_mean", "multiply", "max", "multiply", "ts_av_diff", "vec_avg", "ts_av_diff", "vec_avg", "vec_avg"],
+      "economics": "Lakonishok & Lee (2001): insider PURCHASES contain private information, insider SALES are mostly liquidity/diversification-driven and carry little information. The seed treats a positive and a negative (A20-A60) change symmetrically, diluting signal with sell-side noise. Let dev = 20d intensity minus this stock's own 60d mean. max(dev, 0.35*dev) keeps an up-spike at full weight (dev>0 -> dev) but scales a down-spike to 35% (dev<0 -> 0.35*dev). This is a pure arithmetic sign-preserving asymmetry: it KEEPS the short leg, keeps amplitude, uses no if_else/trade_when (W43 falsified hard gates), and no cross-sectional transform.",
+      "expected": "Sh / CLST up from better information content; PC down (removes the sell-side component that overlaps common liquidity factors); L/S may tilt long (monitor).",
+      "falsification": "If Sh <= B0 or longCount/shortCount imbalance worsens beyond B0 by >50, the buy/sell information asymmetry is already priced or absent in this ratio field.",
+      "pc_budget": "earn",
+      "threshold_target": "Sh>=1.58, CLST>=1.58, PC<0.70"
+    },
+    {
+      "tag": "H6_dispersion_penalty",
+      "expr": "group_rank(ts_mean(multiply(subtract(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),multiply(0.3,vec_stddev(buy_sell_tx_count_ratio_all_20d_filled))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+      "data_fields": 3,
+      "external_datasets": 0,
+      "op_count": 10,
+      "op_list": ["group_rank", "ts_mean", "multiply", "subtract", "subtract", "vec_avg", "vec_avg", "multiply", "vec_stddev", "vec_avg"],
+      "economics": "Information certainty / disagreement. If the individual insider transactions inside a stock's 20d vector all point the SAME direction (low vec_stddev), the cluster is more likely private-information-driven; if buys and sales are mixed (high vec_stddev), it is more likely routine diversification/option exercise. Analogous to analyst-dispersion discounting. This is a WITHIN-vector cross-sectional dispersion, NOT the ts_std_dev time-series denominator that W50-03 used (Sh 0.41) and NOT a divide, so it cannot explode or eject NaNs. A linear 0.3 penalty preserves the seed's pulse sign and amplitude.",
+      "expected": "Sh / CLST up (noise clusters down-weighted); |L-S| narrows; PC near-neutral to down.",
+      "falsification": "If Sh <= B0 or DD worsens materially, direction disagreement is not the noise source and vec_* aggregation must stay at vec_avg.",
+      "pc_budget": "earn (mild)",
+      "threshold_target": "Sh>=1.58, 2Y>=1.58"
+    },
+    {
+      "tag": "H7_combo_best",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),250),multiply(0.3,vec_stddev(buy_sell_tx_count_ratio_all_20d_filled))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry),0.5),2.25)",
+      "data_fields": 2,
+      "external_datasets": 0,
+      "op_count": 11,
+      "op_list": ["signed_power", "subtract", "group_rank", "ts_mean", "multiply", "subtract", "ts_av_diff", "vec_avg", "multiply", "vec_stddev", "vec_avg"],
+      "economics": "Pre-registered best-of-mechanisms combination at the op<=11 ceiling: opportunistic own-history anomaly (CMP2012) MINUS direction-disagreement penalty (certainty weighting), times the top20 confirmation leg, then the verified tail-power free lunch. Only combined AFTER H3/H6/H1 are measured individually, so its increment is attributable. This is the single candidate with a plausible (though still low) path to touching several gates at once.",
+      "expected": "Best CS in the batch; Sh >= 1.12; PC <= 0.66; Fit > B0.",
+      "falsification": "If CS <= 0.6173 or PC > 0.70, the mechanisms are NOT additive and complexity penalty (1-0.04*Op) dominates - confirming R1's Goodhart warning.",
+      "pc_budget": "earn then spend, net target neutral",
+      "threshold_target": "all six gates (best-effort)"
+    }
+  ],
+  "acceptance": {
+    "true_progress": "CS > 0.6173 (re-based) AND PC <= 0.66 AND |L-S| < 50 AND Sh >= 1.12 (hard precondition added per crosscheck C3, because W50-04 reached |L-S|=2 with Sh 0.44 - balanced noise must not win)",
+    "full_green": "0 FAIL + 0 WARNING on a UNIFIED checks endpoint (GET /alphas/{id} -> is.checks, preliminary), plus Sh>=1.58 / Fit>=1.0 / 2Y>=1.58 / CLST>=1.58 / PC<0.70 / Mgn>=10bps",
+    "checks_caliber_note": "Step 0 proved preliminary vs submission-level checks grading drifts; this wave must record the endpoint and pull time for every row, and must NOT reuse archived fail_count for comparison.",
+    "cs_formula": "Fitness * ln(Margin_bps) * (1 - PC^2) * (1 - 0.04 * OpCount)"
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "document": "Independent cross-check of the 2026-11-05 handoff execution (second window)",
+  "role": "Late-arriving agent. The primary window had already completed Step 0, PC recalibration, seed rebase, gates correction and Wave 50 backtest. This window did NOT re-run any simulation and did NOT overwrite the primary window's files (concurrent-write risk detected and avoided).",
+  "generated_at_gmt8": "2026-11-05 00:3x",
+  "verdict": "CORE FACTS CONFIRMED / STRUCTURAL-EXHAUSTION CLAIM CHALLENGED",
+  "environment_verification": {
+    "brain_mcp_channel": "D:/brain-mcp/main.py imported directly (module-level async @mcp.tool functions); no .py source modified",
+    "python": "D:/python/python.exe",
+    "auth": "AUTH_OK, account WP26349, base_url https://api.worldquantbrain.com",
+    "mcp_tools_in_this_session": "NONE - no create_multi_simulation/get_datafields/check_correlation MCP tool is mounted; all access was via direct Python import",
+    "proxy": "HTTP_PROXY/HTTPS_PROXY set; Redis unavailable (caching disabled only, non-blocking)",
+    "whitelist": "D:/brain_cli/wqb_cli/brain-kb/operators/ALL_OPERATORS.md, 104 operators",
+    "legal_operators_used_in_crosscheck": ["group_rank", "ts_mean", "multiply", "subtract", "divide", "add", "vec_avg", "vec_range", "vec_stddev", "ts_av_diff", "ts_zscore"],
+    "absent_never_used": ["vec_last", "negate", "ts_ir", "ts_min", "ts_max"],
+    "datafield_verify": "get_datafields(EQUITY, USA, D1, TOP1000, dataset_id=insider_feats, filter_sharpe=False) -> 118 fields; all 4 target IDs FOUND, type=VECTOR, coverage=0.8833, dataset=insider_feats; A250 alphaCount=1 (others 0)"
+  },
+  "step0_independent_pull": {
+    "checks_endpoint": "GET https://api.worldquantbrain.com/alphas/{id} -> is.checks (PRELIMINARY simulation-level)",
+    "pc_endpoint": "GET https://api.worldquantbrain.com/alphas/{id}/correlations/prod -> scalar max",
+    "pulled_at": "2026-11-05T00:20:48.555395+08:00",
+    "evidence_file": "step0_calibration_2026-11-05.json",
+    "rows": [
+      {"alpha_id": "LLMNRnkL", "sharpe": 1.12, "fitness": 0.60, "margin_bps": 11.13, "pc": 0.662, "fail": [], "warning": ["LOW_SHARPE", "LOW_FITNESS", "CLUSTER_TEST", "LOW_2Y_SHARPE"], "pending_count": 6, "LS": "549/465"},
+      {"alpha_id": "YP1bEqmM", "sharpe": 1.15, "fitness": 0.66, "margin_bps": 12.10, "pc": 0.6848, "fail": ["LOW_SHARPE", "LOW_FITNESS", "LOW_2Y_SHARPE"], "warning": ["CLUSTER_TEST", "MATCHES_THEMES"], "pending_count": 4, "LS": "598/419"},
+      {"alpha_id": "A1Vv1xxg", "sharpe": 1.16, "fitness": 0.68, "margin_bps": 11.82, "pc": 0.6936, "fail": ["LOW_SHARPE", "LOW_FITNESS", "IS_LADDER_SHARPE"], "warning": ["CLUSTER_TEST", "MATCHES_THEMES"], "pending_count": 4, "LS": "591/427"},
+      {"alpha_id": "N1NVqZYg", "sharpe": 1.16, "fitness": 0.69, "margin_bps": 12.06, "pc": 0.6957, "fail": ["LOW_SHARPE", "LOW_FITNESS", "IS_LADDER_SHARPE"], "warning": ["CLUSTER_TEST", "MATCHES_THEMES"], "pending_count": 4, "LS": "601/417"},
+      {"alpha_id": "QPvKlRGp", "sharpe": 1.19, "fitness": 0.71, "margin_bps": 12.69, "pc": "PENDING_200_EMPTY", "fail": ["LOW_SHARPE", "LOW_FITNESS", "CONCENTRATED_WEIGHT", "IS_LADDER_SHARPE"], "warning": ["CLUSTER_TEST", "MATCHES_THEMES"], "pending_count": 4, "LS": "593/435"},
+      {"alpha_id": "gJeZ1G5l", "sharpe": 1.19, "fitness": 0.72, "margin_bps": 14.09, "pc": "PENDING_200_EMPTY", "fail": ["LOW_SHARPE", "LOW_FITNESS", "IS_LADDER_SHARPE"], "warning": ["CLUSTER_TEST", "MATCHES_THEMES"], "pending_count": 4, "LS": "593/428"},
+      {"alpha_id": "bl6bQ0Jp", "sharpe": 1.31, "fitness": 0.76, "margin_bps": 18.61, "pc": "PENDING_200_EMPTY", "fail": [], "warning": ["LOW_SHARPE", "LOW_FITNESS", "CLUSTER_TEST", "LOW_2Y_SHARPE"], "pending_count": 6, "LS": "554/456"}
+    ]
+  },
+  "confirmed_findings": [
+    "PC recalibration 0.6316 -> 0.662 for LLMNRnkL, verified by TWO independent paths: primary window used check_correlation (max_correlation 0.662), this window used direct GET /correlations/prod scalar max (0.662). Histograms identical, highest non-empty bucket [0.6,0.7,8].",
+    "Checks grading drift is real: preliminary snapshot (LLMNRnkL, bl6bQ0Jp: pending=6, LOW_2Y_SHARPE, MATCHES_THEMES=PASS, fail=[]) vs submission-level snapshot (W39 onward: pending=4, IS_LADDER_SHARPE, MATCHES_THEMES=WARNING, explicit FAIL). fail_count is NOT comparable across generations.",
+    "bl6bQ0Jp has PC 0.8142 (blown through the gate) yet fail=[] because PROD_CORRELATION is still PENDING - proving preliminary fail_count is meaningless.",
+    "QPvKlRGp carries an additional CONCENTRATED_WEIGHT FAIL that the original ledger omitted.",
+    "Seed LLMNRnkL CS (recalculated 0.6173) still beats N1NVqZYg (0.4971); seed rebase is correct.",
+    "Wave 50: 8/8 ra_failed, Sharpe 0.41-0.89 all below seed 1.12. CS upper-bound argument verified independently: W50-01 = 0.40*ln(8.64)*(1-0)*(1-0.04*7) = 0.621, W50-06 = 0.43*ln(9.07)*(1-0)*(1-0.04*8) = 0.645; both have |L-S|=68>50, so the three true-progress conditions cannot co-hold. PC gap does not block the verdict."
+  ],
+  "challenges": [
+    {
+      "id": "C1",
+      "severity": "factual correction",
+      "target": "campaign_metadata.checks_calibration_2026-11-05.pc_data_gap",
+      "claim": "7 alphas' /correlations/prod all returned HTTP 200 + empty body; PC values cannot be reproduced live from the endpoint; all archived PC downgraded to L2 historical evidence",
+      "counter_evidence": "Independent pull at 2026-11-05T00:20:48+08:00 on the SAME endpoint returned scalar max for 4 alphas in one pass (LLMNRnkL 0.662, YP1bEqmM 0.6848, A1Vv1xxg 0.6936, N1NVqZYg 0.6957). Only QPvKlRGp/gJeZ1G5l/bl6bQ0Jp were pending (HTTP 200 + Retry-After:1.0 + empty body).",
+      "correction": "The endpoint IS reproducible live; the empty body is a transient per-alpha compute state, not an endpoint defect. 4 of 7 Step-0 PCs are same-day same-endpoint L1 evidence and should be used as the comparable baseline rather than blanket-downgraded to L2."
+    },
+    {
+      "id": "C2",
+      "severity": "MAJOR - over-strong conclusion",
+      "target": "wave50_verdict_2026-11-05.structural_conclusion / verdict R3_MECHANISM_FALSIFIED / 'stop climbing'",
+      "claim": "R3 mechanism falsified; zero-value blocking is an information carrier; both search paths exhausted; 0 FAIL + 0 WARNING unreachable; stop climbing",
+      "counter_evidence": "All 8 Wave-50 expressions perform the SAME class of intervention - relativization, centering, long-anchor replacement, time-series standardization as denominator, external liquidity normalization, confirmation-leg swap, regression residual post-processing. Every one of them simultaneously changes the belief leg's AMPLITUDE and SIGN structure. There is no condition that breaks the zero tie while preserving the pulse amplitude and its direction relative to the zero baseline. Therefore the observed effect is a CONFOUND of 'breaking the tie' and 'destroying the signal'; it cannot be attributed to 'zero blocking carries information'.",
+      "second_defect": "No same-batch seed control (B0). Wave 50 contains no reproduction of LLMNRnkL, so a platform-snapshot/time effect cannot be cleanly separated from a signal effect - especially in a campaign where PC was just proven time-varying and checks grading proven to drift.",
+      "third_defect": "The decisive test should be 'can |L-S| be pushed <50 WHILE Sh >= 1.12'. None of the 8 reached Sh >= 1.12, so the wave only proves these 8 rewrites are bad; it does not prove every tie-breaking rewrite is bad.",
+      "accurate_conclusion": "The specific class of Wave-50 belief-leg rewrites (relativization / centering / long anchor / external normalization) is falsified. NOT 'R3 mechanism falsified' and NOT 'structural exhaustion'. This is the same cognitive pattern the handoff itself criticized in R1/R2: walking into a corner by using one family of moves, then declaring the data pair exhausted.",
+      "handoff_stop_rule": "Task book says stop only after 3 consecutive waves with no true progress. Wave 50 is wave 1. Declaring stop now is premature by the task book's own protocol."
+    },
+    {
+      "id": "C3",
+      "severity": "acceptance-criterion defect",
+      "target": "true_progress_rule's |L-S| < 50 condition",
+      "counter_evidence": "W50-04 (ts_zscore) reached L/S 507/509 -> |L-S| = 2, the best balance in the whole campaign, with Sharpe 0.44, 2Y 0.03, CLST 0.01. W50-07 reached |L-S| = 5 with Sharpe 0.45.",
+      "correction": "|L-S| < 50 is trivially satisfiable by a near-information-free signal (a symmetric noise vector balances long/short by construction). As a standalone true-progress condition it selects BALANCED NOISE. Add a hard precondition Sh >= seed (1.12), or at minimum Sh >= 1.05, before the L/S condition is evaluated."
+    },
+    {
+      "id": "C4",
+      "severity": "scope / authorization",
+      "target": "gate1_wave50_verdict_20261105.json migration_advice[2] ('change target to ra_failed submit criterion, CLUSTER_TEST only warning, no need to chase 0 WARNING')",
+      "counter_evidence": "Task book states explicitly: 'user's final goal is ALWAYS 0 FAIL + 0 WARNING full green (Sh>=1.58 / Fit>=1.0 / 2Y>=1.58 / CLUSTER>=1.58 / PC<0.70 / Margin>=10bps)'.",
+      "correction": "Relaxing the acceptance target is a USER decision, not an agent verdict. Move this item from 'migration advice / conclusion' into an explicit 'requires user ruling' option. Do not present a relaxed target as an achieved conclusion."
+    },
+    {
+      "id": "C5",
+      "severity": "bookkeeping",
+      "target": "rebase_2026-11-05.hard_budget true-progress threshold CS > 0.6173 (task book: CS > 0.6605)",
+      "ruling": "COMPLIANT but must be flagged. The task book allows a CS drop only if proven to come from calibration rather than quality degradation; here the drop 0.6605 -> 0.6173 is entirely from PC 0.6316 -> 0.662, so the exception applies.",
+      "correction": "Because the threshold moved DOWN (easier to clear), every future wave table must state 'threshold re-based to 0.6173 on 2026-11-05 PC calibration' to prevent mixing with the historical 0.6605 ledger."
+    },
+    {
+      "id": "C6",
+      "severity": "engineering discipline",
+      "target": "cross-window correlation polling contention",
+      "observation": "This window started background task W15g3r (3 pending Step-0 PCs) while the primary window had 88L4Cu (8 Wave-50 PCs). Both hit the platform's single-account in-flight correlation slot; W15g3r stalled 8 minutes. This window killed W15g3r to release the lock.",
+      "correction": "Add to the campaign protocol: at most ONE correlation-polling process across ALL windows at any moment. Task-book R6 states the platform single-concurrency limit but does not cover cross-window contention."
+    }
+  ],
+  "wave51_draft_if_user_chooses_to_continue": {
+    "status": "DRAFT ONLY - NOT SUBMITTED (no quota burned by this window)",
+    "purpose": "Separate 'the rewrites were too destructive' from 'R3 is wrong'. Requires a same-batch seed control and interventions that break the zero tie WITHOUT flattening pulse amplitude or sign.",
+    "settings": "INDUSTRY / decay 8 / truncation 0.025 / TOP1000 / D1 / pasteurization ON / nan_handling ON / unitHandling VERIFY / FASTEXPR",
+    "batch_size": 8,
+    "expressions": [
+      {"tag": "B0_seed_control", "fields": 3, "op": 7, "code": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)", "note": "Same-batch reproduction of seed; eliminates platform-snapshot drift. Not a champion candidate."},
+      {"tag": "W51_ts_av_diff", "fields": 2, "op": 6, "code": "group_rank(ts_mean(multiply(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),60),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)", "note": "Own-history deviation, NOT centering across the cross section. Historically-active-but-quiet-today names emit a negative non-zero value instead of a tie. Preserves amplitude and sign vs zero. Untested by Wave 50. Falsifier: |L-S| still >150 or Sh<0.90."},
+      {"tag": "W51_divide_guarded", "fields": 3, "op": 9, "code": "group_rank(ts_mean(multiply(subtract(divide(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),add(vec_avg(buy_sell_tx_count_ratio_all_250d_filled),0.01)),1),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)", "note": "Repairs W50-02's bare-divide divide-by-zero defect with a 0.01 guard far below the ratio scale, preserving amplitude. Tests whether W50-02 failed from the economics or from NaN ejection. Falsifier: no improvement over W50-02."},
+      {"tag": "W51_divide_normalized_diff", "fields": 3, "op": 10, "code": "group_rank(ts_mean(multiply(divide(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),add(vec_avg(buy_sell_tx_count_ratio_all_250d_filled),0.01)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)", "note": "Keep the ORIGINAL 20d-60d difference (preserving pulse sign/amplitude) and only scale it by the 250d anchor. Isolates 'long anchor as normalizer' from 'long anchor as replacement'."},
+      {"tag": "W51_vec_range", "fields": 3, "op": 7, "code": "group_rank(ts_mean(multiply(subtract(vec_range(buy_sell_tx_count_ratio_all_20d_filled),vec_range(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)", "note": "Change VECTOR aggregation only; no relativization, no centering. vec_range exposes a single anomalous trade that vec_avg dilutes. W40 only proved vec_max == vec_avg; vec_range untested. Falsifier: no change vs B0 -> tie block not introduced at vector aggregation."},
+      {"tag": "W51_vec_stddev", "fields": 3, "op": 7, "code": "group_rank(ts_mean(multiply(subtract(vec_stddev(buy_sell_tx_count_ratio_all_20d_filled),vec_stddev(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)", "note": "Paired with W51_vec_range to isolate which vector moment carries the event. Same falsifier."},
+      {"tag": "W51_ts_smooth_before_diff", "fields": 3, "op": 9, "code": "group_rank(ts_mean(multiply(subtract(ts_mean(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),60),ts_mean(vec_avg(buy_sell_tx_count_ratio_all_60d_filled),60)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)", "note": "Fill sparsity along the TIME axis before differencing: any name with one trade in its recent history gets a non-zero baseline. No cross-sectional transform (honors Iron Law B). Untested by Wave 50."},
+      {"tag": "W51_minimal_pulse_preserve", "fields": 3, "op": 8, "code": "group_rank(ts_mean(multiply(add(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),multiply(0.01,vec_avg(buy_sell_tx_count_ratio_all_250d_filled))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)", "note": "MINIMAL tie-breaker: add a tiny amplitude-preserving long-anchor dither (1%) to the ORIGINAL belief difference so equal-zero names separate without changing the signal's sign or magnitude. This is the cleanest single-variable test of 'is the tie itself the problem'. Falsifier: if B0-level Sharpe is retained but |L-S| does not narrow, ties are not the binding constraint."}
+    ],
+    "acceptance_amendment": "Add hard precondition Sh >= 1.12 (seed) before evaluating |L-S| < 50; otherwise near-noise signals win on balance (C3)."
+  },
+  "pending_data": {
+    "step0_pending_pc": ["QPvKlRGp", "gJeZ1G5l", "bl6bQ0Jp"],
+    "wave50_all_pc": "primary window background task 88L4Cu -> gate1_wave50_table_20261105.json",
+    "note": "This window killed its own W15g3r poller to free the single-account correlation slot for 88L4Cu."
+  },
+  "files_written_by_this_window": [
+    "step0_calibration_2026-11-05.json",
+    "handoff_crosscheck_2026-11-05.json"
+  ],
+  "files_intentionally_not_modified": [
+    "campaign_champions.json (primary window owns it; a concurrent write was detected during this window's first edit attempt)",
+    "gate1_wave50_batch.json / gate1_wave50_result_1793809498.json (already submitted; resubmitting would burn quota per R6)",
+    "USA_1_other.md (primary window updated rules 12-14)",
+    "any .py source (hard constraint)"
+  ]
+}

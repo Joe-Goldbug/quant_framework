@@ -1,62 +1,92 @@
 [
- {
-  "card_id": "CARD_CW_01",
-  "tag": "cw_bottleneck",
-  "domain": "risk_neutralization",
-  "one_line": "CW集中度对仿射变换(zscore/winsorize)零敏感，唯一合规解是凹压缩s_log_1p或rank。"
- },
- {
-  "card_id": "CARD_TO_02",
-  "tag": "turnover_floor",
-  "domain": "normalization",
-  "one_line": "换手率<12.5%触发收益打折，低频字段必须除以日频close/adv20以拉过换手地板。"
- },
- {
-  "card_id": "CARD_TO_OVERFLOW",
-  "tag": "turnover_overflow",
-  "domain": "decay_smoothing",
-  "one_line": "换手率过高 (>50%)：使用 ts_decay_exp_window(x, 10, factor=0.8) 或 ts_decay_linear(x, 15) 平滑脉冲。"
- },
- {
-  "card_id": "CARD_IMBAL_01",
-  "tag": "dead_weight_imbalance",
-  "domain": "long_short_symmetry",
-  "one_line": "多空持仓失衡/零值死重：使用 ts_zscore 自归一、subtract_ts_mean 或 trade_when 消除单边多头偏倚。"
- },
- {
-  "card_id": "CARD_COLLIN_02",
-  "tag": "cluster_collinearity",
-  "domain": "decorrelation",
-  "one_line": "同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta。"
- },
- {
-  "card_id": "CARD_OP_OVERFLOW",
-  "tag": "operator_count_overflow",
-  "domain": "ast_pruning",
-  "one_line": "算子嵌套过多 (>8)：剪枝无效的嵌套归一化，保留核心 因果乘积 + 时序平滑 + 截面中性化 三段式。"
- },
- {
-  "card_id": "CARD_CORR_03",
-  "tag": "prod_decorrelation",
-  "domain": "innovation_source",
-  "one_line": "去相关由变动源决定而非换字段，优先使用subtract(close,open)或行业组内中枢对冲。"
- },
- {
-  "card_id": "CARD_OP_04",
-  "tag": "forbidden_ops",
-  "domain": "ast_lint",
-  "one_line": "严禁无量纲add(rank,rank)、group_neutralize(·,subind)及低频无保护的trade_when。"
- },
- {
-  "card_id": "TPL_BIAS_05",
-  "tag": "proven_analyst",
-  "domain": "analyst_estimates",
-  "one_line": "分析师通式: group_rank(subtract(divide(F,close),ts_mean(divide(F,close),w)),subind)+STATISTICAL"
- },
- {
-  "card_id": "CARD_CORR_03",
-  "tag": "prod_corr_overflow",
-  "domain": "decorrelation_amplitude",
-  "one_line": "ProdCorr>=0.70：换低拥挤主锚 + 用 group_zscore/group_neutralize 保留幅度替代 group_rank，仅调参无效。"
- }
+  {
+    "card_id": "CARD_CW_01",
+    "tag": "cw_bottleneck",
+    "domain": "risk_neutralization",
+    "one_line": "CW集中度对仿射变换(zscore/winsorize)零敏感，唯一合规解是凹压缩s_log_1p或rank。"
+  },
+  {
+    "card_id": "CARD_TO_02",
+    "tag": "turnover_floor",
+    "domain": "normalization",
+    "one_line": "换手率<12.5%触发收益打折，低频字段必须除以日频close/adv20以拉过换手地板。"
+  },
+  {
+    "card_id": "CARD_TO_OVERFLOW",
+    "tag": "turnover_overflow",
+    "domain": "decay_smoothing",
+    "one_line": "换手率过高 (>50%)：使用 ts_decay_exp_window(x, 10, factor=0.8) 或 ts_decay_linear(x, 15) 平滑脉冲。"
+  },
+  {
+    "card_id": "CARD_IMBAL_01",
+    "tag": "dead_weight_imbalance",
+    "domain": "long_short_symmetry",
+    "one_line": "多空持仓失衡/零值死重：使用 ts_zscore 自归一、subtract_ts_mean 或 trade_when 消除单边多头偏倚。"
+  },
+  {
+    "card_id": "CARD_COLLIN_02",
+    "tag": "cluster_collinearity",
+    "domain": "decorrelation",
+    "one_line": "同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta。"
+  },
+  {
+    "card_id": "CARD_OP_OVERFLOW",
+    "tag": "operator_count_overflow",
+    "domain": "ast_pruning",
+    "one_line": "算子嵌套过多 (>8)：剪枝无效的嵌套归一化，保留核心 因果乘积 + 时序平滑 + 截面中性化 三段式。"
+  },
+  {
+    "card_id": "CARD_CORR_03",
+    "tag": "prod_decorrelation",
+    "domain": "innovation_source",
+    "one_line": "去相关由变动源决定而非换字段，优先使用subtract(close,open)或行业组内中枢对冲。"
+  },
+  {
+    "card_id": "CARD_OP_04",
+    "tag": "forbidden_ops",
+    "domain": "ast_lint",
+    "one_line": "严禁无量纲add(rank,rank)、group_neutralize(·,subind)及低频无保护的trade_when。"
+  },
+  {
+    "card_id": "TPL_BIAS_05",
+    "tag": "proven_analyst",
+    "domain": "analyst_estimates",
+    "one_line": "分析师通式: group_rank(subtract(divide(F,close),ts_mean(divide(F,close),w)),subind)+STATISTICAL"
+  },
+  {
+    "card_id": "CARD_CORR_03",
+    "tag": "prod_corr_overflow",
+    "domain": "decorrelation_amplitude",
+    "one_line": "ProdCorr>=0.70：换低拥挤主锚 + 用 group_zscore/group_neutralize 保留幅度替代 group_rank，仅调参无效。"
+  },
+  {
+    "card_id": "CARD_NONPARAMETRIC_TS_QUANTILE_01",
+    "tag": "zero_inflated_ts_quantile",
+    "domain": "time_series_normalization",
+    "one_line": "零值膨胀与高缺失另类字段严禁裸用 ts_zscore；强制使用 ts_quantile(x, d) 根除分母趋零发散，自动居中高缺失断流标的。"
+  },
+  {
+    "card_id": "CARD_NEUTRALIZATION_OCCAM_01",
+    "tag": "neutralization_occam_razor",
+    "domain": "cross_sectional_neutralization",
+    "one_line": "严禁 group_rank(group_neutralize(X, sector), market) 冲突双层嵌套；强制使用单算子 group_rank(X, sector) 释放配额并提升 Cluster 稳定性。"
+  },
+  {
+    "card_id": "CARD_FITNESS_FLOOR_TURNOVER_01",
+    "tag": "fitness_turnover_floor_rule",
+    "domain": "turnover_fitness_tuning",
+    "one_line": "当 Turnover < 12.5% 时 Fitness 分母锁死为 0.125；严禁继续加大平滑，应将 Turnover 精准释放至 10.5%~12.5% 黄金区间最大化 Sharpe 与 Returns。"
+  },
+  {
+    "card_id": "CARD_ANTI_CURVE_FITTING_01",
+    "tag": "anti_curve_fitting_windows",
+    "domain": "anti_overfitting",
+    "one_line": "严禁跨年 >250 调参 (如 500 天超长窗)；时序窗口必须严格锚定金融日历自然周期 (5/10/20/30/60/120/250)，严禁跨数据生成稳态混算。"
+  },
+  {
+    "card_id": "CARD_ZERO_HALLUCINATION_AUDIT_01",
+    "tag": "zero_hallucination_api_audit",
+    "domain": "audit_and_verification",
+    "one_line": "汇报逐年数据必须真实调用并解析 /recordsets/yearly-stats 与 is.checks JSON；严禁插值估算与文本幻觉，硬性断言 0 FAIL 且 2023 Sharpe >= +0.50。"
+  }
 ]

@@ -1,0 +1,20 @@
+{
+  "wave": 36,
+  "date": "2026-11-06",
+  "parent": "wave35 critical discovery — prob_pattern 字段族是强反向信号",
+  "multisim": "2w3TJn5454npcF8E8cg09YV",
+  "multisim_failed_v1": "11GrSB3nV4kN95OIMFNpdTP",
+  "fix_note": "v1 全部 8 槽 CANCELLED (slot 7 ERROR 拖死整批)。根因推断：裸 reverse(x) 直喂下游可能与 prob_pattern 字段单位冲突；9qxEwv02 用 rank(reverse(...)) 已证可跑。v2 全部改为 rank(reverse(...)) 形态。",
+  "settings": {"region": "USA", "universe": "TOP1000", "delay": 1, "decay": 0, "neutralization": "STATISTICAL", "truncation": 0.08, "pasteurization": "ON", "nan_handling": "ON", "unit_handling": "VERIFY", "max_trade": "OFF"},
+  "hypothesis": "wave35 slot 6/7 证 l5r20gasfculr_prob_pattern Sharpe -1.41 / multil3_prob_pattern Sharpe -1.21。reverse 后是 +1.41/+1.21 的潜在新腿，且字段 0u/0a 极低拥挤。本波次测：单独反转（3字段） / 反转×ret / 反转×ret×prob² / 三字段等权 / 反转+consensus 三腿 / 反转+2日腿。",
+  "expressions": [
+    {"slot": 1, "tag": "rev_l5culr_solo", "expr": "group_zscore(ts_target_tvr_decay(reverse(oth566_l5r20gasfculr_prob_pattern), target_tvr=0.12), industry)", "reason": "测反转信号的裸 Sharpe — 若 ≥1.0 则是新腿"},
+    {"slot": 2, "tag": "rev_multil3_solo", "expr": "group_zscore(ts_target_tvr_decay(reverse(oth566_multil3_prob_pattern), target_tvr=0.12), industry)", "reason": "multil3_prob_pattern 反转单独"},
+    {"slot": 3, "tag": "rev_l3multi_solo", "expr": "group_zscore(ts_target_tvr_decay(reverse(oth566_l3r20gasfmulti_prob_pattern), target_tvr=0.12), industry)", "reason": "l3r20gasfmulti_prob_pattern 反转单独（此字段 1u/1a 未测过反转）"},
+    {"slot": 4, "tag": "rev_l5_x_ret", "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, reverse(oth566_l5r20gasfculr_prob_pattern)), target_tvr=0.12), industry)", "reason": "反转信念加权 ret — 与 wave35 slot 6 互反"},
+    {"slot": 5, "tag": "rev_l5_x_ret_x_prob2", "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, multiply(reverse(oth566_l5r20gasfculr_prob_pattern), signed_power(oth566_r20marsi_prob_5, 2))), target_tvr=0.12), industry)", "reason": "反转 × ret × prob^2 三因素复合"},
+    {"slot": 6, "tag": "rev_3patterns_equalweight", "expr": "group_zscore(ts_target_tvr_decay(add(add(reverse(oth566_l5r20gasfculr_prob_pattern), reverse(oth566_multil3_prob_pattern)), reverse(oth566_l3r20gasfmulti_prob_pattern)), target_tvr=0.12), industry)", "reason": "三个 prob_pattern 字段反转等权和 — 分散单一字段特异性"},
+    {"slot": 7, "tag": "rev_l5_plus_consensus", "expr": "group_zscore(ts_target_tvr_decay(add(add(group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry), multiply(0.4286, group_zscore(multiply(oth566_return, group_rank(oth566_prob_2, industry)), industry)), group_zscore(reverse(oth566_l5r20gasfculr_prob_pattern), industry)), target_tvr=0.12), industry)", "reason": "反转 prob_pattern 作第三腿叠加 consensus_7030 骨架"},
+    {"slot": 8, "tag": "rev_l5_plus_2day", "expr": "group_zscore(ts_target_tvr_decay(add(reverse(oth566_l5r20gasfculr_prob_pattern), multiply(oth566_return, group_rank(oth566_prob_2, industry))), target_tvr=0.12), industry)", "reason": "反转 prob_pattern + 2 日腿（INDUSTRY 偏好腿）复合"}
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "wave": 37,
+  "multisim": "3SG1ag3G84PXa4CKVu58LLK",
+  "date_completed": "2026-11-06",
+  "settings": {"neutralization": "STATISTICAL", "decay": 0, "truncation": 0.08, "universe": "TOP1000"},
+  "slots": [
+    {"slot": 1, "tag": "vR1_subind", "alpha_id": "xAr2RPqw", "sharpe": 1.04, "fitness": 0.41, "turnover": 0.1463, "returns": 0.0225, "drawdown": 0.0417, "margin_bps": 3.08, "two_year_sharpe": 1.01, "sub_universe_sharpe": 0.65, "cluster": 0.36, "n_fail": 0, "verdict": "KILL", "reason": "subindustry 中性化杀 Sharpe (1.34→1.04) 与 2Y (1.65→1.01)，Cluster 反而降到 0.36 说明过度分散"},
+    {"slot": 2, "tag": "vR1_plus_2day", "alpha_id": "kqNWQ1dO", "sharpe": 1.33, "fitness": 0.64, "turnover": 0.1380, "returns": 0.0323, "drawdown": 0.0452, "margin_bps": 4.67, "two_year_sharpe": 1.92, "sub_universe_sharpe": 0.85, "cluster": 0.98, "n_fail": 2, "prod_corr": 0.5471, "self_corr": 0.1852, "verdict": "KEEP", "reason": "2 日腿叠加提 Margin 4.40→4.67 + 2Y 1.65→1.92，Sh 略降 1.34→1.33。备选"},
+    {"slot": 3, "tag": "vR1_plus_rev_l5_add", "alpha_id": "RREld230", "sharpe": 0.96, "fitness": 0.39, "turnover": 0.1329, "returns": 0.0219, "drawdown": 0.0385, "margin_bps": 3.29, "two_year_sharpe": 1.85, "sub_universe_sharpe": 0.80, "cluster": 0.55, "n_fail": 2, "verdict": "KILL", "reason": "加性 rev_l5 第三腿严重稀释 Sharpe (1.34→0.96)，MPYeb99L 的高 2Y 来自加性第三腿但 Sh 被牺牲"},
+    {"slot": 4, "tag": "vR1_tvr10", "alpha_id": "LLMmkgj1", "sharpe": 1.22, "fitness": 0.58, "turnover": 0.1233, "returns": 0.0287, "drawdown": 0.0408, "margin_bps": 4.66, "two_year_sharpe": 1.55, "sub_universe_sharpe": 0.85, "cluster": 0.93, "n_fail": 0, "verdict": "NEUTRAL", "reason": "tvr=0.10 压 TO 到 12.33% Margin 微升 4.66 但 Sh 降到 1.22，R/TO tradeoff"},
+    {"slot": 5, "tag": "vR1_tvr15", "alpha_id": "0mYNzel2", "sharpe": 1.38, "fitness": 0.60, "turnover": 0.1748, "returns": 0.0331, "drawdown": 0.0418, "margin_bps": 3.78, "two_year_sharpe": 1.70, "sub_universe_sharpe": 0.90, "cluster": 1.03, "n_fail": 0, "prod_corr": 0.6506, "self_corr": 0.1481, "verdict": "KEEP", "reason": "tvr=0.15 Sh 持平 1.38 但 TO 17.48% 偏高，Margin 反降"},
+    {"slot": 6, "tag": "npve_subind", "alpha_id": "wpQ2Lnxx", "sharpe": 1.14, "fitness": 0.47, "turnover": 0.1443, "returns": 0.0245, "drawdown": 0.0438, "margin_bps": 3.40, "two_year_sharpe": 1.13, "sub_universe_sharpe": 0.68, "cluster": 0.34, "n_fail": 0, "verdict": "KILL", "reason": "简化版（无 prob^2）+ subindustry — 双杀 Sharpe"},
+    {"slot": 7, "tag": "vR1_group_neut_subind", "alpha_id": "omEJV35n", "sharpe": 0.88, "fitness": 0.34, "turnover": 0.1455, "returns": 0.0216, "drawdown": 0.0579, "margin_bps": 2.97, "two_year_sharpe": 0.91, "sub_universe_sharpe": 0.41, "cluster": 0.21, "n_fail": 4, "verdict": "KILL", "reason": "group_neutralize 减均值形态比 group_zscore 更杀 Sharpe (0.88)"},
+    {"slot": 8, "tag": "vR1_quantile", "alpha_id": "P0oYvwaK", "sharpe": 1.38, "fitness": 0.68, "turnover": 0.1407, "returns": 0.0341, "drawdown": 0.0379, "margin_bps": 4.84, "two_year_sharpe": 1.77, "sub_universe_sharpe": 1.00, "cluster": 1.19, "n_fail": 0, "prod_corr": 0.5173, "self_corr": 0.1542, "verdict": "CHAMPION", "reason": "★战役新冠军★ quantile 外层叠加 vR1 骨架 — Margin 4.84 战役新高 + SubU 1.00 首次≥1.0 + Fit 0.68 + Cluster 1.19。ProdCorr 0.5173 / SelfCorr 0.1542 双合规"}
+  ],
+  "key_findings": [
+    "★ quantile 外层是 Sharpe/Margin 双提升杠杆 (wave21 已证，本次叠加再证)",
+    "★ industry 中性化显著优于 subindustry (与本战役「中性化随腿而变」一致)",
+    "★ group_neutralize (减均值) 比 group_zscore 杀 Sharpe",
+    "★ 加性 rev_l5 第三腿稀释 Sharpe — 第三腿必须乘性融入 ret 而非加性",
+    "tvr=0.12 已是 Sharpe/Fit 甜点， tvr=0.15 Sh 持平但 TO 上升"
+  ],
+  "current_champion": {
+    "alpha_id": "P0oYvwaK",
+    "code": "quantile(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, multiply(rank(reverse(oth566_l5r20gasfculr_prob_pattern)), signed_power(oth566_r20marsi_prob_5, 2))), target_tvr=0.12), driver=\"gaussian\")",
+    "sharpe": 1.38, "fitness": 0.68, "margin_bps": 4.84, "two_year_sharpe": 1.77,
+    "sub_universe_sharpe": 1.00, "cluster": 1.19, "prod_corr": 0.5173, "self_corr": 0.1542,
+    "remaining_warnings": ["LOW_SHARPE (1.38→1.58)", "LOW_FITNESS (0.68→1.0)", "CLUSTER_TEST (1.19→1.58)", "MATCHES_COMPETITION"]
+  }
+}

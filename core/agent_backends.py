@@ -160,25 +160,44 @@ class AGYCliBackend(BaseAgentBackend):
 
 # -------------------------------------------------------------
 # 后端 2: AI 工具原生内置智能体驱动 (BuiltinAgentBackend / SubAgentIPCBackend)
-# 「断点挂起-恢复 (Yield & Resume)」状态机
+# 「断点挂起-恢复 (Yield & Resume)」状态机与内存直连机制
 # -------------------------------------------------------------
 EXIT_CODE_YIELD = 20  # 状态机挂起专用退出码
+
+class YieldExecutionException(Exception):
+    """当 AEGIS_NO_EXIT=1 时替代 sys.exit(20)，允许上层 Python 宿主就地接管与调度"""
+    def __init__(self, task_id: str, task_file: str, resp_file: str, payload: dict):
+        self.task_id = task_id
+        self.task_file = task_file
+        self.resp_file = resp_file
+        self.payload = payload
+        super().__init__(f"Agent 状态机挂起: 任务就绪 [{task_id}]")
+
+try:
+    from quant_framework.core.concurrency_utils import atomic_save_json
+except ImportError:
+    try:
+        from core.concurrency_utils import atomic_save_json
+    except ImportError:
+        def atomic_save_json(filepath, data, **kwargs):
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
 
 class BuiltinAgentBackend(BaseAgentBackend):
     """
     AI 工具原生内置智能体驱动 (Built-in Agent Backend)
-    采用「断点挂起-恢复 (Yield & Resume)」状态机模式：
-    1. 首次到达思考节点时，生成任务卡片 .agent_tasks/task_{role}_{tag}.json；
-    2. 若未检测到响应，立即打印任务路径并 sys.exit(20) 挂起，交还控制权给当前 AI 工具；
-    3. AI 工具在原生上下文中阅读任务并写入 resp_{role}_{tag}.json；
-    4. 再次执行同一命令时，状态机检测到响应已就绪，立即消费结果继续推进回测与门禁；
-    彻底终结「同步死锁」与「聊天框长睡眠轮询」，100% 真实调用当前 AI 工具内置大模型算力！
+    采用「断点挂起-恢复 (Yield & Resume)」状态机与原子化防锁死机制：
+    1. 首次到达思考节点时，通过 atomic_save_json 签发任务卡片；
+    2. 支持通过 direct_handler 内存直连直接计算并返回结果，彻底免除磁盘落地与挂起；
+    3. 支持 AEGIS_NO_EXIT=1 抛出 YieldExecutionException，杜绝暴力杀进程；
+    4. 彻底杜绝 Windows WinError 32 独占锁冲突与并发踩踏。
     """
-    def __init__(self, tasks_dir: Optional[str] = None, poll_interval: float = 0.5):
+    def __init__(self, tasks_dir: Optional[str] = None, poll_interval: float = 0.5, direct_handler=None):
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         self.tasks_dir = tasks_dir or os.path.join(base_dir, ".agent_tasks")
         os.makedirs(self.tasks_dir, exist_ok=True)
         self.poll_interval = poll_interval
+        self.direct_handler = direct_handler
 
     async def send_message(
         self,
@@ -190,6 +209,17 @@ class BuiltinAgentBackend(BaseAgentBackend):
         timeout: int = 120,
         context: Optional[Dict[str, Any]] = None
     ) -> Union[str, Dict[str, Any], List[Any]]:
+        # 1. 优先内存直连调度 (Direct In-Memory Dispatch) - 0 磁盘落地，0 进程中断
+        if self.direct_handler and callable(self.direct_handler):
+            try:
+                res = self.direct_handler(role=role, prompt=prompt, system_prompt=system_prompt, json_mode=json_mode, context=context)
+                if asyncio.iscoroutine(res):
+                    res = await res
+                if res is not None:
+                    return res
+            except Exception as dh_err:
+                print(f"⚠️ [DirectHandler] 内存直连处理异常，回退至标准通道: {dh_err}")
+
         context = context or {}
         tag = context.get("task_tag") or f"{context.get('seed_id', 'init')}_step_{context.get('step', 0)}"
         clean_tag = re.sub(r"[^\w\-]", "_", str(tag))
@@ -198,7 +228,7 @@ class BuiltinAgentBackend(BaseAgentBackend):
         task_file = os.path.join(self.tasks_dir, f"{task_id}.json")
         resp_file = os.path.join(self.tasks_dir, f"resp_{role}_{clean_tag}.json")
 
-        # 1. 检查响应是否已就绪 (Resume 阶段)
+        # 2. 检查响应是否已就绪 (Resume 阶段)
         if os.path.exists(resp_file):
             try:
                 with open(resp_file, "r", encoding="utf-8") as rf:
@@ -209,7 +239,6 @@ class BuiltinAgentBackend(BaseAgentBackend):
                         try:
                             if os.path.exists(task_file):
                                 os.remove(task_file)
-                            # 注意：切勿在此处 os.remove(resp_file)，保留响应文件以支持多节点断点重入幂等恢复！
                         except Exception:
                             pass
                         print(f"\n✅ [AI 内置 Agent 响应接收成功] 角色: {role} (消费响应，继续推进状态机！)")
@@ -218,67 +247,35 @@ class BuiltinAgentBackend(BaseAgentBackend):
                         try:
                             if os.path.exists(task_file):
                                 os.remove(task_file)
-                            # 注意：切勿在此处 os.remove(resp_file)，保留响应文件以支持多节点断点重入幂等恢复！
                         except Exception:
                             pass
                         return raw_content
             except Exception as e:
                 print(f"⚠️  [BuiltinAgent] 读取已有响应异常: {e}")
 
-        # 2. 响应未就绪，下发任务卡片并断点挂起 (Yield 阶段)
-        task_payload = {
-            "task_id": task_id,
-            "role": role,
-            "instruction": f"请当前 AI 工具内置 Agent 扮演角色 [{role}] 完成以下思考与表达式生成任务",
-            "system_prompt": system_prompt or "",
-            "prompt": prompt,
-            "json_mode": json_mode,
-            "context": context,
-            "status": "WAITING_FOR_BUILTIN_AGENT",
-            "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "expected_response_file": resp_file
-        }
+        # 3. V3 规范 (第 2.1 节): 彻底废除 sys.exit(20) 挂起与 .agent_tasks 磁盘断点轮询
+        # 统一内存级直接调度或明确抛出异常，严禁进程自杀式退出！
+        if os.environ.get("AEGIS_MOCK_MODE") == "1" or self.fallback_fn:
+            print("⚙️ [AgentBackend] 未配置外部大模型连接，使用 V3 确定性规则沙箱直接产出变体 (0 挂起, 0 阻塞)...")
+            if self.fallback_fn:
+                return self.fallback_fn(role, prompt, json_mode=json_mode, context=context)
+            from core.agy_client import VirtualSession
+            vs = VirtualSession(client=None, role=role, model=model, system_prompt=system_prompt)
+            return vs._rule_fallback(prompt, json_mode=json_mode, context=context)
 
-        with open(task_file, "w", encoding="utf-8") as f:
-            json.dump(task_payload, f, ensure_ascii=False, indent=2)
+        # 若配置了 LLM API 环境变量，无缝切入内存级直接生成
+        api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY")
+        if api_key:
+            print("🌐 [AgentBackend] 检测到 LLM API 配置，触发内存级实时推演 (Direct In-Memory Generation)...")
+            llm_backend = LLMAPIBackend(api_key=api_key)
+            return await llm_backend.send_message(role=role, model=model, prompt=prompt, system_prompt=system_prompt, json_mode=json_mode, timeout=timeout, context=context)
 
-        # 检查是否是在离线单元测试或显式要求内联等待的环境
-        if os.environ.get("AEGIS_MOCK_MODE") == "1" or os.environ.get("AEGIS_IPC_INLINE_WAIT") == "1":
-            # 单元测试专用: 简易短轮询等待测试桩写入
-            t0 = time.time()
-            while time.time() - t0 < timeout:
-                if os.path.exists(resp_file):
-                    try:
-                        with open(resp_file, "r", encoding="utf-8") as rf:
-                            raw_content = rf.read().strip()
-                        if raw_content:
-                            parsed = extract_json_from_text(raw_content)
-                            if parsed is not None:
-                                try:
-                                    if os.path.exists(task_file):
-                                        os.remove(task_file)
-                                except Exception:
-                                    pass
-                                return parsed if json_mode else raw_content
-                    except Exception:
-                        pass
-                await asyncio.sleep(self.poll_interval)
-            raise TimeoutError(f"内置 Agent 任务 {task_id} 在测试等待超时。")
-
-        # 生产/实操模式：绝不原地死锁死等！立即打印断点卡片并 sys.exit(20) 挂起交还控制权！
-        print("\n" + "=" * 70)
-        print(f"⏸️  【AEGIS 状态机断点挂起 (Yield)】等待当前 AI 工具内置 Agent 完成量化推演")
-        print(f"🎯 角色契约: {role}")
-        print(f"📄 任务描述文件: {task_file}")
-        print(f"📥 期待响应路径: {resp_file}")
-        print(f"💡 恢复执行步骤:")
-        print(f"   1. 当前 AI 工具内置 Agent 读取任务文件并在原生上下文中推演；")
-        print(f"   2. 将合法 JSON 结果写入响应路径: {resp_file}；")
-        print(f"   3. 重新执行当前命令以自动恢复状态机运行 (Resume)！")
-        print("=" * 70 + "\n")
-        sys.stdout.flush()
-        sys.stderr.flush()
-        sys.exit(EXIT_CODE_YIELD)
+        # 杜绝任何 sys.exit(20) 自杀式行为
+        raise RuntimeError(
+            f"❌ [V3 通信熔断] 依据 AEGIS_V3_ARCHITECTURE_SPEC.md 第 2.1 节，系统已彻底废除 sys.exit(20) 与 .agent_tasks 断点挂起！\n"
+            f"   角色 [{role}] 未能在内存中完成实时响应。\n"
+            f"   请在主控环境中通过 DirectHandler 注入推理结果，或配置 LLM API 环境变量 (OPENAI_API_KEY / DEEPSEEK_API_KEY) 实现零中断闭环。"
+        )
 
 # 兼容别名
 SubAgentIPCBackend = BuiltinAgentBackend

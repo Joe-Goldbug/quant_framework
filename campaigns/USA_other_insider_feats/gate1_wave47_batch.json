@@ -1,0 +1,47 @@
+{
+  "wave": 47,
+  "theme": "news-calm island full-green push: volume-ratio belief swap (CLUSTER axis) + deep-calm ts_min + outer decay kernel + power micro-step",
+  "constraints": "fields<=3 (insider x2 + ai_news x1), ops unlimited, economic hypothesis per expr",
+  "expressions": [
+    {
+      "tag": "vc_w18",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_all_20d_filled), vec_avg(buy_sell_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)",
+      "note": "H6 CLUSTER-PC duality probe: swap tx-count belief for volume-ratio belief (historically CLUSTER 0.82~1.04 but PC 0.78~0.85 in insider-only). Hypothesis: news-calm external leg decorrelates the crowded volume-ratio core, keeping CLUSTER high while pulling PC under 0.70. Fields: buy_sell_ratio_all_20d/60d + negative_score_average_value_3."
+    },
+    {
+      "tag": "vc15",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_ratio_all_20d_filled), vec_avg(buy_sell_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 15), subindustry), 0.5), 2)",
+      "note": "vc_w18 window-shaved variant: if volume-ratio swap works, w15 probes whether the PC island shifts left for the hotter core."
+    },
+    {
+      "tag": "ncalm18",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), multiply(reverse(ts_mean(negative_score_average_value_3, 20)), reverse(ts_std_dev(negative_score_average_value_3, 18)))), 18), subindustry), 0.5), 2)",
+      "note": "[ts_min illegal -> rewritten] Double-calm: low negative level x low negative volatility (both reversed and multiplied). Insider buying during calm AND stable news flow = cleanest information."
+    },
+    {
+      "tag": "ncalm17",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), multiply(reverse(ts_mean(negative_score_average_value_3, 20)), reverse(ts_std_dev(negative_score_average_value_3, 17)))), 17), subindustry), 0.5), 2)",
+      "note": "Double-calm at outer window 17 (island interior probe)."
+    },
+    {
+      "tag": "nc18_dexp",
+      "expr": "signed_power(subtract(group_rank(ts_decay_exp_window(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)",
+      "note": "Outer smoothing kernel swap: exponential decay window (18d) replaces ts_mean to preserve recent-pulse freshness -> 2Y/Margin axis. Double-smoothing died in double-rank shell; single-rank + tail-power is untested territory."
+    },
+    {
+      "tag": "nc18_dl10",
+      "expr": "signed_power(subtract(group_rank(ts_decay_linear(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 10), subindustry), 0.5), 2)",
+      "note": "Linear-decay 10d outer kernel: Wave39 showed ts_decay_linear was a loss on the insider-only core; re-test on the news-calm core for the 2Y freshness hypothesis."
+    },
+    {
+      "tag": "nc18_p225",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_60d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2.25)",
+      "note": "Power micro-step 2->2.25 at w18: PC headroom is 0.6936 (0.0064 to gate). Power gradient (p2.5 at w20 = 0.7038) suggests small gain; testing whether performance lift justifies the PC risk."
+    },
+    {
+      "tag": "nc18_l250",
+      "expr": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled), vec_avg(buy_sell_tx_count_ratio_all_250d_filled)), reverse(ts_mean(negative_score_average_value_3, 20))), 18), subindustry), 0.5), 2)",
+      "note": "Long-anchor belief: 20d pulse vs 250d baseline (Wave38 B-scheme anchor idea grafted onto news-calm core). Longer baseline = more continuous coverage, less zero-clumping in the belief leg."
+    }
+  ]
+}

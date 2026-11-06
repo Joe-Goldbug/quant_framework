@@ -1,0 +1,92 @@
+{
+  "batch": 30,
+  "family": "slow_leg_horizontal_scan_other685",
+  "hypothesis": "波次 30: 波次 29 的算术揭示了真正的杠杆在哪 —— x28_add_negpe 的组合 R 2.74%, 而慢腿 reverse(diff_current_vs_hist_pe_ratio) 单独就有 R 2.80% (Sh +1.09, TO 10.87%), 即**慢腿贡献了组合几乎全部的收益, 快腿贡献约 0**。所以「跨数据集」这个 alpha 的本体其实是一个慢速估值回归 alpha, 快腿只是搭上去的。要把 R/TO 从 0.25 推到 0.75, 必须换更好的慢腿。other685 有 72 个字段, 战役只测过 5 个。本波在**完全固定几何** (同快腿 r20marsi_ret + tvr0.08, 同 add 结构, 同 STATISTICAL/decay0/trunc0.08) 下横向扫描 8 条新慢腿, 每个槽位与 x28_add_negpe 逐位可比, 从而得到干净的慢腿排名。符号约定: 「贵就是坏」的字段取 reverse (当前 P/E 减历史中位、高绝对倍数), 「质量/成长」字段不取反 (高 = 更好)。若某槽回测为负, 说明符号判反, 下一波翻符号即可 —— 用一次回测同时测两个方向。经济学: 订单簿预测 (20 日微观结构) 与估值相对自身历史 (季度级再定价) 时间尺度不同; 慢腿的换手 (~11%) 是它自然的重定价节奏, 波次 29 已证平滑慢腿会杀它 (三层 tvr Sh 0.74)。",
+  "settings": {
+    "neutralization": "STATISTICAL",
+    "decay": 0,
+    "truncation": 0.08
+  },
+  "items": [
+    {
+      "id": "x30_slow1_diff_current_vs_hist_p",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(reverse(diff_current_vs_hist_price_ratio_earnings), subindustry)), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:diff_current_vs_hist_price_ratio_earnings"
+      ],
+      "why": "慢腿扫描 1/8: P/E (current minus median historical forward 12m P/E), earnings-based twin of the proven pe_vs_hist leg. 符号 = reverse. 与 x28_add_negpe 同几何 ⇒ 直接比较该慢腿相对 pe_vs_hist 的增量价值。判据: 若本槽 Sh > 1.07 且 Mgn > 5.07bps, 该慢腿优于已知最好慢腿, 下一波即以它为主体叠加外层 tvr + quantile 冲 15bps 死线。"
+    },
+    {
+      "id": "x30_slow2_forward_pe_ratio_mean_",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(reverse(forward_pe_ratio_mean_fy1), subindustry)), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:forward_pe_ratio_mean_fy1"
+      ],
+      "why": "慢腿扫描 2/8: absolute forward P/E on mean analyst FY1 estimates; high multiple = expensive. 符号 = reverse. 与 x28_add_negpe 同几何 ⇒ 直接比较该慢腿相对 pe_vs_hist 的增量价值。判据: 若本槽 Sh > 1.07 且 Mgn > 5.07bps, 该慢腿优于已知最好慢腿, 下一波即以它为主体叠加外层 tvr + quantile 冲 15bps 死线。"
+    },
+    {
+      "id": "x30_slow3_oth685_91v",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(oth685_91v, subindustry)), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:oth685_91v"
+      ],
+      "why": "慢腿扫描 3/8: operating cash flow yield on enterprise value (CFO/EV); high = cash-generative = cheap. 符号 = plain. 与 x28_add_negpe 同几何 ⇒ 直接比较该慢腿相对 pe_vs_hist 的增量价值。判据: 若本槽 Sh > 1.07 且 Mgn > 5.07bps, 该慢腿优于已知最好慢腿, 下一波即以它为主体叠加外层 tvr + quantile 冲 15bps 死线。"
+    },
+    {
+      "id": "x30_slow4_oth685_cfroitrn",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(oth685_cfroitrn, subindustry)), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:oth685_cfroitrn"
+      ],
+      "why": "慢腿扫描 4/8: trend/change in cash-flow return on investment; high = improving cash efficiency. 符号 = plain. 与 x28_add_negpe 同几何 ⇒ 直接比较该慢腿相对 pe_vs_hist 的增量价值。判据: 若本槽 Sh > 1.07 且 Mgn > 5.07bps, 该慢腿优于已知最好慢腿, 下一波即以它为主体叠加外层 tvr + quantile 冲 15bps 死线。"
+    },
+    {
+      "id": "x30_slow5_blended_growth_rate_sm",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(blended_growth_rate_smartest, subindustry)), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:blended_growth_rate_smartest"
+      ],
+      "why": "慢腿扫描 5/8: SmartEstimate earnings growth blended across last->this->next->LT; high = growth. 符号 = plain. 与 x28_add_negpe 同几何 ⇒ 直接比较该慢腿相对 pe_vs_hist 的增量价值。判据: 若本槽 Sh > 1.07 且 Mgn > 5.07bps, 该慢腿优于已知最好慢腿, 下一波即以它为主体叠加外层 tvr + quantile 冲 15bps 死线。"
+    },
+    {
+      "id": "x30_slow6_smartest_growth_this_v",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(smartest_growth_this_vs_last_year_earnings, subindustry)), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:smartest_growth_this_vs_last_year_earnings"
+      ],
+      "why": "慢腿扫描 6/8: SmartEstimate growth this year vs last year; high = upward revision. 符号 = plain. 与 x28_add_negpe 同几何 ⇒ 直接比较该慢腿相对 pe_vs_hist 的增量价值。判据: 若本槽 Sh > 1.07 且 Mgn > 5.07bps, 该慢腿优于已知最好慢腿, 下一波即以它为主体叠加外层 tvr + quantile 冲 15bps 死线。"
+    },
+    {
+      "id": "x30_slow7_oth685_81v",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(oth685_81v, subindustry)), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:oth685_81v"
+      ],
+      "why": "慢腿扫描 7/8: free cash flow yield on EV (FCF/EV); high = cash-generative and less accrual-manipulated. 符号 = plain. 与 x28_add_negpe 同几何 ⇒ 直接比较该慢腿相对 pe_vs_hist 的增量价值。判据: 若本槽 Sh > 1.07 且 Mgn > 5.07bps, 该慢腿优于已知最好慢腿, 下一波即以它为主体叠加外层 tvr + quantile 冲 15bps 死线。"
+    },
+    {
+      "id": "x30_slow8_median_forward_12m_pe_",
+      "expr": "group_zscore(add(ts_target_tvr_decay(oth566_r20marsi_ret, target_tvr=0.08), group_zscore(median_forward_12m_pe_ratio_hist, subindustry)), subindustry)",
+      "ops": 5,
+      "fields": [
+        "other566:r20marsi_ret",
+        "other685:median_forward_12m_pe_ratio_hist"
+      ],
+      "why": "慢腿扫描 8/8: the stock's OWN historical median forward P/E level; high = historically premium franchise (kept unreversed as the sign-riskiest probe). 符号 = plain. 与 x28_add_negpe 同几何 ⇒ 直接比较该慢腿相对 pe_vs_hist 的增量价值。判据: 若本槽 Sh > 1.07 且 Mgn > 5.07bps, 该慢腿优于已知最好慢腿, 下一波即以它为主体叠加外层 tvr + quantile 冲 15bps 死线。"
+    }
+  ]
+}

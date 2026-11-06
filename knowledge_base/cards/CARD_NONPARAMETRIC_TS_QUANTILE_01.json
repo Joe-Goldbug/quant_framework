@@ -1,0 +1,18 @@
+{
+  "card_id": "CARD_NONPARAMETRIC_TS_QUANTILE_01",
+  "tag": "distribution_aware_ts_mapping",
+  "domain": "time_series_normalization",
+  "title": "数据微观分布与时序映射的动态权衡法则 (ts_quantile 动态归因)",
+  "one_line": "拒绝静态教条：根据数据生成过程 (DGP) 动态权衡时序算子谱；当底层含零值尖峰或阶段断流致使 σ->0 时，优先评估 ts_quantile 的非参数高斯映射以防除零发散。",
+  "dynamic_decision_tree": {
+    "dense_gaussian_data": "数据稠密连续、方差平稳 (如宏观、高频量价)：ts_zscore 保留线性幅度信息，可直接使用。",
+    "zero_inflated_or_sparse_data": "数据含大量 0 值、偶发脉冲或高缺失 (如另类文本、情绪分歧、事件计数)：低活跃标的 250 日滚动方差 σ->0。此时 ts_zscore 存在分母趋零爆炸风险，导致偶发离群值产生畸变极值 (+50~100) 污染空头端。",
+    "candidate_operator_tradeoffs": {
+      "ts_zscore": "保留线性幅度，但对零方差极度脆弱，易引发早期稀疏年 (如 2015/2018) 严重失血。",
+      "ts_av_diff": "消除基线偏置且不除以方差，但缺乏跨时间方差稳态，截面离散度随时间大幅漂移 (实测 Sharpe 0.4~0.6，DD 25%)。",
+      "ts_rank": "严格有界 [0, 1]，免疫分母爆炸，但均匀阶梯分布抹平了极端情绪尾部的肥尾凸性 (实测 Sharpe 仅 1.26)。",
+      "ts_quantile": "先通过经验分位数有界于 [0, 1] 规避除零发散，再通过逆正态累积分布 Φ^(-1) 映射保留高斯尾部敏感度。适合既需要尾部非线性惩罚、又必须杜绝零方差爆炸的场景。"
+    }
+  },
+  "battle_ground_truth": "在 forum_sentiment 战役中，底层存在 2023 年 60% NaN 断流与长周期 0 讨论标的。动态诊断发现 ts_zscore 的 σ->0 爆炸是 2015/2018 年失血元凶，切换为 ts_quantile 后全样本 Sharpe 达 1.63，2023 年 Sharpe 达 +1.23，实现 10 年 100% 全胜。"
+}

@@ -1,0 +1,1638 @@
+{
+  "batch_file": "batch_32.json",
+  "batch": 32,
+  "family": "cross_dataset_slow_fundamental_anchor_plus_chart_momentum_tilt",
+  "hypothesis": "波次 32: 首次引入**跨一个数据集**的字段, 目标是同时攻破 Fitness>=1.05 与 Margin>=15bps 这两条在同一数据集内部被证明互斥的门禁。\n\n【为什么跨数据集是唯一出路】243 个同源回测槽位的实测显示: margin_bps = 20*Returns/Turnover, 且在本信号族内 Sharpe^2*(R/TO) 近似为常数 (最大 7.9), 故 Fitness 上限锁死在 0.63; 而门禁 4+5 (Returns>=5.5% 且 Margin>=15) 在代数上强制 Turnover<=7.33%, 即要求 R/TO>=0.75, 而 oth566 单一信号源 243 次测量从未超过 0.605 (那一点 Sharpe 仅 0.25)。**根因是 oth566 是 1~5 日高频图像预测, 它的收益必须靠高换手兑现, R/TO 被物理属性锁死**。要突破只能引入一个「换手率极低、信息半衰期以月/季计」的慢速信息源, 由它承担组合的持仓与 Carry(慢速腿的主导权重使总换手由慢速腿决定), 而 oth566 仅作为轻仓择时倾斜。\n\n【经济学假设 A: 自身历史估值锚 (Self-referential valuation anchor)】\n字段 diff_current_vs_hist_price_ratio_earnings = 当前远期 P/E 减去该股自身过去 12 个月远期 P/E 的中位数 (正=相对自己变贵)。\n1. 经济含义: 估值倍数的均值回复 (Campbell & Shiller 1988; Asness, Moskowitz & Pedersen 2013)。一家公司相对**自身历史估值中枢**的偏离, 比相对全市场截面便宜/昂贵更能剔除行业结构性差异与成长阶段差异 —— 同一只票在不同年份的合理倍数不同, 但「比自己过去 12 个月中位数贵 20%」是一个可比、平稳、无量纲的量。\n2. 换手属性: 锚是 12 个月滚动中位数, 月度级别才显著移动; 分子是远期 P/E 也随盈利预期缓慢漂移。因此该腿的日换手极低 (预期 2%~5%), 是天然的 Margin 载体。\n3. 为何必须进截面: 单看倍数高低会把「结构性高估值成长股」永久做空, 所以必须做 group_zscore 中性化, 且必须配合下文 B 的催化确认。\n\n【经济学假设 B: 分析师修正漂移 (Revision momentum / PEAD)】\n字段 highest_estimate_change_quarterly_eps_30d_long = 过去 30 天最高季度 EPS 预估的变动率。\n1. 经济含义: 盈余公告后漂移与修正漂移 (Bernard & Thomas 1989; Chan, Jegadeesh & Lakonishok 1996)。分析师预期是**粘性**的, 修正沿同一方向连续发生, 价格对修正的吸收是渐进的 → 修正本身就是可交易的、跨越 1~3 个月的动量。\n2. 与 A 的互补性: A 是「便宜」的静态状态 (value), B 是「正在被向上重估」的动态事件 (catalyst)。价值与修正动量在时序上负相关 (Asness et al. 2013 的 value-momentum 负相关现象), 组合可提高单位风险收益; 更关键的是 B 的半衰期以月计, 与 A 同为慢速腿, **两腿都不会把换手推高**, 这是 Margin 门禁的关键。\n3. 为何用 30 天而非 1 天修正: 日频修正以噪音为主 (单家券商跳变), 30 天窗口是漂移文献的标准构造区间, 且自动把换手压到月度级别。\n\n【经济学假设 C: 图表动能作为轻仓倾斜 (oth566 的角色)】\n字段 oth566_r20marsi_ret = 基于 20 日均线 + RSI 图表的图像模型对收益的预测, 本质是散户视觉交易者对价格形态的解读。\n1. 经济含义: 视觉显著性形态 (趋势启动/突破) 会吸引注意力驱动的资金流 (Barber & Odean 2008 注意力效应), 在短期内自我实现 → 提供 1~5 日的方向性倾斜。\n2. 为什么只能轻仓 (权重 0.2~0.5 对慢速腿): 它的换手是 13.9% (tvr=0.12), 若主导组合则 R/TO 被锁死在 0.22~0.48, Margin 门禁必然失败。作为倾斜, 它只贡献很小一部分总换手, 却能给慢速价值锚提供「入场时机/催化确认」—— 便宜但价格形态正在恶化的票不加仓, 便宜且形态转强的票加仓。\n3. 与 Labs 诊断的呼应: 该字段截面离散度在 2017/2019/2021 塌缩, 正是种子三年回撤的来源; 由慢速估值锚主导后, 这三年的截面漂移被价值状态吸收, 不再直接转成价格暴露。\n\n【本轮 8 槽设计】\n全部 2~3 个字段, op<=11。变量分三组: (a) 慢速腿构成: 估值+修正双锚 (VR) vs 仅估值 (V) vs 仅修正 (R); (b) oth566 倾斜权重 w = 0 / 0.20 / 0.30 / 0.50; (c) 换手控制 tvr=0.05 / 0.03, 以及追加 hump=0.01 不交易带。\nVR_only (w=0) 是 Margin 上限探针: 若纯慢速双锚的 R/TO 都到不了 0.75, 则整个跨数据集路线在该字段组合下也被否证。",
+  "location": "https://api.worldquantbrain.com/simulations/KcCzW6OU4L49pU1hwJOX7EH",
+  "fetched_at": 1793828360,
+  "alpha_results": [
+    {
+      "child_id": "U4JUR2VF4xZb95nNnhkwdB",
+      "child_status": "COMPLETE",
+      "alpha_id": "A1VQkrMX",
+      "location": "https://api.worldquantbrain.com/simulations/U4JUR2VF4xZb95nNnhkwdB",
+      "id": "A1VQkrMX",
+      "type": "REGULAR",
+      "author": "WP26349",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "SUBINDUSTRY",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "regular": {
+        "code": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), target_tvr=0.05), industry)",
+        "description": null,
+        "operatorCount": 7
+      },
+      "dateCreated": "2026-11-04T16:39:09-05:00",
+      "dateSubmitted": null,
+      "dateModified": "2026-11-04T16:39:09-05:00",
+      "name": null,
+      "favorite": false,
+      "hidden": false,
+      "color": null,
+      "category": null,
+      "tags": [],
+      "classifications": [],
+      "grade": null,
+      "stage": "IS",
+      "status": "UNSUBMITTED",
+      "is": {
+        "pnl": 3235184,
+        "bookSize": 20000000,
+        "longCount": 452,
+        "shortCount": 452,
+        "turnover": 0.0682,
+        "returns": 0.0324,
+        "drawdown": 0.1119,
+        "margin": 0.00095,
+        "sharpe": 0.64,
+        "fitness": 0.33,
+        "startDate": "2014-01-01",
+        "investabilityConstrained": {
+          "pnl": 3194945,
+          "bookSize": 20000000,
+          "longCount": 495,
+          "shortCount": 480,
+          "turnover": 0.0668,
+          "returns": 0.032,
+          "drawdown": 0.1173,
+          "margin": 0.000959,
+          "fitness": 0.32,
+          "sharpe": 0.63
+        },
+        "riskNeutralized": {
+          "pnl": 405513,
+          "bookSize": 20000000,
+          "longCount": 452,
+          "shortCount": 452,
+          "turnover": 0.0682,
+          "returns": 0.0041,
+          "drawdown": 0.0763,
+          "margin": 0.000119,
+          "fitness": 0.03,
+          "sharpe": 0.17
+        },
+        "checks": [
+          {
+            "name": "LOW_SHARPE",
+            "result": "FAIL",
+            "limit": 1.58,
+            "value": 0.64
+          },
+          {
+            "name": "LOW_FITNESS",
+            "result": "FAIL",
+            "limit": 1.0,
+            "value": 0.33
+          },
+          {
+            "name": "LOW_TURNOVER",
+            "result": "PASS",
+            "limit": 0.01,
+            "value": 0.0682
+          },
+          {
+            "name": "HIGH_TURNOVER",
+            "result": "PASS",
+            "limit": 0.7,
+            "value": 0.0682
+          },
+          {
+            "name": "CONCENTRATED_WEIGHT",
+            "result": "FAIL"
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "result": "PASS",
+            "limit": 0.34,
+            "value": 0.6
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "result": "FAIL",
+            "year": 2,
+            "startDate": "2024-01-02",
+            "endDate": "2022-01-03",
+            "limit": 1.58,
+            "value": 1.27
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "result": "WARNING",
+            "limit": 1.58,
+            "value": 0.42
+          },
+          {
+            "name": "SELF_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "DATA_DIVERSITY",
+            "result": "PENDING"
+          },
+          {
+            "name": "PROD_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "REGULAR_SUBMISSION",
+            "result": "PENDING"
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_PYRAMID",
+            "effective": 2,
+            "multiplier": 1.3,
+            "pyramids": [
+              {
+                "name": "USA/D1/MODEL",
+                "multiplier": 1.3
+              },
+              {
+                "name": "USA/D1/OTHER",
+                "multiplier": 1.4
+              }
+            ]
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "ZDj28WD",
+                "multiplier": 2.0,
+                "name": "USA/D1 TOP1000 Theme"
+              },
+              {
+                "id": "54bKpy7",
+                "multiplier": 1.3,
+                "name": "USA/D1/MODEL Pyramid Theme"
+              }
+            ],
+            "multiplier": 3.42
+          },
+          {
+            "result": "WARNING",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "9B3qVP4",
+                "multiplier": 1.0,
+                "name": "GLB/D1 Power Pool Nov`26"
+              }
+            ]
+          }
+        ]
+      },
+      "os": null,
+      "train": null,
+      "test": null,
+      "competitions": null,
+      "themes": null,
+      "pyramids": null,
+      "pyramidThemes": null,
+      "team": null,
+      "osmosisPoints": null,
+      "origin": "PLATFORM"
+    },
+    {
+      "child_id": "32dvrueqH4tT9qkV9mlM5lw",
+      "child_status": "COMPLETE",
+      "alpha_id": "VkxdOmJw",
+      "location": "https://api.worldquantbrain.com/simulations/32dvrueqH4tT9qkV9mlM5lw",
+      "id": "VkxdOmJw",
+      "type": "REGULAR",
+      "author": "WP26349",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "SUBINDUSTRY",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "regular": {
+        "code": "group_zscore(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.2, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+        "description": null,
+        "operatorCount": 10
+      },
+      "dateCreated": "2026-11-04T16:39:09-05:00",
+      "dateSubmitted": null,
+      "dateModified": "2026-11-04T16:39:09-05:00",
+      "name": null,
+      "favorite": false,
+      "hidden": false,
+      "color": null,
+      "category": null,
+      "tags": [],
+      "classifications": [],
+      "grade": null,
+      "stage": "IS",
+      "status": "UNSUBMITTED",
+      "is": {
+        "pnl": 3313166,
+        "bookSize": 20000000,
+        "longCount": 451,
+        "shortCount": 452,
+        "turnover": 0.0643,
+        "returns": 0.0332,
+        "drawdown": 0.1038,
+        "margin": 0.001032,
+        "sharpe": 0.65,
+        "fitness": 0.33,
+        "startDate": "2014-01-01",
+        "investabilityConstrained": {
+          "pnl": 3175515,
+          "bookSize": 20000000,
+          "longCount": 494,
+          "shortCount": 480,
+          "turnover": 0.0635,
+          "returns": 0.0318,
+          "drawdown": 0.1071,
+          "margin": 0.001002,
+          "fitness": 0.31,
+          "sharpe": 0.62
+        },
+        "riskNeutralized": {
+          "pnl": 479753,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 452,
+          "turnover": 0.0643,
+          "returns": 0.0048,
+          "drawdown": 0.077,
+          "margin": 0.000149,
+          "fitness": 0.04,
+          "sharpe": 0.21
+        },
+        "checks": [
+          {
+            "name": "LOW_SHARPE",
+            "result": "FAIL",
+            "limit": 1.58,
+            "value": 0.65
+          },
+          {
+            "name": "LOW_FITNESS",
+            "result": "FAIL",
+            "limit": 1.0,
+            "value": 0.33
+          },
+          {
+            "name": "LOW_TURNOVER",
+            "result": "PASS",
+            "limit": 0.01,
+            "value": 0.0643
+          },
+          {
+            "name": "HIGH_TURNOVER",
+            "result": "PASS",
+            "limit": 0.7,
+            "value": 0.0643
+          },
+          {
+            "name": "CONCENTRATED_WEIGHT",
+            "result": "FAIL"
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "result": "PASS",
+            "limit": 0.34,
+            "value": 0.65
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "result": "FAIL",
+            "year": 2,
+            "startDate": "2024-01-02",
+            "endDate": "2022-01-03",
+            "limit": 1.58,
+            "value": 1.23
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "result": "WARNING",
+            "limit": 1.58,
+            "value": 0.46
+          },
+          {
+            "name": "SELF_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "DATA_DIVERSITY",
+            "result": "PENDING"
+          },
+          {
+            "name": "PROD_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "REGULAR_SUBMISSION",
+            "result": "PENDING"
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_PYRAMID",
+            "effective": 2,
+            "multiplier": 1.3,
+            "pyramids": [
+              {
+                "name": "USA/D1/MODEL",
+                "multiplier": 1.3
+              },
+              {
+                "name": "USA/D1/OTHER",
+                "multiplier": 1.4
+              }
+            ]
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "ZDj28WD",
+                "multiplier": 2.0,
+                "name": "USA/D1 TOP1000 Theme"
+              },
+              {
+                "id": "54bKpy7",
+                "multiplier": 1.3,
+                "name": "USA/D1/MODEL Pyramid Theme"
+              }
+            ],
+            "multiplier": 3.42
+          },
+          {
+            "result": "WARNING",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "9B3qVP4",
+                "multiplier": 1.0,
+                "name": "GLB/D1 Power Pool Nov`26"
+              }
+            ]
+          }
+        ]
+      },
+      "os": null,
+      "train": null,
+      "test": null,
+      "competitions": null,
+      "themes": null,
+      "pyramids": null,
+      "pyramidThemes": null,
+      "team": null,
+      "osmosisPoints": null,
+      "origin": "PLATFORM"
+    },
+    {
+      "child_id": "fcnjQbJp4tK91bJegIT3gy",
+      "child_status": "COMPLETE",
+      "alpha_id": "e756LVRO",
+      "location": "https://api.worldquantbrain.com/simulations/fcnjQbJp4tK91bJegIT3gy",
+      "id": "e756LVRO",
+      "type": "REGULAR",
+      "author": "WP26349",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "SUBINDUSTRY",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "regular": {
+        "code": "group_zscore(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+        "description": null,
+        "operatorCount": 10
+      },
+      "dateCreated": "2026-11-04T16:39:09-05:00",
+      "dateSubmitted": null,
+      "dateModified": "2026-11-04T16:39:09-05:00",
+      "name": null,
+      "favorite": false,
+      "hidden": false,
+      "color": null,
+      "category": null,
+      "tags": [],
+      "classifications": [],
+      "grade": null,
+      "stage": "IS",
+      "status": "UNSUBMITTED",
+      "is": {
+        "pnl": 3289642,
+        "bookSize": 20000000,
+        "longCount": 451,
+        "shortCount": 452,
+        "turnover": 0.0636,
+        "returns": 0.033,
+        "drawdown": 0.1026,
+        "margin": 0.001036,
+        "sharpe": 0.65,
+        "fitness": 0.33,
+        "startDate": "2014-01-01",
+        "investabilityConstrained": {
+          "pnl": 3209557,
+          "bookSize": 20000000,
+          "longCount": 494,
+          "shortCount": 480,
+          "turnover": 0.0629,
+          "returns": 0.0322,
+          "drawdown": 0.1005,
+          "margin": 0.001023,
+          "fitness": 0.32,
+          "sharpe": 0.63
+        },
+        "riskNeutralized": {
+          "pnl": 505961,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 452,
+          "turnover": 0.0636,
+          "returns": 0.0051,
+          "drawdown": 0.0778,
+          "margin": 0.000159,
+          "fitness": 0.04,
+          "sharpe": 0.22
+        },
+        "checks": [
+          {
+            "name": "LOW_SHARPE",
+            "result": "FAIL",
+            "limit": 1.58,
+            "value": 0.65
+          },
+          {
+            "name": "LOW_FITNESS",
+            "result": "FAIL",
+            "limit": 1.0,
+            "value": 0.33
+          },
+          {
+            "name": "LOW_TURNOVER",
+            "result": "PASS",
+            "limit": 0.01,
+            "value": 0.0636
+          },
+          {
+            "name": "HIGH_TURNOVER",
+            "result": "PASS",
+            "limit": 0.7,
+            "value": 0.0636
+          },
+          {
+            "name": "CONCENTRATED_WEIGHT",
+            "result": "FAIL"
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "result": "PASS",
+            "limit": 0.34,
+            "value": 0.66
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "result": "FAIL",
+            "year": 2,
+            "startDate": "2024-01-02",
+            "endDate": "2022-01-03",
+            "limit": 1.58,
+            "value": 1.23
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "result": "WARNING",
+            "limit": 1.58,
+            "value": 0.47
+          },
+          {
+            "name": "SELF_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "DATA_DIVERSITY",
+            "result": "PENDING"
+          },
+          {
+            "name": "PROD_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "REGULAR_SUBMISSION",
+            "result": "PENDING"
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_PYRAMID",
+            "effective": 2,
+            "multiplier": 1.3,
+            "pyramids": [
+              {
+                "name": "USA/D1/MODEL",
+                "multiplier": 1.3
+              },
+              {
+                "name": "USA/D1/OTHER",
+                "multiplier": 1.4
+              }
+            ]
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "ZDj28WD",
+                "multiplier": 2.0,
+                "name": "USA/D1 TOP1000 Theme"
+              },
+              {
+                "id": "54bKpy7",
+                "multiplier": 1.3,
+                "name": "USA/D1/MODEL Pyramid Theme"
+              }
+            ],
+            "multiplier": 3.42
+          },
+          {
+            "result": "WARNING",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "9B3qVP4",
+                "multiplier": 1.0,
+                "name": "GLB/D1 Power Pool Nov`26"
+              }
+            ]
+          }
+        ]
+      },
+      "os": null,
+      "train": null,
+      "test": null,
+      "competitions": null,
+      "themes": null,
+      "pyramids": null,
+      "pyramidThemes": null,
+      "team": null,
+      "osmosisPoints": null,
+      "origin": "PLATFORM"
+    },
+    {
+      "child_id": "2bD2ORczl4D9b1v98ImaRyr",
+      "child_status": "COMPLETE",
+      "alpha_id": "npvA3eVa",
+      "location": "https://api.worldquantbrain.com/simulations/2bD2ORczl4D9b1v98ImaRyr",
+      "id": "npvA3eVa",
+      "type": "REGULAR",
+      "author": "WP26349",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "SUBINDUSTRY",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "regular": {
+        "code": "group_zscore(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.5, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+        "description": null,
+        "operatorCount": 10
+      },
+      "dateCreated": "2026-11-04T16:39:09-05:00",
+      "dateSubmitted": null,
+      "dateModified": "2026-11-04T16:39:10-05:00",
+      "name": null,
+      "favorite": false,
+      "hidden": false,
+      "color": null,
+      "category": null,
+      "tags": [],
+      "classifications": [],
+      "grade": null,
+      "stage": "IS",
+      "status": "UNSUBMITTED",
+      "is": {
+        "pnl": 3249093,
+        "bookSize": 20000000,
+        "longCount": 450,
+        "shortCount": 452,
+        "turnover": 0.0628,
+        "returns": 0.0326,
+        "drawdown": 0.1016,
+        "margin": 0.001036,
+        "sharpe": 0.64,
+        "fitness": 0.33,
+        "startDate": "2014-01-01",
+        "investabilityConstrained": {
+          "pnl": 3176685,
+          "bookSize": 20000000,
+          "longCount": 493,
+          "shortCount": 481,
+          "turnover": 0.0622,
+          "returns": 0.0318,
+          "drawdown": 0.1006,
+          "margin": 0.001024,
+          "fitness": 0.31,
+          "sharpe": 0.62
+        },
+        "riskNeutralized": {
+          "pnl": 604995,
+          "bookSize": 20000000,
+          "longCount": 450,
+          "shortCount": 452,
+          "turnover": 0.0628,
+          "returns": 0.0061,
+          "drawdown": 0.0773,
+          "margin": 0.000193,
+          "fitness": 0.06,
+          "sharpe": 0.26
+        },
+        "checks": [
+          {
+            "name": "LOW_SHARPE",
+            "result": "FAIL",
+            "limit": 1.58,
+            "value": 0.64
+          },
+          {
+            "name": "LOW_FITNESS",
+            "result": "FAIL",
+            "limit": 1.0,
+            "value": 0.33
+          },
+          {
+            "name": "LOW_TURNOVER",
+            "result": "PASS",
+            "limit": 0.01,
+            "value": 0.0628
+          },
+          {
+            "name": "HIGH_TURNOVER",
+            "result": "PASS",
+            "limit": 0.7,
+            "value": 0.0628
+          },
+          {
+            "name": "CONCENTRATED_WEIGHT",
+            "result": "FAIL"
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "result": "PASS",
+            "limit": 0.34,
+            "value": 0.67
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "result": "FAIL",
+            "year": 2,
+            "startDate": "2024-01-02",
+            "endDate": "2022-01-03",
+            "limit": 1.58,
+            "value": 1.23
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "result": "WARNING",
+            "limit": 1.58,
+            "value": 0.49
+          },
+          {
+            "name": "SELF_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "DATA_DIVERSITY",
+            "result": "PENDING"
+          },
+          {
+            "name": "PROD_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "REGULAR_SUBMISSION",
+            "result": "PENDING"
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_PYRAMID",
+            "effective": 2,
+            "multiplier": 1.3,
+            "pyramids": [
+              {
+                "name": "USA/D1/MODEL",
+                "multiplier": 1.3
+              },
+              {
+                "name": "USA/D1/OTHER",
+                "multiplier": 1.4
+              }
+            ]
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "ZDj28WD",
+                "multiplier": 2.0,
+                "name": "USA/D1 TOP1000 Theme"
+              },
+              {
+                "id": "54bKpy7",
+                "multiplier": 1.3,
+                "name": "USA/D1/MODEL Pyramid Theme"
+              }
+            ],
+            "multiplier": 3.42
+          },
+          {
+            "result": "WARNING",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "9B3qVP4",
+                "multiplier": 1.0,
+                "name": "GLB/D1 Power Pool Nov`26"
+              }
+            ]
+          }
+        ]
+      },
+      "os": null,
+      "train": null,
+      "test": null,
+      "competitions": null,
+      "themes": null,
+      "pyramids": null,
+      "pyramidThemes": null,
+      "team": null,
+      "osmosisPoints": null,
+      "origin": "PLATFORM"
+    },
+    {
+      "child_id": "2G1JymfSD4BQcxlYFzASKdg",
+      "child_status": "COMPLETE",
+      "alpha_id": "mLoYZ09W",
+      "location": "https://api.worldquantbrain.com/simulations/2G1JymfSD4BQcxlYFzASKdg",
+      "id": "mLoYZ09W",
+      "type": "REGULAR",
+      "author": "WP26349",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "SUBINDUSTRY",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "regular": {
+        "code": "group_zscore(ts_target_tvr_decay(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+        "description": null,
+        "operatorCount": 7
+      },
+      "dateCreated": "2026-11-04T16:39:09-05:00",
+      "dateSubmitted": null,
+      "dateModified": "2026-11-04T16:39:10-05:00",
+      "name": null,
+      "favorite": false,
+      "hidden": false,
+      "color": null,
+      "category": null,
+      "tags": [],
+      "classifications": [],
+      "grade": null,
+      "stage": "IS",
+      "status": "UNSUBMITTED",
+      "is": {
+        "pnl": 3465548,
+        "bookSize": 20000000,
+        "longCount": 458,
+        "shortCount": 463,
+        "turnover": 0.0652,
+        "returns": 0.0347,
+        "drawdown": 0.1155,
+        "margin": 0.001065,
+        "sharpe": 0.6,
+        "fitness": 0.32,
+        "startDate": "2014-01-01",
+        "investabilityConstrained": {
+          "pnl": 3253873,
+          "bookSize": 20000000,
+          "longCount": 502,
+          "shortCount": 490,
+          "turnover": 0.0645,
+          "returns": 0.0326,
+          "drawdown": 0.1144,
+          "margin": 0.001011,
+          "fitness": 0.29,
+          "sharpe": 0.57
+        },
+        "riskNeutralized": {
+          "pnl": 697141,
+          "bookSize": 20000000,
+          "longCount": 458,
+          "shortCount": 463,
+          "turnover": 0.0652,
+          "returns": 0.007,
+          "drawdown": 0.0617,
+          "margin": 0.000214,
+          "fitness": 0.07,
+          "sharpe": 0.31
+        },
+        "checks": [
+          {
+            "name": "LOW_SHARPE",
+            "result": "FAIL",
+            "limit": 1.58,
+            "value": 0.6
+          },
+          {
+            "name": "LOW_FITNESS",
+            "result": "FAIL",
+            "limit": 1.0,
+            "value": 0.32
+          },
+          {
+            "name": "LOW_TURNOVER",
+            "result": "PASS",
+            "limit": 0.01,
+            "value": 0.0652
+          },
+          {
+            "name": "HIGH_TURNOVER",
+            "result": "PASS",
+            "limit": 0.7,
+            "value": 0.0652
+          },
+          {
+            "name": "CONCENTRATED_WEIGHT",
+            "result": "PASS"
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "result": "PASS",
+            "limit": 0.32,
+            "value": 0.63
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "result": "FAIL",
+            "year": 2,
+            "startDate": "2024-01-02",
+            "endDate": "2022-01-03",
+            "limit": 1.58,
+            "value": 1.3
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "result": "WARNING",
+            "limit": 1.58,
+            "value": 0.51
+          },
+          {
+            "name": "SELF_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "DATA_DIVERSITY",
+            "result": "PENDING"
+          },
+          {
+            "name": "PROD_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "REGULAR_SUBMISSION",
+            "result": "PENDING"
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_PYRAMID",
+            "effective": 1,
+            "multiplier": 1.4,
+            "pyramids": [
+              {
+                "name": "USA/D1/OTHER",
+                "multiplier": 1.4
+              }
+            ]
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "ZDj28WD",
+                "multiplier": 2.0,
+                "name": "USA/D1 TOP1000 Theme"
+              },
+              {
+                "id": "mBA2gDL",
+                "multiplier": 1.4,
+                "name": "USA/D1/OTHER Pyramid Theme"
+              }
+            ],
+            "multiplier": 3.56
+          },
+          {
+            "result": "WARNING",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "9B3qVP4",
+                "multiplier": 1.0,
+                "name": "GLB/D1 Power Pool Nov`26"
+              }
+            ]
+          }
+        ]
+      },
+      "os": null,
+      "train": null,
+      "test": null,
+      "competitions": null,
+      "themes": null,
+      "pyramids": null,
+      "pyramidThemes": null,
+      "team": null,
+      "osmosisPoints": null,
+      "origin": "PLATFORM"
+    },
+    {
+      "child_id": "3yam5q5De4tjb1SHTpStbNn",
+      "child_status": "COMPLETE",
+      "alpha_id": "xAr1R2aq",
+      "location": "https://api.worldquantbrain.com/simulations/3yam5q5De4tjb1SHTpStbNn",
+      "id": "xAr1R2aq",
+      "type": "REGULAR",
+      "author": "WP26349",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "SUBINDUSTRY",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "regular": {
+        "code": "group_zscore(ts_target_tvr_decay(add(rank(highest_estimate_change_quarterly_eps_30d_long), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.05), industry)",
+        "description": null,
+        "operatorCount": 6
+      },
+      "dateCreated": "2026-11-04T16:39:09-05:00",
+      "dateSubmitted": null,
+      "dateModified": "2026-11-04T16:39:10-05:00",
+      "name": null,
+      "favorite": false,
+      "hidden": false,
+      "color": null,
+      "category": null,
+      "tags": [],
+      "classifications": [],
+      "grade": null,
+      "stage": "IS",
+      "status": "UNSUBMITTED",
+      "is": {
+        "pnl": 684004,
+        "bookSize": 20000000,
+        "longCount": 451,
+        "shortCount": 451,
+        "turnover": 0.0562,
+        "returns": 0.0069,
+        "drawdown": 0.0756,
+        "margin": 0.000244,
+        "sharpe": 0.23,
+        "fitness": 0.05,
+        "startDate": "2014-01-01",
+        "investabilityConstrained": {
+          "pnl": 723625,
+          "bookSize": 20000000,
+          "longCount": 487,
+          "shortCount": 486,
+          "turnover": 0.056,
+          "returns": 0.0073,
+          "drawdown": 0.0783,
+          "margin": 0.000259,
+          "fitness": 0.06,
+          "sharpe": 0.24
+        },
+        "riskNeutralized": {
+          "pnl": -421917,
+          "bookSize": 20000000,
+          "longCount": 451,
+          "shortCount": 451,
+          "turnover": 0.0562,
+          "returns": -0.0042,
+          "drawdown": 0.0956,
+          "margin": -0.00015,
+          "fitness": -0.03,
+          "sharpe": -0.18
+        },
+        "checks": [
+          {
+            "name": "LOW_SHARPE",
+            "result": "FAIL",
+            "limit": 1.58,
+            "value": 0.23
+          },
+          {
+            "name": "LOW_FITNESS",
+            "result": "FAIL",
+            "limit": 1.0,
+            "value": 0.05
+          },
+          {
+            "name": "LOW_TURNOVER",
+            "result": "PASS",
+            "limit": 0.01,
+            "value": 0.0562
+          },
+          {
+            "name": "HIGH_TURNOVER",
+            "result": "PASS",
+            "limit": 0.7,
+            "value": 0.0562
+          },
+          {
+            "name": "CONCENTRATED_WEIGHT",
+            "result": "FAIL"
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "result": "PASS",
+            "limit": 0.12,
+            "value": 0.19
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "result": "FAIL",
+            "year": 2,
+            "startDate": "2024-01-02",
+            "endDate": "2022-01-03",
+            "limit": 1.58,
+            "value": -0.19
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "result": "WARNING",
+            "limit": 1.58,
+            "value": 0.12
+          },
+          {
+            "name": "SELF_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "DATA_DIVERSITY",
+            "result": "PENDING"
+          },
+          {
+            "name": "PROD_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "REGULAR_SUBMISSION",
+            "result": "PENDING"
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_PYRAMID",
+            "effective": 2,
+            "multiplier": 1.3,
+            "pyramids": [
+              {
+                "name": "USA/D1/MODEL",
+                "multiplier": 1.3
+              },
+              {
+                "name": "USA/D1/OTHER",
+                "multiplier": 1.4
+              }
+            ]
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "ZDj28WD",
+                "multiplier": 2.0,
+                "name": "USA/D1 TOP1000 Theme"
+              },
+              {
+                "id": "54bKpy7",
+                "multiplier": 1.3,
+                "name": "USA/D1/MODEL Pyramid Theme"
+              }
+            ],
+            "multiplier": 3.42
+          },
+          {
+            "result": "WARNING",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "9B3qVP4",
+                "multiplier": 1.0,
+                "name": "GLB/D1 Power Pool Nov`26"
+              }
+            ]
+          }
+        ]
+      },
+      "os": null,
+      "train": null,
+      "test": null,
+      "competitions": null,
+      "themes": null,
+      "pyramids": null,
+      "pyramidThemes": null,
+      "team": null,
+      "osmosisPoints": null,
+      "origin": "PLATFORM"
+    },
+    {
+      "child_id": "4aDyc82rl4Co9G6FuRUIUbZ",
+      "child_status": "COMPLETE",
+      "alpha_id": "A1VQkrdd",
+      "location": "https://api.worldquantbrain.com/simulations/4aDyc82rl4Co9G6FuRUIUbZ",
+      "id": "A1VQkrdd",
+      "type": "REGULAR",
+      "author": "WP26349",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "SUBINDUSTRY",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "regular": {
+        "code": "group_zscore(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.03), industry)",
+        "description": null,
+        "operatorCount": 10
+      },
+      "dateCreated": "2026-11-04T16:39:09-05:00",
+      "dateSubmitted": null,
+      "dateModified": "2026-11-04T16:39:10-05:00",
+      "name": null,
+      "favorite": false,
+      "hidden": false,
+      "color": null,
+      "category": null,
+      "tags": [],
+      "classifications": [],
+      "grade": null,
+      "stage": "IS",
+      "status": "UNSUBMITTED",
+      "is": {
+        "pnl": 2678879,
+        "bookSize": 20000000,
+        "longCount": 450,
+        "shortCount": 453,
+        "turnover": 0.0409,
+        "returns": 0.0268,
+        "drawdown": 0.1072,
+        "margin": 0.001312,
+        "sharpe": 0.53,
+        "fitness": 0.25,
+        "startDate": "2014-01-01",
+        "investabilityConstrained": {
+          "pnl": 2624194,
+          "bookSize": 20000000,
+          "longCount": 489,
+          "shortCount": 484,
+          "turnover": 0.0405,
+          "returns": 0.0263,
+          "drawdown": 0.1068,
+          "margin": 0.001299,
+          "fitness": 0.24,
+          "sharpe": 0.52
+        },
+        "riskNeutralized": {
+          "pnl": 350371,
+          "bookSize": 20000000,
+          "longCount": 450,
+          "shortCount": 453,
+          "turnover": 0.0409,
+          "returns": 0.0035,
+          "drawdown": 0.0789,
+          "margin": 0.000172,
+          "fitness": 0.03,
+          "sharpe": 0.15
+        },
+        "checks": [
+          {
+            "name": "LOW_SHARPE",
+            "result": "FAIL",
+            "limit": 1.58,
+            "value": 0.53
+          },
+          {
+            "name": "LOW_FITNESS",
+            "result": "FAIL",
+            "limit": 1.0,
+            "value": 0.25
+          },
+          {
+            "name": "LOW_TURNOVER",
+            "result": "PASS",
+            "limit": 0.01,
+            "value": 0.0409
+          },
+          {
+            "name": "HIGH_TURNOVER",
+            "result": "PASS",
+            "limit": 0.7,
+            "value": 0.0409
+          },
+          {
+            "name": "CONCENTRATED_WEIGHT",
+            "result": "FAIL"
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "result": "PASS",
+            "limit": 0.28,
+            "value": 0.64
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "result": "FAIL",
+            "year": 2,
+            "startDate": "2024-01-02",
+            "endDate": "2022-01-03",
+            "limit": 1.58,
+            "value": 1.2
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "result": "WARNING",
+            "limit": 1.58,
+            "value": 0.33
+          },
+          {
+            "name": "SELF_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "DATA_DIVERSITY",
+            "result": "PENDING"
+          },
+          {
+            "name": "PROD_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "REGULAR_SUBMISSION",
+            "result": "PENDING"
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_PYRAMID",
+            "effective": 2,
+            "multiplier": 1.3,
+            "pyramids": [
+              {
+                "name": "USA/D1/MODEL",
+                "multiplier": 1.3
+              },
+              {
+                "name": "USA/D1/OTHER",
+                "multiplier": 1.4
+              }
+            ]
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "ZDj28WD",
+                "multiplier": 2.0,
+                "name": "USA/D1 TOP1000 Theme"
+              },
+              {
+                "id": "54bKpy7",
+                "multiplier": 1.3,
+                "name": "USA/D1/MODEL Pyramid Theme"
+              }
+            ],
+            "multiplier": 3.42
+          },
+          {
+            "result": "WARNING",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "9B3qVP4",
+                "multiplier": 1.0,
+                "name": "GLB/D1 Power Pool Nov`26"
+              }
+            ]
+          }
+        ]
+      },
+      "os": null,
+      "train": null,
+      "test": null,
+      "competitions": null,
+      "themes": null,
+      "pyramids": null,
+      "pyramidThemes": null,
+      "team": null,
+      "osmosisPoints": null,
+      "origin": "PLATFORM"
+    },
+    {
+      "child_id": "3jHNjv6ue58k9221d0mRaYgR",
+      "child_status": "COMPLETE",
+      "alpha_id": "xAr1R2am",
+      "location": "https://api.worldquantbrain.com/simulations/3jHNjv6ue58k9221d0mRaYgR",
+      "id": "xAr1R2am",
+      "type": "REGULAR",
+      "author": "WP26349",
+      "settings": {
+        "instrumentType": "EQUITY",
+        "region": "USA",
+        "universe": "TOP1000",
+        "delay": 1,
+        "decay": 0,
+        "neutralization": "SUBINDUSTRY",
+        "truncation": 0.08,
+        "pasteurization": "ON",
+        "unitHandling": "VERIFY",
+        "nanHandling": "ON",
+        "maxTrade": "OFF",
+        "maxPosition": "OFF",
+        "language": "FASTEXPR",
+        "visualization": false,
+        "startDate": "2014-01-01",
+        "endDate": "2023-12-31",
+        "simulationMode": "FULL"
+      },
+      "regular": {
+        "code": "group_zscore(hump(ts_target_tvr_decay(add(add(subtract(0.5, rank(diff_current_vs_hist_price_ratio_earnings)), multiply(0.5, rank(highest_estimate_change_quarterly_eps_30d_long))), multiply(0.3, rank(oth566_r20marsi_ret))), target_tvr=0.05), hump=0.01), industry)",
+        "description": null,
+        "operatorCount": 11
+      },
+      "dateCreated": "2026-11-04T16:39:09-05:00",
+      "dateSubmitted": null,
+      "dateModified": "2026-11-04T16:39:10-05:00",
+      "name": null,
+      "favorite": false,
+      "hidden": false,
+      "color": null,
+      "category": null,
+      "tags": [],
+      "classifications": [],
+      "grade": null,
+      "stage": "IS",
+      "status": "UNSUBMITTED",
+      "is": {
+        "pnl": 541278,
+        "bookSize": 20000000,
+        "longCount": 454,
+        "shortCount": 449,
+        "turnover": 0.0101,
+        "returns": 0.0054,
+        "drawdown": 0.0785,
+        "margin": 0.001072,
+        "sharpe": 0.17,
+        "fitness": 0.04,
+        "startDate": "2014-01-01",
+        "investabilityConstrained": {
+          "pnl": 527549,
+          "bookSize": 20000000,
+          "longCount": 491,
+          "shortCount": 483,
+          "turnover": 0.0105,
+          "returns": 0.0053,
+          "drawdown": 0.0769,
+          "margin": 0.001007,
+          "fitness": 0.03,
+          "sharpe": 0.16
+        },
+        "riskNeutralized": {
+          "pnl": -258875,
+          "bookSize": 20000000,
+          "longCount": 454,
+          "shortCount": 449,
+          "turnover": 0.0101,
+          "returns": -0.0026,
+          "drawdown": 0.0949,
+          "margin": -0.000513,
+          "fitness": -0.02,
+          "sharpe": -0.12
+        },
+        "checks": [
+          {
+            "name": "LOW_SHARPE",
+            "result": "FAIL",
+            "limit": 1.58,
+            "value": 0.17
+          },
+          {
+            "name": "LOW_FITNESS",
+            "result": "FAIL",
+            "limit": 1.0,
+            "value": 0.04
+          },
+          {
+            "name": "LOW_TURNOVER",
+            "result": "PASS",
+            "limit": 0.01,
+            "value": 0.0101
+          },
+          {
+            "name": "HIGH_TURNOVER",
+            "result": "PASS",
+            "limit": 0.7,
+            "value": 0.0101
+          },
+          {
+            "name": "CONCENTRATED_WEIGHT",
+            "result": "FAIL"
+          },
+          {
+            "name": "LOW_SUB_UNIVERSE_SHARPE",
+            "result": "PASS",
+            "limit": 0.09,
+            "value": 0.29
+          },
+          {
+            "name": "IS_LADDER_SHARPE",
+            "result": "FAIL",
+            "year": 2,
+            "startDate": "2024-01-02",
+            "endDate": "2022-01-03",
+            "limit": 1.58,
+            "value": 0.81
+          },
+          {
+            "name": "CLUSTER_TEST",
+            "result": "WARNING",
+            "limit": 1.58,
+            "value": 0.04
+          },
+          {
+            "name": "SELF_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "DATA_DIVERSITY",
+            "result": "PENDING"
+          },
+          {
+            "name": "PROD_CORRELATION",
+            "result": "PENDING"
+          },
+          {
+            "name": "REGULAR_SUBMISSION",
+            "result": "PENDING"
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_PYRAMID",
+            "effective": 2,
+            "multiplier": 1.3,
+            "pyramids": [
+              {
+                "name": "USA/D1/MODEL",
+                "multiplier": 1.3
+              },
+              {
+                "name": "USA/D1/OTHER",
+                "multiplier": 1.4
+              }
+            ]
+          },
+          {
+            "result": "PASS",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "ZDj28WD",
+                "multiplier": 2.0,
+                "name": "USA/D1 TOP1000 Theme"
+              },
+              {
+                "id": "54bKpy7",
+                "multiplier": 1.3,
+                "name": "USA/D1/MODEL Pyramid Theme"
+              }
+            ],
+            "multiplier": 3.42
+          },
+          {
+            "result": "WARNING",
+            "name": "MATCHES_THEMES",
+            "themes": [
+              {
+                "id": "9B3qVP4",
+                "multiplier": 1.0,
+                "name": "GLB/D1 Power Pool Nov`26"
+              }
+            ]
+          }
+        ]
+      },
+      "os": null,
+      "train": null,
+      "test": null,
+      "competitions": null,
+      "themes": null,
+      "pyramids": null,
+      "pyramidThemes": null,
+      "team": null,
+      "osmosisPoints": null,
+      "origin": "PLATFORM"
+    }
+  ]
+}

@@ -81,14 +81,16 @@ def main():
         with open(outp, "w", encoding="utf-8") as f:
             json.dump(out, f, indent=2, ensure_ascii=False)
 
+        from alpha_normalizer import normalize
         got = 0
         for rec in results:
-            m = rec.get("metrics") or {}
+            m = normalize(rec) or {}
             if m.get("sharpe") is not None:
                 got += 1
             print(f"  B{bnum} {rec.get('alpha_id')} Sh={m.get('sharpe')} "
                   f"Fit={m.get('fitness')} TO={m.get('turnover')} "
-                  f"Mgn={(m.get('margin') or 0)*10000:.2f}bps", flush=True)
+                  f"Mgn={m.get('margin_bps')} 2Y={m.get('two_year_sharpe')} "
+                  f"CL={m.get('cluster_test')} fails={m.get('fail_count')}", flush=True)
         print(f"batch {bnum}: {got}/{len(results)} resolved -> {outp}\n", flush=True)
 
 

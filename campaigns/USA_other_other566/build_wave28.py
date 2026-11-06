@@ -1,0 +1,135 @@
+"""build_wave28.py — sign correction on the PE-vs-history leg + additive slow stream.
+
+WAVE 27 DECISIVE READINGS:
+  1. `diff_current_vs_hist_pe_ratio` ALONE is a NEGATIVE alpha: Sh -1.09,
+     R -2.80%, DD 29.6%. Economic meaning: current P/E above its own history
+     median => the stock is expensive relative to its own norm => it UNDERPERFORMS.
+     So the sign is inverted vs my wave-26 assumption. Using rank() (always
+     positive) hid this: in wave 26 the leg worked as a *weight* (Sh 1.45) only
+     because rank() turned it into "high weight for expensive stocks", which
+     happens to shrink positions in high-PE-vs-history names and in the
+     fast-leg's own losers... it is fragile, not principled.
+  2. `earnings_yield_smartest_fy1` alone: Sh 0.40, TO 8.89%, R 1.14%,
+     Mgn 2.57bps => the value leg IS slow and low-turnover as predicted, but
+     its standalone Sharpe is far below what would move the needle.
+  3. `smartest_growth_next_vs_this_year_earnings` alone: Sh 0.31, TO 11.42%,
+     Mgn 1.45bps, 2Y 1.03 => analyst revision leg is positive but weak alone.
+  4. ADDITIVE slow stream FAILED (RREArz6j Sh -1.07) — but ONLY because the
+     added leg's sign was wrong. The mechanism (fast order-book forecast +
+     slow fundamental revaluation stream, different time scales => additive
+     returns without additive turnover) is still untested with a correct sign.
+
+WAVE 28 HYPOTHESIS:
+  The slow leg must enter with its CORRECT sign (negative for PE-vs-history).
+  Three mechanisms:
+    A. SIGN-CORRECTED ADDITIVE STREAM:
+       group_zscore(add(tvr_decay(fast), group_zscore(-pe_vs_hist, subindustry)))
+       - pe_vs_hist is a mean-reversion signal (rich vs own history => sell).
+       Economically: the order-book forecast prices the next 20 days; the
+       valuation-vs-history leg prices a slower reversion. Different horizons =>
+       partially uncorrelated return streams => the portfolio's Sharpe can
+       exceed either leg's while turnover is set almost entirely by the fast
+       leg's tvr target. THIS IS THE ONLY PATH TO R/TO >= 0.75.
+    B. SIGN-CORRECTED MULTIPLICATIVE WEIGHT: the fast forecast is credible
+       only when the stock is not stretched vs its own valuation history.
+       Weight = rank(-pe_vs_hist) => always positive, higher weight when the
+       stock is CHEAP relative to its own history. Contrast with wave 26's
+       rank(+pe_vs_hist) which did the opposite and was fragile.
+    C. VALUE-ADDITIVE STREAM: add the earnings-yield leg (sign already
+       correct: high E/P = cheap = positive) to the fast leg.
+       E/P alone is Sh 0.40 but its 2Y Sharpe 0.52 and it is the cleanest
+       slow leg available in other685.
+
+ALGEBRAIC TARGET (unchanged): Margin >= 15bps => R/TO >= 0.75.
+  Feasible cell: TO 5-9%, R 4-7%, Sh >= 1.65, Fit >= 1.05, Cluster >= 1.60.
+"""
+
+import json
+import os
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+R_RET = "oth566_r20marsi_ret"
+PE_VS_HIST = "diff_current_vs_hist_pe_ratio"          # cov 0.9961, 7u/10a
+EY_SMARTTEST = "earnings_yield_smartest_fy1"          # cov 0.9964, 9u/18a
+GROW_NEXT = "smartest_growth_next_vs_this_year_earnings"  # cov 0.9677, 1u/2a
+EY_IND_PCTL = "earnings_yield_industry_percentile_fy1"  # cov 0.9947, 0u/0a
+
+# sign-corrected slow legs: negative PE-vs-history = cheap relative to own history
+NEG_PE = f"reverse({PE_VS_HIST})"
+NEG_PE_RANK = f"rank({NEG_PE})"
+
+W28 = {
+ "batch": 28, "family": "cross_dataset_sign_corrected_slow_leg",
+ "hypothesis": (
+   "波次 28: 波次 27 的关键读数是 **`diff_current_vs_hist_pe_ratio` 单独为负 alpha (Sh -1.09)** —— "
+   "当前 P/E 高于自身历史中位 = 相对自身历史偏贵 = 跑输。波次 26 用 rank(+) 把它当权重时得 Sh 1.45, "
+   "但那是**脆弱的符号巧合** (rank 保号后变成「给贵股高权重」, 与快腿亏损股重叠产生虚假收益), "
+   "波次 27 的加法槽 (Sh -1.07) 证明了符号错误会直接毒化组合。"
+   "本波三条机制全部使用**符号修正后**的慢腿: (a) 加法独立收益流 (唯一能把 R/TO 推到 0.75 的路径 —— "
+   "快腿定换手, 慢腿定收益, 两个不同时间尺度 ⇒ 收益相关性低); (b) 符号修正的乘性权重 (快腿只在"
+   "「相对自身历史不贵」时可信); (c) 盈利收益率腿 (符号天然正确: E/P 高 = 便宜 = 正) 作加法流。"
+   "同时保留 rank(neg) 的保号形式以避免符号陷阱, 并用 E/P 行业分位作三字段对照。"
+ ),
+ "settings": {"neutralization": "STATISTICAL", "decay": 0, "truncation": 0.08},
+ "items": [
+  {"id": "x28_add_negpe",
+   "expr": f"group_zscore(add(ts_target_tvr_decay({R_RET}, target_tvr=0.08), group_zscore({NEG_PE}, subindustry)), subindustry)",
+   "ops": 4, "fields": ["other566:r20marsi_ret", "other685:diff_current_vs_hist_pe_ratio"],
+   "why": "A 符号修正加法流 (关键槽): 快腿 tvr0.08 定换手, 慢腿 -pe_vs_hist 定收益。"
+          "经济含义: 订单簿预测未来 20 日微观结构定价; 估值相对自身历史偏离捕捉更慢的基本面再定价。"
+          "不同期限 ⇒ 收益流部分不相关 ⇒ 组合 Sharpe 可超任一分量, 而换手几乎全由快腿决定。"
+          "若本槽 R 抬到 4%+ 且 TO 保持 8-10%, 则 R/TO 越过 0.4, 是本战役首次逼近 Margin 15bps 死线。"},
+
+  {"id": "x28_add_negpe_tvr05",
+   "expr": f"group_zscore(add(ts_target_tvr_decay({R_RET}, target_tvr=0.05), group_zscore({NEG_PE}, subindustry)), subindustry)",
+   "ops": 4, "fields": ["other566:r20marsi_ret", "other685:diff_current_vs_hist_pe_ratio"],
+   "why": "A 变体 tvr=0.05: 把快腿换手再压一半 (TO 5-7%), 若慢腿收益流独立, R 可守住而 TO 降 ⇒ R/TO 进一步上升。"},
+
+  {"id": "x28_mult_negpe",
+   "expr": f"group_zscore(ts_target_tvr_decay(multiply({R_RET}, {NEG_PE_RANK}), target_tvr=0.08), subindustry)",
+   "ops": 5, "fields": ["other566:r20marsi_ret", "other685:diff_current_vs_hist_pe_ratio"],
+   "why": "B 符号修正乘性权重: rank(reverse(pe_vs_hist)) 恒正, 相对自身历史便宜的股票获高权重。"
+          "对照波次 26 的 rank(+pe_vs_hist) (Sh 1.45) —— 若本槽 Sh 明显更高, 则波次 26 的成功是符号错误。"
+          "经济含义: 订单簿的看多预测只在「估值未相对自身历史膨胀」的股票上兑现 (否则是拥挤交易)。"},
+
+  {"id": "x28_mult_negpe_tvr12",
+   "expr": f"group_zscore(ts_target_tvr_decay(multiply({R_RET}, {NEG_PE_RANK}), target_tvr=0.12), subindustry)",
+   "ops": 5, "fields": ["other566:r20marsi_ret", "other685:diff_current_vs_hist_pe_ratio"],
+   "why": "B 变体 tvr=0.12 (种子换手档): 与 x28_mult_negpe 配对, 分离换手效应与腿符号效应。"},
+
+  {"id": "x28_add_ey",
+   "expr": f"group_zscore(add(ts_target_tvr_decay({R_RET}, target_tvr=0.08), group_zscore({EY_SMARTTEST}, subindustry)), subindustry)",
+   "ops": 4, "fields": ["other566:r20marsi_ret", "other685:earnings_yield_smartest_fy1"],
+   "why": "C 盈利收益率加法流: E/P 符号天然正确 (高 = 便宜 = 正), 且波次 27 实测 TO 8.89% / Sh 0.40 / Mgn 2.57bps "
+          "—— 是 other685 里最慢最干净的一条腿。经济含义: 快腿捕捉短期微观结构定价, 价值腿捕捉长期定价锚, "
+          "两者期限不同 ⇒ 收益相关性低。"},
+
+  {"id": "x28_add_ey_grow",
+   "expr": f"group_zscore(add(add(ts_target_tvr_decay({R_RET}, target_tvr=0.08), group_zscore({EY_SMARTTEST}, subindustry)), group_zscore({GROW_NEXT}, subindustry)), subindustry)",
+   "ops": 5, "fields": ["other566:r20marsi_ret", "other685:earnings_yield_smartest_fy1", "other685:smartest_growth_next_vs_this_year_earnings"],
+   "why": "C 三字段双慢腿加法: 价值 (E/P 水平) + 分析师预期修正 (增长) 两条慢腿同时叠加。"
+          "经济含义: 绝对估值水平 (便宜) + 预期变化方向 (变好) 是经典的双因子价值-成长组合, "
+          "两者更新频率都低 ⇒ 与快腿的时间尺度差异最大化 ⇒ 理论上最优的 R/TO 结构。"},
+
+  {"id": "x28_add_ey_mult",
+   "expr": f"group_zscore(add(ts_target_tvr_decay(multiply({R_RET}, {NEG_PE_RANK}), target_tvr=0.08), group_zscore({EY_SMARTTEST}, subindustry)), subindustry)",
+   "ops": 6, "fields": ["other566:r20marsi_ret", "other685:diff_current_vs_hist_pe_ratio", "other685:earnings_yield_smartest_fy1"],
+   "why": "A+B+C 三合一: 快腿经符号修正的估值权重, 再叠加绝对价值慢腿。"
+          "经济含义: 快腿 (短期微观结构) x 相对估值条件 (中期) + 绝对价值流 (长期), 三层期限结构。"},
+
+  {"id": "x28_3f_add_pctl",
+   "expr": f"group_zscore(add(ts_target_tvr_decay({R_RET}, target_tvr=0.08), group_zscore({EY_IND_PCTL}, subindustry)), subindustry)",
+   "ops": 4, "fields": ["other566:r20marsi_ret", "other685:earnings_yield_industry_percentile_fy1"],
+   "why": "C 变体 (行业分位): 用 E/P 的行业分位 (0-100) 替代绝对 E/P 作慢腿。"
+          "经济含义: 行业内部的相对便宜程度比绝对估值更适合与行业中性化的快腿叠加 (分位已天然行业中性), "
+          "且该字段 0 用户 0 alpha ⇒ ProdCorr 极低。"},
+ ]}
+
+if __name__ == "__main__":
+    p = os.path.join(HERE, f"batch_{W28['batch']:02d}.json")
+    with open(p, "w", encoding="utf-8") as f:
+        json.dump(W28, f, indent=2, ensure_ascii=False)
+    print("wrote", p, f"({len(W28['items'])} items)")
+    for it in W28["items"]:
+        print(f"  {it['id']:<22} fields={len(it.get('fields') or [])} {it['expr'][:105]}")

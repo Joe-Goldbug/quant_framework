@@ -1,0 +1,95 @@
+{
+  "batch": 16,
+  "family": "confidence_leg_variation_on_best_tvr_operating_point",
+  "hypothesis": "波次 16: 波次 15 的 tvr 单旋钮扫描显示三个指标沿该旋钮**反向移动** —— tvr=0.05 时 Margin 首次达 10.39bps 但 Sh 掉到 0.66; tvr=0.12 时 Fitness 达峰 0.61 但 Margin 只有 7.39; 单一旋钮无法同时满足。代数定位了缺口: 在 TO=12.5% 处要 Mgn>=10 需 returns>=6.25%, 要 Fit>=1.0 需 Sharpe>=1.41, 而当前 tvr=0.12 只有 returns 4.60% / Sharpe 1.00 ⇒ **必须提升收益, 而不是继续拧旋钮**。唯一还没动过的自由度是**置信腿的用法**: 当前 oth566_r20marsi_prob_5 是以**原始水平**参与乘法的, 这使 alpha 幅度正比于置信度 —— 而这**不改变横截面排序**, 因此对 Sharpe 毫无贡献却占用一个算子。本波 8 槽位改用置信腿的两种**真正有信息**的用法: (a) ts_zscore(prob,60) = 「模型对该股的信心比其历史常态高多少」, 这是与「模型有信心」完全不同的命题, 且让权重随时间变化, 有同时提升 Sharpe 与 Margin 的可能; (b) group_rank(prob, industry) 纯正权重 (波次 9 的网格全部裹了 ts_mean, 结论无效, 需重测)。槽位覆盖: 置信腿用法 x tvr 最优点 (0.08/0.12/0.15) 的组合, 外加 L3R5 模型的第三模型复制与 r20marsi_label_5 序数方向的复制, 以检验「置信腿是数据集层面的通用机制」而非单字段偶然。",
+  "items": [
+    {
+      "id": "w16_zp_tvr12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, ts_zscore(oth566_r20marsi_prob_5, 60)), target_tvr=0.12), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "置信腿 (a) x tvr=0.12 (Fitness 峰): 置信度的 60 日历史标准分作为权重。这是本波最核心的假设 —— 若「信心相对自身常态的变化」携带独立信息, 则 Sharpe 与 Margin 可同时上移。"
+    },
+    {
+      "id": "w16_zp_tvr08",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, ts_zscore(oth566_r20marsi_prob_5, 60)), target_tvr=0.08), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "置信腿 (a) x tvr=0.08 (Margin 峰附近, Mgn 9.51): 与上一槽配对, 检验 (a) 是否能同时保住高 Margin。"
+    },
+    {
+      "id": "w16_zp_tvr15",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, ts_zscore(oth566_r20marsi_prob_5, 60)), target_tvr=0.15), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "置信腿 (a) x tvr=0.15 (Sharpe 峰): 第三个 tvr 点, 三点连线确认趋势。"
+    },
+    {
+      "id": "w16_grp_tvr12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, group_rank(oth566_r20marsi_prob_5, industry)), target_tvr=0.12), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "置信腿 (b) x tvr=0.12: 行业内置信秩作为正权重。波次 9 的同类网格全部裹 ts_mean(26) 已证无效, 此处是干净重测。"
+    },
+    {
+      "id": "w16_grp_tvr08",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, group_rank(oth566_r20marsi_prob_5, industry)), target_tvr=0.08), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "置信腿 (b) x tvr=0.08: Margin 侧配对。"
+    },
+    {
+      "id": "w16_l3_tvr12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), target_tvr=0.12), industry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ],
+      "decay": 0,
+      "why": "第三模型复制 (Level3 5 日): 把「标准化方向 x 置信权重 x tvr 目标」搬到 L3R5 模型 (32 用户/40 alpha, 但置信腿 1/1)。若它也过 Step 2, 说明该结构是数据集层面的通用机制。"
+    },
+    {
+      "id": "w16_lbl_tvr12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(ts_zscore(oth566_r20marsi_label_5, 60), oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+      "ops": 5,
+      "fields": [
+        "oth566_r20marsi_label_5",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "序数方向复制: 用 R20MaRsi 的 5 桶序数标签 (标准化后) 替代连续预测, 配原始置信度。若序数方向也能过 Step 2, 说明「信念加权」机制不依赖连续回归输出, 稳健性更强。"
+    },
+    {
+      "id": "w16_p3_zp_tvr12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, ts_zscore(oth566_r20marsi_prob_3, 60)), target_tvr=0.12), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_3"
+      ],
+      "decay": 0,
+      "why": "信念口径稳健性: 把置信腿从 prob_5 (1 用户) 换成 prob_3 (4 用户) 再用历史标准分。若结论对信念口径不敏感, 机制可信; 若敏感, 说明只是在拟合 prob_5 的特定形态。"
+    }
+  ]
+}

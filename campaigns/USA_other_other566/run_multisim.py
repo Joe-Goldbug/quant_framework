@@ -40,15 +40,15 @@ NEUTRALIZATION = "INDUSTRY"
 TRUNCATION = 0.08
 
 
-def build_settings():
+def build_settings(decay=DECAY, neutralization=NEUTRALIZATION, truncation=TRUNCATION):
     return {
         "instrumentType": "EQUITY",
         "region": REGION,
         "universe": UNIVERSE,
         "delay": DELAY,
-        "decay": DECAY,
-        "neutralization": NEUTRALIZATION,
-        "truncation": TRUNCATION,
+        "decay": decay,
+        "neutralization": neutralization,
+        "truncation": truncation,
         "pasteurization": "ON",
         "language": "FASTEXPR",
         "visualization": False,
@@ -59,15 +59,20 @@ def build_settings():
     }
 
 
-def build_payload(exprs):
-    return [{"type": "REGULAR", "settings": build_settings(), "regular": e} for e in exprs]
+def build_payload(items):
+    """One payload entry per item. An item may override the platform decay via
+    its own 'decay' key — decay is a simulation setting, not part of the
+    expression, so items with different decay values must be split into
+    separate multi-simulations by the caller."""
+    return [{"type": "REGULAR", "settings": build_settings(), "regular": it["expr"]}
+            for it in items]
 
 
 def wait_complete(s, location, max_wait=2400):
     t0 = time.time()
     while time.time() - t0 < max_wait:
         try:
-            r = s.get(location)
+            r = resilient_get(s, location)
         except Exception:
             time.sleep(10)
             continue
@@ -86,14 +91,28 @@ def wait_complete(s, location, max_wait=2400):
 
 
 def fetch_children(s, location):
-    j = s.get(location).json()
+    """Fetch results for either a multi-simulation (children list) or a single
+    simulation (the simulation object itself carries the alpha id)."""
+    j = resilient_get(s, location).json()
     children = j.get("children") or []
+    if not children:
+        # single-simulation submission
+        aid = j.get("alpha")
+        if not aid:
+            return []
+        rec = {"child_id": j.get("id"), "child_status": j.get("status"),
+               "alpha_id": aid, "location": location}
+        try:
+            rec.update(resilient_get(s, f"{API}/alphas/{aid}").json())
+        except Exception as exc:
+            rec["fetch_error"] = str(exc)
+        return [rec]
     out = []
     for c in children:
         cid = c if isinstance(c, str) else c.get("id")
         cloc = f"{API}/simulations/{cid}"
         try:
-            cj = s.get(cloc).json()
+            cj = resilient_get(s, cloc).json()
         except Exception:
             cj = {}
         aid = cj.get("alpha")
@@ -101,33 +120,94 @@ def fetch_children(s, location):
                "alpha_id": aid, "location": cloc}
         if aid:
             try:
-                rec.update(s.get(f"{API}/alphas/{aid}").json())
+                rec.update(resilient_get(s, f"{API}/alphas/{aid}").json())
             except Exception as exc:
                 rec["fetch_error"] = str(exc)
         out.append(rec)
     return out
 
 
+def resilient_post(s, path, payload, retries=4):
+    """POST with session re-establishment. The platform periodically drops
+    long-lived sessions (RemoteDisconnected), which kills a multi-wave batch
+    partway through; re-login and retry rather than losing the whole wave."""
+    import time as _t
+    last = None
+    for attempt in range(retries):
+        try:
+            return s.post(path, json=payload)
+        except Exception as exc:
+            last = exc
+            print(f"     POST attempt {attempt+1} failed ({exc}); re-authenticating",
+                  flush=True)
+            _t.sleep(10)
+            try:
+                s = start_session()
+            except Exception:
+                _t.sleep(20)
+    raise last
+
+
+def resilient_get(s, url, **kw):
+    """GET with one re-authentication retry."""
+    try:
+        return s.get(url, **kw)
+    except Exception as exc:
+        print(f"     GET failed ({exc}); re-authenticating", flush=True)
+        import time as _t
+        _t.sleep(8)
+        s = start_session()
+        return s.get(url, **kw)
+
+
 def run_batch(s, path):
     with open(path, "r", encoding="utf-8") as f:
         batch = json.load(f)
-    exprs = [it["expr"] for it in batch["items"]]
+    items = batch["items"]
     name = os.path.basename(path)
-    print(f"\n=== {name} :: {batch.get('family')} :: {len(exprs)} exprs ===", flush=True)
+    print(f"\n=== {name} :: {batch.get('family')} :: {len(items)} exprs ===", flush=True)
 
-    r = s.post(f"{API}/simulations", json=build_payload(exprs))
-    if r.status_code // 100 != 2:
-        print(f"  SUBMIT FAILED {r.status_code}: {r.text[:400]}")
+    # Group items by their per-item platform settings overrides. The platform's
+    # `decay`, `neutralization` and `truncation` are SIMULATION settings, not part
+    # of the expression, so items with different settings must be split into
+    # separate multi-simulations.
+    groups = {}
+    for it in items:
+        key = (it.get("decay", DECAY),
+               it.get("neutralization", NEUTRALIZATION),
+               it.get("truncation", TRUNCATION))
+        groups.setdefault(key, []).append(it)
+
+    all_results = []
+    location = None
+    for (dec, neut, trunc), grp in sorted(groups.items()):
+        exprs = [it["expr"] for it in grp]
+        print(f"  -- decay={dec} neut={neut} trunc={trunc}: {len(exprs)} exprs", flush=True)
+        payload = [{"type": "REGULAR", "settings": build_settings(dec, neut, trunc), "regular": e}
+                   for e in exprs]
+        # A multi-simulation requires >=2 entries; a single entry must be
+        # submitted WITHOUT the wrapping array ("Multi-simulations require
+        # multiple simulations in request array").
+        if len(payload) == 1:
+            payload = payload[0]
+        r = resilient_post(s, f"{API}/simulations", payload)
+        if r.status_code // 100 != 2:
+            print(f"  SUBMIT FAILED {r.status_code}: {r.text[:400]}")
+            continue
+        loc = r.headers.get("Location")
+        location = location or loc
+        print(f"     LOC: {loc}", flush=True)
+
+        final = wait_complete(s, loc)
+        if not final or final.get("status") != "COMPLETE":
+            print(f"     NOT COMPLETE ({(final or {}).get('status')})")
+            continue
+        all_results.extend(fetch_children(s, loc))
+
+    if not all_results:
+        print("  no results")
         return None
-    location = r.headers.get("Location")
-    print(f"  LOC: {location}", flush=True)
 
-    final = wait_complete(s, location)
-    if not final or final.get("status") != "COMPLETE":
-        print(f"  NOT COMPLETE ({(final or {}).get('status')})")
-        return None
-
-    results = fetch_children(s, location)
     out = {
         "batch_file": name,
         "batch": batch.get("batch"),
@@ -135,7 +215,7 @@ def run_batch(s, path):
         "hypothesis": batch.get("hypothesis"),
         "location": location,
         "fetched_at": int(time.time()),
-        "alpha_results": results,
+        "alpha_results": all_results,
     }
     outp = os.path.join(HERE, name.replace(".json", "_result.json"))
     with open(outp, "w", encoding="utf-8") as f:
@@ -143,12 +223,12 @@ def run_batch(s, path):
     print(f"  saved -> {outp}", flush=True)
 
     from alpha_normalizer import normalize
-    for rec in results:
-        n = normalize(rec) or {}
-        m = n or {}
+    for rec in all_results:
+        m = normalize(rec) or {}
         print(f"    {rec.get('alpha_id')} Sh={m.get('sharpe')} Fit={m.get('fitness')} "
               f"TO={m.get('turnover')} Mgn={m.get('margin_bps')} 2Y={m.get('two_year_sharpe')} "
-              f"CL={m.get('cluster_test')} fails={m.get('fail_count')}", flush=True)
+              f"CL={m.get('cluster_test')} fails={m.get('fail_count')} "
+              f"decay={(rec.get('settings') or {}).get('decay')}", flush=True)
     return out
 
 

@@ -240,6 +240,8 @@ class Gatekeeper:
                     "ladder_2y_sharpe": parsed_chk["ladder_2y_sharpe"],
                     "sub_universe_sharpe": parsed_chk["sub_universe_sharpe"],
                     "cw_failed": parsed_chk["cw_failed"],
+                    "yearly_stats": res.get("yearly_stats") or is_m.get("yearly_stats") or [],
+                    "checks": is_m.get("checks") or res.get("checks") or [],
                     "metrics": is_m,
                     "status": status_str
                 })
@@ -409,6 +411,12 @@ class Gatekeeper:
                     "cluster_sharpe": parsed_checks["cluster_sharpe"],
                     "ladder_2y_sharpe": parsed_checks["ladder_2y_sharpe"],
                     "sub_universe_sharpe": parsed_checks["sub_universe_sharpe"],
+                    "prod_corr": cls.extract_prod_corr(res),
+                    "pcorr": cls.extract_prod_corr(res),
+                    "self_corr": cls.extract_self_corr(res),
+                    "yearly_stats": res.get("yearly_stats") or is_m.get("yearly_stats") or [],
+                    "checks": is_m.get("checks") or res.get("checks") or [],
+                    "metrics": is_m,
                     "status": "STEP2_PASSED"
                 })
             else:
@@ -671,17 +679,30 @@ class Gatekeeper:
             else:
                 allowed_ast_ops.add("PRUNE_REDUNDANT_OPERATOR_TO_LE_8")
 
-        # 动态按需调取专属 Tier-2 知识卡片
+        # 动态按需调取专属 Tier-2 知识卡片与 LanceDB 原子化因果 QA
         mounted_cards = []
         for tag in symptoms:
             card = RAGMemoryEngine.get_card_on_demand(tag)
             if card and "error" not in card:
                 mounted_cards.append(card)
 
+        qa_prescriptions = []
+        try:
+            from core.qa_rag_tool import search_qa_knowledge
+            for tag in symptoms:
+                qas = search_qa_knowledge(query=tag, symptom=tag, tags=[tag], top_k=1)
+                for q in qas:
+                    if q not in qa_prescriptions:
+                        qa_prescriptions.append(q)
+        except Exception as e:
+            # 容错降级
+            pass
+
         verdict = {
             "symptoms": symptoms,
             "allowed_mutations": sorted(list(allowed_ast_ops)),
-            "rag_prescriptions": mounted_cards
+            "rag_prescriptions": mounted_cards,
+            "qa_prescriptions": qa_prescriptions
         }
         print(f"\n🩺 [Gatekeeper 处方诊断] 确诊病灶: {symptoms}")
         print(f"🔒 [授权算子白名单]: {verdict['allowed_mutations']}")

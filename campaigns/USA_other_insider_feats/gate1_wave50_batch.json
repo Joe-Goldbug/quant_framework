@@ -1,0 +1,135 @@
+{
+  "wave": 50,
+  "anchor": "LLMNRnkL (seed, CS=0.6605)",
+  "generated_at_gmt8": "2026-11-05 00:20",
+  "objective": "R3 稀疏 belief 腿零值结块根因；以 0 FAIL + 0 WARNING 全绿为设计目标",
+  "hard_constraints": {
+    "data_fields": "2 <= n <= 3",
+    "op_count": "<= 11 (口径: FASTEXPR 函数调用出现总次数, 含重复)",
+    "external_datasets": "<= 1 per expression",
+    "settings": "INDUSTRY / decay 8 / truncation 0.025 / TOP1000 / delay 1 / pasteurization ON / nan_handling ON / unit_handling VERIFY / FASTEXPR",
+    "forbidden": ["SLOW/STATISTICAL/CROWDING 中性化", "截面 rank 化消零", "group_neutralize 外壳", "trade_when 门控", "脚本循环/模板拼凑"],
+    "no_py_source_modified": true
+  },
+  "preflight": {
+    "fields_verified_via": "get_datafields(region=USA, dataset_id=insider_feats|pv1, universe=TOP1000, delay=1, filter_sharpe=False)",
+    "insider_feats_field_count": 118,
+    "operators_verified_via": "D:/brain_cli/wqb_cli/brain-kb/operators/ALL_OPERATORS.md (104 白名单)",
+    "verified_fields": [
+      "buy_sell_tx_count_ratio_all_20d_filled (VECTOR cov .8833 ac=0)",
+      "buy_sell_tx_count_ratio_all_60d_filled (VECTOR cov .8833 ac=0)",
+      "buy_sell_tx_count_ratio_all_250d_filled (VECTOR cov .8833 ac=1)",
+      "top20_buy_to_sell_txn_ratio_lookback_60_filled (VECTOR cov .8833 ac=0)",
+      "adv20 (pv1 MATRIX cov 1.0)",
+      "volume (pv1 MATRIX cov 1.0)"
+    ],
+    "verified_operators": ["group_rank", "ts_mean", "multiply", "subtract", "divide", "vec_avg", "vec_count", "ts_backfill", "ts_std_dev", "ts_zscore", "s_log_1p", "regression_neut"],
+    "note": "交接书称 250d_filled 的 alphaCount=0, 实测已为 1; 幻觉字段 top20_..._volume_ratio_..._filled 未使用"
+  },
+  "unified_economics": "内部人交易是稀疏点事件。信息含量来自「相对该标的自身长期基准的异常度」, 而非两个短窗口的绝对差。种子 subtract(vec_avg(A20), vec_avg(A60)) 在过去 60 天无内部人交易时两端同为 0, 乘以确认腿后仍为 0, 把『近期无新信息』与『信息被确认抵消』压成同一个并列值 -> group_rank ties 偏态 -> 有效持仓宽度浪费 -> L/S 失衡 -> Sh/2Y/CLUSTER 同时封顶。本波所有改动都作用在 belief 腿或其归一化/后处理上, 不做截面 rank、不改幅度壳 group_rank。",
+  "expressions": [
+    {
+      "tag": "W50-01",
+      "expr": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+      "data_fields": 3,
+      "external_datasets": 0,
+      "op_count": 7,
+      "op_list": ["group_rank", "ts_mean", "multiply", "subtract", "vec_avg", "vec_avg", "vec_avg"],
+      "economics": "把 60d 短窗口基准换成 250d 年度常态。稀疏期 A20 与 A60 同为 0 使差恒 0; 但 250d 窗口只要年内发生过一次内部人交易就非零, 于是『近期静默』被编码为 -A250 的负向信号而非并列零值。 economics: 知情人停止买入相对其年度习惯是负面信息, 而非无信息。种子骨架最小改动, 保留幅度壳与确认腿。",
+      "expected": "|L-S| 收窄, Sh/2Y/CLUSTER 同升, Ret 上行",
+      "falsification": "若 |L-S| 仍 >100 或 PC 较种子上升 >0.02, 则『长周期锚打破零值结块』假设被证伪",
+      "pc_budget": "挣 (信号更独立, 未引入新暴露)"
+    },
+    {
+      "tag": "W50-02",
+      "expr": "group_rank(ts_mean(divide(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),20),subindustry)",
+      "data_fields": 2,
+      "external_datasets": 0,
+      "op_count": 5,
+      "op_list": ["group_rank", "ts_mean", "divide", "vec_avg", "vec_avg"],
+      "economics": "divide 结构首次真正攻: 近期内部人买卖倾向 / 年度常态 = 相对买入强度。消除公司间结构性差异 (有些公司常年偏买入), 只保留行为变化。A20=0 且 A250>0 时取 0 (有效状态: 静默而非缺失), 且不经过 multiply 故不会被确认腿吞掉。",
+      "expected": "PC 下降 (去掉公司固定效应=常见因子暴露), 持仓宽度上升",
+      "falsification": "若 longCount+shortCount < 800 (A250=0 触发除零被 nan_handling 剔除过多), 判定该相对化结构在本数据集不可行",
+      "pc_budget": "挣"
+    },
+    {
+      "tag": "W50-03",
+      "expr": "group_rank(ts_mean(divide(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),ts_std_dev(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),250)),20),subindustry)",
+      "data_fields": 2,
+      "external_datasets": 0,
+      "op_count": 8,
+      "op_list": ["group_rank", "ts_mean", "divide", "subtract", "vec_avg", "vec_avg", "ts_std_dev", "vec_avg"],
+      "economics": "逐标的时序标准化: 把事件脉冲换算成『相对自身过去一年波动的几个标准差』的异常度。高波动标的需要更大脉冲才算异常 -> 横截面可比。与 W38 证伪的截面 rank 化本质不同: 时序标准化保留幅度信息 (不违反铁律B), 且分母在 250d 内有事件即非零, 稀疏标的不塌成并列零。",
+      "expected": "Sh/2Y 上升, L/S 收窄, PC 中性偏挣",
+      "falsification": "若 Sharpe 较种子下降 >0.10, 说明时序标准化破坏了脉冲幅度信息, 该假设证伪",
+      "pc_budget": "中性偏挣"
+    },
+    {
+      "tag": "W50-04",
+      "expr": "group_rank(ts_mean(multiply(ts_zscore(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),250),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+      "data_fields": 2,
+      "external_datasets": 0,
+      "op_count": 6,
+      "op_list": ["group_rank", "ts_mean", "multiply", "ts_zscore", "vec_avg", "vec_avg"],
+      "economics": "R3 建议 2 的直接实现: 20d 买卖比相对自身过去一年分布的 z 分数 = 纯异常度, 天然中心化掉每个标的的历史水平; 乘 top20 确认腿表示『核心内部人也参与时该异常更可信』。零值标的的历史均值/标准差仍可定义, 不再并列。",
+      "expected": "|L-S| 显著收窄, Sh 上升, PC 挣",
+      "falsification": "若 longCount+shortCount 骤降 (历史全零标的 ts_zscore 产出 NaN) 或 Sh 未升, 证伪",
+      "pc_budget": "挣"
+    },
+    {
+      "tag": "W50-05",
+      "expr": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_count(buy_sell_tx_count_ratio_all_20d_filled)),20),subindustry)",
+      "data_fields": 2,
+      "external_datasets": 0,
+      "op_count": 7,
+      "op_list": ["group_rank", "ts_mean", "multiply", "subtract", "vec_avg", "vec_avg", "vec_count"],
+      "economics": "改变向量聚合口径 (R3 建议 3): 确认腿从『top20 买卖比』换成『该标的 20d 内内部人交易笔数』= 事件密度。大数定律: 笔数越多, 单笔噪声越小, 聚合信号越可信。计数对稀疏标的也有定义 (0 笔本身是信息), 不像 vec_avg 把稀疏压成 0。W40 已证 vec_max≡vec_avg, 但 vec_count 从未测。",
+      "expected": "若 vec_count 非常数, 持仓宽度与 Sh 上升",
+      "falsification": "若结果与种子逐位相同, 说明 filled 向量长度固定、vec_count 恒常, 该算子在本数据集判死",
+      "pc_budget": "挣"
+    },
+    {
+      "tag": "W50-06",
+      "expr": "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),ts_backfill(vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled),120)),20),subindustry)",
+      "data_fields": 3,
+      "external_datasets": 0,
+      "op_count": 8,
+      "op_list": ["group_rank", "ts_mean", "multiply", "subtract", "vec_avg", "vec_avg", "ts_backfill", "vec_avg"],
+      "economics": "补数据广度: 核心内部人交易比是慢变状态而非瞬时脉冲, 用最近一次有效观测填补确认腿的稀疏缺失, 使『当期无交易』的标的仍能继承其历史确认状态。ts_backfill 保留幅度、不做截面 rank。平台陷阱表指出稀疏数据的 CONCENTRATED_WEIGHT 解药是广度而非权重形状。",
+      "expected": "longCount+shortCount 上升, |L-S| 收窄, CLUSTER 上升",
+      "falsification": "若 TO 升破 12.5% 或 Sh 下降, 说明平滑抹掉事件脉冲, 证伪",
+      "pc_budget": "挣"
+    },
+    {
+      "tag": "W50-07",
+      "expr": "group_rank(ts_mean(divide(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),adv20),20),subindustry)",
+      "data_fields": 3,
+      "external_datasets": 1,
+      "external_dataset_id": "pv1",
+      "op_count": 6,
+      "op_list": ["group_rank", "ts_mean", "divide", "subtract", "vec_avg", "vec_avg"],
+      "economics": "R3 建议 5 / 技能 §4.0 解耦模板: 外部字段做归一化分母而非乘性幅度。内部人买卖倾向的短期偏离 ÷ 日均成交额 = 信息交易强度 / 市场噪声。高流动性标的需要更大的内部人异常才能产生同等错价。分母逐日变化, 把换手由分子更新频率解耦, 是突破 Ret/Sh 天花板的结构。adv20 cov=1.0 无除零风险。",
+      "expected": "Sh/Ret/Fit 跃升 (理论上唯一能触到 Sh 1.58 + Ret 5.01% 的路径)",
+      "falsification": "若 PC > 0.70 直接判死该路线 (技能实测解耦模板 PC 下限 0.78, 非调参可救); 若 Sh 未升 >0.15 同样证伪",
+      "pc_budget": "花 (引入价格/流动性暴露) — 明确标注为本批唯一的高 PC 风险组"
+    },
+    {
+      "tag": "W50-08",
+      "expr": "regression_neut(s_log_1p(group_rank(ts_mean(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_250d_filled)),20),subindustry)),volume)",
+      "data_fields": 3,
+      "external_datasets": 1,
+      "external_dataset_id": "pv1",
+      "op_count": 7,
+      "op_list": ["regression_neut", "s_log_1p", "group_rank", "ts_mean", "subtract", "vec_avg", "vec_avg"],
+      "economics": "直击最硬的 2Y 门: 先用长周期基准差分破零值结块, 组内秩化后 s_log_1p 双侧压缩极端幅度 (保留符号), 再对成交量做横截面回归取残差, 剔除『成交量暴露』这一最常见的伪 alpha 来源。技能 §4.3 实测该顺序 (先压缩后剔除) 可拿 Fit +0.06 且 2Y 大幅跃升, 且是跨族可迁移的免费增量。volume 是最优剔除因子。",
+      "expected": "2Y 显著上行, Fit 上行, PC 挣 (剔除共同暴露)",
+      "falsification": "若 2Y 提升 <0.15, 证伪『后处理能救 2Y』; 若 Fit 下降, 证伪 s_log_1p 在本幅度核上有效",
+      "pc_budget": "挣"
+    }
+  ],
+  "acceptance": {
+    "true_progress": "CS > 0.6605 且 PC <= 0.66 且 |L-S| < 50 (三者同时)",
+    "full_green": "Sh>=1.58 / Fit>=1.0 / 2Y>=1.58 / CLUSTER>=1.58 / PC<0.70 / Margin>=10bps, 0 FAIL + 0 WARNING",
+    "CS_formula": "Fitness * ln(Margin_bps) * (1 - PC^2) * (1 - 0.04 * OpCount)"
+  }
+}

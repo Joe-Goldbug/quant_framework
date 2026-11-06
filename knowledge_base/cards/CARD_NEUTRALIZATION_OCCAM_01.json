@@ -1,0 +1,12 @@
+{
+  "card_id": "CARD_NEUTRALIZATION_OCCAM_01",
+  "tag": "ast_occam_and_orthogonal_neutralization",
+  "domain": "cross_sectional_neutralization",
+  "title": "截面中性化单算子与 AST 拓扑动态简化 (Occam's Razor)",
+  "one_line": "警惕双层分组逻辑冲突；动态权衡组间与组内方差分布，优先选择物理含义清晰、算子消耗最小的单中性化拓扑。",
+  "dynamic_principles": [
+    "嵌套冲突诊断：编写 group_rank(group_neutralize(X, G1), G2) 时，必须动态审视 G1 与 G2 是否正交。若在 sector 内部去均值，外层再用 market 排序，不同行业的残差被强行混排，破坏了行业内部的零和对称性，且常伴随 Cluster Test Sharpe 骤降。",
+    "特征同源性动态消融：不要为了凑‘3 字段’而盲目叠加。高频社交词典与低频财报词典覆盖率差异巨大时，裸加往往引入方差稀释。在增加字段前后必须做单字段 vs 多字段消融对照，若 2 字段信噪比更高，坚决保留极简 AST。"
+  ],
+  "battle_ground_truth": "将 group_rank(group_neutralize(..., sector), market) 简化为 group_rank(..., sector)，AST 算子从 10 精简至 7，字段收敛至 2，Cluster Test 改善至 1.29，Sharpe 从 1.49 升至 1.63。"
+}

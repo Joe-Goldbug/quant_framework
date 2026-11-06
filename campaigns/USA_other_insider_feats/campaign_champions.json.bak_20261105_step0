@@ -1,0 +1,161 @@
+{
+  "campaign_metadata": {
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "decay": 8,
+    "truncation": 0.025,
+    "nan_handling": "ON",
+    "primary_dataset": "insider_feats (Global Insider Transaction Features)",
+    "total_batches_simulated": 49,
+    "lineage": "SEED_04 -> Wave16/17 plateau (j2Y32V9j) -> Wave21 (j2YAbw6W 1.27/2Y1.60) -> Wave25 STATISTICAL (PC 0.6222, Margin 崩, 被用户禁令撤销) -> Wave30/31 冷门字段轮 (笔数比源 PC 0.6316) -> Wave34/35 双层嵌套秩 (PC 0.5728 历史最低) -> Wave36 插值带 (dr26_d8 双达标) -> Wave37 联合体 (CLUSTER-PC 对偶证实) -> Wave38~41 PM处方验证轮 (rank化证伪, 幅度尾部幂次新王 YP1bEqmM, 三轴梯度图闭合) -> Wave42~44 跨数据集解锁 (轧空/新闻族勘察, 新闻平静度新大陆) -> Wave45~46 PC剃刀微带扫描 (w14~18双达标岛, 新王 A1Vv1xxg) -> Wave47~49 设置轴收口 (decay-PC 梯度闭合, truncation 不 bind, 最终王 N1NVqZYg = w18/p2.25/d8)",
+    "status": "DUAL_PASS_FRONTIER_CLOSED_FULL_GREEN_NOT_REACHED",
+    "verdict": "跨数据集新闻平静核三轴 (窗口18/幂次2.25/decay8) 全部顶到 PC<0.70 门边界, 帕累托前沿闭合: wpQbLPO2 (d10) PC 恰 0.7000 FAIL, QPvKlRGp (d12) 0.7091, gJeZ1G5l (d16) 更高。全绿四门缺口: Sh +0.42/Fit +0.31/2Y +0.66/CLST +0.85 — 在 2~3 字段 + 单外部数据集 + PC<0.70 约束下 insider×ai_news 对已结构性穷尽 (49 波 ~350 条表达式)。",
+    "frontier_claim": "insider_feats 数据族在 2~3 字段 + <=10 op + INDUSTRY 中性化约束下已真穷尽：CLUSTER-PC 对偶 + Sharpe 天花板为结构性约束，表达式层与设置层均无未测杠杆。下一步唯一路径 = 转数据族（emotion/news/sentiment event source）。",
+    "generated_at": "2026-11-04"
+  },
+  "grand_champion": {
+    "alpha_id": "N1NVqZYg",
+    "slot": "w47 nc18_p225 (news-calm core, w18, p2.25, decay8)",
+    "code": "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),reverse(ts_mean(negative_score_average_value_3,20))),18),subindustry),0.5),2.25)",
+    "operator_count": 11,
+    "data_fields": [
+      "buy_sell_tx_count_ratio_all_20d_filled (cov 0.8833, ac=0)",
+      "buy_sell_tx_count_ratio_all_60d_filled (cov 0.8833, ac=0)",
+      "negative_score_average_value_3 (ai_news_scores, cov 1.0, ac=0)"
+    ],
+    "settings": {
+      "neutralization": "INDUSTRY",
+      "decay": 8,
+      "truncation": 0.025,
+      "pasteurization": "ON",
+      "nan_handling": "ON",
+      "universe": "TOP1000",
+      "delay": 1
+    },
+    "metrics": {
+      "sharpe": 1.16,
+      "fitness": 0.69,
+      "two_year_sharpe": 0.92,
+      "returns": 0.0438,
+      "turnover": 0.0726,
+      "margin_bps": 12.1,
+      "drawdown": 0.0548,
+      "sub_universe_sharpe": 1.12,
+      "risk_neutralized_sharpe": 0.8
+    },
+    "correlation": {
+      "prod_corr": 0.6957,
+      "prod_corr_pass": true
+    },
+    "economics": "内部人知情增持动量（全队列买卖笔数比 20d 相对 60d 基线偏移）× 负面新闻平静度（reverse(ts_mean(negative,20))）。经济假设：内部人在负面新闻平静期买入 = 恐慌未定价的最干净知情信号（新闻流安静时内部人买入信息含量最高，与知情者逆向于共识文献一致）。尾部幂次 p2.25 把资金集中到子行业信号尾部。跨数据集两字段族（insider_feats × ai_news_scores）。",
+    "gates": {
+      "fail_count": 3,
+      "fails": [
+        [
+          "LOW_SHARPE",
+          1.16,
+          1.58
+        ],
+        [
+          "LOW_FITNESS",
+          0.69,
+          1.0
+        ],
+        [
+          "LOW_2Y_SHARPE",
+          0.92,
+          1.58
+        ]
+      ],
+      "warnings": [
+        [
+          "CLUSTER_TEST",
+          0.73,
+          1.58
+        ],
+        [
+          "MATCHES_THEMES"
+        ]
+      ],
+      "passed_notable": [
+        "PROD_CORRELATION (0.6957)",
+        "MARGIN >= 10 bps (12.1)",
+        "LOW_TURNOVER (7.26%)",
+        "CONCENTRATED_WEIGHT",
+        "LOW_SUB_UNIVERSE_SHARPE"
+      ]
+    }
+  },
+  "runner_ups": [
+    {
+      "alpha_id": "wpQbLPO2",
+      "note": "p2@w18@decay10, Sh 1.16/2Y 0.91/Mgn 12.3/DD 5.37 — PC 恰好 0.7000 passes_check=false, 帕累托边界存档",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "gJeZ1G5l",
+      "note": "p2.25@w18@decay16, Sh 1.19/Fit 0.72/Mgn 14.1/DD 5.17 — 性能全场最强但 PC 被 decay 轴破门",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "QPvKlRGp",
+      "note": "p2@w18@decay12, Sh 1.19/Fit 0.71/Mgn 12.7 — PC 0.7091 被拦",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "RRE6rVGd",
+      "note": "p2.5@w18@decay12, Sh 1.18/Fit 0.71/Mgn 13.3 — PC 预期 0.71+",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "A1Vv1xxg",
+      "note": "p2@w18@decay8 (前王), Sh 1.16/2Y 0.91/Fit 0.68/CLST 0.73/Mgn 11.8/PC 0.6936 — 被 N1NVqZYg 全维压制",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "MPY3P66r",
+      "note": "nleg10, CLST 0.84 历史最高 — PC 0.7521 阵亡",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "omEW12Qk",
+      "note": "p2@w15@d8, PC 0.6987 双达标, Sh 1.09/CLST 0.75",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "YP1bEqmM",
+      "note": "insider 单族王 (top20txn60conf 腿), Sh 1.15/Fit 0.66/Mgn 12.1/PC 0.6848",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "LLMNRnkL",
+      "note": "原冠军, Sh 1.12/Fit 0.60/Mgn 11.13/PC 0.6316",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "bl6bQ0Jp",
+      "note": "insider 单族性能最强 Sh 1.31/Mgn 18.61 — PC 0.8142",
+      "champion_score": null
+    },
+    {
+      "alpha_id": "9qxj3eE1",
+      "note": "x_shortmo (rsk59_short_momentum 原始方向), Ret 6.85%/Mgn 19.9bps 全战役最高 — Sh 0.89/DD 16.96%",
+      "champion_score": null
+    }
+  ],
+  "key_findings": [
+    "【Wave47~49 设置轴收口】decay-PC 梯度: d8 0.6957 -> d10 0.7000(恰 FAIL)/0.7016 -> d12 0.7091 -> d16 更高。PC<0.70 门下 decay 收敛于 8。窗口/幂次/decay 三轴全部顶到 PC 门边界（w18/p2.25/d8 = N1NVqZYg 帕累托最优）。",
+    "【Wave48 truncation 轴不 bind】group_rank+signed_power((x-0.5),2) 输出权重上限 ~0.25/Σ, 单股权重远低于 1%, truncation 0.01/0.025/0.05 结果逐位相同 — 对秩外壳结构 truncation 无效。",
+    "【Wave47 假设判决】量比信念换血在新闻核上 CLUSTER 未抬升 (0.70 vs 0.73) 且 L/S 失衡恶化 (591/427), H6 证伪; 双重平静 (水平低×波动低) Sh 0.68 证伪; ts_decay_exp_window 外层核毁灭 (-0.26); ts_decay_linear 2Y 1.00 全场最高但 Mgn 9.4 破门; 250d 长锚 0.98 弱。",
+    "【算子陷阱第4次】ts_min/ts_max 不在 104 算子白名单 — 深平静假设用 reverse(ts_mean)×reverse(ts_std_dev) 双平静重构。前科: vec_last/negate/ts_ir。",
+    "【Wave42~44 跨数据集解锁判决】朴素幅度乘积全灭(外部腿尺度方差淹没内部人信号, Sh 0.37~0.55)；唯一幸存 rsk59_short_momentum 原始方向(知情双多: 内部人增持×空头加码, Sh 0.89/Ret 6.85%/Mgn 19.9 但 DD 16.96)；经典轧空方向(reverse)更弱(0.68)",
+    "【Wave44 新闻平静度假设】内部人增持 × reverse(负新闻密度) = 最干净知情信号: leAvoO5N Sh 1.18/CLST 0.73/Fit 0.69/DD 5.21 — 跨数据集新大陆, 而 正面新闻确认(0.55)/负面新闻共振(0.54)/分歧度(0.62) 全灭",
+    "【Wave45~46 双达标岛】insider信念动量×新闻平静核的窗口微带 w14~w18 全部双达标: PC 梯度 w10 0.6914→w14 0.6953→w15 0.6987→w16 0.6906→w18 0.6936→w20 0.7204→w25 0.7670; 新王 A1Vv1xxg(w18) 8项5项超 insider 单族王",
+    "【nleg 平滑度轴】新闻腿 ts_mean 10→CLST 0.84 历史最高但 PC 0.7521; 20→平衡; 30→CLST 0.69 衰减 — CLST-PC 对偶在新闻腿内部同样成立",
+    "【双层秩壳×尾部幂次互斥】第 2 次确证(news 核 CLST 0.46), 且 news 核上双层秩壳不降 PC 多少(推测被幂次抵消)",
+    "【Wave38~41 PM处方判决】rank 化消零结块假说证伪（铁律B 双向确证）; 幅度版尾部幂次是唯一有效移植; ts_ir 不在算子白名单; negate 不在白名单(用 reverse)",
+    "【梯度图闭合】窗口/幂次/信念源三轴全部单调指向 PC; PC<0.70 双达标前沿=w14~w18 新闻平静岛 + w20 insider 单族点",
+    "全绿四门仍差: Sh 1.16/1.58(+0.42), Fit 0.68/1.0(+0.32), 2Y 0.91/1.58(+0.67), CLST 0.73/1.58(+0.85)"
+  ]
+}

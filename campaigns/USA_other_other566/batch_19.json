@@ -1,0 +1,111 @@
+{
+  "batch": 19,
+  "family": "missing_middle_segment_and_return_per_turnover_levers",
+  "hypothesis": "波次 19: 波次 18 同时浮现两个**互补**赢家: STATISTICAL + ts_target_tvr_decay (低换手, Sh 1.27/TO 13.9%) 与 STATISTICAL + ts_decay_exp_window(10, 0.5) (高换手, Sh **1.59**/2Y **2.37**/TO 53.5%)。这是全战役首个越过 Sharpe>=1.58 门槛的 alpha, 但换手 53.5% 越过 50% 生产上限且 Margin 仅 1.43bps。两者用的是**同一对杠杆的不同强度** ⇒ 缺失的正是两者之间的中段 (更强几何平滑)。同时波次 18 的阶梯读数给出一个决定性事实: STATISTICAL 下 returns 几乎是常数 (~2.3%~3.8%), 而 Sharpe 随换手单调上升 ⇒ 平滑只是把 PnL 集中成更大更少的交易, **单位换手的收益没有提高**。于是 gate 的代数 (Mgn>=10 ⇒ returns>=0.5*TO) 说明: 在 TO>7% 的任何工作点上, 要同时满足 Mgn 10bps 与 Sharpe 1.58, 必须把单位换手收益提高约三倍 ⇒ **靠继续拧平滑旋钮到不了终点**, 必须提升信号本身的质量。本波 8 槽位因此分两组: (a) 补上指数平滑的中段 (window 15/20, factor 0.6/0.75) 以定位高 Sharpe 端的最优换手; (b) 提升收益/换手比的真实杠杆 —— 加入**正交第二信号腿** (L3R5 订单簿深度模型 x 其置信腿; 波次 11 的 w11_gz_l3r5 以 0 fails 证明第二腿能加 Sharpe 而不同比例加换手)、以及换用**期限更短的方向腿** (oth566_return 2 日期预测, 信息更不陈旧)。",
+  "items": [
+    {
+      "id": "w19_dexp15",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 15, factor=0.6), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(a) 中段补点: window 15 / factor 0.6。预期 TO 落在 35-45%, 即在 53.5% (Sh1.59) 与 13.9% (Sh1.27) 之间, 若 Sharpe 保持 >=1.5 而 TO 压到 45% 以下则同时解决换手上限与 Sharpe 门槛。"
+    },
+    {
+      "id": "w19_dexp20",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(a) 中段补点: window 20 / factor 0.7, 与上一槽配对做 window x factor 双维扫描。"
+    },
+    {
+      "id": "w19_dexp20_d4",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "(a) 中段 + 平台端 decay=4: 平台端线性衰减与表达式端几何衰减叠加, 双平滑器能否把 TO 53.5% 压到 50% 以下而保住 Sh>=1.5。这是波次 13 建立的「两杠杆互补」在高 Sharpe 端的复测。",
+      "truncation": 0.08,
+      "why": "decay=4"
+    },
+    {
+      "id": "w19_l3_dexp20",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), 20, factor=0.7), industry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(b) 第二正交腿: Level3 订单簿 5 日模型 (标准化方向 x 行业内置信秩) 配指数平滑。R20MaRsi 是技术指标模型, L3R5 是订单簿深度模型, 信息集正交 ⇒ 期望在不线性增加换手的前提下抬 Sharpe。"
+    },
+    {
+      "id": "w19_l3_tvr12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(ts_zscore(oth566_l3r5_label, 60), group_rank(oth566_l3r5_prob, industry)), target_tvr=0.12), industry)",
+      "ops": 5,
+      "fields": [
+        "oth566_l3r5_label",
+        "oth566_l3r5_prob"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(b) 第二正交腿的低换手版: 与 w19_l3_dexp20 配对, 检验第二腿在不同平滑器下的收益。"
+    },
+    {
+      "id": "w19_l3_dexp20_c",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 20, factor=0.7), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(b) 基准复现: w19_dexp20 的同设置第二次运行, 作为第二腿增量的归因基准 (平台同设置应逐位一致)。"
+    },
+    {
+      "id": "w19_ret2_dexp20",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_return, group_rank(oth566_prob_2, industry)), 20, factor=0.7), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_return",
+        "oth566_prob_2"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(c) 更短期限的方向腿: oth566_return 是 2 日前向预测 (39 用户) 而非 20 日, 信息更不陈旧 ⇒ 预期更高的单位换手收益, 且其置信腿 prob_2 同样冷门 (1/1)。"
+    },
+    {
+      "id": "w19_p3_dexp20",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_3), 20, factor=0.7), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_3"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "(c) 信念口径稳健性: 置信腿换 prob_3 (4 用户) 在高 Sharpe 工作点上重测, 确认结论不依赖 prob_5 的特定形态。"
+    }
+  ]
+}

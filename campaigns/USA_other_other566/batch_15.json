@@ -1,0 +1,95 @@
+{
+  "batch": 15,
+  "family": "joint_lever_surface_decay_x_tvr_target",
+  "hypothesis": "波次 15: 联合杠杆面 (decay x tvr target)。波次 13 的真实 decay 扫描证明两个杠杆是**互补**而非替代: decay=0 + ts_target_tvr_decay(target_tvr=0.15) 给出 Sh 1.00 / Fit 0.55 / Mgn 6.00 / TO 15.6% / 2Y 1.16 / **0 平台 FAIL** —— 是全战役唯一 ra_failed=false 的 alpha; 而 decay=4 同样的 tvr 只有 Sh 0.91 / Fit 0.53。原因是 ts_target_tvr_decay 内部本身就是一个 decay 优化器: 若平台端已先做过 decay=4 平滑, 留给它优化的信号空间被压缩, 联合解变差。代数上仍有缺口: 由冠军 (returns 4.68%, TO 15.6%) 反推, 要 Fit>=1.00 需 Sh>=1.83 (同换手), 要 Mgn>=10bps 需 returns>=7.8%。本波 8 槽位在 (decay, tvr_target) 联合面上细扫: tvr 0.05/0.08/0.12/0.20 四档 @decay=0, decay 2/6 两档 @tvr=0.15, 外层 group_rank 对照 (波次 11 中 rank 给最高 Sharpe 1.18 而 zscore 给最高 Margin 7.46), 以及把胜出结构复制到 L5 深订单簿模型做跨模型稳健性检验。",
+  "items": [
+    {
+      "id": "w15_tvr05_d0",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.05), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "最激进换手目标: 若 TO 压到 5-7% 而收益保持, Margin 可直接过 10bps 线。"
+    },
+    {
+      "id": "w15_tvr08_d0",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.08), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "换手目标 8%: 与 tvr10 的 9.56bps 对照, 定位 Margin 峰值。"
+    },
+    {
+      "id": "w15_tvr12_d0",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "换手目标 12%: 波次 13 冠军 (tvr15) 的邻域, 确认最优点。"
+    },
+    {
+      "id": "w15_tvr20_d0",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.2), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "换手目标 20%: 宽松档, 检验「更多收益、更少 Margin」的一侧。"
+    },
+    {
+      "id": "w15_tvr15_d2",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 2,
+      "why": "decay=2 @tvr15: 平台端轻度平滑 + 表达式端目标换手, 测试最小量的互补。"
+    },
+    {
+      "id": "w15_tvr15_d6",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 6,
+      "why": "decay=6 @tvr15: 中度平台平滑, 定位互补性的拐点 (decay 0 最优? 还是 2~6 更优?)。"
+    },
+    {
+      "id": "w15_tvr15_d0_rank",
+      "expr": "group_rank(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), subindustry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "外层对照: 波次 11 中 group_rank 给最高 Sharpe (1.18 vs zscore 1.08), 本槽在胜出杠杆组合下复测该排序是否保持。"
+    },
+    {
+      "id": "w15_l5_d0_tvr15",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_l5r20gasfculr_ret, group_rank(oth566_l5r20gasfculr_prob_pattern, industry)), target_tvr=0.15), industry)",
+      "ops": 4,
+      "fields": [
+        "oth566_l5r20gasfculr_ret",
+        "oth566_l5r20gasfculr_prob_pattern"
+      ],
+      "decay": 0,
+      "why": "跨模型稳健性: 把胜出结构 (tvr 目标换手 + 信念加权 + 幅度外层) 复制到 L5 GasfCulr 深订单簿模型 (与 R20MaRsi 信息集正交)。若两者都出信号, 机制是数据集层面的, 而非单模型偶然。"
+    }
+  ]
+}

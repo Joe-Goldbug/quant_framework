@@ -1,0 +1,49 @@
+{
+  "wave": 51,
+  "submitted_at": "2026-11-05T01:18:52.305822+08:00",
+  "tags": [
+    "B0_seed_control",
+    "H1_seed_tail_p225",
+    "H2_belief_convex",
+    "H3_opportunistic",
+    "H4_opportunistic_tail",
+    "H5_information_asymmetry",
+    "H6_dispersion_penalty",
+    "H7_combo_best"
+  ],
+  "expressions": [
+    "group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+    "signed_power(subtract(group_rank(ts_mean(multiply(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry),0.5),2.25)",
+    "group_rank(ts_mean(multiply(signed_power(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),2),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+    "group_rank(ts_mean(multiply(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),250),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+    "signed_power(subtract(group_rank(ts_mean(multiply(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),250),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry),0.5),2.25)",
+    "group_rank(ts_mean(multiply(max(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),60),multiply(0.35,ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),60))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+    "group_rank(ts_mean(multiply(subtract(subtract(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),vec_avg(buy_sell_tx_count_ratio_all_60d_filled)),multiply(0.3,vec_stddev(buy_sell_tx_count_ratio_all_20d_filled))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry)",
+    "signed_power(subtract(group_rank(ts_mean(multiply(subtract(ts_av_diff(vec_avg(buy_sell_tx_count_ratio_all_20d_filled),250),multiply(0.3,vec_stddev(buy_sell_tx_count_ratio_all_20d_filled))),vec_avg(top20_buy_to_sell_txn_ratio_lookback_60_filled)),20),subindustry),0.5),2.25)"
+  ],
+  "settings": {
+    "instrument_type": "EQUITY",
+    "region": "USA",
+    "universe": "TOP1000",
+    "delay": 1,
+    "decay": 8,
+    "neutralization": "INDUSTRY",
+    "truncation": 0.025,
+    "pasteurization": "ON",
+    "nan_handling": "ON",
+    "unit_handling": "VERIFY",
+    "language": "FASTEXPR",
+    "test_period": "P0Y0M",
+    "max_trade": "OFF",
+    "visualization": false
+  },
+  "submit_response": {
+    "status": "IN_PROGRESS",
+    "submitted": true,
+    "multisimulation_id": "1QL6oQbcB56Ocy48e6QRzUa",
+    "location": "https://api.worldquantbrain.com/simulations/1QL6oQbcB56Ocy48e6QRzUa",
+    "total_requested": 8,
+    "next_step": "Poll check_multi_simulation(location), then fetch_multi_simulation_result(location). Do NOT resubmit the same expressions."
+  },
+  "location": "https://api.worldquantbrain.com/simulations/1QL6oQbcB56Ocy48e6QRzUa"
+}

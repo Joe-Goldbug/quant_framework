@@ -1,0 +1,95 @@
+{
+  "batch": 13,
+  "family": "decay_and_window_sweep_on_champion_core",
+  "hypothesis": "波次 13: 冠军核心的 decay 扫描。战役全程 decay=4, 但 decay 是平台对持仓做线性衰减的平滑参数, 与 ts_mean 是同一类平滑器 —— 而 E1 已证明在本数据集上强平滑会杀死信号。因此 decay 很可能存在一个「低衰减保信号 / 高衰减压换手」的最优点。波次 13 用 8 个槽位扫描 decay(0/2/8/12/20) x 平滑档位(不平滑 / ts_decay_exp_window / ts_target_tvr_decay), 目标是在保住 Sharpe 的前提下把换手压到 Margin 死线之下。每个槽位仍是 2 字段、<=6 算子。",
+  "items": [
+    {
+      "id": "w13_d0_plain",
+      "expr": "group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry)",
+      "ops": 2,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "decay=0 完全不平滑: 与 decay=4 的 w11_gz_plain 配对, 单独测量 decay 参数本身的贡献。"
+    },
+    {
+      "id": "w13_d8_plain",
+      "expr": "group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry)",
+      "ops": 2,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 8,
+      "why": "decay=8: 在不改变表达式的前提下提高平台端平滑, 观察 Sharpe/换手的权衡曲线。"
+    },
+    {
+      "id": "w13_d12_plain",
+      "expr": "group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry)",
+      "ops": 2,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 12,
+      "why": "decay=12: 更强平滑档, 用于定位 Sharpe 崩塌的拐点。"
+    },
+    {
+      "id": "w13_d20_plain",
+      "expr": "group_zscore(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), industry)",
+      "ops": 2,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 20,
+      "why": "decay=20: 最强档, 预期换手最低但 Sharpe 可能崩塌 (E1 的延伸验证)。"
+    },
+    {
+      "id": "w13_d0_tvr15",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "why": "双平滑器组合的对照: 表达式端 tvr 目标 + 平台端 decay=0, 隔离平台 decay 的边际作用。"
+    },
+    {
+      "id": "w13_d8_tvr15",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 8,
+      "why": "双平滑器组合: 表达式端目标换手 15% + 平台端 decay=8。两者叠加可能过度平滑, 此槽检验是否过头。"
+    },
+    {
+      "id": "w13_d8_dexp",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 10, factor=0.5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 8,
+      "why": "指数衰减 + decay=8 的组合, 与 w13_d8_plain 配对以测双重平滑的边际贡献。"
+    },
+    {
+      "id": "w13_d12_dexp",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 10, factor=0.5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 12,
+      "why": "指数衰减 + 更强 decay, 定位「双重平滑」下的 Sharpe 拐点。"
+    }
+  ]
+}

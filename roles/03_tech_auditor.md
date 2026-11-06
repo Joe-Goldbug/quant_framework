@@ -21,6 +21,10 @@
 - 算子命名必须符合 WorldQuant FastExpr 官方标准；
 - Group 算子最后一个参数必须为裸字面量 `market/sector/industry/subindustry`，严禁加引号。
 
+### 4. AST 结构与时序窗口红线核查 (AST Lint & Horizon Bounds)
+- **严禁双层冲突排序**：严禁出现 `group_rank(group_neutralize(X, sector), market)` 等冲突嵌套；
+- **时序窗口冻结红线**：时序算子（`ts_quantile`, `ts_zscore`, `ts_rank`, `ts_av_diff` 等）的窗口参数 $d$ 绝对严禁超过 `250` 天（严禁 500 等跨年超长调参窗口），回填窗口严禁超过 `30` 天。
+
 ---
 
 ## 三、 判定与驳回流程

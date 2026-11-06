@@ -36,7 +36,17 @@
   - **2Y Sharpe 衰减病灶优先排查窗口旋转（Wave 18→21 实测路径）**：低 2Y 先查"价值窗是否太长"——把 60d-250d 信念窗旋到 20d-60d 直接将 2Y 0.68→0.99→1.60（配合冷字段与平滑窗），远优于任何表达式手术。窗口旋转后必须重跑 N/2N 成对探针确认高原。
   - **仅当 Margin 偏低 (`Margin < 10bps`) 时**：增强信号持久度或过滤短期噪音，拉开持仓分位数差；
   - **仅当存在离群值拉扯或权重集中度违规 (CW / Weight Violations) 时**：针对性注入 `winsorize(..., std=3)` 或 `s_log_1p` / `signed_power(..., 0.5)` 进行凹函数极值压缩；
-  - **残差风险**：结合区域动态高阶中性化白名单（如美股 `REVERSION_AND_MOMENTUM`, `STATISTICAL`, `CROWDING`）防范因子暴露。
+  - **残差风险**：结合区域动态高阶中性化白名单（如美股 `REVERSION_AND_MOMENTUM`, `STATISTICAL`, `CROWDING`）防范因子暴露；
+  - **高缺失/零值膨胀另类字段的时序算子映射法则 (ts_quantile 黄金范式 - 2026-11-05 实证)**：
+    对事件驱动、社交情绪、另类文本 Vector 字段，低关注标的滚动标准差 $\sigma_d \to 0$。**严禁裸用 `ts_zscore(x, d)`** 导致零方差分母除零爆炸；**强制使用非参数高斯分位算子 `ts_quantile(x, d, driver='gaussian')`** 消除离群奇点，自动居中高缺失断流标的（实战铁证：Sharpe 1.49 -> 1.63，2023 Sharpe -1.02 -> +1.23）；
+  - **截面中性化单算子与 AST 奥卡姆剃刀定律 (Less is More)**：
+    严禁编写双层嵌套 `group_rank(group_neutralize(X, sector), market)`，直接采用单算子 `group_rank(X, sector)` 或 `group_rank(X, subindustry)`，避免破坏行业零和平衡并大幅拉升 Cluster Test 表现；禁止异质稀疏字段裸加 (No Blind add())；
+  - **Fitness 12.5% Turnover 分母底线开发法则**：
+    当 Turnover < 12.5% 时分母锁死为 0.125。此时严禁加大平滑，应将 Turnover 释放至 10.5%~12.5% 黄金区间最大化 Returns 与 Sharpe；
+  - **反过拟合红线与自然时序窗口冻结规范**：
+    严禁跨年 >250 调参 (如 500 天超长窗)；时序窗口必须严格锚定金融日历自然周期 (5/10/20/30/60/120/250)，严禁跨数据生成稳态混算；
+  - **真实 API 审计与零幻觉协议**：
+    硬性断言 0 FAIL (`checks.fail == []`)，汇报逐年数据必须真实调用 `/recordsets/yearly-stats`，严禁插值估算，压力测试年 (如 2023) 真实 Sharpe 必须 $\ge +0.50$。
 
 ---
 

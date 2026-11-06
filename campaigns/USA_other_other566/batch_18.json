@@ -1,0 +1,111 @@
+{
+  "batch": 18,
+  "family": "statistical_neutralization_tvr_ladder",
+  "hypothesis": "波次 18: 把波次 17 的赢家 (STATISTICAL 中性化) 与 tvr 旋钮结合。波次 17 显示 STATISTICAL 相对 INDUSTRY 把 Sharpe 从 1.00 抬到 **1.27**、2Y Sharpe 从 1.38 抬到 **1.86**, 且仍是 0 平台 FAIL —— 这是本战役除「去掉 ts_mean」之外最大的单点提升。机理: STATISTICAL 用统计方法剥离市值/beta/波动率等**共同统计因子**, 而保留预测中真正与行业条件性相关的部分; 这与 SUBINDUSTRY 的结果一致地反证了本 alpha 的边缘**部分来自行业层面的订单簿流动性状态信号**, 强制细分行业纯度反而摧毁它 (Sh 0.83)。另外 NONE 与 MARKET 给出逐位相同的指标 (1.00/0.61/7.39/12.5%), 因为对美元中性多空组合而言「剥离市场 beta」与「完全保留 beta」最终构造出同一本账 —— 只有真正剥离不同**因子结构**的 STATISTICAL 与 SUBINDUSTRY 才改变数字。STATISTICAL 改变了工作点 (tvr=0.12 时 returns 3.04%, TO 13.9%), 因此必须在 STATISTICAL 下重扫 tvr 阶梯: 要在 TO≈10% 处拿到 returns≥5% 且 Sharpe≥1.58, 才可能同时过 Mgn 10bps 与 Fit 1.00 两条线。",
+  "items": [
+    {
+      "id": "w18_stat_tvr05",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.05), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "STATISTICAL @ tvr=0.05: 最激进换手档。波次 17 在 INDUSTRY 下 tvr=0.05 曾给出唯一过 Margin 的槽位; 在 STATISTICAL 下需重测 —— 统计因子剥离可能让低换手端的收益/换手比更优。"
+    },
+    {
+      "id": "w18_stat_tvr08",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.08), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "STATISTICAL @ tvr=0.08: INDUSTRY 下该点的 Mgn 9.51 (差 0.5bps), 在 STATISTICAL 下重测。"
+    },
+    {
+      "id": "w18_stat_tvr10",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.1), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "STATISTICAL @ tvr=0.10: 理论最优区间的探测点 (TO≈10% 时需 returns≥5% 且 Sharpe≥1.58)。"
+    },
+    {
+      "id": "w18_stat_tvr15",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.15), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "STATISTICAL @ tvr=0.15: INDUSTRY 下的 Sharpe 峰位 (1.00/0.55/6.00), STATISTICAL 下重测。"
+    },
+    {
+      "id": "w18_stat_tvr20",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.2), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "STATISTICAL @ tvr=0.20: 宽松换手端, 检验 STATISTICAL 是否把 Sharpe 峰推到更高换手 (Sharpe 换手率更高 ⇒ returns 更高 ⇒ Mgn 更高)。"
+    },
+    {
+      "id": "w18_stat_tvr10_rank",
+      "expr": "group_rank(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.10), subindustry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "外层对照: STATISTICAL + tvr=0.10 + group_rank。波次 11 中 rank 给最高 Sharpe (1.18 vs zscore 1.08), 而 STATISTICAL 已剥离共同因子, 外层 rank 可能不再承担去因子职责 ⇒ Sharpe 可能进一步上升。"
+    },
+    {
+      "id": "w18_stat_dexp10",
+      "expr": "group_zscore(ts_decay_exp_window(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), 10, factor=0.5), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "独立平滑器对照: 用 ts_decay_exp_window 替代 ts_target_tvr_decay, 检验 tvr 最优点是否为单一算子的产物。"
+    },
+    {
+      "id": "w18_stat_tvr12",
+      "expr": "group_zscore(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, oth566_r20marsi_prob_5), target_tvr=0.12), industry)",
+      "ops": 3,
+      "fields": [
+        "oth566_r20marsi_ret",
+        "oth566_r20marsi_prob_5"
+      ],
+      "decay": 0,
+      "neutralization": "STATISTICAL",
+      "truncation": 0.08,
+      "why": "波次 17 冠军点复现 (STATISTICAL @ tvr=0.12 → Sh 1.27): 作为本波其余槽位的同组基准, 确认结果可重复 (平台在同设置下应逐位一致)。"
+    }
+  ]
+}

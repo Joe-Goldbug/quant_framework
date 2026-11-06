@@ -41,22 +41,38 @@ TURNOVER_LO, TURNOVER_HI = 0.05, 0.50
 
 
 def load_results():
-    """Map expression -> metrics dict from every saved batch result payload."""
+    """Map (batch, expression, decay) -> metrics dict from the saved batch result payloads.
+
+    Keyed by batch AND platform decay as well as expression: several waves
+    deliberately re-run the SAME expression under different platform settings
+    (decay / truncation), both ACROSS waves and WITHIN one wave (wave 15's
+    d2/d6 slots differ only by decay). A global expression->metrics map would
+    silently attach one setting's numbers to another and report a decay sweep
+    that never ran.
+    """
     from alpha_normalizer import normalize
-    by_expr = {}
+    by_key = {}
     for p in sorted(glob.glob(os.path.join(HERE, "batch_*_result.json"))):
         try:
             with open(p, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except Exception:
             continue
+        bnum = data.get("batch")
+        if bnum is None:
+            continue
+        bucket = by_key.setdefault(int(bnum), {})
         for r in data.get("alpha_results", []):
             rec = normalize(r)
             if not rec or not rec.get("expression"):
                 continue
             rec["source_result_file"] = os.path.basename(p)
-            by_expr[rec["expression"]] = rec
-    return by_expr
+            st = rec.get("settings") or {}
+            dec = st.get("decay")
+            neut = st.get("neutralization")
+            trunc = st.get("truncation")
+            bucket[(rec["expression"], dec, neut, trunc)] = rec
+    return by_key
 
 
 def gate(rec):
@@ -127,16 +143,28 @@ def _f(v, w=6, p=2, dash="--"):
 
 
 def main():
-    by_expr = load_results()
+    by_key = load_results()
     ledger = []
     for p in sorted(glob.glob(os.path.join(HERE, "batch_*.json"))):
         if p.endswith("_result.json"):
             continue
         with open(p, "r", encoding="utf-8") as f:
             b = json.load(f)
+        bucket = by_key.get(int(b.get("batch")), {})
+        default_decay = 4
         for it in b.get("items", []):
             e = it["expr"]
-            rec = by_expr.get(e)
+            want_decay = it.get("decay", default_decay)
+            want_neut = it.get("neutralization", "INDUSTRY")
+            want_trunc = it.get("truncation", 0.08)
+            rec = bucket.get((e, want_decay, want_neut, want_trunc))
+            if rec is None:
+                # fall back to the same expression under any setting, but only if
+                # there is exactly ONE such candidate (otherwise the mapping is
+                # ambiguous and guessing would silently mislabel the row)
+                cands = [v for (expr_k, dec_k, n_k, t_k), v in bucket.items() if expr_k == e]
+                if len(cands) == 1:
+                    rec = cands[0]
             entry = {
                 "batch": b.get("batch"),
                 "family": b.get("family"),

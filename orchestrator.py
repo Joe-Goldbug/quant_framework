@@ -20,6 +20,7 @@ from quant_framework.core.dimension_rules import DimensionAuditor
 from quant_framework.core.gatekeeper import Gatekeeper
 from quant_framework.core.rag_memory import RAGMemoryEngine
 from quant_framework.core.sim_runner import SimBatchRunner
+from quant_framework.core.concurrency_utils import atomic_save_json
 from quant_framework.main import AegisPipelineController, REGION_NEUTRALIZATIONS_DICT
 
 class AEGISOrchestrator(AegisPipelineController):
@@ -53,8 +54,7 @@ class AEGISOrchestrator(AegisPipelineController):
             "seed_expression": seed_expression,
             "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")
         }
-        with open(self.state_file, 'w', encoding='utf-8') as f:
-            json.dump(state, f, ensure_ascii=False, indent=2)
+        atomic_save_json(self.state_file, state)
 
     def load_state(self) -> dict:
         """加载状态机记录"""
@@ -105,16 +105,15 @@ class AEGISOrchestrator(AegisPipelineController):
         batch_path = os.path.join(self.campaign_dir, batch_filename)
         known_fields = self.load_dataset_fields()
 
-        with open(batch_path, 'w', encoding='utf-8') as f:
-            json.dump({
-                "seed_id": seed_id,
-                "region": self.region,
-                "universe": self.universe,
-                "delay": self.delay,
-                "category": self.category,
-                "known_fields": known_fields,
-                "items": variants
-            }, f, ensure_ascii=False, indent=2)
+        atomic_save_json(batch_path, {
+            "seed_id": seed_id,
+            "region": self.region,
+            "universe": self.universe,
+            "delay": self.delay,
+            "category": self.category,
+            "known_fields": known_fields,
+            "items": variants
+        })
 
         return await SimBatchRunner.run_batch_silently(
             batch_file_path=batch_path,
@@ -130,10 +129,13 @@ MasterOrchestrator = AEGISOrchestrator
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AEGIS GrandMaster 调度引擎")
     parser.add_argument("--region", default="USA")
-    parser.add_argument("--dataset", required=True)
+    parser.add_argument("--dataset", default="news12", help="数据集 ID (默认 news12)")
     parser.add_argument("--category", default="news")
     parser.add_argument("--universe", default="TOP1000")
     parser.add_argument("--delay", type=int, default=1)
+    parser.add_argument("--batch-size", "--parallelism", dest="parallelism", type=int, default=20, help="单批并发槽位数 (默认 20，支持 8/20)")
+    parser.add_argument("--steps-per-seed", type=int, default=3, help="每个主信号最大迭代轮数 (默认 3)")
+    parser.add_argument("--max-seeds", type=int, default=20, help="最多探索主信号数量 (默认 20)")
     parser.add_argument("--seed", default=None, help="种子因子表达式")
     args = parser.parse_args()
 
@@ -142,7 +144,8 @@ if __name__ == "__main__":
         dataset_id=args.dataset,
         category=args.category,
         universe=args.universe,
-        delay=args.delay
+        delay=args.delay,
+        parallelism=args.parallelism
     )
 
     if args.seed:
@@ -151,4 +154,7 @@ if __name__ == "__main__":
             base_seed_expr=args.seed
         ))
     else:
-        asyncio.run(orchestrator.run_pipeline_loop())
+        asyncio.run(orchestrator.run_pipeline_loop(
+            max_seeds_to_explore=args.max_seeds,
+            max_steps_per_seed=args.steps_per_seed
+        ))

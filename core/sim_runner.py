@@ -66,21 +66,150 @@ try:
     from quant_framework.core.gatekeeper import Gatekeeper
     from quant_framework.core.anti_laziness import AntiLazinessAuditor
     from quant_framework.core.red_team import DoubleBlindRedTeam
+    from quant_framework.core.concurrency_utils import atomic_save_json
 except ImportError:
     from core.dimension_rules import DimensionAuditor
     from core.func_call_corrector import ASTSandboxCorrector
     from core.gatekeeper import Gatekeeper
     from core.anti_laziness import AntiLazinessAuditor
     from core.red_team import DoubleBlindRedTeam
+    try:
+        from core.concurrency_utils import atomic_save_json
+    except ImportError:
+        def atomic_save_json(filepath, data, **kwargs):
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
 
 class SimBatchRunner:
     DEFAULT_BATCH_SIZE = 20
 
     @classmethod
+    def extract_golden_alpha_result(cls, r: dict, yearly_records: list = None) -> dict:
+        """
+        对齐图 1 生产级黄金诊断契约 (Golden Schema):
+        1. 彻底过滤冗余 PASS 噪声，保留 warn 与 fail 告警项
+        2. 提取 10 年逐年夏普阵列 (yearly_sharpe)，一眼识破 2020 年等黑天鹅异动
+        3. 提取近 24 个月月度夏普 (last_24_monthly_sharpe)
+        4. 提取核心指标 (sharpe, fitness, margin, turnover, returns, drawdown)
+        5. 提取正交性 (pc, sc) 与 基础设置 (settings, regular)
+        """
+        if not isinstance(r, dict):
+            return {}
+
+        alpha_id = r.get("id") or r.get("alpha_id") or ""
+        metrics = r.get("metrics") or r.get("is") or {}
+        settings = r.get("settings") or {}
+        regular = r.get("regular") or {}
+        if not isinstance(regular, dict):
+            regular = {"code": str(regular) if regular else ""}
+        if not regular.get("code") and r.get("expression"):
+            regular["code"] = r.get("expression")
+        if "operatorCount" not in regular:
+            code_str = regular.get("code", "")
+            regular["operatorCount"] = code_str.count("(") if code_str else 0
+
+        warn_list = []
+        fail_list = []
+
+        raw_checks = r.get("checks")
+        if isinstance(raw_checks, dict):
+            warn_list = list(raw_checks.get("warning", []))
+            fail_list = list(raw_checks.get("fail", []))
+        elif isinstance(raw_checks, list):
+            for c in raw_checks:
+                if not isinstance(c, dict):
+                    continue
+                res = c.get("result")
+                item = {
+                    "name": c.get("name"),
+                    "result": res,
+                    "limit": c.get("limit"),
+                    "value": c.get("value")
+                }
+                if c.get("year") is not None:
+                    item["year"] = c["year"]
+                if res == "FAIL":
+                    fail_list.append(item)
+                elif res == "WARNING":
+                    warn_list.append(item)
+        elif isinstance(metrics.get("checks"), list):
+            for c in metrics["checks"]:
+                if not isinstance(c, dict):
+                    continue
+                res = c.get("result")
+                item = {
+                    "name": c.get("name"),
+                    "result": res,
+                    "limit": c.get("limit"),
+                    "value": c.get("value")
+                }
+                if c.get("year") is not None:
+                    item["year"] = c["year"]
+                if res == "FAIL":
+                    fail_list.append(item)
+                elif res == "WARNING":
+                    warn_list.append(item)
+
+        yearly_sharpe = []
+        y_src = yearly_records or r.get("yearly_stats") or metrics.get("yearly_stats") or []
+        if isinstance(y_src, dict):
+            y_src = y_src.get("records", [])
+        if isinstance(y_src, list):
+            for yr in y_src:
+                if isinstance(yr, dict) and "year" in yr and yr.get("sharpe") is not None:
+                    try:
+                        yearly_sharpe.append([str(yr["year"]), f"{float(yr['sharpe']):.2f}"])
+                    except (ValueError, TypeError):
+                        pass
+
+        monthly_sharpe = r.get("last_24_monthly_sharpe") or metrics.get("last_24_monthly_sharpe") or []
+
+        def _fmt_pct(v):
+            if v is None:
+                return "0.00%"
+            try:
+                if isinstance(v, str) and "%" in v:
+                    return v
+                return f"{float(v) * 100:.2f}%"
+            except (ValueError, TypeError):
+                return str(v)
+
+        def _flt(v, default=0.0):
+            if v is None:
+                return default
+            try:
+                return round(float(v), 2)
+            except (ValueError, TypeError):
+                return default
+
+        golden = {
+            "name": r.get("name", f"AI_{alpha_id}"),
+            "alpha_id": alpha_id,
+            "regular": regular,
+            "settings": settings,
+            "sharpe": _flt(metrics.get("sharpe")),
+            "sharpe_2y": _flt(metrics.get("twoYearSharpe") or metrics.get("sharpe_2y") or metrics.get("two_year_sharpe")),
+            "fitness": _flt(metrics.get("fitness")),
+            "margin": _fmt_pct(metrics.get("margin")),
+            "turnover": _fmt_pct(metrics.get("turnover")),
+            "returns": _fmt_pct(metrics.get("returns")),
+            "drawdown": _fmt_pct(metrics.get("drawdown")),
+            "warn": warn_list,
+            "fail": fail_list,
+            "pc": _flt(r.get("prod_corr", r.get("pc", metrics.get("prodCorrelation", -1.0))), default=-1.0),
+            "sc": _flt(r.get("self_corr", r.get("sc", metrics.get("selfCorrelation", 0.0))), default=0.0),
+            "yearly_sharpe": yearly_sharpe,
+            "last_24_monthly_sharpe": monthly_sharpe,
+            "good_flag": 1 if len(fail_list) == 0 and _flt(metrics.get("sharpe")) >= 1.25 else 0
+        }
+        return golden
+
+    @classmethod
     def verify_state_token_and_gates(cls, batch_file_path: str, expressions_data: list, 
                                      known_fields: Union[list, dict], category: str, 
                                      region: str, universe: str, delay: int, neutralization: str,
-                                     ledger_path: str = None, strict_hardness: bool = True) -> list:
+                                     ledger_path: str = None, strict_hardness: bool = True,
+                                     batch_step: int = None) -> list:
         """
         前置门禁防御体系 (支持 GrandMaster 极速模式与 Hardness 终审加固模式):
         1. 弹性容量核验 (支持 1~30 槽，对齐原帖 PARALLELISM_INSIDE=20 与 8 槽消融)
@@ -192,7 +321,8 @@ class SimBatchRunner:
                         )
 
         # 5. Pre-read batch metadata for Golden Shot & Dynamic Operator Caps
-        batch_step = 1
+        if batch_step is None:
+            batch_step = 1
         core_fields = None
         stage0_op_count = 0
         batch_max_ops = 8
@@ -201,7 +331,10 @@ class SimBatchRunner:
             try:
                 with open(batch_file_path, 'r', encoding='utf-8') as bf:
                     b_meta = json.load(bf)
-                    batch_step = b_meta.get("step", 1)
+                    if "step" in b_meta:
+                        batch_step = b_meta.get("step", batch_step)
+                    if b_meta.get("has_parent", False):
+                        batch_step = max(batch_step, 2)
                     core_fields = b_meta.get("core_fields", [])
                     stage0_op_count = b_meta.get("stage0_op_count", 0)
                     batch_max_ops = b_meta.get("max_ast_operators", b_meta.get("max_operators", 8))
@@ -233,7 +366,8 @@ class SimBatchRunner:
             print(f"✅ [Gate 3 - Golden Shot 豁免] 准冠军加时赛锁定母本骨架微调，已放行骨架限制并完成语法纠偏。")
         else:
             corrected_exprs = corrector.check_and_record_batch(
-                raw_exprs, region, universe, delay, neutralization, batch_id=batch_id
+                raw_exprs, region, universe, delay, neutralization, batch_id=batch_id,
+                is_exploit_or_step2=(batch_step >= 2)
             )
             print(f"✅ [Gate 3 - AST Sandbox] 算子别名/参数位置自动纠偏完成，单批拓扑骨架唯一性通过。")
 
@@ -245,7 +379,7 @@ class SimBatchRunner:
             audit = DimensionAuditor.audit_expression(
                 expr, known_fields, category=category, allow_pv_cross=False, max_operators=batch_max_ops,
                 step=batch_step, allowed_operators=rx_allowed, stage0_op_count=stage0_op_count,
-                required_fields=core_fields if (batch_step == 1 and core_fields) else None
+                required_fields=core_fields if (batch_step == 1 and not (locals().get('b_meta', {}).get('has_parent')) and core_fields) else None
             )
             if not audit["is_valid"]:
                 corrector.remove_records(corrected_exprs, region, universe, delay, neutralization)
@@ -315,6 +449,7 @@ class SimBatchRunner:
                 "step1": step1_res,
                 "step2_passed": step2_passed,
                 "final_passed": final_passed,
+                "golden_results": [cls.extract_golden_alpha_result(r) for r in mock_results],
                 "results": mock_results
             }
 
@@ -464,8 +599,11 @@ class SimBatchRunner:
                     continue
                 results.extend(w_chunk)
             # 增量落盘: 每波完成后即写盘，支持断点恢复
-            with open(output_path, 'w', encoding='utf-8') as f:
-                json.dump({"alpha_results": results}, f, ensure_ascii=False, indent=2)
+            try:
+                atomic_save_json(output_path, {"alpha_results": results})
+            except Exception as _we:
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    json.dump({"alpha_results": results}, f, ensure_ascii=False, indent=2)
             print(f"   💾 [并发波] 本波完成，累计已收集 {len(results)} 条结果并落盘。")
 
         print(f"\n📊 全部 {total_chunks} 个子批回测执行完毕，累计 {len(results)} 条结果。")
@@ -535,6 +673,18 @@ class SimBatchRunner:
                             print(f"🔗 [Brain ProdCorr] 成功拉取 Alpha {a_id} 生产库相关性: {extracted_pcorr:.4f}")
                 except Exception as _ce:
                     print(f"⚠️ [ProdCorr] 查询 Alpha {a_id} 相关性异常: {_ce}")
+
+                # 同步拉取逐年统计数据 (Yearly Stats) 供图 1 黄金契约与微观法医诊断
+                try:
+                    if hasattr(bm, "get_alpha_yearly_stats"):
+                        y_fn = getattr(bm, "get_alpha_yearly_stats")
+                        y_res = await y_fn(a_id) if asyncio.iscoroutinefunction(y_fn) else y_fn(a_id)
+                        if isinstance(y_res, dict) and not y_res.get("error"):
+                            records = y_res.get("records") or y_res
+                            r["yearly_stats"] = records
+                            print(f"📈 [Brain YearlyStats] 成功拉取 Alpha {a_id} 逐年统计数据 ({len(records) if isinstance(records, list) else 1} 年)")
+                except Exception as _ye:
+                    print(f"⚠️ [YearlyStats] 查询 Alpha {a_id} 逐年统计异常: {_ye}")
 
         # 4. Gatekeeper 阶梯漏斗裁决与法医诊断
         step1_res = Gatekeeper.audit_step1_batch({"alpha_results": results}, expected_polarity=batch_data.get("expected_polarity", 1))
@@ -646,12 +796,28 @@ class SimBatchRunner:
 
         # 将授权处方写盘给下一轮使用
         rx_path = os.path.join(campaign_dir, "authorized_mutations.json")
-        with open(rx_path, 'w', encoding='utf-8') as f:
-            json.dump({
+        try:
+            atomic_save_json(rx_path, {
                 "symptoms": prescriptions.get("symptoms", []),
                 "allowed_mutations": prescriptions.get("allowed_mutations", []),
                 "rag_prescriptions": prescriptions.get("rag_prescriptions", [])
-            }, f, ensure_ascii=False, indent=2)
+            })
+        except Exception:
+            with open(rx_path, 'w', encoding='utf-8') as f:
+                json.dump({
+                    "symptoms": prescriptions.get("symptoms", []),
+                    "allowed_mutations": prescriptions.get("allowed_mutations", []),
+                    "rag_prescriptions": prescriptions.get("rag_prescriptions", [])
+                }, f, ensure_ascii=False, indent=2)
+
+        # 生成对齐图 1 格式的生产级黄金诊断契约 (Golden Schema)
+        golden_results = [cls.extract_golden_alpha_result(r) for r in results]
+        golden_output_path = batch_file_path.replace(".json", "_golden_result.json")
+        try:
+            atomic_save_json(golden_output_path, {"golden_results": golden_results})
+            print(f"✨ [Golden Schema] 已生成对齐图 1 格式的精简黄金诊断数据: {os.path.basename(golden_output_path)} (共 {len(golden_results)} 条)")
+        except Exception as _g_err:
+            print(f"⚠️ [Golden Schema] 黄金诊断数据落盘异常: {_g_err}")
 
         return {
             "step1": step1_res,
@@ -660,5 +826,6 @@ class SimBatchRunner:
             "horizon": horizon_summary,
             "horizon_verdicts": h_verdicts,
             "prescriptions": prescriptions,
+            "golden_results": golden_results,
             "results": results
         }

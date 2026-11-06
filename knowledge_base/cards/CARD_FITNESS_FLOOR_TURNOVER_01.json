@@ -1,0 +1,15 @@
+{
+  "card_id": "CARD_FITNESS_FLOOR_TURNOVER_01",
+  "tag": "fitness_turnover_floor_rule",
+  "domain": "turnover_fitness_tuning",
+  "title": "Fitness 算术底线 (12.5% Turnover Floor) 换手释放法则",
+  "one_line": "当 Turnover < 12.5% 时 Fitness 分母锁死为 0.125；严禁继续加大平滑，应将 Turnover 精准释放至 10.5%~12.5% 黄金区间最大化 Sharpe 与 Returns。",
+  "symptom": "种子 Alpha 换手率仅 6%~9% (低于 12.5% 保护下限)，存在免费换手空间，但研究员误判为需要继续加大 Decay 或加大 ts_backfill 窗口，导致信号严重钝化、半衰期错配、收益率缩水且 Fitness 停滞。",
+  "mathematical_mechanism": "Fitness = Sharpe * sqrt(|Returns| / max(Turnover, 0.125))。当 Turnover <= 0.125 时，分母对换手率的偏导数恒为 0 (∂Fitness / ∂Turnover = 0)。此时换手率从 6% 上升到 12.5% 完全零惩罚；若能换取更高信息更新频次与更高夏普/年化收益，Fitness 将获得单向净收益。",
+  "rules": [
+    "若 Turnover < 10.5%：严禁盲目增大 Decay (如 Decay > 60) 或增大 ts_backfill (如 > 30)。",
+    "释放换手动作：将 ts_backfill 从 60 缩短为 30 或 20；微调 Decay 控制换手落入 10.5% ~ 12.5% 最佳免罚区间。",
+    "严守硬上界：换手绝不能突破 12.5% (突破后分母按真实换手计算，惩罚开始生效)。"
+  ],
+  "prescription_recipe": "将种子 e756njNE 的 backfill 60 缩短为 30，通过 ts_quantile 将换手从僵尸态 6.49% 提升至 12.08%，未触发分母惩罚 (仍按 0.125 计)，但年化收益率从 5.85% 提升至 6.52%，Sharpe 从 1.24 提至 1.63，Fitness 顺理成章从 0.85 飞跃至 1.18。"
+}
