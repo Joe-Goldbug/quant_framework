@@ -13,13 +13,31 @@
   "truncation": 0.08,
   "pasteurization": "ON",
   "nan_handling": "ON",
-  "total_batches_simulated": 35,
-  "total_alphas_simulated": 281,
+  "total_batches_simulated": 38,
+  "total_alphas_simulated": 289,
   "status": "NO_PRODUCTION_PASS",
   "champion": {
+   "alpha_id": "P0oYvwaK",
+   "champion_score": 0.566,
+   "selection_rule": "strict abs-max prod corr < 0.65, then 0-FAIL priority, then Champion_Score",
+   "note": "wave37 新冠军 — 唯一 0-FAIL + abs_max_prod_corr<0.65 的候选。虽 CS 0.566 微低于 kqNgXQqd 0.5703，但 kqNgXQqd 有 2 个 FAIL，P0oYvwaK 是当前唯一真正可提交（0 FAIL）的合规 alpha。"
+  },
+  "wave37_champion": {
+   "alpha_id": "P0oYvwaK",
+   "wave": 37,
+   "code": "quantile(ts_target_tvr_decay(multiply(oth566_r20marsi_ret, multiply(rank(reverse(oth566_l5r20gasfculr_prob_pattern)), signed_power(oth566_r20marsi_prob_5, 2))), target_tvr=0.12), driver=\"gaussian\")",
+   "sharpe": 1.38, "fitness": 0.68, "margin_bps": 4.84,
+   "two_year_sharpe": 1.77, "sub_universe_sharpe": 1.00, "cluster": 1.19,
+   "turnover_pct": 14.07, "returns": 0.0341, "drawdown": 0.0379,
+   "prod_corr_max": 0.5173, "prod_corr_min": -0.4575, "prod_corr_abs_max": 0.5173,
+   "self_corr": 0.1542,
+   "n_platform_fail": 0,
+   "remaining_warnings": ["LOW_SHARPE (1.38→1.58)", "LOW_FITNESS (0.68→1.0)", "CLUSTER_TEST (1.19→1.58)", "MATCHES_COMPETITION"]
+  },
+  "prior_champion": {
    "alpha_id": "kqNgXQqd",
    "champion_score": 0.5703,
-   "selection_rule": "strict abs-max prod corr < 0.65, then Champion_Score"
+   "note": "wave17 母本 — 2 个 FAIL (LOW_SHARPE LOW_FITNESS)，已被 P0oYvwaK 超越"
   },
   "champion_note": "Absolute-correlation audit changed the ranking: every higher-margin variant of this seed carries one production alpha at |corr| = 0.68-0.73 in the NEGATIVE tail, while the platform's reported 'max_correlation' only looks at the positive side. Under the strict ProdCorr < 0.65 requirement only kqNgXQqd qualifies (abs max 0.5052).",
   "correlation_audit_finding": {
