@@ -1,0 +1,28 @@
+{
+  "wave": 38,
+  "multisim": "48k7Dz53Z4Eba1aNHyLp6Wb",
+  "date_completed": "2026-11-06",
+  "settings": {"neutralization": "STATISTICAL", "decay": 0, "truncation": 0.08, "universe": "TOP1000"},
+  "slots": [
+    {"slot": 1, "tag": "quant_vR1_plus_2day", "alpha_id": "qMLYXN7A", "sharpe": 1.28, "fitness": 0.61, "margin_bps": 4.61, "two_year_sharpe": 1.94, "sub_universe_sharpe": 0.84, "cluster": 0.89, "n_fail": 2, "verdict": "NEUTRAL", "reason": "2 日腿叠加在 quantile 外层下 2Y 1.94 但 Sh 降到 1.28"},
+    {"slot": 2, "tag": "quant_cauchy", "alpha_id": "O0AM9GWR", "sharpe": 0.89, "fitness": 0.35, "margin_bps": 3.13, "two_year_sharpe": 0.90, "cluster": 0.83, "n_fail": 3, "verdict": "KILL", "reason": "cauchy 重尾放大换手 (TO 26.78%) + dd 11.85% — 灾难"},
+    {"slot": 3, "tag": "quant_sigma05", "alpha_id": "vR1pmNAb", "sharpe": 1.38, "fitness": 0.68, "margin_bps": 4.84, "two_year_sharpe": 1.77, "sub_universe_sharpe": 1.00, "cluster": 1.19, "n_fail": 0, "verdict": "SIGMA_INVALID", "reason": "sigma=0.5 与默认 sigma=1.0 指标逐位相同 — sigma 参数在 FASTEXPR quantile 中无效"},
+    {"slot": 4, "tag": "quant_sigma15", "alpha_id": "QPvNQGWM", "sharpe": 1.38, "fitness": 0.68, "margin_bps": 4.84, "two_year_sharpe": 1.77, "sub_universe_sharpe": 1.00, "cluster": 1.19, "n_fail": 0, "verdict": "SIGMA_INVALID", "reason": "sigma=1.5 与默认相同 — 证实 sigma 无效"},
+    {"slot": 5, "tag": "quant_prob3", "alpha_id": "0mYN8pGK", "sharpe": 1.38, "fitness": 0.68, "margin_bps": 4.87, "two_year_sharpe": 1.79, "sub_universe_sharpe": 0.97, "cluster": 1.21, "n_fail": 0, "verdict": "KEEP", "reason": "prob^3 微弱改进：Mgn 4.84→4.87 / 2Y 1.77→1.79 / Cluster 1.19→1.21"},
+    {"slot": 6, "tag": "quant_plus_rev_l5_add", "alpha_id": "GrWKoGQO", "sharpe": 0.46, "fitness": 0.13, "margin_bps": 1.61, "two_year_sharpe": 1.11, "cluster": 0.21, "n_fail": 3, "verdict": "KILL", "reason": "quantile 外层下加性 rev_l5 杀 Sharpe 与 wave37 slot 3 一致"},
+    {"slot": 7, "tag": "quant_tvr10", "alpha_id": "xAr2nNlJ", "sharpe": 1.25, "fitness": 0.62, "margin_bps": 5.04, "two_year_sharpe": 1.68, "sub_universe_sharpe": 0.91, "cluster": 1.13, "n_fail": 0, "verdict": "KEEP_AUX", "reason": "★ Margin 5.04 战役新高 ★ 但 Sh 1.25 降；作为高 Margin 备选"},
+    {"slot": 8, "tag": "quant_tvr08", "alpha_id": "YP1EAv8A", "sharpe": 1.06, "fitness": 0.48, "margin_bps": 5.03, "two_year_sharpe": 1.55, "cluster": 1.00, "n_fail": 0, "verdict": "KILL", "reason": "tvr=0.08 杀 Sharpe (1.06) 和 2Y (1.55)"}
+  ],
+  "engineering_findings": [
+    "★ sigma 参数在 FASTEXPR quantile 中无效 (sigma=0.5/1.0/1.5 指标逐位相同)",
+    "cauchy driver 在本信号形态下放大换手，不可用于 quantile",
+    "P0oYvwaK 骨架已到局部最优 — 表达式几何调优边际耗尽"
+  ],
+  "frontier_state": {
+    "best_sharpe_at_zero_fail": 1.38,
+    "best_margin_at_zero_fail": 5.04,
+    "best_2y_sharpe_at_zero_fail": 1.79,
+    "best_fitness_at_zero_fail": 0.68,
+    "conclusion": "Sh 1.58 需要 returns 翻倍；other566 数据集在 TO≤15% 区间 Sharpe 上限被证 1.38。需新 returns 来源或接受 P0oYvwaK 作为最终候选"
+  }
+}
