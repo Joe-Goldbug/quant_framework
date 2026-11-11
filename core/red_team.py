@@ -156,25 +156,3 @@ class DoubleBlindRedTeam:
             json.dump(verdict_doc, f, ensure_ascii=False, indent=2)
 
         return verdict_doc
-
-if __name__ == "__main__":
-    f_dict = {
-        "max_sentiment": {"domain": "[0, 1]", "sparse_zero": True, "meaning": "最大公关情绪"},
-        "news_volume": {"domain": "unbounded", "sparse_zero": False, "meaning": "新闻量"}
-    }
-    # 恶劣案例：文不对题 + 稀疏字段减 0.5
-    bad_expr = "group_rank(subtract(max_sentiment, 0.5), subindustry)"
-    bad_hypo = {"mechanism": "捕捉极端正面跃升的边际动量"}
-    payload = DoubleBlindRedTeam.generate_blind_payload(bad_expr, bad_hypo, f_dict)
-    res = DoubleBlindRedTeam.audit_candidate_blindly(payload)
-    print("Bad expr audit result:", res["verdict"], res["issues"])
-    assert res["verdict"] == "REJECT"
-
-    # 优良案例：忠实且尊重定义域
-    good_expr = "group_rank(ts_decay_exp_window(ts_delta(max_sentiment, 3), 10), subindustry)"
-    good_hypo = {"mechanism": "捕捉权威情绪的 3 日时序动量边际跃升"}
-    p2 = DoubleBlindRedTeam.generate_blind_payload(good_expr, good_hypo, f_dict)
-    r2 = DoubleBlindRedTeam.audit_candidate_blindly(p2)
-    print("Good expr audit result:", r2["verdict"], r2["issues"])
-    assert r2["verdict"] == "PASS"
-    print("✅ DoubleBlindRedTeam 审判与防伪签名测试通过！")

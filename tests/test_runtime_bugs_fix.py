@@ -13,6 +13,7 @@ import json
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 # 确保导入 quant_framework
 WORKSPACE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -245,7 +246,17 @@ class TestRuntimeBugsFix(unittest.TestCase):
 
         # 执行 1 轮探索，此前代码会因为跳过 else 分支导致 campaign_ledger 报 UnboundLocalError
         # 修复后应顺利执行完毕！
-        asyncio.run(ctrl.run_pipeline_loop(max_seeds_to_explore=1, max_steps_per_seed=1))
+        mock_sim_result = {
+            "step1": {
+                "max_abs_sharpe": 1.35,
+                "should_prune": False,
+                "qualified_seeds": [{"expression": "subtract(test_alpha_f1, test_alpha_f2)", "sharpe": 1.35, "alpha_id": "P1"}]
+            },
+            "step2_passed": [],
+            "final_passed": []
+        }
+        with mock.patch.object(qf_main.SimBatchRunner, "run_batch_silently", new_callable=mock.AsyncMock, return_value=mock_sim_result):
+            asyncio.run(ctrl.run_pipeline_loop(max_seeds_to_explore=1, max_steps_per_seed=1))
         self.assertTrue(os.path.exists(os.path.join(ctrl.campaign_dir, "batch_SEED_TEST_func2_s1.json")))
         print("  ✅ [沙盘 1 验证] 断点恢复并进入 func2 时 campaign_ledger 正常绑定，零崩溃！")
 

@@ -27,10 +27,16 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from quant_framework.core.crowding_pairing import FieldCrowdingProfiler, enforce_stage0_pairing
-from quant_framework.core.horizon_probe import HorizonProbe
-from quant_framework.core.swarm_auditor import SwarmAuditor
-from quant_framework.core.gatekeeper import Gatekeeper
+try:
+    from quant_framework.core.crowding_pairing import FieldCrowdingProfiler, enforce_stage0_pairing
+    from quant_framework.core.horizon_probe import HorizonProbe
+    from quant_framework.core.swarm_auditor import SwarmAuditor
+    from quant_framework.core.gatekeeper import Gatekeeper
+except (ModuleNotFoundError, ImportError):
+    from core.crowding_pairing import FieldCrowdingProfiler, enforce_stage0_pairing
+    from core.horizon_probe import HorizonProbe
+    from core.swarm_auditor import SwarmAuditor
+    from core.gatekeeper import Gatekeeper
 
 
 FIELDS = {

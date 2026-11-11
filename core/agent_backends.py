@@ -361,7 +361,17 @@ class LLMAPIBackend(BaseAgentBackend):
 # 后端 4: 离线白盒规则引擎 (RuleMockBackend)
 # -------------------------------------------------------------
 class RuleMockBackend(BaseAgentBackend):
-    """确定性白盒规则引擎，用于离线单元测试与极速门禁核查"""
+    """
+    确定性白盒规则引擎，用于离线单元测试与极速门禁核查。
+    生产代码中彻底剥离所有具体因子公式模板死代码；
+    测试夹具通过 fallback_fn 注入或由 tests/fixtures/rule_mock_fixtures 动态承接。
+    """
+    _fixture_handler = None
+
+    @classmethod
+    def register_fixture_handler(cls, handler):
+        cls._fixture_handler = handler
+
     def __init__(self, fallback_fn=None):
         self.fallback_fn = fallback_fn
 
@@ -377,6 +387,17 @@ class RuleMockBackend(BaseAgentBackend):
     ) -> Union[str, Dict[str, Any], List[Any]]:
         if self.fallback_fn:
             return self.fallback_fn(role, prompt, json_mode=json_mode, context=context)
+
+        if self._fixture_handler:
+            return self._fixture_handler(role, prompt, json_mode=json_mode, context=context)
+
+        # 尝试动态加载测试夹具（仅在测试运行时存在）
+        try:
+            from tests.fixtures.rule_mock_fixtures import handle_rule_mock
+            return handle_rule_mock(role, prompt, json_mode=json_mode, context=context)
+        except (ImportError, ModuleNotFoundError):
+            pass
+
         return {"status": "mock_success", "role": role} if json_mode else f"Mock response for {role}"
 
 

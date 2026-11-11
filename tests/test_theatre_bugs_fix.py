@@ -10,6 +10,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -156,8 +157,18 @@ class TestTheatreBugsFix(unittest.TestCase):
                 ]
             }, pf)
 
-        # 运行流水线，设置单种子最多 2 步迭代
-        asyncio.run(self.controller.run_pipeline_loop(max_seeds_to_explore=1, max_steps_per_seed=2))
+        # 运行流水线，设置单种子最多 2 步迭代 (采用 mock.patch 隔离仿真平台网络回测)
+        mock_sim_result = {
+            "step1": {
+                "max_abs_sharpe": 1.45,
+                "should_prune": False,
+                "qualified_seeds": [{"expression": "subtract(test_alpha_f1, test_alpha_f2)", "sharpe": 1.45}]
+            },
+            "step2_passed": [],
+            "final_passed": []
+        }
+        with mock.patch("main.SimBatchRunner.run_batch_silently", new_callable=mock.AsyncMock, return_value=mock_sim_result):
+            asyncio.run(self.controller.run_pipeline_loop(max_seeds_to_explore=1, max_steps_per_seed=2))
         
         # 检查是否生成了批次文件
         files = os.listdir(self.controller.campaign_dir)

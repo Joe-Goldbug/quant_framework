@@ -23,16 +23,28 @@ sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from quant_framework.core.field_resolver import DatasetFieldResolver
-from quant_framework.core.agent_backends import (
-    create_agent_backend,
-    SubAgentIPCBackend,
-    LLMAPIBackend,
-    AGYCliBackend,
-    RuleMockBackend,
-    extract_json_from_text
-)
-from quant_framework.main import AegisPipelineController
+try:
+    from quant_framework.core.field_resolver import DatasetFieldResolver
+    from quant_framework.core.agent_backends import (
+        create_agent_backend,
+        SubAgentIPCBackend,
+        LLMAPIBackend,
+        AGYCliBackend,
+        RuleMockBackend,
+        extract_json_from_text
+    )
+    from quant_framework.main import AegisPipelineController
+except (ModuleNotFoundError, ImportError):
+    from core.field_resolver import DatasetFieldResolver
+    from core.agent_backends import (
+        create_agent_backend,
+        SubAgentIPCBackend,
+        LLMAPIBackend,
+        AGYCliBackend,
+        RuleMockBackend,
+        extract_json_from_text
+    )
+    from main import AegisPipelineController
 
 
 class TestMultiAgentAndGLBField(unittest.TestCase):

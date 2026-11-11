@@ -357,18 +357,3 @@ def enforce_stage0_pairing(
     final_kept = [] if report["should_reject_all"] else kept
     return final_kept, rejected, report
 
-
-if __name__ == "__main__":
-    demo_meta = {
-        "total_assets": {"coverage": 0.98, "alpha_count": 4800},
-        "revenue_total": {"coverage": 0.95, "alpha_count": 3900},
-        "litigation_word_count": {"coverage": 0.31, "alpha_count": 3},
-        "supply_chain_lead_time": {"coverage": 0.42, "alpha_count": 7},
-        "analyst_eps_mean": {"coverage": 0.88, "alpha_count": 2100},
-        "niche_segment_margin": {"coverage": 0.55, "alpha_count": 12},
-    }
-    prof = FieldCrowdingProfiler(demo_meta)
-    print(json.dumps(prof.summary(), ensure_ascii=False, indent=2))
-    print("配对示例:", json.dumps(prof.candidate_pairs(3), ensure_ascii=False, indent=2))
-    print("合法种子:", prof.classify(["litigation_word_count", "total_assets"]))
-    print("违规种子:", prof.classify(["total_assets", "revenue_total"]))

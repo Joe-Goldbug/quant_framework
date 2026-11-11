@@ -1,7 +1,7 @@
 """
 main.py
 AEGIS GrandMaster 纯 Python 状态机总控调度引擎
-(完全复刻 WS29639 原帖 GrandMaster 设计：Python + AI 模式，极度节约 Token & 完全可控)
+(复刻 WS29639 原帖 GrandMaster 设计：Python + AI 模式，极度节约 Token & 完全可控)
 
 核心工程特性：
 1. 纯 Python 宿主死循环接管调度，淘汰 LLM 总控与长对话上下文累积；
@@ -106,12 +106,15 @@ class AegisPipelineController:
         self.parallelism = parallelism
         self.targeted_alpha_id = targeted_alpha_id
         self.mock_only = mock_only
+        if self.mock_only:
+            os.environ["AEGIS_MOCK_MODE"] = "1"
         self.backend_type = backend_type
         self.fields_file = fields_file
         self.raw_fields_arg = raw_fields_arg
         self.allow_cross_region_fields = allow_cross_region_fields
         self.tasks_dir = tasks_dir
         
+        self.initial_max_operator_count = max_operator_count
         self.is_quasi_champion_optimization = bool(self.targeted_alpha_id)
         # 研究员说明: 研究挖掘阶段要求算子尽可能简单 <= 6 (经济学意义、信号纯粹，防过拟合)。
         # 仅仅是在研究员明确说明在准冠军 alpha 基础上进入优化阶段才放宽到 <= 10 算子。
@@ -136,7 +139,7 @@ class AegisPipelineController:
         
         self.signals_pool_file = os.path.join(self.campaign_dir, "total_signals.json")
         self.kb_fields_file = os.path.join(self.base_dir, "knowledge_base", "fields", self.region, f"{self.dataset_id}.json")
-        self.corrector = ASTSandboxCorrector()
+        self.corrector = ASTSandboxCorrector(db_path=os.path.join(self.campaign_dir, "alphas_record.db"))
         self.field_resolver = DatasetFieldResolver(base_dir=self.base_dir)
         self.client = GeminiClient(
             default_model=self.model,
@@ -150,22 +153,25 @@ class AegisPipelineController:
         self.memory_file = os.path.join(self.campaign_dir, "campaign_memory.json")
         self.good_alphas: List[dict] = []
         self.history_save: List[dict] = []
+        self.failed_hypotheses_digest: List[str] = []
         if os.path.exists(self.memory_file):
             try:
                 with open(self.memory_file, "r", encoding="utf-8") as mf:
                     mem = json.load(mf)
                     self.good_alphas = mem.get("good_alphas", [])
                     self.history_save = mem.get("history_save", [])
+                    self.failed_hypotheses_digest = mem.get("failed_hypotheses_digest", [])
             except Exception:
                 pass
 
     def save_campaign_memory(self):
-        """持久化保存全局战役记忆 (good_alphas 与 history_save)"""
+        """持久化保存全局战役记忆 (good_alphas, history_save 与 failed_hypotheses_digest)"""
         try:
             with open(self.memory_file, "w", encoding="utf-8") as mf:
                 json.dump({
                     "good_alphas": self.good_alphas,
-                    "history_save": self.history_save
+                    "history_save": self.history_save,
+                    "failed_hypotheses_digest": getattr(self, "failed_hypotheses_digest", [])[-15:]
                 }, mf, ensure_ascii=False, indent=2)
         except Exception:
             pass
@@ -231,11 +237,15 @@ class AegisPipelineController:
 
     def synthesize_stage0_seeds(self, count: int = 10) -> List[dict]:
         """
-        阶段 0: 纯四则运算双字段主信号原型生成
-        基于 Plan 1 独立会话由 aegis-seed-synthesizer 生成，并经 aegis-tech-auditor 严格审查
-        仅使用 (+ - * /) + Vector 标量化，严禁提前嵌套时序算子！
+        阶段 0: ATOM Alpha 原生主信号原型生成 (Stage 0: ATOM Alpha Seed Reservoir)
+        关键原则：
+        1. 专攻 ATOM Alpha 范式，使用 1~3 个字段来自同一单数据集 (self.dataset_id)；
+        2. 算子预算限制：总算子数 op <= 6；
+        3. 严禁使用 + 和 *，以及函数形式 add 和 multiply (粗暴加乘容易造成高阶过拟合，留待组合优化阶段)；
+        4. 融合单因子决策树 (截面标准化、时序滤波、同量纲剪刀差、规模比率、条件激活)；
+        5. 时间窗口严格对齐自然交易日历网格 [1, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252]，严禁 4、44 等过拟合参数。
         """
-        print(f"\n🌱 【Stage 0: 离线主信号原型生成 (Seed Reservoir)】")
+        print(f"\n🌱 【Stage 0: ATOM Alpha 原生主信号原型生成 (op <= 6 | 严禁加乘)】")
         fields_dict = self.load_dataset_fields()
         all_field_names = list(fields_dict.keys())
         if not all_field_names:
@@ -283,64 +293,54 @@ class AegisPipelineController:
 
         session = self.client.create_session(role="aegis-seed-synthesizer", model=self.model)
         prompt = (
-            f"你是一位顶级的 WorldQuant 量化研究总监。请深入研读下方给定的数据集字段全量画像，构建 {count} 个高价值、低相关性、非过拟合的原生主信号假说。\n"
+            f"你是一位顶级的 WorldQuant 量化研究总监与 ATOM Alpha 架构专家。请深入研读下方给定的数据集字段画像，构建 {count} 个高价值、低相关性、非过拟合的 ATOM 原生主信号假说。\n"
             f"目标配置: 区域 {self.region} | 股票池 {self.universe} | 预测延迟 Delay {self.delay} | 类别 {self.category} | 数据集 {self.dataset_id}\n\n"
-            f"【核心认知准则：严禁“先想好简单公式再编造故事”！必须严格按以下四步思维链自上而下推导】：\n"
-            f"1. 第一步：字段商业实质与拥挤度剖析 (dataset_field_study)\n"
-            f"   - 仔细核查每个字段的 description（真实业务含义）、coverage（覆盖率）、alpha_count（已产出因子拥挤度）、alpha_pct（拥挤度分位）、crowding_tier（COLD/WARM/HOT）、domain（值域）与 update_frequency（更新周期）。\n"
-            f"   - 找出该数据集中能够反映企业经营摩擦、预期偏差或资金行为异动的 3~5 个正交业务簇 (economic_clusters)。\n"
-            f"   - 【低相关性铁律】：每个业务簇及后续每个信号中，必须优先选用高 coverage 但低 alpha_count（未被全平台过度挖掘）的细分字段作为核心信息源！\n"
-            f"2. 第二步：深度字段语义映射 (field_semantics_mapping)\n"
-            f"   - 针对选定的 2~4 个字段，逐一阐明其物理量纲与业务角色：谁是反映边际变化的【主信号源】？谁是用于剥离规模/行业基数混杂效应的【内生归一化锚点】？谁是度量信息确定性或催化强度的【状态调节项】？\n"
-            f"   - 明确解释：为什么这几个字段放在一起会产生单一字段无法提供的增量信息（正交交互价值）？\n"
-            f"3. 第三步：微观市场摩擦与因果传导机制 (economic_mechanism & expected_polarity)\n"
-            f"   - 完整写出因果链条：[底层经营/预期/舆情发生何种结构性变动] -> [哪类市场参与者（分析师/机构/散户）因何种制度约束或认知偏误未能及时充分定价] -> [未来超额收益的释放方向与预期极性 expected_polarity (+1 代表该代数项越大未来收益越高，-1 代表越低)]。\n"
-            f"4. 第四步：从机理自然涌现代数表达式 (expression)\n"
-            f"   - 唯有当上述三步完全确立后，才将第三步的数学关系精确翻译为极简代数表达式。\n\n"
-            f"【经济学母题词汇表 (Economic Motif Vocabulary)——只提供机制语义与变换意图，严禁套用固定死公式】：\n"
-            f"- 相对利差与剪刀差 (Relative Spread / Divergence): 剥离共同宏观/行业趋势，刻画多空力量、预期差或供需剪刀差。自归一化，最纯粹正交；\n"
-            f"- 规模与基数消除 (Scale & Baseline Normalization): 结合总量基准消除市值、规模或总体曝光偏倚，注意必须结合字段物理定义域（如金额/比率/概率）设计安全无偏的归一化方式；\n"
-            f"- 交互调节与催化放大 (Interaction & Conditioning): 利用置信度、惊奇度或催化剂指标调节主信号的风险敞口，实现有条件的强弱放大；\n"
-            f"- 分布离散度与信息不确定性 (Dispersion & Uncertainty Proxy): 刻画截面离散度、市场参与者分歧度或预期迷茫度，捕捉市场定价效率低下期；\n"
-            f"- 尾心曲率与两极分化 (Tail-to-Center / Kurtosis Proxy): 刻画分布形态是两极化厚尾（高分歧/危机）还是单峰收敛，捕捉极端定价机会；\n"
-            f"- 边际冲击与动态跃迁 (Temporal Shock - 仅限 SHOCK 假说): 捕捉慢变量水平值背后的突变动量或意外冲击（如超预期业绩修正、舆情突变）。\n\n"
-            f"【铁律 A：主锚字段与归一化字段的“冷热非对称配对”(本批由 Python 物理校验，不合规种子直接拒收)】：\n"
-            f"- 严禁全部扎堆使用 alpha_count 最高的热门字段，也严禁所有字段都从 HOT 档里挑；\n"
-            f"- 每个种子的字段组合必须同时满足：\n"
-            f"  * 分子主信号 = 1 个低拥挤度细分字段 (coverage >= 0.25 且 alpha_pct <= 0.40，即 COLD 档)，代表未被充分挖掘的细分业务流或特定情绪维度；\n"
-            f"  * 分母/差分基准 = 1 个高覆盖度内生总量字段 (coverage >= 0.80，如总资产、总报道数、一致预期均值)，用于剥离规模噪音；\n"
-            f"- 该配对既保证信号在截面上的逻辑完备性，又从源头避开全平台拥挤赛道，是 ProdCorr < 0.65 的结构性前提；\n"
-            f"- 下方已给出可直接采用的冷热配对清单 (pairing_candidates)，可据此展开假说，但不得照抄公式。\n\n"
-            f"【硬性反模板与阶段算子复杂度预算】：\n"
-            f"- 复杂度预算：Stage 0 表达式外层总算子数必须 <= 3，保持因果逻辑极简与纯粹；\n"
-            f"- 假说举证准入 (hypothesis_type)：\n"
-            f"  * LEVEL (状态假说，默认)：仅使用基础代数算子 (add, subtract, multiply, divide, reverse) 与 vec_* 标量化，严禁时序与截面算子；\n"
-            f"  * SHOCK (边际突变/状态冲击假说)：允许且仅允许使用恰好 1 个基础时序算子 (ts_delta, ts_decay_linear, ts_zscore, ts_mean)，且必须在因果链中举证突变逻辑并匹配 update_frequency (日频 3~21，季频 60+)；\n"
-            f"- 绝对红线：Stage 0 严禁使用任何截面算子 (group_*, rank) 与非线性装潢算子 (winsorize, s_log_1p, signed_power, hump)，100% 留待 Stage 1 根据回测病灶对症解锁；严禁混入任何外部量价 (PV) 字段；\n"
-            f"- 标注原因的反面清单 (Negative Anti-Patterns)：\n"
-            f"  * ❌ 盲目套用非负除数：严禁机械式拼接无意义分母！若分子已是纯剪刀差，根本无需除法分母；若需除法，分母必须具备明确的内生规模/基数含义，且严防除零与符号反转；\n"
-            f"  * ❌ 伪因果相乘：双 [-1, 1] 字段严禁直接相乘（负负得正造成虚假利好伪因果）；\n"
-            f"  * ❌ 维度混杂加减：将不同物理量纲、未进行无量纲化或未在同一空间对齐的字段直接加减。\n\n"
-            f"【候选字段全量物理画像清单 (含拥挤度分位与配对角色建议)】:\n{json.dumps(fields_meta_list, ensure_ascii=False, indent=1)}\n\n"
+            f"【ATOM Alpha 种子挖掘核心准则 (GrandMaster 铁律)】：\n"
+            f"1. 严格锁定单数据集：所有字段必须 100% 来自指定的单数据集 ({self.dataset_id})，严禁跨数据集混用外部量价 (PV) 字段；\n"
+            f"2. 字段数预算：每个种子使用 1~3 个字段 (1 <= fields <= 3)：单字段走纯 TS/CS 决策树自归一，双字段走冷热非对称配对（divide / 同量纲 subtract / ts_regression / trade_when）；\n"
+            f"3. 算子数量预算：表达式总算子数必须 <= 6 (op <= 6)，保持因果链条紧凑，杜绝冗余堆叠；\n"
+            f"4. 🚫 【绝对红线：严禁在种子挖掘期使用加法和乘法 (+, *, add, multiply)】：\n"
+            f"   - 严禁任何形式的 A + B 或 A * B，以及 add(A, B) 或 multiply(A, B)！\n"
+            f"   - 原因：单特征信号尚未确立前，粗暴相加相乘属于高阶多项式样本内强行过拟合，且导致量纲混乱与负负得正伪因果。多信号组合是组合优化器的职责，严禁提前写入单因子公式！\n"
+            f"5. ✅ 【推荐算子生态：融合单因子决策树 (Single Factor Decision Tree)】：\n"
+            f"   - 数据清洗与极值处理：winsorize(A, std=4) 或 std=3，防止毛刺毁掉排序；\n"
+            f"   - 形状映射与尾部强调：signed_power(A, 0.5)（凹函数压缩防极端值）或 signed_power(A, 2.0)，s_log_1p(A)；\n"
+            f"   - 行业截面中性化：group_zscore(A, subindustry/industry), group_neutralize(A, subindustry/industry), group_rank(A, subindustry), rank(A), scale(A)；\n"
+            f"   - 时间序列动态：ts_decay_linear(A, d), ts_delta(A, d), ts_zscore(A, d), ts_regression(y, x, d, rettype=0), ts_arg_max(A, d), ts_rank(A, d), ts_mean(A, d)；\n"
+            f"   - 预期差/残差剪刀差：subtract(A, B) 或 A - B（必须为同一量纲，如 Actual - Estimate，或 Feature - SectorMean）；\n"
+            f"   - 内生规模与强度消除：divide(A, B) 或 A / B（B 为总资产、总报道数等内生规模分母）；\n"
+            f"   - 逻辑状态激活：trade_when(cond, A, -1) 或 if_else(greater(B, threshold), A, 0)；\n"
+            f"6. ⏳ 【自然交易日历时间窗口铁律 (拒绝 4, 17, 44 等无意义随机数)】：\n"
+            f"   - 所有时序算子的回溯天数 d 必须严格选用具有制度性/经济学含义的自然日历网格：\n"
+            f"     * 5 (1周流动性/情绪反转)\n"
+            f"     * 10 (双周调仓节奏)\n"
+            f"     * 20 / 22 (1个月月度财报漂移/期权交割)\n"
+            f"     * 63 (1季度美股10-Q季报修正)\n"
+            f"     * 126 (半年度组合再平衡)\n"
+            f"     * 252 (1年美股10-K年报/滚动年化Beta与波动率)\n"
+            f"   - 严禁出现 4、17、44、45 等无经济学依据的局部过拟合窗口数字！\n\n"
+            f"【铁律 A：主锚字段与归一化字段的冷热配对】：\n"
+            f"- 分子主信号优先选用低拥挤度细分字段 (COLD 档，alpha_pct <= 0.40)；\n"
+            f"- 分母/差分基准选用高覆盖度内生字段 (coverage >= 0.80)，用于剥离规模噪音。\n\n"
+            f"【候选字段全量物理画像清单】:\n{json.dumps(fields_meta_list, ensure_ascii=False, indent=1)}\n\n"
             f"【推荐冷热非对称配对清单】:\n{json.dumps(pairing_candidates, ensure_ascii=False, indent=1)}\n\n"
-            f"【输出格式契约】必须返回严格的 JSON 对象（严格按以下键顺序输出，先完成深度研究与机理映射，最后才输出 expression）：\n"
+            f"【输出格式契约】必须返回严格的 JSON 对象（先完成商业机理研判，最后输出 expression）：\n"
             f"{{\n"
             f'  "dataset_field_study": {{\n'
-            f'    "dataset_essence": "对该数据集底层商业生成过程、更新频率特征与核心未充分定价摩擦点的深度研判",\n'
+            f'    "dataset_essence": "对该单数据集底层商业生成过程与核心未充分定价摩擦点的深度研判",\n'
             f'    "economic_clusters": [\n'
-            f'      {{"cluster_name": "涌现维度名称", "fields": ["字段名..."], "cluster_logic": "该簇字段的内在经济关联及去混杂噪音逻辑"}}\n'
+            f'      {{"cluster_name": "业务簇名称", "fields": ["字段名..."], "cluster_logic": "内在经济关联与去噪逻辑"}}\n'
             f"    ]\n"
             f"  }},\n"
             f'  "signals": [\n'
             f"    {{\n"
             f'      "id": "SEED_01",\n'
-            f'      "cluster_ref": "所属涌现维度名称",\n'
-            f'      "hypothesis_type": "LEVEL",  // 假说类型: LEVEL (慢变量水平值/截面分布，纯代数) 或 SHOCK (边际突变/状态冲击，举证需要 ts_delta/ts_zscore)\n'
-            f'      "fields_used": ["本次选用的 2~4 个具体字段列表"],\n'
-            f'      "field_semantics_mapping": "逐一剖析所选字段的商业实质、物理量纲及为何如此组合以剥离规模或基数噪音",\n'
-            f'      "economic_mechanism": "完整因果传导链：底层异动 -> 市场参与者认知摩擦/交易约束 -> 价格修正方向與持续周期",\n'
+            f'      "cluster_ref": "所属业务簇名称",\n'
+            f'      "fields_used": ["选用的1~3个具体字段名 (必须来自当前单数据集)"],\n'
+            f'      "field_semantics_mapping": "逐一剖析字段商业实质、物理量纲及为何如此组合以剥离规模或基数噪音",\n'
+            f'      "economic_mechanism": "完整因果传导链：底层异动 -> 市场参与者认知摩擦/交易约束 -> 价格修正方向与持续周期",\n'
             f'      "expected_polarity": 1,\n'
-            f'      "expression": "<此处填入由上方语义映射与经济机制唯一推导出的 FastExpr 表达式>"\n'
+            f'      "expression": "<此处填入由上方因果机制推导出的 FastExpr 表达式，op<=6，严禁 + 和 *，日历窗口对齐>"\n'
             f"    }}\n"
             f"  ]\n"
             f"}}"
@@ -348,6 +348,7 @@ class AegisPipelineController:
         context = {
             "fields": sampled_names,
             "fields_meta": fields_meta_list,
+            "pairing_candidates": pairing_candidates,
             "count": count,
             "task_tag": f"stage0_{self.dataset_id}"
         }
@@ -452,49 +453,36 @@ class AegisPipelineController:
                         "times": 0
                     })
 
-        # 直接使用毫秒级纯 Python DimensionAuditor 替代冗余的 auditor_session LLM 调用
+        # 直接使用毫秒级纯 Python ASTSandboxCorrector 与 DimensionAuditor 进行 ATOM Alpha 门禁审查
         signals = []
         for s in candidate_signals:
             expr = s["expression"]
+            # 1. 自动日历网格吸附 (将 4->5, 17->20, 44->63 等)
+            expr = ASTSandboxCorrector.snap_economic_calendar_windows(expr)
+            s["expression"] = expr
+
+            # 2. Stage 0 ATOM Alpha 专属门禁审查:
+            # 严禁 +, *, add, multiply | op <= 6 | 1 <= fields <= 3 | 100% 同单数据集
+            atom_ok, atom_issues, op_count, used_fields = ASTSandboxCorrector.audit_atom_stage0_expression(
+                expr, valid_dataset_fields=set(all_field_names)
+            )
+            if not atom_ok:
+                continue
+
+            # 3. 量纲守恒与 PV 污染拦截 (上限 op <= 6)
             audit_res_ast = DimensionAuditor.audit_expression(
                 expr,
                 known_fields=fields_dict,
                 category=self.category,
-                allow_pv_cross=False
+                allow_pv_cross=False,
+                max_operators=6
             )
-            is_valid = audit_res_ast.get("is_valid", True)
-
-            # Stage 0 复杂度预算与举证准入 (Complexity Budget <= 3 + Evidentiary Admission)
-            # 1. 物理封杀所有跨截面算子与非线性装潢算子 (一律留待 Stage 1)
-            # 必须使用 Python AST 解析出的真实调用算子集合 (杜绝因字段名包含 quantile/rank 等词根发生误杀)
-            called_ops = set(audit_res_ast.get("called_operators", []))
-            disallowed_ops = {"rank", "group_rank", "quantile", "group_quantile", "scale", "group_scale",
-                              "group_neutralize", "group_zscore", "winsorize", "signed_power", "s_log_1p", "hump", "trade_when"}
-            if called_ops.intersection(disallowed_ops):
+            if not audit_res_ast.get("is_valid", True):
                 continue
 
-            # 2. 算子预算限制 (Stage 0 严禁复杂堆砌，总算子数 <= 3)
-            op_count = audit_res_ast.get("operator_count", expr.count("("))
-            if op_count > 3:
-                continue
-
-            # 3. 假说类型举证准入 (按 AST 节点调用真实次数严格校验，彻底杜绝 set 去重漏洞与 Prompt/代码矛盾)
-            h_type = str(s.get("hypothesis_type", "LEVEL")).upper()
-            temporal_calls = self._get_ast_temporal_calls(expr)
-
-            if h_type == "SHOCK":
-                # SHOCK 假说允许且仅允许使用恰好 1 个时序算子，且算子必须在 ALLOWED_SHOCK_TEMPORAL 白名单内
-                if len(temporal_calls) != 1 or temporal_calls[0] not in self.ALLOWED_SHOCK_TEMPORAL:
-                    continue
-            else:
-                # LEVEL 假说保持严格纯代数，严禁任何时序算子调用
-                if len(temporal_calls) > 0:
-                    continue
-
-            if is_valid:
-                # 强制使用 Python AST 真实提取的数据集字段列表覆盖 LLM 自报字段，杜绝虚报冷门字段绕过铁律 A
-                s["fields_used"] = audit_res_ast.get("used_fields") or s.get("fields_used", [])
-                signals.append(s)
+            # 强制使用 Python AST 真实提取的数据集字段列表覆盖 LLM 自报字段
+            s["fields_used"] = list(used_fields)
+            signals.append(s)
 
         # ---------------- 铁律 A 物理校验: 未构成冷热非对称配对的种子直接拒收 ----------------
         signals, pairing_rejected, pairing_report = enforce_stage0_pairing(
@@ -514,32 +502,19 @@ class AegisPipelineController:
                 f"(存活率 {pairing_report['survival_ratio']:.0%})。"
             )
 
-        tasks_dir = self.client.tasks_dir or os.path.join(self.base_dir, ".agent_tasks")
-        stage0_resp = os.path.join(tasks_dir, f"resp_aegis-seed-synthesizer_stage0_{self.dataset_id}.json")
-
         if not signals:
-            if os.path.exists(stage0_resp):
-                try:
-                    os.remove(stage0_resp)
-                except Exception:
-                    pass
             raise RuntimeError(
                 f"❌ 【Stage 0 全员合规审查被拒】候选主信号原型全部未通过技术审查 / 铁律 A 冷热配对校验！\n"
-                f"   已物理清理 Stage 0 响应缓存，系统拒绝违规死模板强行入池，请重新启动大模型推演合规种子！\n"
+                f"   系统拒绝违规死模板强行入池，请重新启动大模型推演合规种子！\n"
                 f"   拒收详情: {json.dumps(pairing_report.get('rejected_detail', [])[:3], ensure_ascii=False)}"
             )
 
         # 若因同质化或语法违规导致存活种子不足 50%，打回重造，绝不接受缩水种子池
         min_required = max(1, int(count * 0.5))
         if len(signals) < min_required:
-            if os.path.exists(stage0_resp):
-                try:
-                    os.remove(stage0_resp)
-                except Exception:
-                    pass
             raise RuntimeError(
                 f"❌ 【Stage 0 存活种子不足】要求生成 {count} 个，经 AST 骨架多样性与量纲门禁审查后仅存活 {len(signals)} 个 (低于最低阈值 {min_required})！\n"
-                f"   已物理清理 Stage 0 响应缓存，系统拒绝缩水种子池，请重新启动大模型推演高多样性合规种子！"
+                f"   系统拒绝缩水种子池，请重新启动大模型推演高多样性合规种子！"
             )
 
         pool = self.load_signals_pool()
@@ -560,14 +535,7 @@ class AegisPipelineController:
             print(f"⚠️ [铁律 A] 配对审计报告落盘失败: {e}")
         self.save_signals_pool(pool)
 
-        # 种子池落盘成功后，清理 Stage 0 临时任务缓存，因为种子已永久沉淀在 total_signals.json 中
-        if os.path.exists(stage0_resp):
-            try:
-                os.remove(stage0_resp)
-            except Exception:
-                pass
-
-        print(f"✅ 阶段 0 生成并通过技术审查完毕，共 {len(signals)} 个纯四则运算双字段原型写入 {self.signals_pool_file}")
+        print(f"✅ 阶段 0 生成并通过技术审查完毕，共 {len(signals)} 个 ATOM Alpha 双/三字段主信号原型写入 {self.signals_pool_file}")
         return signals
 
     # -------------------------------------------------------------
@@ -614,6 +582,9 @@ class AegisPipelineController:
                 "type": meta.get("type", "MATRIX"),
                 "description": meta.get("description", "无描述"),
                 "coverage": round(meta.get("coverage", 1.0), 3),
+                "domain": meta.get("domain", "unbounded"),
+                "is_sparse": meta.get("is_sparse", False),
+                "alpha_count": meta.get("alpha_count", meta.get("alphaCount", 0)),
                 "update_frequency": freq,
                 "semantic_role": meta.get("semantic_role", "Signal_Flow"),
                 "prescriptions": meta.get("prescriptions", []),
@@ -689,10 +660,12 @@ class AegisPipelineController:
                     os.remove(rx_path)
                 except Exception:
                     pass
+            self.last_step_verdict = None
+            self.last_step_qa_prescriptions = []
             stage_guidance = (
                 "【阶段科研使命: Step #1 假说多维实证检验 (Clean Empirical Validation)】:\n"
                 "- 当前假说尚未经过回测检验，不存在母本 (parent_alpha 为空)，因此本轮 100% 为假说实证探索 (type 统一填 'empirical_probe')！\n"
-                "- 【严禁算子暴力堆砌】：在证实该假说具备基础预测力之前，严禁盲目套用 winsorize、s_log_1p、signed_power 等非线性装潢算子！\n"
+                "- 【基础清洗与周期高原】：允许使用 ts_backfill 与 winsorize(..., std=4) 进行基础清洗，并在 (5, 20)、(20, 63)、(63, 126)、(63, 252) 自然日历周期对上检验信号的参数高原稳健性！\n"
                 "- 【保持极简纯净】：每条变体外层包装算子严格控制在 1~3 个以内（仅使用匹配更新频率的时序差分/均值/Z-score 与截面 group_rank / group_neutralize），从不同时间跨度与截面基准干净地检验该经济学假说是否成立。\n"
                 f"- 【中性化基准约束】：在 {self.parallelism} 条实证变体中，必须保证至少 30% (>= {max(int(self.parallelism * 0.3), 1)} 条) 变体使用基础截面中性化 ('SUBINDUSTRY' 或 'INDUSTRY')，以验证信号源是否自带真实 Alpha 潜力，严禁全量寄生在高阶风险中性化残差中！\n"
             )
@@ -737,10 +710,11 @@ class AegisPipelineController:
             verdict = Gatekeeper.diagnose_and_route_prescriptions(
                 alpha_metrics=p_metrics,
                 checks_parsed=parent_alpha or {},
-                yearly_stats=p_metrics.get("yearly_stats", []),
+                yearly_stats=p_metrics.get("yearly_stats", []) or (parent_alpha.get("yearly_stats", []) if parent_alpha else []),
                 operator_count=parent_op_count,
                 prod_corr=(Gatekeeper.extract_prod_corr(parent_alpha) if parent_alpha else None) or (parent_alpha.get("prod_corr") if parent_alpha else None),
-                max_operator_limit=getattr(self, "max_ast_operators", 8)
+                max_operator_limit=getattr(self, "max_ast_operators", 8),
+                parent_alpha=parent_alpha
             )
             # 处方凭据落盘，供 Gate 4 Pre-Flight 审计核验
             rx_path = os.path.join(self.campaign_dir, "authorized_mutations.json")
@@ -748,13 +722,14 @@ class AegisPipelineController:
                 with open(rx_path, 'w', encoding='utf-8') as rf:
                     json.dump({
                         "symptoms": verdict["symptoms"],
-                        "allowed_mutations": verdict["allowed_mutations"]
+                        "forensic_clues": verdict.get("forensic_clues", []),
+                        "allowed_mutations": []
                     }, rf, ensure_ascii=False, indent=2)
             except Exception as e:
                 print(f"⚠️ [Gatekeeper] 处方锁凭据落盘异常: {e}")
 
             symptoms_str = ", ".join(verdict["symptoms"]) if verdict["symptoms"] else "无严重结构性病灶"
-            allowed_mutations_str = ", ".join(verdict["allowed_mutations"])
+            forensic_clues_str = "\n".join(f"- {c}" for c in verdict.get("forensic_clues", [])) if verdict.get("forensic_clues") else "- 各项微观结构与统计属性稳健"
             rag_prescriptions_str = json.dumps(verdict["rag_prescriptions"], ensure_ascii=False, indent=1) if verdict["rag_prescriptions"] else "暂无匹配处方卡"
 
             polarity_warning = ""
@@ -801,62 +776,42 @@ class AegisPipelineController:
 
             if surgery_mode:
                 mission_line = (
-                    f"- 🩺 【场景路由 = 老兵精修】母本 |Sharpe|={_parent_sharpe:.2f} 已是局部极值，本轮目标不是全绿，"
+                    f"- 🩺 【场景路由 = 老兵精修 (1+9+10 分仓制)】母本 |Sharpe|={_parent_sharpe:.2f} 已是局部极值，本轮目标不是全绿，"
                     f"而是按母本病灶选一条轴做单点相对改进 (Margin 升 >= 20% / Turnover 降 >= 20%『仅当母本换手 > 30%』/ ProdCorr 降 >= 0.05)，"
                     f"且 |Sharpe| 不得低于母本。\n"
-                    f"- 🚫 严禁拆解骨架 {protected_skeleton}；LOW_SHARPE / CLUSTER_TEST 等由骨架本身决定的平台告警，本轮不必强制清零。\n"
+                    f"- ⚖️ 分仓配额: Slot 1 逐字复现母本控制槽；Slot 2~10 (45%) 锁定母本主锚特征做单变量微调；Slot 11~20 (50%) 彻底重构全新数学拓扑；\n"
                 )
             else:
                 mission_line = (
                     "- 🎯 【全绿冲刺使命】: 必须对症下药将 Fails 与 Warnings 一并彻底清零（实现 0 FAIL + 0 WARNING 的 ALL PASS 状态）！\n"
                 )
 
+            self.last_step_verdict = verdict
+            self.last_step_qa_prescriptions = verdict.get("qa_prescriptions", [])
             stage_guidance = (
                 f"【阶段科研使命: Step #{step} 基于回测病灶的靶向因子工程 (Diagnostic-Driven Engineering)】:\n"
                 f"- 核心母本已证实存在显著信号！母本实测体检指标：Sharpe={p_sharpe:.2f}, Fitness={p_fit:.2f}, Turnover={p_turn:.2%}, Margin={p_margin:.2f}bps | Fails={p_fails} | Warnings={p_warnings}。\n"
                 f"{golden_profile_str}\n"
                 f"{mission_line}"
                 f"- 🩺 【法医确诊病灶】: {symptoms_str}\n"
-                f"- 💡 【专家推荐算子工具箱 (供参考，Agent 可基于因果逻辑自主选用平台合法算子)】: {allowed_mutations_str}\n"
+                f"- 🔬 【Gate 4 反事实法医病理线索 (Forensic Clues)】:\n{forensic_clues_str}\n"
                 f"- 📋 【靶向 Tier-2 处方指引】:\n{rag_prescriptions_str}\n"
                 + (f"\n{qa_insights_str}\n" if qa_insights_str else "")
                 + f"{polarity_warning}"
-                f"- 请严格根据确诊病灶对症下药（50% 探索新拓扑 + 50% 针对母本病灶精修），绝不盲目堆叠非线性算子！\n"
+                f"- 请严格根据反事实病理线索自主推演 DGP，结合第一性原理选配平台算子，绝不盲目堆叠非线性算子！\n"
             )
             output_schema_instruction = (
-                f"【输出格式契约】必须返回严格的 JSON 数组，共 {self.parallelism} 个变体对象（50% explore + 50% exploit）。\n"
+                f"【输出格式契约】必须返回严格的 JSON 数组，共 {self.parallelism} 个变体对象（1+9+10 三分天下分仓制）。\n"
                 f"每个对象必须包含以下 6 个键：slot, optimize_reason, expression, neutralization, type, original_alpha（先写 optimize_reason 诊断依据，再写 expression！）。\n"
             )
 
-        max_champ_ops = getattr(self, "max_champion_operators", 6)
-        max_ast_ops = getattr(self, "max_ast_operators", 8)
-        phase_name = "准冠军定向优化阶段" if getattr(self, "is_quasi_champion_optimization", False) else "常规研究挖掘阶段"
-        op_constraint_directive = (
-            f"【⚙️ 算子数硬约束 ({phase_name})】:\n"
-            f"- 当前阶段冠军算子数硬上限 <= {max_champ_ops}，AST 语法树调用总数必须 <= {max_ast_ops}！\n"
-            f"- 严禁过度嵌套复杂算子，保持因果逻辑纯净。回测前 Gate 2 将执行静态 AST 断言，超限 (>{max_ast_ops}) 物理拒收！\n"
-        )
-
-        golden_shot_directive = ""
-        if is_golden_shot:
-            ironlaw_directive = ""  # 解除 Golden Shot 加时赛双指令冲突: 锁定母本微调，不套用正交骨架探索
-            golden_shot_directive = (
-                "\n" + "🔥" * 35 + "\n"
-                "🎯 【准冠军加时冲刺微调锁定 (Golden Shot Overtime Lock)】:\n"
-                "- 当前进入准冠军加时冲刺！核心母本已经通过 ProdCorr (< 0.70) 与高 Margin 溢价门槛，夏普 1.45+，离生产线 1.58 仅差 0.04~0.10！\n"
-                "- 🔒 【骨架拓扑硬锁定】: 严禁大幅修改公式拓扑！严禁引入任何复杂新算子！必须 100% 锁定母本的极简算子结构！\n"
-                "- 🎛️ 【高精度网格微调】: 唯一允许的优化方向为精细调参：\n"
-                "  1. 窗口参数平滑微调 (例如 240d -> 200d / 220d / 260d，或 20d -> 15d / 25d)；\n"
-                "  2. 截面分组层级微调 (例如 industry <-> subindustry / sector)；\n"
-                "  3. 极差微调 (例如 winsorize std 从 3 调为 2.5 或 3.5)。\n"
-                f"- 变体的 {self.parallelism} 个槽位全部针对母本做高精度网格微调，冲刺最后 0.05 夏普实现 1.58+ 完美登顶！\n"
-                + "🔥" * 35 + "\n"
-            )
-
-        # Step >= 2 或存在达标母本时: 下放同源冷门字段备选池 (Top-10 Low-Crowding Alternatives)
-        alt_candidates_str = ""
-        alt_candidates_list = []
-        if step >= 2 or parent_alpha is not None:
+        # ---------------- V3.1 极简瘦身 Prompt 构建 (< 1,000 Token) ----------------
+        # 1. 字段铁律约束
+        if step <= 2 and not parent_alpha:
+            field_rule_str = "【字段铁律 (Step 1~2 初筛阶段)】: 严格 100% 锁定种子初始的 2 个字段，严禁增减任何字段！严禁使用外部量价 (PV) 字段！\n"
+            alt_candidates_list = []
+        else:
+            field_rule_str = "【字段铁律 (Step 3~10 / 母本靶向优化)】: 允许从同数据集引入至多 1 个同源辅助特征做交互 (全表达式唯一字段总数严格 <= 3)！严禁跨数据集或引入外部量价字段！\n"
             all_fields = list(fields_dict.keys())
             core_used = set(used_field_names)
             valid_candidates = [
@@ -867,54 +822,135 @@ class AegisPipelineController:
                 key=lambda fn: fields_dict.get(fn, {}).get("coverage", 0) / (1 + math.log1p(fields_dict.get(fn, {}).get("alpha_count", 0))),
                 reverse=True
             )
-            top10_alts = valid_candidates[:10]
-            for fn in top10_alts:
-                f_meta = fields_dict.get(fn, {})
-                alt_candidates_list.append({
+            alt_candidates_list = [
+                {
                     "name": fn,
-                    "type": f_meta.get("type", "MATRIX"),
-                    "description": f_meta.get("description", "无描述"),
-                    "coverage": round(f_meta.get("coverage", 1.0), 3),
-                    "alpha_count": int(f_meta.get("alpha_count", 0)),
-                    "semantic_role": f_meta.get("semantic_role", "Signal_Flow")
-                })
-            if alt_candidates_list:
-                alt_candidates_str = (
-                    f"【同源冷门字段备选池 (Top-10 Low-Crowding Alternatives)】:\n"
-                    f"若母本存在 ProdCorr >= 0.65、CLUSTER 告警或拥挤瓶颈，在 Step >= 2 允许直接将原主锚平替为以下同源冷门字段:\n"
-                    f"{json.dumps(alt_candidates_list, ensure_ascii=False, indent=1)}\n\n"
-                )
+                    "type": fields_dict[fn].get("type", "MATRIX"),
+                    "description": fields_dict[fn].get("description", "无描述"),
+                    "coverage": round(fields_dict[fn].get("coverage", 1.0), 3),
+                    "alpha_count": fields_dict[fn].get("alpha_count", 0),
+                    "update_frequency": fields_dict[fn].get("update_frequency", "daily"),
+                    "domain": fields_dict[fn].get("domain", "unbounded"),
+                    "skewness": fields_dict[fn].get("skewness", "medium"),
+                    "is_sparse": fields_dict[fn].get("is_sparse", False),
+                }
+                for fn in valid_candidates[:10]
+            ]
+
+        # 2. 30% RAG Dropout 脱敏 (30% 概率完全不召回，强迫 AI 从第一性原理发散)
+        rag_dropout = (random.random() < 0.30)
+        qa_prompt_section = ""
+        if not rag_dropout and parent_alpha:
+            try:
+                from core.qa_rag_tool import format_qa_for_prompt
+                qa_prompt_section = format_qa_for_prompt(verdict.get("qa_prescriptions", [])[:2])
+            except Exception:
+                qa_prompt_section = ""
 
         prompt_parts = [
-            f"基于主信号核心 '{core_expr}' 生成 {self.parallelism} 条群体变体。\n",
-            f"当前演化轮次: Step #{step}\n",
-            f"主信号假说内涵: {seed_mech}\n",
-            f"目标区域: {self.region} | 股票池: {self.universe} | 预测延迟: Delay {self.delay} | 类别: {self.category}\n\n",
-            f"{op_constraint_directive}\n"
+            f"【量化变体生成使命】基于核心 '{core_expr}' 生成 {self.parallelism} 条群体变体。\n",
+            f"轮次: Step #{step} | 区域: {self.region} | 股票池: {self.universe} | 延迟: Delay {self.delay} | 类别: {self.category}\n",
+            f"假说内涵: {seed_mech}\n\n",
+            f"【核心字段全量物理画像 (请基于以下商业实质与分布属性推演 DGP)】:\n"
         ]
-        if golden_shot_directive:
-            prompt_parts.append(f"{golden_shot_directive}\n")
-        prompt_parts.append(f"{stage_guidance}\n")
-        prompt_parts.append(f"【核心字段物理画像】:\n{json.dumps(core_fields_meta, ensure_ascii=False, indent=1)}\n\n")
-        prompt_parts.append(f"{frequency_guidance}\n")
-        prompt_parts.append(f"{ironlaw_directive}\n")
+        for cm in core_fields_meta:
+            prompt_parts.append(
+                f"- {cm['name']} ({cm.get('type', 'MATRIX')}): 业务释义=\"{cm.get('description', '无')}\" | "
+                f"更新频率={cm.get('update_frequency', 'daily')} | 覆盖率={cm.get('coverage', 1.0)} | "
+                f"定义域={cm.get('domain', 'unbounded')} | 偏态={cm.get('skewness', 'medium')} | "
+                f"稀疏零值={cm.get('is_sparse', False)}\n"
+            )
+        prompt_parts.append(field_rule_str)
+
         if pairing_note:
-            prompt_parts.append(f"{pairing_note}")
-        if alt_candidates_str:
-            prompt_parts.append(f"{alt_candidates_str}")
-        prompt_parts.append(f"【区域动态高阶中性化白名单】:\n{neut_list}\n\n")
-        if pyramid_kb:
-            prompt_parts.append(f"【四级金字塔经验手册 (纯算子规则)】:\n{pyramid_kb}\n\n")
-        if inspiration:
-            prompt_parts.append(f"【当前探索灵感启发】:\n{inspiration}\n\n")
-        if top5:
-            prompt_parts.append(f"【Top-5 历史最优标杆】:\n{json.dumps(top5, ensure_ascii=False, indent=1)}\n\n")
+            prompt_parts.append(f"\n{pairing_note}\n")
+        if frequency_guidance:
+            prompt_parts.append(f"\n{frequency_guidance}\n")
+
+        if alt_candidates_list:
+            prompt_parts.append(f"同源备选特征参考 (最多增选1个): {json.dumps(alt_candidates_list, ensure_ascii=False)}\n")
+
+        # 核心指令注入：病灶法医确诊与处方 + 铁律硬指令 (Bug 1 关键修复)
+        prompt_parts.append(f"\n{stage_guidance}\n")
+        prompt_parts.append(f"\n{ironlaw_directive}\n")
+
+        # 反模式防坑双轨记忆注入
+        failed_digests = getattr(self, "failed_hypotheses_digest", [])
+        if failed_digests:
+            prompt_parts.append("\n【前车之鉴·被证伪机制防坑警示 (Anti-Pattern)】:\n")
+            for fh in failed_digests[-3:]:
+                prompt_parts.append(f"- ❌ {fh}\n")
+
         if parent_alpha:
-            prompt_parts.append(f"【母本最优参考】: {json.dumps(parent_alpha, ensure_ascii=False)}\n\n")
+            prompt_parts.append(f"{golden_profile_str}\n")
+            if qa_prompt_section:
+                prompt_parts.append(f"【因果问答启发】:\n{qa_prompt_section}\n")
+
+        if top5:
+            prompt_parts.append("【高分拓扑标杆 (Top 5)】:\n")
+            for t in top5[:5]:
+                expr_str = t.get("expression") or t.get("code") or ""
+                sh_str = f"Sharpe={t.get('sharpe', 0.0):.2f}" if "sharpe" in t else ""
+                prompt_parts.append(f"- {expr_str} ({sh_str})\n")
+
         if random20:
-            prompt_parts.append(f"【采样历史候选】:\n{json.dumps(random20, ensure_ascii=False, indent=1)}\n\n")
-        prompt_parts.append(f"{output_schema_instruction}")
+            prompt_parts.append("【破坏性灵感采样 (Random 20)】:\n")
+            for r in random20[:15]:
+                expr_str = r.get("expression") if isinstance(r, dict) else str(r)
+                prompt_parts.append(f"- {expr_str}\n")
+
+        if pyramid_kb:
+            prompt_parts.append(f"【金字塔经验参考】:\n{pyramid_kb}\n")
+        if inspiration:
+            prompt_parts.append(f"【跨界启发】:\n{inspiration}\n")
+
+        # 提取历史已测表达式集合，避免跨轮次重复生成被 AST Sandbox 拦截
+        tested_exprs = set()
+        if hasattr(self, "corrector") and self.corrector:
+            try:
+                conn = self.corrector._get_connection()
+                c = conn.cursor()
+                c.execute("SELECT expression FROM alpha_fingerprints WHERE region=? AND universe=? AND delay=?", (self.region, self.universe, self.delay))
+                for r in c.fetchall():
+                    if r[0]:
+                        tested_exprs.add(r[0].strip())
+                conn.close()
+            except Exception:
+                pass
+
+        if tested_exprs and step >= 2:
+            sampled_tested = list(tested_exprs)[:50]
+            tested_str = "\n".join(f"- {e}" for e in sampled_tested)
+            prompt_parts.append(
+                f"\n🚫 【严禁重复的历史已测表达式黑名单 (Duplicate Forbidden)】:\n"
+                f"以下表达式在历史轮次中已全部测过，除 Slot 1 对照槽允许保留母本外，其余卡槽绝对严禁重复生成下列公式！必须进行结构性或字段级创新：\n"
+                f"{tested_str}\n"
+            )
+
+        if surgery_mode:
+            format_spec = (
+                f"\n【输出格式硬契约 (老兵精修模式)】\n"
+                f"必须返回严格的 JSON 数组，共 {self.parallelism} 个变体对象。\n"
+                f"⚠️ 【必须严格遵守的 4 大门禁硬契约，不合规直接整批打回】:\n"
+                f"1. 严格键序: 必须先写 \"slot\" 和 \"optimize_reason\"，再写 \"expression\"！\n"
+                f"2. 假设充分性: 每个对象的 \"optimize_reason\" 必须不少于 25 字，且必须显式包含至少一个可验收的度量指标词 (如 'Sharpe', 'Margin', 'Turnover', 'ProdCorr', 'Cluster')！\n"
+                f"3. 控制槽基准: Slot 1 必须作为对照控制槽，逐字复制母本表达式 '{_parent_expr}'！\n"
+                f"4. 1+9+10 分仓保护: Slot 2~10 (9槽) 必须锚定母本主锚字段 ({used_field_names}) 针对法医线索做单变量微创；Slot 11~{self.parallelism} (10槽) 彻底解除母本骨架限制，结合 DGP 与同源冷字段重构全新数学拓扑；严禁超过 2 个槽位做纯数字窗口微调！\n"
+                f"对象结构示例: {{\"slot\": 1, \"optimize_reason\": \"保留母本核心骨架作为对照控制槽，严格比对基准 Sharpe 和 Margin 表现\", \"expression\": \"{_parent_expr}\", \"neutralization\": \"SUBINDUSTRY\", \"type\": \"exploit\"}}"
+            )
+        else:
+            format_spec = (
+                f"\n【输出格式硬契约 (假说开拓模式)】\n"
+                f"必须返回严格的 JSON 数组，共 {self.parallelism} 个变体对象。\n"
+                f"⚠️ 【必须严格遵守的 3 大门禁硬契约，不合规直接整批打回】:\n"
+                f"1. 严格键序: 必须先写 \"slot\" 和 \"optimize_reason\"，再写 \"expression\"！\n"
+                f"2. 假设充分性: 每个对象的 \"optimize_reason\" 必须不少于 25 字，且必须显式包含至少一个可验收的度量指标词 (如 'Sharpe', 'Margin', 'Turnover', 'ProdCorr')！\n"
+                f"3. 拓扑多样性: 至少 40% 槽位外层不使用 group_rank (使用 group_neutralize/group_zscore)，并按 (N, 2N) 双窗口成对探针设计！\n"
+                f"对象结构示例: {{\"slot\": 1, \"optimize_reason\": \"基于时序动量假说平滑日频噪声，预期提升夏普 Sharpe 并压制日间换手 Turnover\", \"expression\": \"FastExpr公式\", \"neutralization\": \"SUBINDUSTRY\", \"type\": \"explore\"}}"
+            )
+        prompt_parts.append(format_spec)
         prompt = "".join(prompt_parts)
+
         context = {
             "core_expr": core_expr,
             "core_fields": core_fields_meta,
@@ -925,27 +961,85 @@ class AegisPipelineController:
             "category": self.category,
             "region": self.region,
             "step": step,
+            "task_tag": f"{seed['id']}_s{step}",
             "pyramid_kb": pyramid_kb,
-            "inspiration": inspiration,
-            "top5": top5,
-            "random20": random20,
-            "task_tag": f"{seed['id']}_s{step}"
+            "inspiration": inspiration
         }
 
         variants = session.send_message_sync(prompt, json_mode=True, context=context)
         if not (isinstance(variants, list) and len(variants) > 0):
-            if self.client.mock_fallback or os.environ.get("AEGIS_MOCK_MODE") == "1" or self.mock_only:
-                variants = session._rule_fallback(prompt, json_mode=True, context=context)
-            else:
-                raise RuntimeError(
-                    "❌ 【严禁死模板】大模型未返回有效变体，系统已严禁回退至死模板！"
-                    "请检查智能体连接或切换为有效后端 (内置 SubAgent / LLM API)！"
+            raise RuntimeError(
+                "❌ 【严禁死模板】大模型未返回有效变体，系统已严禁回退至死模板！"
+                "请检查智能体连接或切换为有效后端 (内置 SubAgent / LLM API)！"
+            )
+
+        # ---------------- Pre-Flight 批内自闭环校验与局部重写 (最多重试 2 次，杜绝 Python 替考与未捕获崩溃) ----------------
+        max_local_retries = 2
+        for retry_idx in range(max_local_retries + 1):
+            slot_errors = []
+            seen_in_batch = set()
+            _p_clean = self.corrector.correct_expression(_parent_expr) if (hasattr(self, "corrector") and self.corrector and _parent_expr) else (_parent_expr.strip() if _parent_expr else "")
+
+            for idx, v in enumerate(variants):
+                if not isinstance(v, dict):
+                    continue
+                slot_no = int(v.get("slot", idx + 1))
+                raw_e = v.get("expression", "").strip()
+                corr_e = self.corrector.correct_expression(raw_e) if (hasattr(self, "corrector") and self.corrector) else raw_e
+                v["expression"] = corr_e
+
+                # (a) 校验 AST 语法与量纲守恒
+                audit_known_fields = dict(fields_dict)
+                for cf in used_field_names:
+                    if cf not in audit_known_fields:
+                        audit_known_fields[cf] = {"type": "MATRIX", "coverage": 1.0, "description": "母本核心特征"}
+                ast_audit = DimensionAuditor.audit_expression(
+                    corr_e, audit_known_fields, category=self.category,
+                    max_operators=self.max_ast_operators, step=(2 if surgery_mode else step)
                 )
+                if not ast_audit["is_valid"]:
+                    slot_errors.append(f"Slot {slot_no} AST/量纲违规: {'; '.join(ast_audit['issues'])}")
+                    continue
+
+                # (b) 校验历史库重复与批内重复 (豁免 Slot 1 控制槽)
+                is_ctrl = (slot_no == 1 and _p_clean and corr_e == _p_clean)
+                if not is_ctrl:
+                    if (tested_exprs and (corr_e in tested_exprs or raw_e in tested_exprs)) or corr_e in seen_in_batch:
+                        slot_errors.append(f"Slot {slot_no} 表达式 '{corr_e}' 与历史已测或本批其他槽位重复")
+                        continue
+                seen_in_batch.add(corr_e)
+
+            if not slot_errors or retry_idx == max_local_retries:
+                if slot_errors:
+                    print(f"⚠️ [Pre-Flight 达到最大重试次数] 仍有 {len(slot_errors)} 个槽位存疑，交付门禁系统兜底。")
+                break
+
+            # 构造局部返工 Prompt，仅要求重写违规槽位并按 slot 编号热合并
+            print(f"⚠️ [Pre-Flight 局部返工 #{retry_idx+1}] 检测到 {len(slot_errors)} 个槽位不合规，打回大模型重思...")
+            retry_prompt = (
+                prompt + "\n\n🚨 【Pre-Flight 本地编译器驳回通知】\n"
+                "你刚才生成的变体中，以下槽位未能通过物理门禁审查：\n"
+                + "\n".join(f"- {err}" for err in slot_errors)
+                + "\n请从字段底层物理意义出发，重新构思上述违规槽位，并返回完整的 20 槽 JSON 数组（或仅返回修正后的违规槽位 JSON 数组）！"
+            )
+            try:
+                patch_res = session.send_message_sync(retry_prompt, json_mode=True, context=context)
+                if isinstance(patch_res, list) and len(patch_res) > 0:
+                    by_slot = {int(item.get("slot", i + 1)): item for i, item in enumerate(variants) if isinstance(item, dict)}
+                    for new_item in patch_res:
+                        if isinstance(new_item, dict) and "slot" in new_item and "expression" in new_item:
+                            try:
+                                s_idx = int(new_item["slot"])
+                                by_slot[s_idx] = new_item
+                            except (ValueError, TypeError):
+                                pass
+                    variants = [by_slot[k] for k in sorted(by_slot.keys())]
+            except Exception as e:
+                print(f"⚠️ [Pre-Flight 重试捕获异常]: {e}，跳过本次重试。")
+                break
 
         # ---------------- 铁律 B 物理核验: 非 rank 外壳占比 + 成对双窗口矩阵 ----------------
         mock_env = (self.client.mock_only or self.mock_only or os.environ.get("AEGIS_MOCK_MODE") == "1")
-        tasks_dir = self.client.tasks_dir or os.path.join(self.base_dir, ".agent_tasks")
-        swarm_resp = os.path.join(tasks_dir, f"resp_aegis-swarm-generator_{seed['id']}_s{step}.json")
         try:
             audit_report = SwarmAuditor.enforce(
                 variants,
@@ -958,12 +1052,6 @@ class AegisPipelineController:
                 strict=(step <= 1 and not mock_env)
             )
         except (ValueError, PermissionError, RuntimeError) as e:
-            # 物理清理违规响应缓存，彻底打破 BuiltinAgent 重试时的死锁循环
-            if os.path.exists(swarm_resp):
-                try:
-                    os.remove(swarm_resp)
-                except Exception:
-                    pass
             raise e
 
         try:
@@ -1147,8 +1235,23 @@ class AegisPipelineController:
         elif prod_corr >= 0.70:
             reasons.append(f"ProdCorr {prod_corr:.4f} >= 0.70 (与生产库严重共线)")
 
+        warning_cnt = alpha.get("warning_count")
+        fail_cnt = alpha.get("fail_count")
+        if warning_cnt is None or fail_cnt is None:
+            chk_parsed = Gatekeeper.parse_brain_checks(alpha)
+            if warning_cnt is None:
+                warning_cnt = len(chk_parsed.get("warnings", []))
+            if fail_cnt is None:
+                fail_cnt = chk_parsed.get("fail_count", 0)
+        zero_warnings = (int(warning_cnt or 0) == 0 and int(fail_cnt or 0) == 0)
+
         op_count = self._operator_count_of(alpha)
-        max_ops = getattr(self, "max_champion_operators", 10 if bool(getattr(self, "targeted_alpha_id", None)) else 6)
+        is_near = Gatekeeper.is_near_miss_champion(alpha, self.region)
+        is_quasi_or_perfect = (
+            bool(getattr(self, "targeted_alpha_id", None))
+            or getattr(self, "is_quasi_champion_optimization", False)
+        )
+        max_ops = 10 if is_quasi_or_perfect else getattr(self, "max_champion_operators", 6)
         if op_count > max_ops:
             phase_desc = "准冠军优化阶段" if max_ops >= 10 else "研究挖掘阶段"
             reasons.append(f"算子数 {op_count} > {max_ops} ({phase_desc}非极简结构)")
@@ -1161,9 +1264,8 @@ class AegisPipelineController:
         if margin_bps < premium:
             reasons.append(f"Margin {margin_bps:.1f} bps 未达区域溢价门槛 {premium:.1f} bps")
 
-        # 仅当命中严重共线 (>= 0.70) 或算子复杂度超标 (> 6) 时硬性否决
+        # 仅当命中严重共线 (>= 0.70) 或算子复杂度超标时硬性否决
         hard_rejected = any(">= 0.70" in r or "算子数" in r for r in reasons)
-        is_near = Gatekeeper.is_near_miss_champion(alpha, self.region)
         if not hard_rejected:
             if verified and prod_corr < 0.70:
                 s_val = float(alpha.get("sharpe") or (alpha.get("metrics") or {}).get("sharpe") or 0.0)
@@ -1177,17 +1279,6 @@ class AegisPipelineController:
                 status = "DISQUALIFIED"
         else:
             status = "DISQUALIFIED"
-
-        # 0 WARNING 完美全绿判定 (0 FAIL + 0 WARNING)
-        warning_cnt = alpha.get("warning_count")
-        fail_cnt = alpha.get("fail_count")
-        if warning_cnt is None or fail_cnt is None:
-            chk_parsed = Gatekeeper.parse_brain_checks(alpha)
-            if warning_cnt is None:
-                warning_cnt = len(chk_parsed.get("warnings", []))
-            if fail_cnt is None:
-                fail_cnt = chk_parsed.get("fail_count", 0)
-        zero_warnings = (int(warning_cnt or 0) == 0 and int(fail_cnt or 0) == 0)
 
         return {
             "eligible": not hard_rejected,
@@ -1204,16 +1295,91 @@ class AegisPipelineController:
             "reasons": reasons,
         }
 
+    # -------------------------------------------------------------
+    # 单批次定向回测执行器 (Direct Single Batch Runner)
+    # -------------------------------------------------------------
+    async def run_single_batch(self, batch_file_path: str) -> dict:
+        """
+        单批次变体极速仿真执行器 (Single Batch Direct Runner)
+        允许宿主 Agent 或外部脚本直接传入 20 槽变体 JSON，执行 AST 门禁、静默并发回测与 ALL PASS 准入核验
+        """
+        print("\n" + "=" * 65)
+        print("⚡ 【AEGIS GrandMaster 单批次定向回测执行器启动】")
+        print(f"📍 批次文件: {batch_file_path}")
+        print(f"📍 回测环境: {self.region} / {self.universe} / Delay {self.delay} / {self.category}")
+        print("=" * 65)
+
+        if not os.path.exists(batch_file_path):
+            raise FileNotFoundError(f"未找到指定的批次文件: {batch_file_path}")
+
+        with open(batch_file_path, "r", encoding="utf-8") as bf:
+            batch_data = json.load(bf)
+
+        variants = batch_data.get("items") if isinstance(batch_data, dict) else batch_data
+        if not isinstance(variants, list) or not variants:
+            raise ValueError(f"批次文件 {batch_file_path} 中未包含合法的变体列表 (list)")
+
+        # 执行静默并发回测 (内置 Gate 2 AST 维度审计与 Gate 3 沙箱排重门禁)
+        campaign_ledger = os.path.join(self.campaign_dir, "exploration_ledger.json")
+        from core.sim_runner import SimBatchRunner
+        if self.mock_only:
+            os.environ["AEGIS_MOCK_MODE"] = "1"
+        sim_res = await SimBatchRunner.run_batch_silently(
+            batch_file_path=batch_file_path,
+            region=self.region,
+            universe=self.universe,
+            delay=self.delay,
+            category=self.category,
+            neutralization=None,
+            ledger_path=campaign_ledger
+        )
+
+        step1 = sim_res.get("step1", {})
+        qualified = step1.get("qualified_seeds", [])
+        final_passed = sim_res.get("final_passed", [])
+
+        print("\n" + "-" * 65)
+        print(f"📊 回测完成！总测试: {len(variants)} 条 | 达标 (Sharpe >= 1.2): {len(qualified)} 条 | 生产级 (ALL PASS): {len(final_passed)} 条")
+        for idx, q in enumerate(qualified, 1):
+            is_pass = "🏆 [ALL PASS]" if q in final_passed else "📈 [QUALIFIED]"
+            print(f"  #{idx} {is_pass} Sharpe={q.get('sharpe', 0.0):.2f} | Margin={q.get('margin_bps', 0.0):.1f}bps | Turnover={q.get('turnover', 0.0)*100:.1f}% | ProdCorr={q.get('prod_corr', 'N/A')} | Expr: {q.get('expression')}")
+
+        if final_passed:
+            champions_file = os.path.join(self.campaign_dir, "campaign_champions.json")
+            champions_list = []
+            if os.path.exists(champions_file):
+                try:
+                    with open(champions_file, "r", encoding="utf-8") as cf:
+                        champions_list = json.load(cf)
+                except Exception:
+                    champions_list = []
+            for fp in final_passed:
+                if not any(c.get("expression") == fp.get("expression") for c in champions_list):
+                    champions_list.append(fp)
+            with open(champions_file, "w", encoding="utf-8") as cf:
+                json.dump(champions_list, cf, ensure_ascii=False, indent=2)
+            print(f"\n🌟 生产级冠军已追加至待审库: {champions_file}")
+
+        return sim_res
 
     # -------------------------------------------------------------
     # 主状态机循环 (Pure Python State Machine Loop)
     # -------------------------------------------------------------
-    async def run_pipeline_loop(self, max_seeds_to_explore: int = 50, max_steps_per_seed: int = 3):
+    async def run_pipeline_loop(self, max_seeds_to_explore: int = 50, max_steps_per_seed: int = 10):
         print("\n" + "=" * 65)
         print("🚀 【AEGIS GrandMaster 纯 Python 状态机总控启动】")
         print(f"📍 目标: {self.region} / {self.universe} / Delay {self.delay} / {self.category} / {self.dataset_id}")
         print(f"⚙️ 并发容量: {self.parallelism} 条 | 模型: {self.model}")
         print("=" * 65)
+
+        # 0. 启动时执行实战经验库指数半衰期衰减 (Spec 2.6)
+        try:
+            from core.qa_rag_tool import apply_experience_decay
+            decayed_cnt = apply_experience_decay(half_life_days=14.0)
+            if decayed_cnt > 0:
+                print(f"📚 [LanceDB RAG] 成功执行实战经验半衰期衰减 (14天)，活跃经验更新: {decayed_cnt} 条")
+        except Exception as rag_err:
+            print(f"⚠️ [LanceDB RAG] 经验半衰期衰减未触发: {rag_err}")
 
         # 1. 检查或生成主信号种子池
         pool = self.load_signals_pool()
@@ -1252,6 +1418,14 @@ class AegisPipelineController:
             if explored_count >= max_seeds_to_explore:
                 print(f"⏹️ 已达到本次运行探索上限 ({max_seeds_to_explore} 个主信号)，平稳停机。")
                 break
+
+            # 跨种子循环重置当前种子的算子预算，杜绝前一个种子的准冠军/加时赛状态泄漏到下一个全新种子
+            self.is_quasi_champion_optimization = bool(self.targeted_alpha_id)
+            if getattr(self, "initial_max_operator_count", None) is not None:
+                self.max_champion_operators = int(self.initial_max_operator_count)
+            else:
+                self.max_champion_operators = 10 if self.is_quasi_champion_optimization else 6
+            self.max_ast_operators = 10 if (self.is_quasi_champion_optimization or (getattr(self, "initial_max_operator_count", None) and self.initial_max_operator_count > 8)) else 8
 
             seed_id = seed["id"]
             core_expr = seed["expression"]
@@ -1314,14 +1488,31 @@ class AegisPipelineController:
                     print(f"💡 [灵感检索] {inspiration}")
 
                 # 母本严格来自当前种子的最优候选，绝不借用其他不相干种子的母本！
-                # 若无 >= 1.2 的优秀母本，则向下兼容回退至 >= 1.0 的达标候选，桥接 1.0~1.2 缺口
+                # 依据 Spec 2.5 Master Good Flag: 优先选取满足收益单调性与时效性的优质母本 (good_flag == True)
+                def _parent_sort_key(alpha_dict):
+                    try:
+                        mgf = Gatekeeper.compute_master_good_flag(alpha_dict)
+                        is_good = 1 if mgf.get("good_flag", False) else 0
+                    except Exception:
+                        is_good = 0
+                    champ_score = self.compute_champion_score(alpha_dict)
+                    sharpe = abs(alpha_dict.get("sharpe", 0.0))
+                    return (is_good, champ_score, sharpe)
+
                 seed_best_parent = (
-                    sorted(seed_good_alphas, key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)[0]
+                    sorted(seed_good_alphas, key=_parent_sort_key, reverse=True)[0]
                     if seed_good_alphas else (
-                        sorted(seed_qualified_alphas, key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)[0]
+                        sorted(seed_qualified_alphas, key=_parent_sort_key, reverse=True)[0]
                         if seed_qualified_alphas else None
                     )
                 )
+
+                # 动态升阶准冠军与加时赛算子预算: 挖掘阶段严格 <=6，准冠军/加时赛动态放宽至 <=10
+                is_near_parent = bool(seed_best_parent and Gatekeeper.is_near_miss_champion(seed_best_parent, self.region))
+                if overtime_granted or is_near_parent or bool(getattr(self, "targeted_alpha_id", None)):
+                    self.is_quasi_champion_optimization = True
+                    self.max_champion_operators = 10
+                    self.max_ast_operators = 10
 
                 # 组装批次报文并管理回测检查点 (Step Checkpointing 幂等断点恢复)
                 batch_filename = f"batch_{seed_id}_s{step}.json"
@@ -1378,6 +1569,7 @@ class AegisPipelineController:
                             "max_ast_operators": getattr(self, "max_ast_operators", 8),
                             "max_champion_operators": getattr(self, "max_champion_operators", 6),
                             "is_golden_shot": bool(overtime_granted and step == step_limit),
+                            "parent_expression": seed_best_parent.get("expression") if seed_best_parent else None,
                             "items": variants
                         }, f, ensure_ascii=False, indent=2)
 
@@ -1394,14 +1586,6 @@ class AegisPipelineController:
                             ledger_path=campaign_ledger
                         )
                     except (ValueError, PermissionError, RuntimeError) as e:
-                        # 物理清理违规响应缓存与批次文件，打破重试死循环
-                        tasks_dir = self.client.tasks_dir or os.path.join(self.base_dir, ".agent_tasks")
-                        swarm_resp = os.path.join(tasks_dir, f"resp_aegis-swarm-generator_{seed_id}_s{step}.json")
-                        if os.path.exists(swarm_resp):
-                            try:
-                                os.remove(swarm_resp)
-                            except Exception:
-                                pass
                         if os.path.exists(batch_path):
                             try:
                                 os.remove(batch_path)
@@ -1413,7 +1597,7 @@ class AegisPipelineController:
                         json.dump(sim_res, sf, ensure_ascii=False, indent=2)
 
                 # ---------------------------------------------------------
-                # 阶梯漏斗早停核心 (Funnel Pruning - 0 Token 纠缠)
+                # 阶梯漏斗早停核心 (Funnel Pruning - 0.05秒极速断舍离)
                 # ---------------------------------------------------------
                 step1_status = sim_res.get("step1", {})
                 if step1_status.get("platform_failure", False):
@@ -1427,11 +1611,30 @@ class AegisPipelineController:
                     break
 
                 if step == 1 and step1_status.get("should_prune", False):
+                    # 反馈 LanceDB 经验库: 该处方未能孵化成功，施加 -10 惩罚 (Spec 2.6)
+                    if getattr(self, "last_step_qa_prescriptions", None):
+                        try:
+                            from core.qa_rag_tool import feedback_experience_outcome
+                            for q in self.last_step_qa_prescriptions:
+                                qid = q.get("id")
+                                if qid:
+                                    feedback_experience_outcome(qid, success=False)
+                        except Exception:
+                            pass
+
+                    # 记录被证伪的假说与特征组合，让反模式双轨记忆真正通电生效
+                    self.failed_hypotheses_digest.append(
+                        f"[{seed_id} Step 1 证伪] 原型 {core_expr} "
+                        f"最高 |Sharpe|={step1_status.get('max_abs_sharpe', 0.0):.2f} < 1.2，"
+                        f"该字段组合与周期未能产生有效边际利润"
+                    )
+                    self.save_campaign_memory()
+
                     # Step 1 冷酷熔断：Python 直接置 times = 1，秒级切换下一个主信号，严禁调用 LLM 写总结！
                     seed["times"] = seed.get("times", 0) + 1
                     self.save_signals_pool(pool)
-                    print(f"⚡ [0 Token 极速早停] {seed_id} Step 1 最高 |Sharpe| 仅为 {step1_status.get('max_abs_sharpe', 0):.2f} (< 1.0)。")
-                    print(f"⏩ 立即置 times=1，0.05 秒内无缝切入下一个主信号，拒绝算力与 Token 浪费！")
+                    print(f"⚡ [0 Token 极速早停] {seed_id} Step 1 未达到高起点门槛 (|Sharpe| >= 1.2 且 Margin >= 5.0 bps)。")
+                    print(f"⏩ 立即置 times=1，0.05 秒内无缝切入下一个主信号，0 Token 浪费，拒绝无效内耗！")
                     break
 
                 # 若通过 Step 1 或后续 Step:
@@ -1462,6 +1665,13 @@ class AegisPipelineController:
                     # 尖峰过拟合候选: 保留指标但严禁晋升为 Step 2 母本 (隐藏 OS 存活率极低)
                     if q.get("horizon_verdict") == "SPIKE":
                         print(f"   🔴 [尖峰剔除] N/2N 双窗口表现严重不一致，禁止作为演进母本: {q.get('expression', '')[:60]}")
+                        spike_msg = (
+                            f"[{seed_id} 尖峰过拟合] 公式 {q.get('expression', '')[:70]} "
+                            f"在 N/2N 双窗口测试中表现急剧崩塌，判定为单点参数过拟合假信号"
+                        )
+                        if spike_msg not in self.failed_hypotheses_digest:
+                            self.failed_hypotheses_digest.append(spike_msg)
+                            self.save_campaign_memory()
                         continue
                     if abs(q.get("sharpe", 0.0)) >= 1.2:
                         seed_good_alphas.append(q)
@@ -1472,12 +1682,16 @@ class AegisPipelineController:
                     if Gatekeeper.is_near_miss_champion(q, self.region):
                         q["status"] = "NEAR_CHAMPION"
                         q["near_champion"] = True
+                        self.is_quasi_champion_optimization = True
+                        self.max_champion_operators = 10
+                        self.max_ast_operators = 10
                         if not hasattr(self, "near_miss_hall_of_fame"):
                             self.near_miss_hall_of_fame = []
                         if not any(nm.get("expression") == q.get("expression") for nm in self.near_miss_hall_of_fame):
                             self.near_miss_hall_of_fame.append(q)
                             print(f"\n🏛️ 【入选准生产突破池 (Near-Miss Hall of Fame)】{q['expression'][:55]}...")
                             print(f"   Sharpe={q['sharpe']:.2f} (离1.58仅差{1.58-q['sharpe']:.2f}) | ProdCorr={q.get('prod_corr', 0.0):.4f} | Margin={q['margin_bps']:.1f}bps")
+                            print(f"   🚀 【算子预算动态升阶】捕获准冠军候选，算子预算自动升阶为 max_ops=10 (AST<=10)！")
                             hm_path = os.path.join(self.campaign_dir, "near_miss_hall_of_fame.json")
                             try:
                                 with open(hm_path, 'w', encoding='utf-8') as hmf:
@@ -1498,17 +1712,15 @@ class AegisPipelineController:
                                     json_mode=False,
                                     context={"alpha": q, "task_tag": f"{seed_id}_s{step}_nearmiss_distill"}
                                 )
-                                abstract_rule = str(distill_res) if distill_res else (
-                                    f"在 {self.region} Delay {self.delay} 的 {self.category.upper()} 因子中，"
-                                    f"长周期时序平滑差分结合多空分位数差分与行业中性化可实现超低 ProdCorr 与高 Margin。"
-                                )
-                                RAGMemoryEngine.append_pure_operator_experience(
-                                    region=self.region,
-                                    delay=self.delay,
-                                    category=self.category,
-                                    abstract_insight=abstract_rule,
-                                    alpha_stats=q
-                                )
+                                if distill_res and str(distill_res).strip():
+                                    abstract_rule = str(distill_res).strip()
+                                    RAGMemoryEngine.append_pure_operator_experience(
+                                        region=self.region,
+                                        delay=self.delay,
+                                        category=self.category,
+                                        abstract_insight=abstract_rule,
+                                        alpha_stats=q
+                                    )
                             except Exception as _de:
                                 print(f"⚠️ [经验提炼] 准冠军经验沉淀异常: {_de}")
 
@@ -1527,14 +1739,62 @@ class AegisPipelineController:
                 step2_passed = sim_res.get("step2_passed", [])
                 print(f"📋 Step 2 合规通过数: {len(step2_passed)} 条")
 
-                # 终极生产准入门禁核对
+                # 终极生产准入门禁核对 (ALL PASS 铁律与第一时间汇报研究员)
                 final_passed = sim_res.get("final_passed", [])
                 if final_passed:
-                    print("\n" + "🌟" * 30)
-                    print(f"🏆 【诞生生产级达标 Alpha！】主信号 {seed_id} 产生 {len(final_passed)} 条达标因子！")
+                    # 反馈 LanceDB 经验库: 成功孵化生产级 Alpha，施加 +15 奖励并重置活跃时间 (Spec 2.6)
+                    if getattr(self, "last_step_qa_prescriptions", None):
+                        try:
+                            from core.qa_rag_tool import feedback_experience_outcome
+                            for q in self.last_step_qa_prescriptions:
+                                qid = q.get("id")
+                                if qid:
+                                    feedback_experience_outcome(qid, success=True)
+                        except Exception:
+                            pass
+
+                    print("\n" + "=" * 70)
+                    print(f"🚨 【生产级 ALL PASS Alpha 诞生 - 立即汇报研究员！】")
+                    print(f"📍 主信号: {seed_id} | 轮次: Step #{step} | 共诞生 {len(final_passed)} 条全维度达标因子")
+                    print("-" * 70)
                     for i, f_alpha in enumerate(final_passed):
-                        print(f"  - 表达式: {f_alpha['expression']}")
-                        print(f"    Sharpe: {f_alpha['sharpe']:.2f} | Fitness: {f_alpha['fitness']:.2f} | Margin: {f_alpha['margin_bps']:.1f}bps")
+                        expr_str = f_alpha.get('expression', '')
+                        alpha_id_str = f_alpha.get('id') or f_alpha.get('alpha_id') or 'N/A'
+                        sh_val = f_alpha.get('sharpe', 0.0)
+                        fit_val = f_alpha.get('fitness', 0.0)
+                        m_bps = f_alpha.get('margin_bps', 0.0)
+                        turn_pct = f_alpha.get('turnover', 0.0) * 100.0 if f_alpha.get('turnover', 0.0) <= 1.0 else f_alpha.get('turnover', 0.0)
+                        pc_val = f_alpha.get('prod_corr', f_alpha.get('pcorr', 'N/A'))
+                        sc_val = f_alpha.get('sc', 'N/A')
+
+                        golden_res = SimBatchRunner.extract_golden_alpha_result(f_alpha)
+                        yearly_str = " | ".join(f"{y}:{s}" for y, s in golden_res.get("yearly_sharpe", []))
+                        monthly_str = " | ".join(f"{m}:{s}" for m, s in golden_res.get("last_24_monthly_sharpe", [])[-12:])
+
+                        print(f"🏆 [生产级达标 Alpha #{i+1}] ID: {alpha_id_str}")
+                        print(f"   表达式 (Code): {expr_str}")
+                        print(f"   核心指标: Sharpe={sh_val:.2f} | Fitness={fit_val:.2f} | Margin={m_bps:.1f}bps | Turnover={turn_pct:.2f}%")
+                        print(f"   相关性: ProdCorr={pc_val} (< 0.65) | SelfCorr={sc_val} (<= 0.60)")
+                        print(f"   10年逐年夏普: {yearly_str or '见体检档案'}")
+                        print(f"   最近12月夏普: {monthly_str or '见体检档案'}")
+                        print(f"   平台审查: 0 FAIL + 0 WARNING (ALL PASS)")
+                        print(f"   经济学机制: {seed.get('economic_mechanism', '因果假说驱动')}")
+                        print(f"   ⚠️ 【绝对红线遵从】严禁系统私自提交平台池子！已安全归档至 campaign_champions.json，待研究员肉眼复核确认！")
+                        print("-" * 70)
+
+                        # 保存至待审冠军库 campaign_champions.json
+                        champions_file = os.path.join(self.campaign_dir, "campaign_champions.json")
+                        champions_list = []
+                        if os.path.exists(champions_file):
+                            try:
+                                with open(champions_file, 'r', encoding='utf-8') as cf:
+                                    champions_list = json.load(cf)
+                            except Exception:
+                                champions_list = []
+                        if not any(c.get("expression") == expr_str for c in champions_list):
+                            champions_list.append(f_alpha)
+                            with open(champions_file, 'w', encoding='utf-8') as cf:
+                                json.dump(champions_list, cf, ensure_ascii=False, indent=2)
 
                         # 触发经验提炼: 纯算子、去字段化抽象沉淀 (Plan 1 隔离会话)
                         distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
@@ -1542,30 +1802,30 @@ class AegisPipelineController:
                             f"达标 Alpha: {f_alpha['expression']} (Sharpe={f_alpha['sharpe']:.2f}, Fitness={f_alpha['fitness']:.2f})。\n"
                             f"请提炼纯算子抽象经验。严格遵循原则：只总结纯算子结构规律与风控拓扑，严禁出现任何具体数据字段名！"
                         )
-                        distill_res = await distill_session.send_message(
-                            distill_prompt,
-                            json_mode=False,
-                            context={"alpha": f_alpha, "task_tag": f"{seed_id}_s{step}_distill_{i+1}"}
-                        )
-                        abstract_rule = str(distill_res) if distill_res else (
-                            f"在 {self.region} Delay {self.delay} 的 {self.category.upper()} 因子中，"
-                            f"时序差分结合指数衰减可显著改善动量捕捉与换手率；"
-                            f"前置 winsorize(std=3) 抑制子池震荡，结合高阶风险中性化可有效突破 Margin 死线。"
-                        )
-                        # 幂等沉淀：避免多轮断点恢复时重复追加写入经验库
-                        distill_done_flag = os.path.join(self.campaign_dir, f".distilled_{seed_id}_s{step}_{i+1}.flag")
-                        if not os.path.exists(distill_done_flag):
-                            RAGMemoryEngine.append_pure_operator_experience(
-                                region=self.region,
-                                delay=self.delay,
-                                category=self.category,
-                                abstract_insight=abstract_rule,
-                                alpha_stats=f_alpha
+                        try:
+                            distill_res = await distill_session.send_message(
+                                distill_prompt,
+                                json_mode=False,
+                                context={"alpha": f_alpha, "task_tag": f"{seed_id}_s{step}_distill_{i+1}"}
                             )
-                            with open(distill_done_flag, "w", encoding="utf-8") as df:
-                                df.write("1")
+                            if distill_res and str(distill_res).strip():
+                                abstract_rule = str(distill_res).strip()
+                                distill_done_flag = os.path.join(self.campaign_dir, f".distilled_{seed_id}_s{step}_{i+1}.flag")
+                                if not os.path.exists(distill_done_flag):
+                                    RAGMemoryEngine.append_pure_operator_experience(
+                                        region=self.region,
+                                        delay=self.delay,
+                                        category=self.category,
+                                        abstract_insight=abstract_rule,
+                                        alpha_stats=f_alpha
+                                    )
+                                    with open(distill_done_flag, "w", encoding="utf-8") as df:
+                                        df.write("1")
+                        except Exception as _de:
+                            print(f"⚠️ [经验提炼] 达标 Alpha 经验沉淀异常: {_de}")
+
                     self.save_campaign_memory()
-                    print("🌟" * 30 + "\n")
+                    print("=" * 70 + "\n")
 
                 # ---------------------------------------------------------
                 # Step 5: 自动升阶深水区精炼 (func2) - 真实提交回测闭环
@@ -1641,23 +1901,14 @@ class AegisPipelineController:
                             "task_tag": f"{seed_id}_s{step}_func2"
                         }
                         refined_variants = await refiner_session.send_message(refiner_prompt, json_mode=True, context=context_refiner)
+                        func2_sim_res = {}
                         if isinstance(refined_variants, list) and len(refined_variants) > 0:
-                            tasks_dir = self.client.tasks_dir or os.path.join(self.base_dir, ".agent_tasks")
-                            refiner_resp = os.path.join(tasks_dir, f"resp_aegis-deep-refiner_{seed_id}_s{step}_func2.json")
-                            try:
-                                SwarmAuditor.enforce(
-                                    refined_variants,
-                                    step=5,
-                                    parallelism=self.parallelism,
-                                    strict=False
-                                )
-                            except (ValueError, PermissionError, RuntimeError) as e:
-                                if os.path.exists(refiner_resp):
-                                    try:
-                                        os.remove(refiner_resp)
-                                    except Exception:
-                                        pass
-                                raise e
+                            SwarmAuditor.enforce(
+                                refined_variants,
+                                step=5,
+                                parallelism=self.parallelism,
+                                strict=False
+                            )
 
                             print(f"🌊 深水区精炼生成 {len(refined_variants)} 条攻坚变体，正在组装批次并提交并发回测...")
 
@@ -1696,11 +1947,6 @@ class AegisPipelineController:
                                     ledger_path=campaign_ledger
                                 )
                             except (ValueError, PermissionError, RuntimeError) as e:
-                                if os.path.exists(refiner_resp):
-                                    try:
-                                        os.remove(refiner_resp)
-                                    except Exception:
-                                        pass
                                 if os.path.exists(func2_batch_path):
                                     try:
                                         os.remove(func2_batch_path)
@@ -1713,109 +1959,113 @@ class AegisPipelineController:
                         # -----------------------------------------------------
                         # 核心成果回收：全面提取 func2 跑出的高夏普准达标候选，绝不丢弃演进成果
                         # -----------------------------------------------------
-                        func2_step1 = func2_sim_res.get("step1", {})
-                        func2_qualified = func2_step1.get("qualified_seeds", [])
-                        if func2_qualified:
-                            print(f"🌊 [func2 演进成果回收] 捕获 {len(func2_qualified)} 条优质变体 (最高 |Sharpe| = {func2_step1.get('max_abs_sharpe', 0.0):.2f})！")
-                            with open(self.history_file, 'a', encoding='utf-8') as hf:
-                                hf.write(f"\n--- Cycle {explored_count} [{seed_id} func2 Step #{step}] ---\n")
+                        if func2_sim_res:
+                            func2_step1 = func2_sim_res.get("step1", {})
+                            func2_qualified = func2_step1.get("qualified_seeds", [])
+                            if func2_qualified:
+                                print(f"🌊 [func2 演进成果回收] 捕获 {len(func2_qualified)} 条优质变体 (最高 |Sharpe| = {func2_step1.get('max_abs_sharpe', 0.0):.2f})！")
+                                with open(self.history_file, 'a', encoding='utf-8') as hf:
+                                    hf.write(f"\n--- Cycle {explored_count} [{seed_id} func2 Step #{step}] ---\n")
+                                    for q in func2_qualified:
+                                        hf.write(f"Sharpe: {q.get('sharpe'):.2f} | Expr: {q.get('expression')}\n")
                                 for q in func2_qualified:
-                                    hf.write(f"Sharpe: {q.get('sharpe'):.2f} | Expr: {q.get('expression')}\n")
-                            for q in func2_qualified:
-                                q["seed_id"] = seed_id
-                                seed_qualified_alphas.append(q)
-                                self.history_save.append(q)
-                                if abs(q.get("sharpe", 0.0)) >= 1.2:
-                                    seed_good_alphas.append(q)
-                                    self.good_alphas.append(q)
-
-                            # 🏛️ 准生产突破池 (Near-Miss Hall of Fame) 物理入库与基因强制沉淀 (func2 成果回收)
-                            for q in func2_qualified:
-                                if Gatekeeper.is_near_miss_champion(q, self.region):
-                                    q["status"] = "NEAR_CHAMPION"
-                                    q["near_champion"] = True
-                                    if not hasattr(self, "near_miss_hall_of_fame"):
-                                        self.near_miss_hall_of_fame = []
-                                    if not any(nm.get("expression") == q.get("expression") for nm in self.near_miss_hall_of_fame):
-                                        self.near_miss_hall_of_fame.append(q)
-                                        print(f"\n🏛️ 【func2 入选准生产突破池 (Near-Miss Hall of Fame)】{q['expression'][:55]}...")
-                                        print(f"   Sharpe={q['sharpe']:.2f} (离1.58仅差{1.58-q['sharpe']:.2f}) | ProdCorr={q.get('prod_corr', 0.0):.4f} | Margin={q['margin_bps']:.1f}bps")
-                                        hm_path = os.path.join(self.campaign_dir, "near_miss_hall_of_fame.json")
-                                        try:
-                                            with open(hm_path, 'w', encoding='utf-8') as hmf:
-                                                json.dump(self.near_miss_hall_of_fame, hmf, ensure_ascii=False, indent=2)
-                                        except Exception:
-                                            pass
-
-                                        # 物理触发 Knowledge Distiller 基因锁定入金字塔知识库 (幂等)
-                                        func2_distill_nm_flag = os.path.join(self.campaign_dir, f".distilled_{seed_id}_s{step}_func2_nearmiss.flag")
-                                        if not os.path.exists(func2_distill_nm_flag):
-                                            distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
-                                            distill_prompt = (
-                                                f"准生产突破 Alpha (func2 深水区产出): {q['expression']} (Sharpe={q['sharpe']:.2f}, ProdCorr={q.get('prod_corr', 0.0):.4f}, Margin={q['margin_bps']:.1f}bps)。\n"
-                                                f"该因子攻克了最难的生产共线死线 (ProdCorr < 0.70) 与高利润溢价 (Margin >= 18bps)。\n"
-                                                f"请提炼纯算子抽象经验。严格遵循原则：只总结纯算子结构规律与风控拓扑，严禁出现任何具体数据字段名！"
-                                            )
+                                    q["seed_id"] = seed_id
+                                    seed_qualified_alphas.append(q)
+                                    self.history_save.append(q)
+                                    if abs(q.get("sharpe", 0.0)) >= 1.2:
+                                        seed_good_alphas.append(q)
+                                        self.good_alphas.append(q)
+    
+                                # 🏛️ 准生产突破池 (Near-Miss Hall of Fame) 物理入库与基因强制沉淀 (func2 成果回收)
+                                for q in func2_qualified:
+                                    if Gatekeeper.is_near_miss_champion(q, self.region):
+                                        q["status"] = "NEAR_CHAMPION"
+                                        q["near_champion"] = True
+                                        self.is_quasi_champion_optimization = True
+                                        self.max_champion_operators = 10
+                                        self.max_ast_operators = 10
+                                        if not hasattr(self, "near_miss_hall_of_fame"):
+                                            self.near_miss_hall_of_fame = []
+                                        if not any(nm.get("expression") == q.get("expression") for nm in self.near_miss_hall_of_fame):
+                                            self.near_miss_hall_of_fame.append(q)
+                                            print(f"\n🏛️ 【func2 入选准生产突破池 (Near-Miss Hall of Fame)】{q['expression'][:55]}...")
+                                            print(f"   Sharpe={q['sharpe']:.2f} (离1.58仅差{1.58-q['sharpe']:.2f}) | ProdCorr={q.get('prod_corr', 0.0):.4f} | Margin={q['margin_bps']:.1f}bps")
+                                            print(f"   🚀 【算子预算动态升阶】捕获准冠军候选，算子预算自动升阶为 max_ops=10 (AST<=10)！")
+                                            hm_path = os.path.join(self.campaign_dir, "near_miss_hall_of_fame.json")
                                             try:
-                                                distill_res = await distill_session.send_message(
-                                                    distill_prompt,
-                                                    json_mode=False,
-                                                    context={"alpha": q, "task_tag": f"{seed_id}_s{step}_func2_nearmiss_distill"}
+                                                with open(hm_path, 'w', encoding='utf-8') as hmf:
+                                                    json.dump(self.near_miss_hall_of_fame, hmf, ensure_ascii=False, indent=2)
+                                            except Exception:
+                                                pass
+    
+                                            # 物理触发 Knowledge Distiller 基因锁定入金字塔知识库 (幂等)
+                                            func2_distill_nm_flag = os.path.join(self.campaign_dir, f".distilled_{seed_id}_s{step}_func2_nearmiss.flag")
+                                            if not os.path.exists(func2_distill_nm_flag):
+                                                distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
+                                                distill_prompt = (
+                                                    f"准生产突破 Alpha (func2 深水区产出): {q['expression']} (Sharpe={q['sharpe']:.2f}, ProdCorr={q.get('prod_corr', 0.0):.4f}, Margin={q['margin_bps']:.1f}bps)。\n"
+                                                    f"该因子攻克了最难的生产共线死线 (ProdCorr < 0.70) 与高利润溢价 (Margin >= 18bps)。\n"
+                                                    f"请提炼纯算子抽象经验。严格遵循原则：只总结纯算子结构规律与风控拓扑，严禁出现任何具体数据字段名！"
                                                 )
-                                                abstract_rule = str(distill_res) if distill_res else (
-                                                    f"在 {self.region} Delay {self.delay} 的 {self.category.upper()} 深水区因子中，"
-                                                    f"长周期时序平滑差分结合多空分位数差分与行业中性化可实现超低 ProdCorr 与高 Margin。"
-                                                )
-                                                RAGMemoryEngine.append_pure_operator_experience(
-                                                    region=self.region,
-                                                    delay=self.delay,
-                                                    category=self.category,
-                                                    abstract_insight=abstract_rule,
-                                                    alpha_stats=q
-                                                )
-                                                with open(func2_distill_nm_flag, "w", encoding="utf-8") as dnf:
-                                                    dnf.write("1")
-                                            except Exception as _e_dist:
-                                                print(f"⚠️ [Knowledge Distiller] func2 准生产经验提炼异常: {_e_dist}")
-
-                            seed_good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
-                            self.good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
-                            self.save_campaign_memory()
-
-                        func2_final = func2_sim_res.get("final_passed", [])
-                        if func2_final:
-                            print(f"🏆🏆 【深水区精炼大突破】诞生 {len(func2_final)} 条生产级达标 Alpha！")
-                            for j, f_alpha in enumerate(func2_final):
-                                f_alpha["seed_id"] = seed_id
-                                print(f"  🌟 突破表达式: {f_alpha['expression']}")
-                                print(f"     Sharpe: {f_alpha['sharpe']:.2f} | Fitness: {f_alpha['fitness']:.2f} | Margin: {f_alpha['margin_bps']:.1f}bps")
-                                seed_good_alphas.append(f_alpha)
-                                self.good_alphas.append(f_alpha)
-                                distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
-                                distill_prompt = f"达标 Alpha: {f_alpha['expression']}。请提炼纯算子抽象经验，严禁出现具体字段名！"
-                                distill_res = await distill_session.send_message(
-                                    distill_prompt,
-                                    json_mode=False,
-                                    context={"alpha": f_alpha, "task_tag": f"{seed_id}_s{step}_func2_distill_{j+1}"}
-                                )
-                                # 幂等沉淀：避免深水区多轮断点恢复时重复追加写入经验库
-                                func2_distill_done_flag = os.path.join(self.campaign_dir, f".distilled_{seed_id}_s{step}_func2_{j+1}.flag")
-                                if not os.path.exists(func2_distill_done_flag):
-                                    RAGMemoryEngine.append_pure_operator_experience(
-                                        region=self.region,
-                                        delay=self.delay,
-                                        category=self.category,
-                                        abstract_insight=str(distill_res) if distill_res else "深水区精炼攻坚成功",
-                                        alpha_stats=f_alpha
+                                                try:
+                                                    distill_res = await distill_session.send_message(
+                                                        distill_prompt,
+                                                        json_mode=False,
+                                                        context={"alpha": q, "task_tag": f"{seed_id}_s{step}_func2_nearmiss_distill"}
+                                                    )
+                                                    if distill_res and str(distill_res).strip():
+                                                        abstract_rule = str(distill_res).strip()
+                                                        RAGMemoryEngine.append_pure_operator_experience(
+                                                            region=self.region,
+                                                            delay=self.delay,
+                                                            category=self.category,
+                                                            abstract_insight=abstract_rule,
+                                                            alpha_stats=q
+                                                        )
+                                                        with open(func2_distill_nm_flag, "w", encoding="utf-8") as dnf:
+                                                            dnf.write("1")
+                                                except Exception as _e_dist:
+                                                    print(f"⚠️ [Knowledge Distiller] func2 准生产经验提炼异常: {_e_dist}")
+    
+                                seed_good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
+                                self.good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
+                                self.save_campaign_memory()
+    
+                            func2_final = func2_sim_res.get("final_passed", [])
+                            if func2_final:
+                                print(f"🏆🏆 【深水区精炼大突破】诞生 {len(func2_final)} 条生产级达标 Alpha！")
+                                for j, f_alpha in enumerate(func2_final):
+                                    f_alpha["seed_id"] = seed_id
+                                    print(f"  🌟 突破表达式: {f_alpha['expression']}")
+                                    print(f"     Sharpe: {f_alpha['sharpe']:.2f} | Fitness: {f_alpha['fitness']:.2f} | Margin: {f_alpha['margin_bps']:.1f}bps")
+                                    seed_good_alphas.append(f_alpha)
+                                    self.good_alphas.append(f_alpha)
+                                    distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
+                                    distill_prompt = f"达标 Alpha: {f_alpha['expression']}。请提炼纯算子抽象经验，严禁出现具体字段名！"
+                                    distill_res = await distill_session.send_message(
+                                        distill_prompt,
+                                        json_mode=False,
+                                        context={"alpha": f_alpha, "task_tag": f"{seed_id}_s{step}_func2_distill_{j+1}"}
                                     )
-                                    with open(func2_distill_done_flag, "w", encoding="utf-8") as df:
-                                        df.write("1")
-                            seed_good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
-                            self.good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
-                            self.save_campaign_memory()
-                            # 仅当诞生 warning_count == 0 的完美全绿因子时才提前 break，否则继续攻坚消灭 Warning
-                            if any(int(a.get("warning_count", 0)) == 0 for a in func2_final):
-                                break
+                                    # 幂等沉淀：避免深水区多轮断点恢复时重复追加写入经验库
+                                    if distill_res and str(distill_res).strip():
+                                        func2_distill_done_flag = os.path.join(self.campaign_dir, f".distilled_{seed_id}_s{step}_func2_{j+1}.flag")
+                                        if not os.path.exists(func2_distill_done_flag):
+                                            RAGMemoryEngine.append_pure_operator_experience(
+                                                region=self.region,
+                                                delay=self.delay,
+                                                category=self.category,
+                                                abstract_insight=str(distill_res).strip(),
+                                                alpha_stats=f_alpha
+                                            )
+                                            with open(func2_distill_done_flag, "w", encoding="utf-8") as df:
+                                                df.write("1")
+                                seed_good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
+                                self.good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
+                                self.save_campaign_memory()
+                                # 仅当诞生 warning_count == 0 的完美全绿因子时才提前 break，否则继续攻坚消灭 Warning
+                                if any(int(a.get("warning_count", 0)) == 0 for a in func2_final):
+                                    break
 
                 # 状态机加时冲刺 (Golden Shot) 判定: 出现准冠军雏形或带 Warning 达标因子时物理否决 "3 步走完就走人"
                 if step == step_limit and not overtime_granted:
@@ -1988,7 +2238,10 @@ if __name__ == "__main__":
     parser.add_argument("--fields", default=None, help="显式指定逗号分隔字段名清单 (如 f1,f2,f3)")
     parser.add_argument("--ipc-dir", default=None, help="SubAgent IPC 任务交互目录 (默认 .agent_tasks)")
     parser.add_argument("--no-cross-region-fields", action="store_true", help="禁用跨区域同源字段自动继承")
+    parser.add_argument("--max-seeds", type=int, default=10, help="最多探索主信号数量")
+    parser.add_argument("--max-steps", type=int, default=10, help="单主信号最大演进轮次")
     parser.add_argument("--max-operator-count", type=int, default=None, help="最大算子数约束 (默认研究挖掘阶段 <=6, 准冠军优化阶段 <=10)")
+    parser.add_argument("--run-batch", default=None, help="直接执行外部给定的批次变体 JSON 文件并进行静默回测与门禁核验")
     
     # 兼容原帖 run_this.sh 纯位置参数: main.py $NOW "True" "$MODEL" "$SETTING" "$BASE_DIR" "$OPERATORS_PATH" $EXCLUDE_CATEGORY
     args, unknown = parser.parse_known_args()
@@ -2045,21 +2298,17 @@ if __name__ == "__main__":
         max_operator_count=args.max_operator_count
     )
 
+    if getattr(args, "run_batch", None):
+        asyncio.run(controller.run_single_batch(args.run_batch))
+        sys.exit(0)
+
     if args.generate_seeds or getattr(args, "seeds_only", False):
-        # 当显式指定重新生成种子时，若非断点恢复阶段，方清理旧响应缓存
-        tasks_dir = controller.client.tasks_dir or os.path.join(controller.base_dir, ".agent_tasks")
-        for f in [f"resp_aegis-seed-synthesizer_stage0_{controller.dataset_id}.json",
-                  f"resp_aegis-tech-auditor_stage0_audit_{controller.dataset_id}.json"]:
-            p = os.path.join(tasks_dir, f)
-            t_file = os.path.join(tasks_dir, f.replace("resp_", "task_"))
-            if os.path.exists(p) and not os.path.exists(t_file):
-                try:
-                    os.remove(p)
-                except Exception:
-                    pass
         controller.synthesize_stage0_seeds(count=20)
         if getattr(args, "seeds_only", False):
             print("✅ 阶段 0 种子生成完毕 (--seeds-only)，平稳停机。")
             sys.exit(0)
 
-    asyncio.run(controller.run_pipeline_loop())
+    asyncio.run(controller.run_pipeline_loop(
+        max_seeds_to_explore=args.max_seeds,
+        max_steps_per_seed=args.max_steps
+    ))

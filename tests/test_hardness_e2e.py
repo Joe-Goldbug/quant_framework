@@ -29,13 +29,22 @@ sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from quant_framework.core.dimension_rules import DimensionAuditor
-from quant_framework.core.func_call_corrector import ASTSandboxCorrector
-from quant_framework.core.gatekeeper import Gatekeeper
-from quant_framework.core.anti_laziness import AntiLazinessAuditor
-from quant_framework.core.rag_memory import RAGMemoryEngine
-from quant_framework.core.red_team import DoubleBlindRedTeam
-from quant_framework.core.sim_runner import SimBatchRunner
+try:
+    from quant_framework.core.dimension_rules import DimensionAuditor
+    from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+    from quant_framework.core.gatekeeper import Gatekeeper
+    from quant_framework.core.anti_laziness import AntiLazinessAuditor
+    from quant_framework.core.rag_memory import RAGMemoryEngine
+    from quant_framework.core.red_team import DoubleBlindRedTeam
+    from quant_framework.core.sim_runner import SimBatchRunner
+except (ModuleNotFoundError, ImportError):
+    from core.dimension_rules import DimensionAuditor
+    from core.func_call_corrector import ASTSandboxCorrector
+    from core.gatekeeper import Gatekeeper
+    from core.anti_laziness import AntiLazinessAuditor
+    from core.rag_memory import RAGMemoryEngine
+    from core.red_team import DoubleBlindRedTeam
+    from core.sim_runner import SimBatchRunner
 
 class TestAEGISHardnessSystem(unittest.TestCase):
     def setUp(self):

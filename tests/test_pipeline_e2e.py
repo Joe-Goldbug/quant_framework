@@ -27,11 +27,18 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from quant_framework.core.dimension_rules import DimensionAuditor
-from quant_framework.core.gatekeeper import Gatekeeper
-from quant_framework.core.rag_memory import RAGMemoryEngine
-from quant_framework.core.anti_laziness import AntiLazinessAuditor
-from quant_framework.orchestrator import MasterOrchestrator
+try:
+    from quant_framework.core.dimension_rules import DimensionAuditor
+    from quant_framework.core.gatekeeper import Gatekeeper
+    from quant_framework.core.rag_memory import RAGMemoryEngine
+    from quant_framework.core.anti_laziness import AntiLazinessAuditor
+    from quant_framework.orchestrator import MasterOrchestrator
+except (ModuleNotFoundError, ImportError):
+    from core.dimension_rules import DimensionAuditor
+    from core.gatekeeper import Gatekeeper
+    from core.rag_memory import RAGMemoryEngine
+    from core.anti_laziness import AntiLazinessAuditor
+    from orchestrator import MasterOrchestrator
 
 def run_verification_suite():
     print("=" * 65)

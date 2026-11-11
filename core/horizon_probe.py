@@ -52,8 +52,8 @@ TIME_SERIES_OPS = {
     "ts_regression", "ts_count_nans", "ts_product", "jump_decay",
 }
 
-# 允许的窗口倍率区间: 覆盖 d=5/15 (3x) 与 d=66/132 (2x) 两种常见成对写法
-RATIO_LOW, RATIO_HIGH = 1.6, 3.5
+# 允许的窗口倍率区间: 覆盖 d=5/20 (4x)、d=20/63 (3.15x)、d=63/252 (4x) 与 d=63/126 (2x) 等成对写法
+RATIO_LOW, RATIO_HIGH = 1.6, 4.2
 
 
 def _norm_expr(expr: str) -> str:
@@ -328,22 +328,3 @@ class HorizonProbe:
         )
         return head + "\n" + "\n".join(lines)
 
-
-if __name__ == "__main__":
-    demo = [
-        {"slot": 1, "expression": "group_neutralize(ts_delta(f, 5), subindustry)"},
-        {"slot": 2, "expression": "group_neutralize(ts_delta(f, 15), subindustry)"},
-        {"slot": 3, "expression": "group_neutralize(ts_mean(g, 66), subindustry)"},
-        {"slot": 4, "expression": "group_neutralize(ts_mean(g, 132), subindustry)"},
-        {"slot": 5, "expression": "group_zscore(ts_delta(h, 5), subindustry)"},
-    ]
-    pairs = HorizonProbe.detect_pairs(demo)
-    print("pairs:", [(p["slots"], p["windows"]) for p in pairs])
-    q = [
-        {"expression": demo[0]["expression"], "sharpe": 1.45},
-        {"expression": demo[1]["expression"], "sharpe": -0.20},
-        {"expression": demo[2]["expression"], "sharpe": 1.22},
-        {"expression": demo[3]["expression"], "sharpe": 1.31},
-    ]
-    v = HorizonProbe.evaluate(demo, q, pairs)
-    print(HorizonProbe.format_report(v))

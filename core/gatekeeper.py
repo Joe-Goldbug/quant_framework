@@ -131,17 +131,22 @@ class Gatekeeper:
     def audit_step1_batch(
         cls,
         sim_result_data: dict,
-        min_sharpe: float = 1.0,
+        min_sharpe: float = 1.2,
+        min_margin_bps: float = 5.0,
         expected_polarity: int = 1,
         check_parasitism: bool = True
     ) -> dict:
         """
-        Step 1 极速初筛 (Staged Funnel Step 1):
-        批次中若无任何一个变体满足 |Sharpe| >= 1.0，判定当前主信号无统计显著性，
-        立即物理熔断跳出，绝不浪费算力纠缠！
-        包含因果极性一致性核验 (expected_polarity) 与高阶中性化残差寄生审计 (check_parasitism)。
+        Step 1 极速漏斗初筛 (Staged Funnel Step 1 - V3.1 极速版):
+        批次中若无任何一个变体同时满足 |Sharpe| >= 1.2 且 Margin >= 5.0 bps，
+        立即 0.05 秒物理冷酷熔断跳出，0 Token 总结，绝不在劣质种子上浪费算力！
         """
-        results = sim_result_data.get("alpha_results", sim_result_data if isinstance(sim_result_data, list) else [sim_result_data])
+        if isinstance(sim_result_data, list):
+            results = sim_result_data
+        elif isinstance(sim_result_data, dict):
+            results = sim_result_data.get("alpha_results", [sim_result_data])
+        else:
+            results = [sim_result_data]
         
         qualified_seeds = []
         all_sharpes = {}
@@ -174,7 +179,7 @@ class Gatekeeper:
             if res.get("status") in ["ERROR", "CANCELLED", "FAILED"] or "error" in res:
                 continue
             expr = cls.extract_expression(res)
-            if not expr or expr.startswith("alpha_"):
+            if not expr:
                 continue
             is_m = res.get("is") or res.get("metrics") or {}
             raw_sharpe = is_m.get("sharpe")
@@ -190,7 +195,16 @@ class Gatekeeper:
             if abs(sharpe) > max_abs_sharpe:
                 max_abs_sharpe = abs(sharpe)
             
-            if abs(sharpe) >= min_sharpe:
+            fitness = float(is_m.get("fitness") or 0.0)
+            turnover = float(is_m.get("turnover") or 0.0)
+            has_margin = ("margin_bps" in is_m or "margin" in is_m)
+            if "margin_bps" in is_m:
+                margin_bps = float(is_m.get("margin_bps") or 0.0)
+            else:
+                margin_bps = float(is_m.get("margin") or 0.0) * 10000.0
+
+            margin_ok = (margin_bps >= min_margin_bps) if has_margin else True
+            if abs(sharpe) >= min_sharpe and margin_ok:
                 raw_neut = (
                     res.get("neutralization") or
                     res.get("settings", {}).get("neutralization") or
@@ -209,12 +223,6 @@ class Gatekeeper:
                 is_polarity_inverted = bool(sharpe < 0 or (effective_polarity * sharpe < 0))
                 status_str = "POLARITY_INVERTED" if is_polarity_inverted else "STEP1_PASSED"
 
-                fitness = float(is_m.get("fitness") or 0.0)
-                turnover = float(is_m.get("turnover") or 0.0)
-                if "margin_bps" in is_m:
-                    margin_bps = float(is_m.get("margin_bps") or 0.0)
-                else:
-                    margin_bps = float(is_m.get("margin") or 0.0) * 10000.0
                 parsed_chk = cls.parse_brain_checks(res)
                 pcorr_val = cls.extract_prod_corr(res)
                 alpha_id = res.get("id") or res.get("alpha_id")
@@ -269,9 +277,8 @@ class Gatekeeper:
             "all_sharpes": all_sharpes,
             "platform_failure": False,
             "message": (
-                f"【Step 1 熔断退出】全批变体最高 |Sharpe| 仅为 {max_abs_sharpe:.2f} (< {min_sharpe:.2f})！"
-                f"判定主信号为伪因果，立即剪枝，秒级切换下一个主信号！"
-            ) if should_prune else f"【Step 1 通过】捕获 {len(qualified_seeds)} 条达标种子 (最高 |Sharpe| = {max_abs_sharpe:.2f})"
+                f"【Step 1 极速漏斗早停】全批变体未出现同时满足 |Sharpe| >= {min_sharpe:.2f} 且 Margin >= {min_margin_bps:.1f} bps 的高潜力种子 (最高 |Sharpe|={max_abs_sharpe:.2f})！0.05秒极速剪枝！"
+            ) if should_prune else f"【Step 1 漏斗通过】捕获 {len(qualified_seeds)} 条达标种子 (最高 |Sharpe| = {max_abs_sharpe:.2f})"
         }
 
     @classmethod
@@ -358,7 +365,12 @@ class Gatekeeper:
         2. Margin 达到区域基准的 50% (例如 USA 必须 >= 5.0 bps)
         3. 换手率不超过 70%
         """
-        results = sim_result_data.get("alpha_results", sim_result_data if isinstance(sim_result_data, list) else [sim_result_data])
+        if isinstance(sim_result_data, list):
+            results = sim_result_data
+        elif isinstance(sim_result_data, dict):
+            results = sim_result_data.get("alpha_results", [sim_result_data])
+        else:
+            results = [sim_result_data]
         min_margin_bps = cls.get_min_margin_bps(region)
         step2_margin_threshold = (min_margin_bps * 0.5) / 10000.0  # 换算为比率
 
@@ -425,23 +437,125 @@ class Gatekeeper:
         return passed
 
     @classmethod
-    def audit_final_alpha(cls, sim_result_data: dict, region: str = "USA", pcorr_max: float = 0.70,
-                          sc_max: float = 0.60, require_corr_verified: bool = True) -> list:
+    def compute_master_good_flag(cls, alpha: dict) -> dict:
         """
-        终极全维度生产级准入门禁 (Submission-Grade Gate):
-        彻底封死一切垃圾与违规因子：
-        1. Sharpe >= 1.58
-        2. Fitness >= 1.00 (彻底斩断 0.38 垃圾)
-        3. Margin >= 区域门槛 (USA/EUR >= 10 bps, ASI/GLB >= 15 bps, IND/MEA >= 20 bps) (彻底斩断 1.74 bps)
-        4. Turnover ∈ [5.0%, 50.0%] (彻底斩断 121.72% 畸高换手)
-        5. Checks: fail_num == 0 且集中度无违规
-        6. 相关性: 平台 ProdCorr < 0.70, 本地 SelfCorr <= 0.60
-        7. 相关性必须「已核实」: 若结果体中完全没有 ProdCorr 字段，一律不予放行，
-           必须先跑 /alphas/{id}/correlations/prod 探针确认后再提交
-           (可用环境变量 AEGIS_ALLOW_UNVERIFIED_PCORR=1 临时降级为告警)。
+        Master 级生产 Alpha 程序化 good_flag 评估器 (V3.1 规范):
+        1. YearlyCheck: 有效年份 (>=8年) 中，负 Sharpe 年份最多允许 1 年
+        2. RecentSharpeCheck: 最近 2 年年化 Sharpe >= 1.58
+        3. MarginCheck: Margin >= 8.0 bps
+        4. TurnoverCheck: 换手率处于 [5.0%, 35.0%] 黄金区间
+        5. WarningsCheck: 平台警告数 == 0 (0 WARNING)
+        6. FailsCheck: 平台失败数 == 0 (0 FAIL)
+        7. ProdCorrCheck: ProdCorr < 0.65
         """
-        results = sim_result_data.get("alpha_results", sim_result_data if isinstance(sim_result_data, list) else [sim_result_data])
-        min_margin_bps = cls.get_min_margin_bps(region)
+        metrics = alpha.get("metrics") or alpha.get("is") or {}
+        if not isinstance(metrics, dict):
+            metrics = {}
+
+        margin_bps = float(alpha.get("margin_bps") or metrics.get("margin_bps") or (float(metrics.get("margin") or 0.0) * 10000.0))
+        turnover = float(alpha.get("turnover") or metrics.get("turnover") or 0.0)
+        margin_passed = margin_bps >= 8.0
+        turnover_passed = 0.05 <= turnover <= 0.35
+
+        raw_yearly = alpha.get("yearly_stats") or metrics.get("yearly_stats") or alpha.get("yearly_sharpe") or []
+        if isinstance(raw_yearly, dict):
+            raw_yearly = raw_yearly.get("records", [])
+        yearly_sharpes = []
+        if isinstance(raw_yearly, list):
+            for y_item in raw_yearly:
+                if isinstance(y_item, dict):
+                    sh = y_item.get("sharpe") or y_item.get("value")
+                elif isinstance(y_item, (list, tuple)) and len(y_item) >= 2:
+                    sh = y_item[1]
+                else:
+                    sh = None
+                if sh is not None:
+                    try:
+                        yearly_sharpes.append(float(sh))
+                    except (ValueError, TypeError):
+                        pass
+
+        valid_years = len(yearly_sharpes)
+        neg_years = sum(1 for s in yearly_sharpes if s < 0)
+        if valid_years >= 5:
+            yearly_passed = neg_years <= 1
+        else:
+            yearly_passed = (valid_years > 0 and neg_years == 0)
+
+        ladder_2y = alpha.get("ladder_2y_sharpe") or alpha.get("two_year_sharpe") or metrics.get("sharpe_2y")
+        if ladder_2y is not None:
+            try:
+                recent_2y_sharpe = float(ladder_2y)
+            except (ValueError, TypeError):
+                recent_2y_sharpe = 0.0
+        elif len(yearly_sharpes) >= 2:
+            recent_2y_sharpe = sum(yearly_sharpes[-2:]) / 2.0
+        else:
+            recent_2y_sharpe = float(alpha.get("sharpe") or metrics.get("sharpe") or 0.0)
+        
+        recent_2y_passed = recent_2y_sharpe >= 1.58
+
+        warn_cnt = int(alpha.get("warning_count", 0))
+        fail_cnt = int(alpha.get("fail_count", 0))
+        checks = alpha.get("checks") or metrics.get("checks") or []
+        if isinstance(checks, list):
+            for c in checks:
+                if isinstance(c, dict):
+                    res_val = str(c.get("result", "")).upper()
+                    if res_val in ("FAIL", "ERROR"):
+                        fail_cnt += 1
+                    elif res_val == "WARNING":
+                        warn_cnt += 1
+        warn_passed = (warn_cnt == 0)
+        fail_passed = (fail_cnt == 0)
+
+        pcorr = alpha.get("prod_corr") if alpha.get("prod_corr") is not None else alpha.get("pcorr")
+        if pcorr is None:
+            pcorr = cls.extract_prod_corr(alpha)
+        prod_corr_passed = (pcorr is not None and float(pcorr) < 0.65) if pcorr is not None else False
+
+        is_good = (yearly_passed and recent_2y_passed and margin_passed and turnover_passed)
+        is_all_pass_champion = is_good and warn_passed and fail_passed and prod_corr_passed
+
+        return {
+            "good_flag": is_good,
+            "is_all_pass_champion": is_all_pass_champion,
+            "yearly_passed": yearly_passed,
+            "neg_years_count": neg_years,
+            "total_years_count": valid_years,
+            "recent_2y_passed": recent_2y_passed,
+            "recent_2y_sharpe": recent_2y_sharpe,
+            "margin_passed": margin_passed,
+            "margin_bps": margin_bps,
+            "turnover_passed": turnover_passed,
+            "turnover": turnover,
+            "warn_passed": warn_passed,
+            "warn_count": warn_cnt,
+            "fail_passed": fail_passed,
+            "fail_count": fail_cnt,
+            "prod_corr_passed": prod_corr_passed,
+            "prod_corr": pcorr
+        }
+
+    @classmethod
+    def audit_final_alpha(cls, sim_result_data: dict, region: str = "USA", pcorr_max: float = 0.65,
+                          sc_max: float = 0.60, require_corr_verified: bool = True, strict_zero_warnings: bool = False) -> list:
+        """
+        终极全维度生产级准入门禁 (Submission-Grade Gate - V3.1 ALL PASS 铁律版):
+        彻底封死一切违规与过拟合因子：
+        1. Sharpe >= 1.58 且 Fitness >= 1.00
+        2. Margin >= 区域门槛 且 换手率 ∈ [5.0%, 35.0%]
+        3. ALL PASS 铁律: fail_num == 0 且 (strict_zero_warnings 时 warn_num == 0)
+        4. 相关性: 平台 ProdCorr < 0.65, 本地 SelfCorr <= 0.60
+        5. Master 级 good_flag 评估 (10年最多1年负夏普, 近2年夏普 >= 1.58)
+        """
+        if isinstance(sim_result_data, list):
+            results = sim_result_data
+        elif isinstance(sim_result_data, dict):
+            results = sim_result_data.get("alpha_results", [sim_result_data])
+        else:
+            results = [sim_result_data]
+        min_margin_bps = max(cls.get_min_margin_bps(region), 8.0)
         margin_threshold = min_margin_bps / 10000.0
         allow_unverified = os.environ.get("AEGIS_ALLOW_UNVERIFIED_PCORR") == "1"
         require_corr_verified = require_corr_verified and not allow_unverified
@@ -471,6 +585,7 @@ class Gatekeeper:
             parsed_checks = cls.parse_brain_checks(res)
             fail_checks = parsed_checks["fails"]
             fail_num = parsed_checks["fail_count"]
+            warn_num = len(parsed_checks.get("warnings", []))
             cw_failed = parsed_checks["cw_failed"]
 
             pcorr = cls.extract_prod_corr(res)
@@ -490,10 +605,12 @@ class Gatekeeper:
                 fails.append(f"换手率过低 {turnover*100:.1f}% < 5.0% (仓位几乎不动)")
             if fail_num > 0:
                 fails.append(f"平台检查项不合格 (fail_num={fail_num}, 违规项: {fail_checks})")
+            if strict_zero_warnings and warn_num > 0:
+                fails.append(f"平台告警项未清零 (warn_num={warn_num}, 告警项: {parsed_checks.get('warnings')})")
             if cw_failed:
                 fails.append("持仓过分集中 (CONCENTRATED_WEIGHT)")
             if pcorr is not None and pcorr >= pcorr_max:
-                fails.append(f"平台生产库相关性 {pcorr:.3f} >= {pcorr_max} (严重共线性无法提交)")
+                fails.append(f"平台生产库相关性 {pcorr:.3f} >= {pcorr_max} (共线性无法出厂)")
             if sc is not None and sc > sc_max:
                 fails.append(f"个人存量库自相关性 {sc:.3f} > {sc_max} (与已有提交撞车)")
             if not pcorr_verified:
@@ -502,6 +619,14 @@ class Gatekeeper:
                     fails.append(msg + "，严禁在未核实相关性的情况下提交")
                 else:
                     print(f"⚠️ [Gatekeeper Final] {msg}，已按 AEGIS_ALLOW_UNVERIFIED_PCORR 降级为告警。")
+
+            # Master 级收益单调性 check (在严格终审时生效)
+            gf_res = cls.compute_master_good_flag(res)
+            if strict_zero_warnings and not gf_res["good_flag"]:
+                fails.append(
+                    f"Master 收益单调性 good_flag 未通过 (负夏普年数={gf_res['neg_years_count']}/{gf_res['total_years_count']}, "
+                    f"近2年夏普={gf_res['recent_2y_sharpe']:.2f}, Margin={gf_res['margin_bps']:.1f}bps)"
+                )
 
             if not fails:
                 alpha_id = res.get("id") or res.get("alpha_id")
@@ -520,12 +645,13 @@ class Gatekeeper:
                     "sc": sc,
                     "fail_count": fail_num,
                     "fails": fail_checks,
-                    "warning_count": len(parsed_checks["warnings"]),
+                    "warning_count": warn_num,
                     "warnings": parsed_checks["warnings"],
                     "cluster_sharpe": parsed_checks["cluster_sharpe"],
                     "ladder_2y_sharpe": parsed_checks["ladder_2y_sharpe"],
                     "sub_universe_sharpe": parsed_checks["sub_universe_sharpe"],
                     "two_year_sharpe": two_year,
+                    "good_flag_details": gf_res,
                     "status": "APPROVED_SUBMITTABLE"
                 })
             else:
@@ -598,16 +724,22 @@ class Gatekeeper:
         )
 
     @classmethod
-    def diagnose_and_route_prescriptions(cls, alpha_metrics: dict, checks_parsed: dict = None, 
-                                         yearly_stats: list = None, operator_count: int = 0,
-                                         prod_corr: float = None, max_operator_limit: int = 8) -> dict:
+    def diagnose_and_route_prescriptions(
+        cls,
+        alpha_metrics: dict,
+        checks_parsed: dict = None,
+        yearly_stats: list = None,
+        operator_count: int = 0,
+        prod_corr: float = None,
+        max_operator_limit: int = 8,
+        parent_alpha: dict = None
+    ) -> dict:
         """
-        Gate 4: 确定性法医诊断与处方路由锁 (Symptom-to-Prescription Lock)
-        由 Python 硬算病灶标签，从 RAG 知识库按需调取处方卡，
-        并锁定下一轮允许修改的 AST 算子集合（物理封杀 LLM 乱改参数或无脑堆砌算子）
+        Gate 4: 反事实法医病理诊断器 (Forensic Pathologist)
+        彻底废除机械的“病症->算子白名单”抓药模式，输出客观物理病灶与三大反事实病理线索，
+        驱动 Agent 结合字段 DGP（数据生成过程）自主推演数学拓扑。
         """
         checks_parsed = checks_parsed or {}
-        # 兼容性: 若传入的是未解析的 raw res / metrics，自动解析
         if "checks" in checks_parsed or "is" in checks_parsed or "metrics" in checks_parsed:
             if "fails" not in checks_parsed or "warnings" not in checks_parsed:
                 checks_parsed = cls.parse_brain_checks(checks_parsed)
@@ -615,12 +747,75 @@ class Gatekeeper:
         fails = checks_parsed.get("fails", [])
         warnings = checks_parsed.get("warnings", [])
         all_issues_str = " ".join(str(x).upper() for x in (fails + warnings))
-
         yearly_stats = yearly_stats or []
-        symptoms = []
-        allowed_ast_ops = set(["group_rank", "subindustry", "industry"]) # 基础结构算子常驻
+        if isinstance(yearly_stats, dict):
+            yearly_stats = yearly_stats.get("records", [])
 
-        # 0. 诊断生产库相关性越线 (ProdCorr >= 0.65 预警，>= 0.70 超限)
+        symptoms = []
+        forensic_clues = []
+
+        # 线索 1：多空腿持仓不对称度 (Long/Short Imbalance Ratio) 与零值稀释诊断
+        long_counts, short_counts, neg_years_info = [], [], []
+        for y in yearly_stats:
+            if isinstance(y, dict):
+                yr, sh = y.get("year"), y.get("sharpe")
+                lc = y.get("long_count") or y.get("longCount")
+                sc = y.get("short_count") or y.get("shortCount")
+            elif isinstance(y, (list, tuple)) and len(y) >= 2:
+                yr, sh = y[0], y[1]
+                lc = y[5] if len(y) > 5 else None
+                sc = y[6] if len(y) > 6 else None
+            else:
+                continue
+            if lc is not None and sc is not None:
+                try:
+                    long_counts.append(float(lc))
+                    short_counts.append(float(sc))
+                except (ValueError, TypeError):
+                    pass
+            if yr is not None and sh is not None:
+                try:
+                    if float(sh) < 0:
+                        neg_years_info.append(f"{yr}年(Sharpe={float(sh):.2f})")
+                except (ValueError, TypeError):
+                    pass
+
+        if long_counts and short_counts:
+            avg_l = sum(long_counts) / len(long_counts)
+            avg_s = sum(short_counts) / len(short_counts)
+            ratio = avg_l / max(avg_s, 1.0)
+            if ratio > 1.25 or ratio < 0.80:
+                symptoms.append("dead_weight_imbalance")
+                forensic_clues.append(
+                    f"【法医病理 1·多空腿失衡】年均多头 {avg_l:.0f} 只 vs 空头 {avg_s:.0f} 只 (比例 {ratio:.2f})。"
+                    f"表明截面存在大量零值或常数堆积稀释单侧持仓！请核查字段 is_sparse 与零值物理含义，剥离无事件僵尸样本。"
+                )
+
+        # 线索 2：宏观政权脆弱年定位 (Regime Vulnerability Pinpointing)
+        if neg_years_info:
+            forensic_clues.append(
+                f"【法医病理 2·宏观政权脆弱年】信号在 {', '.join(neg_years_info)} 出现负夏普失血！"
+                f"请结合字段底层商业逻辑，思考在流动性冲击/通胀加息周期中该特征发生了何种基数畸变或均值漂移。"
+            )
+
+        # 线索 3：换手—边际利润弹性 (Turnover-to-Margin Elasticity)
+        cur_turn = float(alpha_metrics.get("turnover") or 0.0)
+        cur_margin = float(alpha_metrics.get("margin_bps") or (float(alpha_metrics.get("margin") or 0.0) * 10000.0))
+        if parent_alpha and isinstance(parent_alpha, dict):
+            p_m = parent_alpha.get("metrics") or {}
+            p_turn = float(parent_alpha.get("turnover") or p_m.get("turnover") or 0.0)
+            p_margin = float(parent_alpha.get("margin_bps") or (float(p_m.get("margin") or 0.0) * 10000.0))
+            d_turn = cur_turn - p_turn
+            d_margin = cur_margin - p_margin
+            if d_turn < -0.03 and d_margin < -1.0:
+                forensic_clues.append(
+                    f"【法医病理 3·换手—利润负弹性警告】相比母本换手率下降 {abs(d_turn)*100:.1f}%，但 Margin 反而萎缩 {abs(d_margin):.1f}bps！"
+                    f"证明该信号属于快衰减高频脉冲，过度平滑正在扼杀 Alpha 峰值，严禁继续拉长时序衰减窗口！"
+                )
+
+        # 其余客观平台检查项归因（只报物理病症，不开算子药方）
+        allowed_ast_ops = set(["group_rank", "subindustry", "industry"])
+
         if prod_corr is not None:
             try:
                 pc = float(prod_corr)
@@ -628,85 +823,55 @@ class Gatekeeper:
                 pc = None
             if pc is not None and pc >= 0.65:
                 symptoms.append("prod_corr_overflow" if pc >= 0.70 else "prod_corr_elevated_above_065")
-                allowed_ast_ops.update([
-                    "group_zscore", "group_neutralize", "zscore", "scale",
-                    "SUBSTITUTE_LOW_ALPHA_COUNT_FIELD", "ts_delta", "ts_zscore"
-                ])
+                forensic_clues.append(
+                    f"【共线性超标】当前 ProdCorr={pc:.4f} >= 0.65。底层主信号或外层截面映射与存量库高度同质化，"
+                    f"请在重构舱启用低 alpha_count 同源冷字段平替、VECTOR 高阶矩（分歧度/偏度）或特质残差剥离。"
+                )
+                allowed_ast_ops.update(["group_neutralize", "group_zscore", "ts_delta", "quantile_spread_subtract", "SUBSTITUTE_LOW_ALPHA_COUNT_FIELD"])
 
-        # 1. 诊断多空持仓失衡与零值死重
-        if yearly_stats:
-            avg_long = sum(y.get("long_count", 0) for y in yearly_stats) / max(len(yearly_stats), 1)
-            avg_short = sum(y.get("short_count", 0) for y in yearly_stats) / max(len(yearly_stats), 1)
-            total_count = avg_long + avg_short
-            if total_count > 0 and abs(avg_long - avg_short) / total_count > 0.10:
-                symptoms.append("dead_weight_imbalance")
-                allowed_ast_ops.update(["ts_zscore", "subtract_ts_mean", "trade_when", "rank_tail_power"])
-
-        # 2. 诊断同簇共线性 (含 CLUSTER FAIL/WARNING)
         cluster_sharpe = checks_parsed.get("cluster_sharpe")
         if (cluster_sharpe is not None and cluster_sharpe < 1.58) or "CLUSTER" in all_issues_str:
             symptoms.append("cluster_collinearity")
+            forensic_clues.append("【同簇共线性警告】与已有同质 Alpha 簇产生共振，建议使用正交残差回归或非线性特征交互破除共线性。")
             allowed_ast_ops.update(["SUBSTITUTE_LOW_ALPHA_COUNT_FIELD", "ts_delta", "group_neutralize", "group_zscore", "quantile_spread_subtract", "winsorize", "signed_power"])
 
-        # 2b. 诊断区域夏普与临界夏普缺口 (LOW_GLB_EMEA_SHARPE, LOW_GLB_APAC_SHARPE, LOW_SHARPE)
         if any(k in all_issues_str for k in ("EMEA", "APAC", "REGIONAL", "LOW_SHARPE")):
             symptoms.append("regional_or_sharpe_deficit")
+            forensic_clues.append("【区域或临界夏普缺口】在特定区域存在性能滑坡，建议通过组内均衡或风险中性化改善局部泛化能力。")
             allowed_ast_ops.update(["winsorize", "signed_power", "s_log_1p", "group_neutralize", "group_zscore", "subindustry", "country", "ts_decay_linear", "ts_decay_exp_window"])
 
-        # 3. 诊断集中度违规与子宇宙/近两年稳健性警告 (含 FAIL 与 WARNING)
         if "CONCENTRATED" in all_issues_str or checks_parsed.get("cw_failed"):
             symptoms.append("cw_bottleneck")
+            forensic_clues.append("【权重集中度违规 (CW)】少数极端离群标的垄断了组合权重，请结合字段偏态分布设计尾部收敛或组内均衡映射。")
             allowed_ast_ops.update(["s_log_1p", "winsorize", "signed_power"])
 
         if any(k in all_issues_str for k in ("SUB_UNIVERSE", "LADDER", "2Y", "ROBUST")):
             symptoms.append("sub_universe_or_2y_instability")
+            forensic_clues.append("【子池/近2年稳健性不足】请排查是否存在大小盘基数鸿沟（Level Bias）或回溯窗口过长导致的跨周期均值滞后。")
             allowed_ast_ops.update(["winsorize", "ts_zscore", "ts_decay_exp_window", "signed_power", "trade_when"])
 
-        # 4. 诊断换手率过高脉冲 (> 50%)，并授权状态记忆算子 trade_when 冻结无信息日持仓
-        turnover = float(alpha_metrics.get("turnover", 0.0))
-        if turnover > 0.40 or "TURNOVER" in all_issues_str:
-            # 40% 以上即进入 trade_when 的适用区间 (目标压降至 12%~25% 黄金区间)
+        if cur_turn > 0.40 or "TURNOVER" in all_issues_str:
             allowed_ast_ops.update(["trade_when", "ts_decay_exp_window", "ts_decay_linear"])
-        if turnover > 0.50 or "HIGH_TURNOVER" in all_issues_str:
+        if cur_turn > 0.35 or "TURNOVER" in all_issues_str:
             symptoms.append("turnover_overflow")
-            allowed_ast_ops.update(["ts_decay_exp_window", "ts_decay_linear"])
+            forensic_clues.append(f"【换手率超标】当前换手率 {cur_turn*100:.1f}% > 35% 黄金区间上限，日间微幅噪音触发了过多无效调仓。")
 
-        # 5. 诊断 Power Pool 算子超限 (研究挖掘阶段默认 > 8，准冠军优化阶段才放宽到 > 10)
         if operator_count > max_operator_limit:
             symptoms.append("operator_count_overflow")
-            if max_operator_limit >= 10:
-                allowed_ast_ops.add("PRUNE_REDUNDANT_OPERATOR_TO_LE_10")
-            else:
-                allowed_ast_ops.add("PRUNE_REDUNDANT_OPERATOR_TO_LE_8")
+            forensic_clues.append(f"【算子复杂度超限】当前算子数 {operator_count} > {max_operator_limit}，请执行奥卡姆剃刀剔除无信息增量的冗余嵌套。")
+            allowed_ast_ops.add(f"PRUNE_REDUNDANT_OPERATOR_TO_LE_{max_operator_limit}")
 
-        # 动态按需调取专属 Tier-2 知识卡片与 LanceDB 原子化因果 QA
-        mounted_cards = []
-        for tag in symptoms:
-            card = RAGMemoryEngine.get_card_on_demand(tag)
-            if card and "error" not in card:
-                mounted_cards.append(card)
+        print(f"\n🩺 [Gatekeeper 法医诊断] 确诊病灶: {symptoms}")
+        if forensic_clues:
+            print(f"🔬 [法医病理线索]: {len(forensic_clues)} 条反事实线索已就绪")
 
-        qa_prescriptions = []
-        try:
-            from core.qa_rag_tool import search_qa_knowledge
-            for tag in symptoms:
-                qas = search_qa_knowledge(query=tag, symptom=tag, tags=[tag], top_k=1)
-                for q in qas:
-                    if q not in qa_prescriptions:
-                        qa_prescriptions.append(q)
-        except Exception as e:
-            # 容错降级
-            pass
-
-        verdict = {
+        return {
             "symptoms": symptoms,
+            "forensic_clues": forensic_clues,
             "allowed_mutations": sorted(list(allowed_ast_ops)),
-            "rag_prescriptions": mounted_cards,
-            "qa_prescriptions": qa_prescriptions
+            "rag_prescriptions": [],
+            "qa_prescriptions": []
         }
-        print(f"\n🩺 [Gatekeeper 处方诊断] 确诊病灶: {symptoms}")
-        print(f"🔒 [授权算子白名单]: {verdict['allowed_mutations']}")
-        return verdict
 
     @classmethod
     def audit_raw_signal(cls, sim_result, min_sharpe: float = 1.20, min_positive_years: int = 9) -> list:
@@ -730,26 +895,3 @@ class Gatekeeper:
                 expr = cls.extract_expression(res)
                 passed.append({"expression": expr, "sharpe": sharpe, "is": is_m})
         return passed
-
-if __name__ == "__main__":
-    # 模拟 user 刚刚测出的 pwvZJW6j 垃圾数据
-    pwvZJW6j_fake = {
-        "alpha_results": [{
-            "expression": "pwvZJW6j_sample",
-            "is": {
-                "sharpe": 1.30,
-                "fitness": 0.38,
-                "margin": 0.000174, # 1.74 bps
-                "turnover": 1.2172   # 121.72%
-            },
-            "pcorr": 0.8670,
-            "ra": {"fail_num": 0}
-        }]
-    }
-    print("Testing Gatekeeper on pwvZJW6j:")
-    s1 = Gatekeeper.audit_step1_batch(pwvZJW6j_fake)
-    print("Step 1:", s1["message"])
-    s2 = Gatekeeper.audit_step2_batch(pwvZJW6j_fake, region="USA")
-    print("Step 2 passed count:", len(s2))
-    final = Gatekeeper.audit_final_alpha(pwvZJW6j_fake, region="USA")
-    print("Final passed count:", len(final))

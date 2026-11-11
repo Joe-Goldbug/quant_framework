@@ -19,7 +19,7 @@ import ast
 import os
 import re
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set, Any, Tuple
 
 if sys.platform == "win32":
     try:

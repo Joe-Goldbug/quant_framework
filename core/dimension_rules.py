@@ -24,7 +24,10 @@ from typing import Dict, List, Set, Union, Optional
 try:
     from quant_framework.core.operator_registry import OperatorRegistry
 except ModuleNotFoundError:
-    from core.operator_registry import OperatorRegistry
+    try:
+        from core.operator_registry import OperatorRegistry
+    except ModuleNotFoundError:
+        from operator_registry import OperatorRegistry
 
 if sys.platform == "win32":
     try:
@@ -53,13 +56,24 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
             "close", "open", "high", "low", "vwap", "volume", "cap", "adv20",
             "returns", "sharesout", "split", "dividend"
         }
-        # 原帖第 6.1 节与第 9.1 节明确要求：在 USA 区域可使用 group_neutralize(..., subindustry) 配合风险中性化
-        # 故彻底解禁 group_neutralize，将其置空，完全放行合规中性化算子
-        self.FORBIDDEN_OPERATORS = set()
+        # 1. 采纳 GM 铁律：物理封杀容易造成量纲混乱与过拟合的 add(+) 和 multiply(*)
+        self.FORBIDDEN_OPERATORS = {"add", "multiply"}
+
+        # 2. 经济学自然日历周期白名单：5(周), 10(双周), 20/21/22(月), 60/63(季), 120/126(半年), 250/252(年)
+        # 以及向后兼容的 0, 1, 2, 3, 4 (用于 ts_delay(x, 1), rettype=0/2, driver/std 整数位等)
+        self.VALID_CALENDAR_INTS = {0, 1, 2, 3, 4, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252}
+
+        # 3. 标准小数参数白名单 (彻底封杀 0.13, 0.37, 1.42 等网格过拟合小数)
+        self.VALID_CANONICAL_FLOATS = {
+            -1.0, 0.0, 0.01, 0.05, 0.08, 0.1, 0.12, 0.15, 0.2, 0.25, 
+            0.5, 0.7, 0.75, 0.8, 0.9, 0.95, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0
+        }
+
         self.VALID_GROUPS = {"market", "sector", "industry", "subindustry", "country", "region"}
         self.VECTOR_WRAPPERS = {
             "vec_avg", "vec_sum", "vec_choose", "vec_count", "vec_max",
-            "vec_min", "vec_std", "vec_norm", "vec_percentage", "vec_ir"
+            "vec_min", "vec_std", "vec_stddev", "vec_range", "vec_norm",
+            "vec_percentage", "vec_ir", "vec_skewness", "vec_kurtosis", "vec_median"
         }
 
     def _get_field_info(self, field_name: str) -> dict:
@@ -135,7 +149,7 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
             elif func_name in ("group_zscore", "ts_zscore"):
                 return {"type": "MATRIX", "domain": "[-1, 1]", "is_sparse": False}
             # VECTOR 降维包裹算子继承底层字段 domain
-            elif func_name in self.VECTOR_WRAPPERS:
+            elif func_name in self.VECTOR_WRAPPERS or func_name.startswith("vec_"):
                 if node.args:
                     inner_d = self._infer_node_domain(node.args[0])
                     return {"type": "MATRIX", "domain": inner_d.get("domain", "unbounded"), "is_sparse": inner_d.get("is_sparse", False)}
@@ -222,7 +236,7 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         for arg in node.args:
             if isinstance(arg, ast.Name):
                 f_info = self._get_field_info(arg.id)
-                if f_info.get("type") == "VECTOR" and func_name not in self.VECTOR_WRAPPERS:
+                if f_info.get("type") == "VECTOR" and not (func_name in self.VECTOR_WRAPPERS or func_name.startswith("vec_")):
                     self.issues.append(
                         f"【VECTOR 类型安全违规】VECTOR 字段 '{arg.id}' 直接作为 '{func_name}' 的参数！"
                         f"FastExpr 规则要求 VECTOR 字段必须先套用 vec_* 算子 (如 vec_avg, vec_sum, vec_choose) 降维后方可参与运算。"
@@ -249,6 +263,49 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
             self.used_fields.add(var_name)
         self.generic_visit(node)
 
+    def visit_BinOp(self, node: ast.BinOp):
+        """拦截表达式中直接写的 + 或 * 符号"""
+        if isinstance(node.op, (ast.Add, ast.Mult)):
+            op_sym = "+" if isinstance(node.op, ast.Add) else "*"
+            self.issues.append(
+                f"【GM 铁律拦截】严禁使用 '{op_sym}' (add/multiply) 运算符！"
+                "多特征交互请改用同量纲 subtract、规模归一 divide、正交残差 ts_regression 或条件门控 trade_when/if_else。"
+            )
+        self.generic_visit(node)
+
+    def visit_Constant(self, node: ast.Constant):
+        """拦截无经济学意义的窗口天数 (如 4, 44) 与乱凑的小数参数"""
+        val = node.value
+        if isinstance(val, bool) or val is None or isinstance(val, str):
+            return
+        if isinstance(val, int):
+            if abs(val) not in self.VALID_CALENDAR_INTS:
+                self.issues.append(
+                    f"【GM 日历周期铁律拦截】检测到无经济学意义的整数参数 '{val}'！"
+                    f"时序窗口必须严格锚定自然日历周期: 5(周), 10(双周), 20/21(月), 63(季), 126(半年), 252(年)。"
+                )
+        elif isinstance(val, float):
+            if round(val, 4) not in self.VALID_CANONICAL_FLOATS:
+                self.issues.append(
+                    f"【GM 反调参过拟合拦截】检测到非标准小数参数 '{val}'！"
+                    f"浮点数仅允许使用标准分位或幂次常数: {sorted(list(self.VALID_CANONICAL_FLOATS))}。"
+                )
+        self.generic_visit(node)
+
+    def visit_Num(self, node: ast.Num):
+        val = node.n
+        if isinstance(val, int):
+            if abs(val) not in self.VALID_CALENDAR_INTS:
+                self.issues.append(
+                    f"【GM 日历周期铁律拦截】检测到无经济学意义的整数参数 '{val}'！"
+                )
+        elif isinstance(val, float):
+            if round(val, 4) not in self.VALID_CANONICAL_FLOATS:
+                self.issues.append(
+                    f"【GM 反调参过拟合拦截】检测到非标准小数参数 '{val}'！"
+                )
+        self.generic_visit(node)
+
 
 class DimensionAuditor:
     EXTERNAL_PV_FIELDS = {
@@ -258,12 +315,17 @@ class DimensionAuditor:
     # 彻底解禁 group_neutralize，将其置空，完全放行合规截面中性化
     FORBIDDEN_OPERATORS = set()
     VALID_GROUPS = {"market", "sector", "industry", "subindustry", "country", "region"}
+    VALID_CALENDAR_INTS = {0, 1, 2, 3, 4, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252}
     KB_FIELDS_DIR = os.path.join(os.path.dirname(__file__), "..", "knowledge_base", "fields")
+    _FIELD_CACHE: Dict[str, Optional[dict]] = {}
 
     @classmethod
     def load_field_meta_from_kb(cls, field_name: str) -> Optional[dict]:
         """从 knowledge_base/fields/ 中跨区域搜索真实字段画像"""
+        if field_name in cls._FIELD_CACHE:
+            return cls._FIELD_CACHE[field_name]
         if not os.path.exists(cls.KB_FIELDS_DIR):
+            cls._FIELD_CACHE[field_name] = None
             return None
         for root, _, files in os.walk(cls.KB_FIELDS_DIR):
             for f in files:
@@ -271,20 +333,23 @@ class DimensionAuditor:
                     try:
                         with open(os.path.join(root, f), 'r', encoding='utf-8') as jf:
                             data = json.load(jf)
-                            fields = data.get("fields", {})
+                            fields = data.get("fields", {}) if isinstance(data, dict) else {}
                             if field_name in fields:
                                 info = fields[field_name]
                                 domain = info.get("domain", "unbounded")
                                 is_sparse = info.get("is_sparse", info.get("sparse_zero", False))
                                 f_type = info.get("type", "MATRIX")
-                                return {
+                                res = {
                                     "type": f_type,
                                     "domain": domain,
                                     "is_sparse": is_sparse,
                                     "description": info.get("description", "")
                                 }
+                                cls._FIELD_CACHE[field_name] = res
+                                return res
                     except Exception:
                         pass
+        cls._FIELD_CACHE[field_name] = None
         return None
 
     @classmethod
@@ -382,7 +447,7 @@ class DimensionAuditor:
 
         # 8. Step 1 纯净实证与核心字段锁定校验 (Clean Empirical Validation)
         if step == 1:
-            STEP1_FORBIDDEN_OPERATORS = {"winsorize", "s_log_1p", "signed_power", "hump", "jump_decay"}
+            STEP1_FORBIDDEN_OPERATORS = set()  # 采纳 GM 建议：解禁 winsorize, s_log_1p, signed_power 供清洗与形状映射
             forbidden_hit = visitor.called_operators.intersection(STEP1_FORBIDDEN_OPERATORS)
             if forbidden_hit:
                 issues.append(
@@ -420,25 +485,3 @@ class DimensionAuditor:
             "used_pv_fields": list(visitor.used_pv_fields),
             "group_vars": list(visitor.group_vars)
         }
-
-if __name__ == "__main__":
-    # 测试用例 1: 传入 list 时，测试 news 情绪字段减 0.5 依然被拦截
-    raw_list = ["mean_sentiment_score_transfer"]
-    e1 = "group_rank(subtract(mean_sentiment_score_transfer, 0.5), subindustry)"
-    res1 = DimensionAuditor.audit_expression(e1, raw_list, category="news")
-    print("Test 1 (list input + subtract 0.5):", res1["is_valid"], res1["issues"])
-    assert not res1["is_valid"], "传入 list 时未拦截 subtract 0.5！"
-
-    # 测试用例 2: 嵌套在 winsorize / ts_decay 内的双 [-1, 1] 裸乘拦截
-    raw_list2 = ["sent_score_a", "sent_score_b"]
-    e2 = "group_rank(multiply(winsorize(sent_score_a, std=2.5), ts_decay_linear(sent_score_b, 5)), subindustry)"
-    res2 = DimensionAuditor.audit_expression(e2, raw_list2, category="news")
-    print("Test 2 (nested dual [-1, 1] multiply):", res2["is_valid"], res2["issues"])
-    assert not res2["is_valid"], "嵌套双 [-1, 1] 裸乘未被拦截！"
-
-    # 测试用例 3: 字段数超过 4 个拦截
-    raw_list3 = ["f1", "f2", "f3", "f4", "f5"]
-    e3 = "group_rank(add(add(add(f1, f2), add(f3, f4)), f5), subindustry)"
-    res3 = DimensionAuditor.audit_expression(e3, raw_list3, category="news")
-    print("Test 3 (field count > 4):", res3["is_valid"], res3["issues"])
-    assert not res3["is_valid"], "字段数超过 4 个未被拦截！"

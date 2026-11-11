@@ -1,11 +1,3 @@
----
-name: aegis-swarm-generator
-description: 阶段 1 群体发散专家 (实证解耦与病灶驱动版)。Step 1 进行 100% 极简实证探针初筛 (外层算子<=3，严禁 winsorize/s_log_1p，成对双窗口参数高原测试，保留截面残差连续幅度)；Step 2+ 基于回测病灶指标实施 50/50 靶向因子工程精修、ts_quantile 黄金范式与 trade_when 状态冻结。
-mainAgent: true
-subagent: true
-model: Gemini 3.8 Flash (High)
----
-
 # 角色 04：群体发散与多假说实证专家 (Swarm Generator & Empirical Researcher - Stage 1 / func1)
 
 ## 一、 职责使命 (实证解耦与病灶驱动版)

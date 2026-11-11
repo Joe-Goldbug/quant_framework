@@ -161,6 +161,12 @@ class SimBatchRunner:
                         yearly_sharpe.append([str(yr["year"]), f"{float(yr['sharpe']):.2f}"])
                     except (ValueError, TypeError):
                         pass
+                elif isinstance(yr, (list, tuple)) and len(yr) >= 2:
+                    # 兼容 Brain recordsets/yearly-stats 原生二维数组 [year, sharpe, ...]
+                    try:
+                        yearly_sharpe.append([str(yr[0]), f"{float(yr[1]):.2f}"])
+                    except (ValueError, TypeError):
+                        pass
 
         monthly_sharpe = r.get("last_24_monthly_sharpe") or metrics.get("last_24_monthly_sharpe") or []
 
@@ -302,31 +308,15 @@ class SimBatchRunner:
             except Exception as ex:
                 pass
 
-        # 4. Gate 5: Tabu 禁忌表全槽位扫描
-        ledger_file = ledger_path or os.path.join(campaign_dir, "exploration_ledger.json")
-        known_field_names = set(known_fields if isinstance(known_fields, list) else known_fields.keys())
-        if strict_hardness and os.path.exists(ledger_file):
-            for slot_idx, item in enumerate(expressions_data):
-                expr_text = item.get("expression", "")
-                tokens = [t for t in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', expr_text) if t in known_field_names]
-                if len(tokens) >= 1:
-                    sig = tokens[0]
-                    cat = tokens[1] if len(tokens) > 1 else None
-                    is_tabu, tabu_reason = AntiLazinessAuditor.check_tabu(ledger_file, sig, cat)
-                    if is_tabu:
-                        raise PermissionError(
-                            f"【Gate 5 拦截】Slot {slot_idx+1} 检测到已被禁忌表锁定的停滞字段对: ({sig}:{cat or 'NONE'})！\n"
-                            f"原因: {tabu_reason}\n"
-                            f"请将该槽位字段更换为未锁定的高优候选！"
-                        )
-
-        # 5. Pre-read batch metadata for Golden Shot & Dynamic Operator Caps
+        # 4. Pre-read batch metadata for Golden Shot & Dynamic Operator Caps
         if batch_step is None:
             batch_step = 1
         core_fields = None
         stage0_op_count = 0
         batch_max_ops = 8
         is_golden_shot = False
+        has_parent = False
+        parent_expr = None
         if os.path.exists(batch_file_path):
             try:
                 with open(batch_file_path, 'r', encoding='utf-8') as bf:
@@ -335,6 +325,8 @@ class SimBatchRunner:
                         batch_step = b_meta.get("step", batch_step)
                     if b_meta.get("has_parent", False):
                         batch_step = max(batch_step, 2)
+                        has_parent = True
+                    parent_expr = b_meta.get("parent_expression")
                     core_fields = b_meta.get("core_fields", [])
                     stage0_op_count = b_meta.get("stage0_op_count", 0)
                     batch_max_ops = b_meta.get("max_ast_operators", b_meta.get("max_operators", 8))
@@ -354,20 +346,56 @@ class SimBatchRunner:
             except Exception:
                 pass
 
+        # 5. Gate 5: Tabu 禁忌表全槽位扫描 (在靶向母本精修模式 has_parent 下，母本核心字段与基准对照槽豁免禁忌锁定)
+        ledger_file = ledger_path or os.path.join(campaign_dir, "exploration_ledger.json")
+        known_field_names = set(known_fields if isinstance(known_fields, list) else known_fields.keys())
+        if strict_hardness and os.path.exists(ledger_file) and not has_parent:
+            for slot_idx, item in enumerate(expressions_data):
+                expr_text = item.get("expression", "")
+                if slot_idx == 0 or (parent_expr and expr_text == parent_expr):
+                    continue
+                tokens = [t for t in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', expr_text) if t in known_field_names]
+                if len(tokens) >= 1:
+                    sig = tokens[0]
+                    cat = tokens[1] if len(tokens) > 1 else None
+                    is_tabu, tabu_reason = AntiLazinessAuditor.check_tabu(ledger_file, sig, cat)
+                    if is_tabu:
+                        raise PermissionError(
+                            f"【Gate 5 拦截】Slot {slot_idx+1} 检测到已被禁忌表锁定的停滞字段对: ({sig}:{cat or 'NONE'})！\n"
+                            f"原因: {tabu_reason}\n"
+                            f"请将该槽位字段更换为未锁定的高优候选！"
+                        )
+
         # Gate 3: AST 自动纠偏与骨架防摸鱼微调熔断 (Golden Shot 加时赛豁免同骨架微调上限)
         campaign_dir = os.path.dirname(os.path.abspath(batch_file_path))
         campaign_db = os.path.join(campaign_dir, "alphas_record.db")
         corrector = ASTSandboxCorrector(db_path=campaign_db)
         raw_exprs = [x.get("expression", "") for x in expressions_data]
         batch_id = os.path.basename(batch_file_path).replace(".json", "")
-        if is_golden_shot:
+        parent_expr = None
+        if os.path.exists(batch_file_path):
+            try:
+                with open(batch_file_path, 'r', encoding='utf-8') as bf:
+                    b_doc = json.load(bf)
+                    parent_expr = b_doc.get("parent_expression")
+            except Exception:
+                parent_expr = None
+
+        ledger_data = AntiLazinessAuditor.load_ledger(ledger_file) if os.path.exists(ledger_file) else {}
+        gs_used = ledger_data.get("golden_shot_used_count", 0)
+        if is_golden_shot and gs_used < 1:
+            ledger_data["golden_shot_used_count"] = gs_used + 1
+            AntiLazinessAuditor.save_ledger(ledger_file, ledger_data)
             corrected_exprs = [corrector.correct_expression(x) for x in raw_exprs]
             corrector.record_batch(corrected_exprs, region, universe, delay, neutralization, batch_id=batch_id)
-            print(f"✅ [Gate 3 - Golden Shot 豁免] 准冠军加时赛锁定母本骨架微调，已放行骨架限制并完成语法纠偏。")
+            print(f"✅ [Gate 3 - Golden Shot 单次豁免] 已消耗唯一一次加时赛微调配额 (1/1)。")
         else:
+            if is_golden_shot:
+                print(f"🛑 [Gate 3 - Golden Shot 配额耗尽] 加时赛微调未突破 1.58，已强制收回豁免权，恢复反常数微调硬拦截！")
             corrected_exprs = corrector.check_and_record_batch(
                 raw_exprs, region, universe, delay, neutralization, batch_id=batch_id,
-                is_exploit_or_step2=(batch_step >= 2)
+                is_exploit_or_step2=(batch_step >= 2),
+                parent_expression=parent_expr
             )
             print(f"✅ [Gate 3 - AST Sandbox] 算子别名/参数位置自动纠偏完成，单批拓扑骨架唯一性通过。")
 
@@ -400,6 +428,9 @@ class SimBatchRunner:
 
         items = batch_data.get("items", [])
         known_fields = batch_data.get("known_fields", [])
+        decay = int(batch_data.get("decay", decay))
+        truncation = float(batch_data.get("truncation", truncation))
+        nan_handling = batch_data.get("nan_handling", nan_handling)
         campaign_dir = os.path.dirname(os.path.abspath(batch_file_path))
         if ledger_path is None:
             ledger_path = os.path.join(campaign_dir, "exploration_ledger.json")
@@ -417,46 +448,9 @@ class SimBatchRunner:
             ledger_path=ledger_path
         )
 
-        if os.environ.get("AEGIS_MOCK_MODE") == "1":
-            print("\n[Mock 模式] 检测到测试/离线模式，快速构造测试桩数据...")
-            mock_results = []
-            for idx, expr in enumerate(corrected_exprs):
-                sh = 1.35 if idx in [0, 1, 2] else 0.45
-                mock_results.append({
-                    "id": f"MOCK_{idx+1}",
-                    "expression": expr,
-                    "is": {
-                        "sharpe": sh,
-                        "fitness": 1.20,
-                        "turnover": 0.25,
-                        "margin": 0.0018,
-                        "checks": []
-                    }
-                })
-            step1_res = Gatekeeper.audit_step1_batch({"alpha_results": mock_results}, expected_polarity=batch_data.get("expected_polarity", 1))
-            step2_passed = [r for r in mock_results if r["is"]["sharpe"] >= 1.25]
-            final_passed = [
-                {
-                    "alpha_id": r["id"],
-                    "expression": r["expression"],
-                    "sharpe": r["is"]["sharpe"],
-                    "fitness": r["is"]["fitness"],
-                    "margin_bps": r["is"]["margin"] * 10000
-                }
-                for r in step2_passed
-            ] if os.environ.get("AEGIS_MOCK_FINAL") == "1" else []
-            return {
-                "step1": step1_res,
-                "step2_passed": step2_passed,
-                "final_passed": final_passed,
-                "golden_results": [cls.extract_golden_alpha_result(r) for r in mock_results],
-                "results": mock_results
-            }
-
         bm = get_brain_module()
         if not bm:
-            print("\n[Mock 模式] 未检测到生产 D:\\brain-mcp 真实网络环境，模拟完成。")
-            return {"mock": True, "corrected_exprs": corrected_exprs}
+            raise RuntimeError("❌ 未检测到生产环境 Brain MCP 模块，无法提交并发仿真回测！请检查平台连接配置。")
 
         # 2. 静默提交至 Brain (按各变体专属的中性化分组，且每组按最多 10 条分块提交，实现真实高阶中性化并发)
         neut_groups: Dict[str, List[str]] = {}
@@ -721,16 +715,17 @@ class SimBatchRunner:
         sig_f = tokens[0] if len(tokens) >= 1 else "signal"
         cat_f = tokens[1] if len(tokens) >= 2 else None
         
-        # Gate 5: 登记账本并检测 Tabu 连续停滞
-        batch_id = os.path.basename(batch_file_path).replace(".json", "")
-        tabu_update = AntiLazinessAuditor.update_ledger_and_check_tabu(
-            ledger_path=ledger_path,
-            batch_id=batch_id,
-            signal_field=sig_f,
-            catalyst_field=cat_f,
-            batch_max_fitness=max_batch_fitness,
-            expressions=corrected_exprs
-        )
+        # Gate 5: 登记账本并检测 Tabu 连续停滞 (仅在开拓探索阶段生效，老兵精修模式豁免锁定母本字段)
+        if not batch_data.get("has_parent", False):
+            batch_id = os.path.basename(batch_file_path).replace(".json", "")
+            tabu_update = AntiLazinessAuditor.update_ledger_and_check_tabu(
+                ledger_path=ledger_path,
+                batch_id=batch_id,
+                signal_field=sig_f,
+                catalyst_field=cat_f,
+                batch_max_fitness=max_batch_fitness,
+                expressions=corrected_exprs
+            )
 
         if step1_res["should_prune"]:
             print("❌ 触发 AEGIS Step 1 极速早停熔断！当前主信号无统计显著性，自动剪枝！")
@@ -745,8 +740,8 @@ class SimBatchRunner:
         step2_passed = Gatekeeper.audit_step2_batch({"alpha_results": results}, region=region)
         print(f"🏆 Step 2 合规通过数: {len(step2_passed)} / {len(items)} 条！")
 
-        # 终极生产准入门禁
-        final_passed = Gatekeeper.audit_final_alpha({"alpha_results": results}, region=region)
+        # 终极生产准入门禁 (V3.1 ALL PASS 0 FAIL 0 WARNING 铁律)
+        final_passed = Gatekeeper.audit_final_alpha({"alpha_results": results}, region=region, strict_zero_warnings=True)
         print(f"🌟 达到终极生产准入标准 (可提交) 数量: {len(final_passed)} 条！")
 
         # ---------------- 双窗口敏感性成对验证 (参数高原压力测试器) ----------------

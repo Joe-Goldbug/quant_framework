@@ -79,15 +79,23 @@ class DatasetFieldResolver:
         search_roots = [self.kb_root]
         if self.default_kb_root != self.kb_root:
             search_roots.append(self.default_kb_root)
+        
+        repo_fixtures = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tests", "fixtures")
+        if os.path.exists(repo_fixtures) and repo_fixtures not in search_roots:
+            search_roots.append(repo_fixtures)
 
         for c_ds in cand_ds_names:
             for s_root in search_roots:
-                target_path = os.path.join(s_root, region, f"{c_ds}.json")
-                if os.path.exists(target_path):
-                    parsed = self._parse_file(target_path)
-                    if parsed:
-                        print(f"✅ [FieldResolver] 匹配本地字段知识库: {region}/{c_ds} (共 {len(parsed)} 字段)")
-                        return parsed
+                target_paths = [
+                    os.path.join(s_root, region, f"{c_ds}.json"),
+                    os.path.join(s_root, f"{c_ds}.json")
+                ]
+                for target_path in target_paths:
+                    if os.path.exists(target_path):
+                        parsed = self._parse_file(target_path)
+                        if parsed:
+                            print(f"✅ [FieldResolver] 匹配本地字段知识库: {region}/{c_ds} (共 {len(parsed)} 字段)")
+                            return parsed
 
         # 4. 优先级四: 跨区域同源继承 (Cross-Region Inheritance)
         # 例如: GLB/EUR/ASI 请求 fundamental23，由于财务指标在各市场本质同构，可从已缓存的 USA 继承

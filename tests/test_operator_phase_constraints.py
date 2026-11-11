@@ -93,7 +93,7 @@ class TestOperatorPhaseConstraints(unittest.TestCase):
     def test_03_dimension_rules_default_and_override(self):
         """测试 dimension_rules.py 默认保持 8 算子审查，优化阶段才显式放宽至 10"""
         # 默认调用: 默认上限必须是 8 (9 算子应超限拦截)
-        e_9_ops = "add(add(add(add(add(add(add(add(add(f1, f2), f1), f2), f1), f2), f1), f2), f1), f2)"
+        e_9_ops = "subtract(subtract(subtract(subtract(subtract(subtract(subtract(subtract(subtract(f1, f2), f1), f2), f1), f2), f1), f2), f1), f2)"
         res_default = DimensionAuditor.audit_expression(
             e_9_ops, known_fields=["f1", "f2"], category="news"
         )
