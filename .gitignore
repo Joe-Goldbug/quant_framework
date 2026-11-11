@@ -9,6 +9,8 @@ build/
 # SQLite databases (large binary files)
 *.db
 *.db.bak_dryrun
+*.db-shm
+*.db-wal
 
 # Logs
 *.log
@@ -30,6 +32,20 @@ temp/
 *config*.json
 !knowledge_base/**/*.json
 !campaigns/**/*.json
+
+# LanceDB binary data (large embeddings)
+knowledge_base/lancedb_data/
+
+# Reference docs (may contain platform-specific content)
+knowledge_base/references/
+
+# Scratch / one-off helper scripts (contain local paths & platform specifics)
+scripts/
+scratch_*
+inspect_func2.py
+
+# Nested duplicate
+quant_framework/
 
 # OS files
 .DS_Store
