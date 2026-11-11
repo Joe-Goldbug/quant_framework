@@ -323,9 +323,10 @@ class BuiltinAgentBackend(BaseAgentBackend):
             print("⚙️ [AgentBackend] 未捕获到外部响应，使用 V3 确定性规则沙箱直接产出变体 (0 挂起, 0 阻塞)...")
             if self.fallback_fn:
                 return self.fallback_fn(role, prompt, json_mode=json_mode, context=context)
-            from core.agy_client import VirtualSession
-            vs = VirtualSession(client=None, role=role, model=model, system_prompt=system_prompt)
-            return vs._rule_fallback(prompt, json_mode=json_mode, context=context)
+            return await RuleMockBackend().send_message(
+                role=role, model=model, prompt=prompt, system_prompt=system_prompt,
+                json_mode=json_mode, timeout=timeout, context=context
+            )
 
         # 若配置了 LLM API 环境变量，无缝切入内存级直接生成
         api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("LLM_API_KEY")

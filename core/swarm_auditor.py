@@ -500,7 +500,7 @@ class SwarmAuditor:
         lines = [
             "【场景路由 = 老兵精修 (Veteran Refinement)｜1+9+10 三分天下制（Slot 1 基准锚 5% + Slot 2~10 微创正交舱 45% + Slot 11~20 第一性原理重构舱 50%）】:",
             f"- 母本已被 10 年历史与近 2 年区间双重验证，骨架 [{skeleton_str}] 是资产而不是待拆的脚手架；",
-            f"- 🚫 严禁把骨架 [{skeleton_str}] 中的任一算子替换或删除；严禁把外层 group_zscore 换成 group_rank/rank 来“去相关性”；",
+            "- ⚖️ Slot 2~10 锁定母本主锚字段做微创，Slot 11~20 彻底解除骨架限制重构全新拓扑；",
             "   严禁把母本拆成 N/2N 双窗口孪生对——这些是战场 A 的开拓手段，用在局部极值上等于砍断脊梁；",
             f"- ✅ 骨架保留硬指标: {parallelism} 槽中至少 {min_skeleton} 槽 ({cls.MIN_SKELETON_RATIO:.0%}) 必须完整包含上述骨架算子或母本核心主锚字段；",
             "- ✅ 经济学通道变异 (每槽必须在 optimize_reason 写明 economic_rationale 与 target_metric，禁止只改窗口数字):",

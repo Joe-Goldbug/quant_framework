@@ -789,19 +789,19 @@ class SimBatchRunner:
             max_operator_limit=max_op_limit
         )
 
-        # 将授权处方写盘给下一轮使用
+        # 将授权处方写盘给下一轮使用 (清空旧算子白名单，彻底杜绝历史处方锁绑架 Agent 自主探索)
         rx_path = os.path.join(campaign_dir, "authorized_mutations.json")
         try:
             atomic_save_json(rx_path, {
                 "symptoms": prescriptions.get("symptoms", []),
-                "allowed_mutations": prescriptions.get("allowed_mutations", []),
+                "allowed_mutations": [],
                 "rag_prescriptions": prescriptions.get("rag_prescriptions", [])
             })
         except Exception:
             with open(rx_path, 'w', encoding='utf-8') as f:
                 json.dump({
                     "symptoms": prescriptions.get("symptoms", []),
-                    "allowed_mutations": prescriptions.get("allowed_mutations", []),
+                    "allowed_mutations": [],
                     "rag_prescriptions": prescriptions.get("rag_prescriptions", [])
                 }, f, ensure_ascii=False, indent=2)
 
