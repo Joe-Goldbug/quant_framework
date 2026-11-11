@@ -117,7 +117,7 @@ class AGYCliBackend(BaseAgentBackend):
         prompt: str,
         system_prompt: Optional[str] = None,
         json_mode: bool = False,
-        timeout: int = 60,
+        timeout: int = 600,
         context: Optional[Dict[str, Any]] = None
     ) -> Union[str, Dict[str, Any], List[Any]]:
         if not os.path.exists(self.agy_path):
@@ -133,29 +133,37 @@ class AGYCliBackend(BaseAgentBackend):
             "--print-timeout", f"{timeout}s"
         ]
 
-        t0 = time.time()
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        try:
-            stdout_data, stderr_data = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
-            if proc.returncode == 0 and stdout_data:
-                res = stdout_data.decode("utf-8", errors="replace").strip()
-                if json_mode:
-                    parsed = extract_json_from_text(res)
-                    if parsed is not None:
-                        return parsed
-                return res
-            err_msg = stderr_data.decode("utf-8", errors="replace").strip() if stderr_data else "无标准错误"
-            raise RuntimeError(f"AGY CLI 退出码 {proc.returncode}: {err_msg}")
-        except asyncio.TimeoutError:
+        retries = 2
+        for attempt in range(retries):
             try:
-                proc.kill()
-            except Exception:
-                pass
-            raise TimeoutError(f"AGY CLI 调用超时 ({timeout}s)")
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                stdout_data, stderr_data = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
+                if proc.returncode == 0 and stdout_data:
+                    res = stdout_data.decode("utf-8", errors="replace").strip()
+                    if json_mode:
+                        parsed = extract_json_from_text(res)
+                        if parsed is not None:
+                            return parsed
+                    return res
+                err_msg = stderr_data.decode("utf-8", errors="replace").strip() if stderr_data else "无标准错误"
+                if attempt < retries - 1:
+                    print(f"⚠️ [AGYCliBackend] 执行失败 (退出码 {proc.returncode})，重试中 ({attempt+1}/{retries}): {err_msg[:120]}")
+                    await asyncio.sleep(2.0)
+                    continue
+                raise RuntimeError(f"AGY CLI 退出码 {proc.returncode}: {err_msg}")
+            except asyncio.TimeoutError:
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
+                if attempt < retries - 1:
+                    print(f"⚠️ [AGYCliBackend] 执行超时 ({timeout}s)，正在重试 ({attempt+1}/{retries})...")
+                    continue
+                raise TimeoutError(f"AGY CLI 调用超时 ({timeout}s)")
 
 
 # -------------------------------------------------------------
@@ -223,6 +231,17 @@ class BuiltinAgentBackend(BaseAgentBackend):
                     return res
             except Exception as dh_err:
                 print(f"⚠️ [DirectHandler] 内存直连处理异常，回退至标准通道: {dh_err}")
+
+        # 1.1 检查是否存在外部大模型 API Key，若存在直接直连调用，免除磁盘任务卡
+        if any(k in os.environ for k in ("OPENAI_API_KEY", "DEEPSEEK_API_KEY", "LLM_API_KEY")):
+            try:
+                llm_backend = LLMAPIBackend()
+                return await llm_backend.send_message(
+                    role=role, model=model, prompt=prompt, system_prompt=system_prompt,
+                    json_mode=json_mode, timeout=timeout, context=context
+                )
+            except Exception as e:
+                print(f"⚠️ [BuiltinAgent] LLMAPIBackend 前置直连异常，回退至 IPC 邮箱通道: {e}")
 
         if not self.tasks_dir:
             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

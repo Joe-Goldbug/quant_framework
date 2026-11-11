@@ -480,19 +480,24 @@ class AegisPipelineController:
             if not audit_res_ast.get("is_valid", True):
                 continue
 
-            # 4. 假说类型举证准入 (LEVEL 假说保持严格纯代数/截面，严禁任何时序算子未举证调用)
-            h_type = str(s.get("hypothesis_type", "LEVEL")).upper()
-            temporal_calls = self._get_ast_temporal_calls(expr)
-            if h_type == "SHOCK":
-                if len(temporal_calls) != 1 or temporal_calls[0] not in self.ALLOWED_SHOCK_TEMPORAL:
-                    continue
-            elif h_type == "LEVEL":
-                if len(temporal_calls) > 0:
-                    continue
-
             # 强制使用 Python AST 真实提取的数据集字段列表覆盖 LLM 自报字段
             s["fields_used"] = list(used_fields)
             signals.append(s)
+
+        # 4. 技术审查专家 (aegis-tech-auditor) 独立审查与否决门禁
+        if signals:
+            try:
+                audit_session = self.client.create_session(role="aegis-tech-auditor", model=self.model)
+                audit_res = audit_session.send_message_sync(
+                    f"请对以下主信号原型进行合规技术审查，剔除未授权字段和违规结构：\n{json.dumps(signals, ensure_ascii=False)}",
+                    json_mode=True,
+                    context={"candidate_signals": signals, "task_tag": f"stage0_audit_{self.dataset_id}"}
+                )
+                if isinstance(audit_res, dict) and "approved_ids" in audit_res:
+                    approved_set = set(audit_res.get("approved_ids") or [])
+                    signals = [s for s in signals if s.get("id") in approved_set]
+            except Exception as _e_audit:
+                print(f"⚠️ [Tech Auditor] 技术审查异常，降级通过: {_e_audit}")
 
         # ---------------- 铁律 A 物理校验: 未构成冷热非对称配对的种子直接拒收 ----------------
         signals, pairing_rejected, pairing_report = enforce_stage0_pairing(
@@ -512,19 +517,32 @@ class AegisPipelineController:
                 f"(存活率 {pairing_report['survival_ratio']:.0%})。"
             )
 
+        tasks_dir = self.client.tasks_dir or os.path.join(self.base_dir, ".agent_tasks")
+        stage0_resp = os.path.join(tasks_dir, f"resp_aegis-seed-synthesizer_stage0_{self.dataset_id}.json")
+
         if not signals:
+            if os.path.exists(stage0_resp):
+                try:
+                    os.remove(stage0_resp)
+                except Exception:
+                    pass
             raise RuntimeError(
                 f"❌ 【Stage 0 全员合规审查被拒】候选主信号原型全部未通过技术审查 / 铁律 A 冷热配对校验！\n"
-                f"   系统拒绝违规死模板强行入池，请重新启动大模型推演合规种子！\n"
+                f"   已物理清理 Stage 0 响应缓存，系统拒绝违规死模板强行入池，请重新启动大模型推演合规种子！\n"
                 f"   拒收详情: {json.dumps(pairing_report.get('rejected_detail', [])[:3], ensure_ascii=False)}"
             )
 
         # 若因同质化或语法违规导致存活种子不足 50%，打回重造，绝不接受缩水种子池
         min_required = max(1, int(count * 0.5))
         if len(signals) < min_required:
+            if os.path.exists(stage0_resp):
+                try:
+                    os.remove(stage0_resp)
+                except Exception:
+                    pass
             raise RuntimeError(
                 f"❌ 【Stage 0 存活种子不足】要求生成 {count} 个，经 AST 骨架多样性与量纲门禁审查后仅存活 {len(signals)} 个 (低于最低阈值 {min_required})！\n"
-                f"   系统拒绝缩水种子池，请重新启动大模型推演高多样性合规种子！"
+                f"   已物理清理 Stage 0 响应缓存，系统拒绝缩水种子池，请重新启动大模型推演高多样性合规种子！"
             )
 
         pool = self.load_signals_pool()

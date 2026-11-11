@@ -19,7 +19,7 @@ class OperatorRegistry:
     DEFAULT_GROUPS = {"market", "sector", "industry", "subindustry", "country", "region"}
     DEFAULT_SPECIAL_TOKENS = {
         "NUM", "std", "factor", "sensitivity", "force", "filter", "lag", "rettype",
-        "lower", "upper", "newval", "y", "x", "d", "a", "b", "c"
+        "lower", "upper", "newval", "y", "x", "d", "a", "b", "c", "target_tvr", "driver"
     }
 
     @classmethod
@@ -56,6 +56,7 @@ class OperatorRegistry:
             "ts_rank", "ts_delta", "ts_delay", "ts_corr", "ts_decay_linear", "ts_decay_exp_window",
             "trade_when", "if_else", "winsorize", "hump", "group_neutralize", "jump_decay",
             "ts_regression", "ts_arg_max", "ts_arg_min", "ts_skewness", "ts_kurtosis",
+            "ts_target_tvr_decay", "ts_quantile",
             "bucket", "right_tail", "left_tail", "densify", "pasteurize",
             "vec_avg", "vec_sum", "vec_max", "vec_min", "vec_stddev", "vec_range", "vec_count"
         }

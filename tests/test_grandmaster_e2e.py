@@ -35,6 +35,7 @@ except (ModuleNotFoundError, ImportError):
 
 class TestAEGISGrandMaster(unittest.TestCase):
     def setUp(self):
+        os.environ["AEGIS_MOCK_MODE"] = "1"
         self.temp_dir = tempfile.mkdtemp()
         self.controller = AegisPipelineController(
             region="USA",
@@ -43,7 +44,8 @@ class TestAEGISGrandMaster(unittest.TestCase):
             category="news",
             dataset_id="test_ds",
             base_dir=self.temp_dir,
-            parallelism=20
+            parallelism=20,
+            mock_only=True
         )
 
     def tearDown(self):

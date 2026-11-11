@@ -56,9 +56,8 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
             "close", "open", "high", "low", "vwap", "volume", "cap", "adv20",
             "returns", "sharesout", "split", "dividend"
         }
-        # 原帖第 6.1 节与第 9.1 节明确要求：在 USA 区域可使用 group_neutralize(..., subindustry) 配合风险中性化
-        # 故彻底解禁 group_neutralize，将其置空，完全放行合规中性化算子
-        self.FORBIDDEN_OPERATORS = set()
+        # 1. 采纳 GM 铁律：物理封杀容易造成量纲混乱与过拟合的 add(+) 和 multiply(*)
+        self.FORBIDDEN_OPERATORS = {"add", "multiply"}
 
         # 2. 经济学自然日历周期白名单：5(周), 10(双周), 20/21/22(月), 60/63(季), 120/126(半年), 250/252(年)
         # 以及向后兼容的 0, 1, 2, 3, 4 (用于 ts_delay(x, 1), rettype=0/2, driver/std 整数位等)
@@ -422,20 +421,21 @@ class DimensionAuditor:
             max_operators=max_operators
         )
         visitor.visit(tree)
-        issues.extend(visitor.issues)
 
-        # 5. 算子数量物理上限门禁 (Power Pool <= 10, 定向优化 <= 10)
-        if visitor.operator_count > max_operators:
-            issues.append(
-                f"【算子数超标】检测到 {visitor.operator_count} 个算子，超过物理上限 (<= {max_operators})！"
-                f"过多算子属于虚假繁荣与过度拟合，请精简结构。"
-            )
-
-        # 6. 字段总数硬上限：严禁超过 4 个数据集字段
+        # 5. 字段总数硬上限：严禁超过 4 个数据集字段 (优先于子树算子级告警，防止大杂烩特征被次要告警淹没)
         if len(visitor.used_fields) > 4:
             issues.append(
                 f"【字段超限违规】检测到使用了 {len(visitor.used_fields)} 个数据集字段: {list(visitor.used_fields)} (> 4 个上限)！"
                 f"单条 Alpha 最多只允许融合 2~4 个正交字段，严禁多字段大杂烩过拟合。"
+            )
+
+        issues.extend(visitor.issues)
+
+        # 6. 算子数量物理上限门禁 (Power Pool <= 10, 定向优化 <= 10)
+        if visitor.operator_count > max_operators:
+            issues.append(
+                f"【算子数超标】检测到 {visitor.operator_count} 个算子，超过物理上限 (<= {max_operators})！"
+                f"过多算子属于虚假繁荣与过度拟合，请精简结构。"
             )
 
         # 7. 检查是否至少包含 1 个有效数据集内部字段，且严禁使用非白名单/幻觉字段

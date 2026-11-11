@@ -87,18 +87,6 @@ class VirtualSession:
         self.system_prompt = system_prompt
         self.session_id = f"sess_{int(time.time())}_{random.randint(1000, 9999)}"
 
-    def _should_bypass_cli(self) -> bool:
-        """识别测试套件或降级环境，秒级返回确定性结果避免长阻塞"""
-        if os.environ.get("AEGIS_MOCK_MODE") == "1":
-            return True
-        if getattr(self.client, "mock_only", False):
-            return True
-        main_script = os.path.basename(sys.argv[0] if sys.argv else "")
-        if main_script.startswith("test_") or "pytest" in main_script or "unittest" in main_script:
-            if os.environ.get("AEGIS_LIVE_AGY") != "1":
-                return True
-        return False
-
     async def send_message(
         self,
         prompt: str,
@@ -106,12 +94,9 @@ class VirtualSession:
         timeout: Optional[int] = None,
         context: Optional[Dict[str, Any]] = None
     ) -> Union[str, Dict[str, Any], List[Any]]:
-        if self._should_bypass_cli():
-            return self._rule_fallback(prompt, json_mode=json_mode, context=context)
-
         timeout = timeout or self.client.default_timeout
 
-        # 优先通过可插拔 Agent 后端驱动 (AGY CLI / SubAgent IPC / LLM API)
+        # 优先通过可插拔 Agent 后端驱动 (AGY CLI / SubAgent IPC / LLM API / RuleMockBackend)
         try:
             res = await self.client.backend.send_message(
                 role=self.role,
@@ -126,18 +111,12 @@ class VirtualSession:
                 return res
         except Exception as e:
             backend_name = type(self.client.backend).__name__
-            if not self._should_bypass_cli():
-                print(f"\n❌ 【Agent 后端调用失败】后端 '{backend_name}' 未能完成思考生成: {e}")
-            if not self.client.mock_fallback and not self._should_bypass_cli():
-                raise RuntimeError(
-                    f"❌ 【严禁死模板假思考】智能体后端 '{backend_name}' 未能返回有效思考结果: {e}！\n"
-                    f"   【系统严禁硬编码死模板替代大模型量化思考】！任务已安全阻断。\n"
-                    f"   解决方案：请确保配置了可用的智能体后端 (反重力内置 SubAgent / --backend subagent / --backend llm_api)！"
-                )
-
-        # 仅在显式开启测试 mock 时允许白盒测试桩
-        if self.client.mock_fallback or self._should_bypass_cli():
-            return self._rule_fallback(prompt, json_mode=json_mode, context=context)
+            print(f"\n❌ 【Agent 后端调用失败】后端 '{backend_name}' 未能完成思考生成: {e}")
+            raise RuntimeError(
+                f"❌ 【严禁死模板假思考】智能体后端 '{backend_name}' 未能返回有效思考结果: {e}！\n"
+                f"   【系统严禁硬编码死模板替代大模型量化思考】！任务已安全阻断。\n"
+                f"   解决方案：请确保配置了可用的智能体后端 (反重力内置 SubAgent / --backend subagent / --backend llm_api)！"
+            )
 
         raise RuntimeError(f"Agent 后端调用失败 ({timeout}s)，且已严禁回退至死模板。")
 
@@ -149,9 +128,6 @@ class VirtualSession:
         context: Optional[Dict[str, Any]] = None
     ) -> Union[str, Dict[str, Any], List[Any]]:
         """同步阻塞式调用，支持在非异步或复杂同步状态机中无缝使用"""
-        if self._should_bypass_cli():
-            return self._rule_fallback(prompt, json_mode=json_mode, context=context)
-
         timeout = timeout or self.client.default_timeout
 
         try:
@@ -168,17 +144,12 @@ class VirtualSession:
                 return res
         except Exception as e:
             backend_name = type(self.client.backend).__name__
-            if not self._should_bypass_cli():
-                print(f"\n❌ 【Agent 后端同步调用失败】后端 '{backend_name}' 未能完成思考生成: {e}")
-            if not self.client.mock_fallback and not self._should_bypass_cli():
-                raise RuntimeError(
-                    f"❌ 【严禁死模板假思考】智能体后端 '{backend_name}' 未能返回有效思考结果: {e}！\n"
-                    f"   【系统严禁硬编码死模板替代大模型量化思考】！任务已安全阻断。\n"
-                    f"   解决方案：请确保配置了可用的智能体后端 (反重力内置 SubAgent / --backend subagent / --backend llm_api)！"
-                )
-
-        if self.client.mock_fallback or self._should_bypass_cli():
-            return self._rule_fallback(prompt, json_mode=json_mode, context=context)
+            print(f"\n❌ 【Agent 后端同步调用失败】后端 '{backend_name}' 未能完成思考生成: {e}")
+            raise RuntimeError(
+                f"❌ 【严禁死模板假思考】智能体后端 '{backend_name}' 未能返回有效思考结果: {e}！\n"
+                f"   【系统严禁硬编码死模板替代大模型量化思考】！任务已安全阻断。\n"
+                f"   解决方案：请确保配置了可用的智能体后端 (反重力内置 SubAgent / --backend subagent / --backend llm_api)！"
+            )
 
         raise RuntimeError(f"Agent 后端同步调用失败 ({timeout}s)，且已严禁回退至死模板。")
 
@@ -206,31 +177,6 @@ class VirtualSession:
                 pass
         return None
 
-    def _rule_fallback(
-        self,
-        prompt: str,
-        json_mode: bool = False,
-        context: Optional[Dict[str, Any]] = None
-    ) -> Union[str, Dict[str, Any], List[Any]]:
-        # 仅限本地单元测试与显式 Mock 仿真桩 (委托给 tests/fixtures/rule_mock_fixtures.py)
-        is_mock = (self.client and (getattr(self.client, "mock_only", False) or getattr(self.client, "mock_fallback", False))) or os.environ.get("AEGIS_MOCK_MODE") == "1"
-        if not is_mock:
-            raise RuntimeError(
-                "❌ 【物理封杀死模板】core/agy_client.py 中已彻底移除所有预制公式模板！"
-                "任何 Agent 严禁在此编写规则模板，必须在原生大模型上下文中完成真实经济学推演！"
-            )
-
-        try:
-            from tests.fixtures.rule_mock_fixtures import handle_rule_mock
-            return handle_rule_mock(role=self.role or "", prompt=prompt, json_mode=json_mode, context=context)
-        except Exception:
-            try:
-                from quant_framework.tests.fixtures.rule_mock_fixtures import handle_rule_mock
-                return handle_rule_mock(role=self.role or "", prompt=prompt, json_mode=json_mode, context=context)
-            except Exception as e:
-                print(f"⚠️ [VirtualSession] rule mock 异常: {e}")
-                return []
-
 class GeminiClient:
     """GrandMaster Python 宿主会话调度器 (支持可插拔多智能体后端)"""
 
@@ -238,7 +184,7 @@ class GeminiClient:
         self,
         agy_path: Optional[str] = None,
         default_model: str = DEFAULT_MODEL,
-        default_timeout: int = 60,
+        default_timeout: int = 600,
         mock_fallback: bool = False,
         mock_only: bool = False,
         backend_type: str = "builtin",

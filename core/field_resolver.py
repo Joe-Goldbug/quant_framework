@@ -51,8 +51,25 @@ class DatasetFieldResolver:
         if raw_fields_arg:
             field_list = [f.strip() for f in raw_fields_arg.split(",") if f.strip()]
             if field_list:
-                print(f"📌 [FieldResolver] 从命令行参数 --fields 显式载入 {len(field_list)} 个字段")
-                return {fn: {"type": "MATRIX", "description": "命令行直接指定字段", "coverage": 1.0} for fn in field_list}
+                print(f"📌 [FieldResolver] 从命令行参数 --fields 显式载入 {len(field_list)} 个字段 (关联底层真实画像)...")
+                try:
+                    base_dict = self.resolve_fields(
+                        region=region,
+                        category=category,
+                        dataset_id=dataset_id,
+                        fields_file=fields_file,
+                        raw_fields_arg=None,
+                        allow_cross_region=allow_cross_region
+                    )
+                except Exception:
+                    base_dict = {}
+                resolved = {}
+                for fn in field_list:
+                    if fn in base_dict:
+                        resolved[fn] = base_dict[fn]
+                    else:
+                        resolved[fn] = {"type": "MATRIX", "description": f"命令行显式指定字段 {fn}", "coverage": 1.0}
+                return resolved
 
         # 2. 优先级二: 显式指定的外部字段文件 (--fields-file <path>)
         if fields_file and os.path.exists(fields_file):

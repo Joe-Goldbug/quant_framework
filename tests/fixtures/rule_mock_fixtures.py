@@ -18,12 +18,15 @@ def handle_rule_mock(
 
     # 1. 技术审查专家 (aegis-tech-auditor)
     if "tech-auditor" in role_lower or "audit" in role_lower:
+        candidates = ctx.get("candidate_signals") or []
+        ids = [s.get("id") for s in candidates] if candidates else [
+            "SEED_01", "SEED_02", "SEED_03", "SEED_04",
+            "SEED_05", "SEED_06", "SEED_07", "SEED_08", "SEED_09", "SEED_10",
+            "SEED_TEST", "SEED_PASS", "SEED_WIN"
+        ]
         return {
             "status": "PASS",
-            "approved_ids": [
-                "SEED_01", "SEED_02", "SEED_03", "SEED_04",
-                "SEED_05", "SEED_06", "SEED_TEST", "SEED_PASS", "SEED_WIN"
-            ]
+            "approved_ids": ids
         }
 
     # 2. 主信号原型生成 (aegis-seed-synthesizer)
@@ -46,6 +49,10 @@ def handle_rule_mock(
             if pairings and i < len(pairings):
                 f1 = pairings[i].get("main_anchor")
                 f2 = pairings[i].get("normalizer") or pairings[i].get("norm_anchor")
+                if not f2 and len(fields) >= 2:
+                    f2 = [f for f in fields if f != f1][0]
+                elif not f2:
+                    f2 = "test_alpha_f2"
             elif len(fields) >= 2:
                 f1 = fields[(i * 2) % len(fields)]
                 f2 = fields[(i * 2 + 1) % len(fields)]

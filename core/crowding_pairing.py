@@ -159,21 +159,23 @@ class FieldCrowdingProfiler:
         """判定一个 Stage 0 种子的字段组合是否构成冷热非对称配对"""
         used = [f for f in (fields_used or []) if f]
 
-        # 单字段自归一判定 (ATOM Alpha 单因子范式)
+        # 单字段自归一判定 (ATOM Alpha 单因子范式，允许 COLD 及非 HOT 且高覆盖 WARM 字段准入)
         if len(used) == 1:
-            f = used[0]
-            is_cold = self.is_cold_anchor(f) if self.has_crowding_data else True
-            cold_pct = self.percentile(f)
+            single = used[0]
+            tier = self.tier(single) if self.has_crowding_data else "COLD"
+            cov = self.coverage(single)
+            is_valid_single = (self.is_cold_anchor(single) or (tier != "HOT" and cov >= self.min_anchor_coverage)) if self.has_crowding_data else True
+            cold_pct = self.percentile(single)
             issues = []
-            if self.has_crowding_data and not is_cold:
-                issues.append("单字段主信号必须为低拥挤度主锚字段 (后 40%)")
+            if self.has_crowding_data and not is_valid_single:
+                issues.append("单字段主信号必须为低拥挤度主锚字段 (后 40%) 或高覆盖度非热门主锚字段")
             return {
-                "is_asymmetric": is_cold,
-                "main_anchor": f,
+                "is_asymmetric": is_valid_single,
+                "main_anchor": single,
                 "normalizer": None,
                 "main_anchor_alpha_pct": cold_pct,
-                "main_anchor_tier": self.tier(f) if self.has_crowding_data else "COLD",
-                "normalizer_coverage": None,
+                "main_anchor_tier": tier,
+                "normalizer_coverage": cov,
                 "pairing_score": 1.0,
                 "issues": issues,
             }

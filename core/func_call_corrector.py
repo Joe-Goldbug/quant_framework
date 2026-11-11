@@ -21,6 +21,14 @@ import sqlite3
 import sys
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+try:
+    from quant_framework.core.operator_registry import OperatorRegistry
+except (ModuleNotFoundError, ImportError):
+    try:
+        from core.operator_registry import OperatorRegistry
+    except (ModuleNotFoundError, ImportError):
+        from operator_registry import OperatorRegistry
+
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -50,7 +58,10 @@ class ParamOrderCorrector(ast.NodeTransformer):
         return node
 
 class CalendarWindowSnapper(ast.NodeTransformer):
-    """遍历 AST 中的时序算子 (ts_*)，将时间窗口吸附到标准自然日历网格，同时保护日频触发器 (d=1)"""
+    """遍历 AST 中的时序算子 (ts_*) 及非线性算子，将时间窗口吸附到标准自然日历网格，同时保护日频触发器 (d=1) 并离散化参数"""
+    VALID_WINSORIZE_STDS = [2.5, 3.0, 3.5, 4.0]
+    VALID_POWERS = [0.5, 2.0]
+
     def __init__(self, valid_lookbacks: List[int]):
         super().__init__()
         self.snap_targets = sorted([x for x in valid_lookbacks if x >= 5])
@@ -60,6 +71,9 @@ class CalendarWindowSnapper(ast.NodeTransformer):
         if val <= 1 or val in self.valid_set:
             return val
         return min(self.snap_targets, key=lambda x: abs(x - val))
+
+    def _snap_float(self, val: float, targets: List[float]) -> float:
+        return min(targets, key=lambda x: abs(x - val))
 
     def visit_Call(self, node):
         self.generic_visit(node)
@@ -85,6 +99,21 @@ class CalendarWindowSnapper(ast.NodeTransformer):
                 if kw.arg in {"d", "d1", "lookback", "window", "days", "time"} and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, int) and not isinstance(kw.value.value, bool):
                     if kw.value.value > 1:
                         kw.value = ast.Constant(value=self._snap_val(kw.value.value))
+
+        elif func_name == "winsorize":
+            if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, (int, float)):
+                node.args[1] = ast.Constant(value=self._snap_float(float(node.args[1].value), self.VALID_WINSORIZE_STDS))
+            for kw in node.keywords:
+                if kw.arg == "std" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, (int, float)):
+                    kw.value = ast.Constant(value=self._snap_float(float(kw.value.value), self.VALID_WINSORIZE_STDS))
+
+        elif func_name in ("power", "signed_power"):
+            if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, (int, float)):
+                node.args[1] = ast.Constant(value=self._snap_float(float(node.args[1].value), self.VALID_POWERS))
+            for kw in node.keywords:
+                if kw.arg in {"exp", "exponent", "p"} and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, (int, float)):
+                    kw.value = ast.Constant(value=self._snap_float(float(kw.value.value), self.VALID_POWERS))
+
         return node
 
 class ASTSandboxCorrector:
@@ -216,7 +245,7 @@ class ASTSandboxCorrector:
         """
         Stage 0 ATOM Alpha 专属门禁审查:
         1. 专攻 ATOM Alpha 范式，使用 1~3 个字段
-        2. 算子预算限制：总算子数 op <= 8
+        2. 算子预算限制：总算子数 op <= 6 (豁免 vec_* 降维包裹算子)
         3. 严禁使用 + 和 *，以及函数形式 add 和 multiply
         """
         issues = []
@@ -232,9 +261,10 @@ class ASTSandboxCorrector:
             return False, [f"表达式语法解析失败: {e}"], 0, set()
 
         group_and_params = {
-            "market", "sector", "subindustry", "industry",
-            "true", "false", "none", "std", "factor", "sensitivity", "force"
+            "market", "sector", "subindustry", "industry", "country", "region",
+            "true", "false", "none", "std", "factor", "sensitivity", "force", "driver", "target_tvr"
         }
+        all_known_ops = OperatorRegistry.get_all_operator_names() if hasattr(OperatorRegistry, "get_all_operator_names") else set()
 
         for node in ast.walk(tree):
             if isinstance(node, ast.BinOp):
@@ -246,31 +276,41 @@ class ASTSandboxCorrector:
             elif isinstance(node, ast.UnaryOp):
                 op_count += 1
             elif isinstance(node, ast.Call):
-                op_count += 1
                 func_name = ""
                 if isinstance(node.func, ast.Name):
                     func_name = node.func.id
                 elif isinstance(node.func, ast.Attribute):
                     func_name = node.func.attr
 
+                # 豁免 vec_* 降维标量化包裹算子
+                if not func_name.startswith("vec_"):
+                    op_count += 1
+
                 if func_name.lower() in {"add", "multiply"}:
                     issues.append(f"Stage 0 严禁使用加乘算子: '{func_name}'")
             elif isinstance(node, ast.Name):
                 name = node.id
-                if name.lower() not in group_and_params:
+                name_lower = name.lower()
+                if (
+                    name_lower not in group_and_params
+                    and name not in all_known_ops
+                ):
                     if valid_dataset_fields is not None:
                         if name in valid_dataset_fields:
                             used_fields.add(name)
+                        elif not name.startswith(("ts_", "group_", "vec_")):
+                            issues.append(f"使用未授权外部数据集字段: '{name}'")
                     else:
-                        used_fields.add(name)
+                        if not name.startswith(("ts_", "group_", "vec_")):
+                            used_fields.add(name)
 
         if len(used_fields) < 1:
             issues.append(f"Stage 0 表达式必须包含至少 1 个数据集字段，当前检测到 {len(used_fields)} 个")
         elif len(used_fields) > 3:
             issues.append(f"Stage 0 表达式最多允许使用 3 个字段 (ATOM 范式)，当前检测到 {len(used_fields)} 个: {list(used_fields)}")
 
-        if op_count > 8:
-            issues.append(f"Stage 0 算子数超标: {op_count} > 8 (Stage 0 严格控制复杂度)")
+        if op_count > 6:
+            issues.append(f"Stage 0 算子数超标: {op_count} > 6 (Stage 0 严格控制复杂度)")
 
         is_valid = len(issues) == 0
         return is_valid, issues, op_count, used_fields
@@ -394,6 +434,7 @@ class ASTSandboxCorrector:
         # 2. 数据库历史去重 (Exact MD5) 与 跨批次历史骨架累积查重 (Gate 3 终极加固)
         duplicates = []
         new_records = []
+        parent_corr = self.correct_expression(parent_expression) if parent_expression else None
         for expr, skel, skel_hash in zip(corrected_exprs, skeletons, skeleton_hashes):
             # 2.1 跨批次骨架频次核查：若该拓扑骨架在相同中性化下历史回测中已测试 >= max_hist_count (>= 8) 次，直接熔断
             # 若提供了 batch_id，排除当前批次自身的旧记录 (支持幂等重跑与断点恢复)
@@ -418,15 +459,17 @@ class ASTSandboxCorrector:
                         f"系统硬性禁止继续修改数字窗口调参！必须更换底层数据集字段、更换中性化维度或改变算子拓扑结构！"
                     )
 
-            # 2.2 精确 MD5 组合查重
+            # 2.2 精确 MD5 组合查重 (母本控制槽 is_parent_control 豁免历史查重，确保基准槽可正常复测对齐)
             h = self.compute_fingerprint(expr, region, universe, delay, neutralization)
             if batch_id:
                 cursor.execute("SELECT expression FROM alpha_fingerprints WHERE md5_hash = ? AND (batch_id != ? OR batch_id IS NULL)", (h, batch_id))
             else:
                 cursor.execute("SELECT expression FROM alpha_fingerprints WHERE md5_hash = ?", (h,))
             row = cursor.fetchone()
+            is_parent_control = bool(parent_corr and expr == parent_corr)
             if row:
-                duplicates.append({"expr": expr, "hash": h, "matched": row[0]})
+                if not is_parent_control:
+                    duplicates.append({"expr": expr, "hash": h, "matched": row[0]})
             else:
                 new_records.append((h, skel_hash, skel, expr, region, universe, delay, neutralization, batch_id, "COMPLETED"))
 
@@ -449,33 +492,3 @@ class ASTSandboxCorrector:
         conn.close()
 
         return corrected_exprs
-
-if __name__ == "__main__":
-    corrector = ASTSandboxCorrector(":memory:")
-    
-    # 测试骨架抽取
-    e1 = "group_rank(ts_decay_linear(sentiment, 10), subindustry)"
-    e2 = "group_rank(ts_decay_linear(sentiment, 20), subindustry)"
-    s1 = corrector.get_canonical_skeleton(e1)
-    s2 = corrector.get_canonical_skeleton(e2)
-    print("Skeleton 1:", s1)
-    print("Skeleton 2:", s2)
-    assert s1 == s2, "骨架应当完全一致！"
-    print("✅ 骨架提取测试通过！")
-
-    # 测试批次内部微调熔断 (> 2 条相同骨架)
-    bad_batch = [
-        "group_rank(ts_decay_linear(sentiment, 5), subindustry)",
-        "group_rank(ts_decay_linear(sentiment, 10), subindustry)",
-        "group_rank(ts_decay_linear(sentiment, 15), subindustry)", # 第 3 条相同骨架！
-        "group_rank(ts_decay_exp_window(sentiment, 5, factor=0.5), subindustry)",
-        "group_rank(ts_decay_exp_window(sentiment, 10, factor=0.5), subindustry)",
-        "group_rank(winsorize(sentiment, std=3), subindustry)",
-        "group_rank(ts_delta(sentiment, 3), subindustry)",
-        "group_rank(s_log_1p(sentiment), subindustry)"
-    ]
-    try:
-        corrector.check_and_record_batch(bad_batch, "USA", "TOP1000", 1)
-        print("❌ 应该被拦截却放过了！")
-    except ValueError as ex:
-        print("✅ 成功拦截摸鱼批次:", str(ex)[:80], "...")

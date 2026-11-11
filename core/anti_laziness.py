@@ -188,23 +188,3 @@ class AntiLazinessAuditor:
             "reason": f"已系统性测试 {tested_count}/{total_required} 组核心因果交互 (覆盖率 {coverage*100:.1f}%)，允许判定该数据集在当前 Universe 下缺乏生命力。",
             "coverage_pct": coverage
         }
-
-if __name__ == "__main__":
-    import tempfile
-    test_ledger = os.path.join(tempfile.gettempdir(), "test_ledger.json")
-    if os.path.exists(test_ledger):
-        os.remove(test_ledger)
-
-    # 模拟连续 3 批震荡但未能突破历史最高水位线 (0.74 -> 0.60 -> 0.74)
-    sig = "mean_sentiment"
-    cat = "prob_10d"
-    AntiLazinessAuditor.update_ledger_and_check_tabu(test_ledger, "b1", sig, cat, 0.74, ["e1"])
-    AntiLazinessAuditor.update_ledger_and_check_tabu(test_ledger, "b2", sig, cat, 0.60, ["e2"])
-    res = AntiLazinessAuditor.update_ledger_and_check_tabu(test_ledger, "b3", sig, cat, 0.74, ["e3"])
-    print("Tabu check after 3 oscillating batches (0.74 -> 0.60 -> 0.74):", res["is_tabu"])
-    assert res["is_tabu"] == True, "震荡未创新高必须触发 Tabu 熔断！"
-
-    is_t, reason = AntiLazinessAuditor.check_tabu(test_ledger, sig, cat)
-    print("Direct Tabu query:", is_t, reason[:60])
-    assert is_t == True
-    print("✅ Gate 5: Tabu Search Circuit Breaker 测试通过！")

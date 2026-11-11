@@ -185,16 +185,16 @@ class TestAEGISHardnessSystem(unittest.TestCase):
 
         # 构造未遵从处方的批次 (8 槽每种骨架 <= 2 条，使用未授权算子 如 ts_mean, ts_std_dev, quantile, power)
         disobedient_batch = [
-            {"expression": f"group_rank(ts_mean(news_volume, {10+i}), subindustry)", "optimize_reason": f"未按处方调优 A{i}"}
+            {"expression": f"group_rank(ts_mean(news_volume, {[10, 20][i]}), subindustry)", "optimize_reason": f"未按处方调优 A{i}"}
             for i in range(2)
         ] + [
-            {"expression": f"group_rank(ts_std_dev(news_volume, {10+i}), subindustry)", "optimize_reason": f"未按处方调优 B{i}"}
+            {"expression": f"group_rank(ts_std_dev(news_volume, {[10, 20][i]}), subindustry)", "optimize_reason": f"未按处方调优 B{i}"}
             for i in range(2)
         ] + [
-            {"expression": f"group_rank(power(news_volume, {2+i}), subindustry)", "optimize_reason": f"未按处方调优 C{i}"}
+            {"expression": f"group_rank(power(news_volume, {[0.5, 2.0][i]}), subindustry)", "optimize_reason": f"未按处方调优 C{i}"}
             for i in range(2)
         ] + [
-            {"expression": f"group_rank(reverse(ts_mean(news_volume, {20+i})), subindustry)", "optimize_reason": f"未按处方调优 D{i}"}
+            {"expression": f"group_rank(reverse(ts_mean(news_volume, {[20, 60][i]})), subindustry)", "optimize_reason": f"未按处方调优 D{i}"}
             for i in range(2)
         ]
         self.assertEqual(len(disobedient_batch), 8)

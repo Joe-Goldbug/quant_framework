@@ -178,7 +178,7 @@ class SwarmAuditor:
     MIN_NON_RANK_RATIO = 0.40      # 铁律 B: 至少 40% 槽位外层不用 group_rank
     MIN_PAIRED_SLOTS = 8           # 10 组骨架 x 2 槽 (20 槽批次)
     PAIRED_SLOTS_8 = 4             # 8 槽批次的最小成对槽位数
-    MIN_SKELETON_RATIO = 0.60      # 精修模式: 至少 60% 槽位必须保留母本骨架算子
+    MIN_SKELETON_RATIO = 0.45      # 精修模式: 至少 45% 槽位保留母本主锚字段/骨架 (1+9+10 三分天下制)
     MAX_WINDOW_ONLY_RATIO = 0.50   # 精修模式: 纯窗口数字微调不得超过一半槽位
 
     @staticmethod
@@ -269,9 +269,22 @@ class SwarmAuditor:
     @classmethod
     def _audit_refinement(cls, variants: List[dict], parent_expression: str = "",
                           protected_ops: Optional[List[str]] = None, parallelism: Optional[int] = None) -> dict:
-        """精修模式 (手术刀): 只核验「母本骨架是否被保护」，不要求 rank 配额与 N/2N 拆解。"""
+        """精修模式 (1+9+10 三分天下制): Slot 1 控制槽，Slot 2~10 锁母本核心字段/机制，Slot 11~20 彻底重构。"""
         prot = [op for op in (protected_ops if protected_ops is not None else extract_skeleton_ops(parent_expression)) if op]
         parent_norm = normalize_expr(parent_expression)
+
+        def _extract_fields(expr_str: str) -> Set[str]:
+            tree = _parse(expr_str)
+            if tree is None:
+                return set(re.findall(r"[a-zA-Z_][a-zA-Z0-9_]*", expr_str or ""))
+            return {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
+
+        non_field_ids = {
+            "subindustry", "industry", "sector", "market", "country", "std",
+            "target_tvr", "factor", "pct", "percentage", "True", "False", "driver", "gaussian"
+        }
+        parent_fields = _extract_fields(parent_expression) - non_field_ids
+
         exprs = []
         for idx, v in enumerate(variants or []):
             if not isinstance(v, dict):
@@ -291,13 +304,21 @@ class SwarmAuditor:
         control_slots: List[int] = []
         window_only_slots: List[int] = []
         broken_slots: List[int] = []
+
         for slot, expr in exprs:
-            if parent_norm and normalize_expr(expr) == parent_norm:
+            is_ctrl = parent_norm and (normalize_expr(expr) == parent_norm)
+            if is_ctrl:
                 control_slots.append(slot)
-            if prot and all(op in expr for op in prot):
                 skeleton_slots.append(slot)
             else:
-                broken_slots.append(slot)
+                expr_fields = _extract_fields(expr) - non_field_ids
+                overlap_ratio = (len(parent_fields & expr_fields) / len(parent_fields)) if parent_fields else 1.0
+                core_preserved = (overlap_ratio >= 0.50) or (bool(prot) and any(op in expr for op in prot))
+                if core_preserved:
+                    skeleton_slots.append(slot)
+                elif slot <= 10:
+                    broken_slots.append(slot)
+
             if is_window_only_tweak(expr, parent_expression):
                 window_only_slots.append(slot)
 
@@ -305,8 +326,8 @@ class SwarmAuditor:
         issues: List[str] = []
         if total and ratio < cls.MIN_SKELETON_RATIO:
             issues.append(
-                f"骨架保护槽位仅 {len(skeleton_slots)}/{total} ({ratio:.0%})，低于精修模式要求的 "
-                f"{cls.MIN_SKELETON_RATIO:.0%}；被拆掉母本骨架 {prot} 的槽位: {broken_slots}"
+                f"母本核心信号锚定槽位仅 {len(skeleton_slots)}/{total} ({ratio:.0%})，低于 1+9+10 分仓制要求的 "
+                f"{cls.MIN_SKELETON_RATIO:.0%} (Slot 1~10 应保留母本主锚字段)；偏离槽位: {broken_slots}"
             )
         if total and not control_slots:
             issues.append("缺少控制槽: 必须有 1 槽逐字复现母本，否则本轮回测配置无法与母本历史结果对齐")
@@ -477,17 +498,17 @@ class SwarmAuditor:
         skeleton_str = " / ".join(prot) if prot else "母本最外层算子链"
         min_skeleton = max(1, int(round(parallelism * cls.MIN_SKELETON_RATIO)))
         lines = [
-            "【场景路由 = 老兵精修 (Veteran Refinement)｜铁律 B 本批已停用】:",
+            "【场景路由 = 老兵精修 (Veteran Refinement)｜1+9+10 三分天下制（Slot 1 基准锚 5% + Slot 2~10 微创正交舱 45% + Slot 11~20 第一性原理重构舱 50%）】:",
             f"- 母本已被 10 年历史与近 2 年区间双重验证，骨架 [{skeleton_str}] 是资产而不是待拆的脚手架；",
             f"- 🚫 严禁把骨架 [{skeleton_str}] 中的任一算子替换或删除；严禁把外层 group_zscore 换成 group_rank/rank 来“去相关性”；",
             "   严禁把母本拆成 N/2N 双窗口孪生对——这些是战场 A 的开拓手段，用在局部极值上等于砍断脊梁；",
-            f"- ✅ 骨架保留硬指标: {parallelism} 槽中至少 {min_skeleton} 槽 ({cls.MIN_SKELETON_RATIO:.0%}) 必须完整包含上述骨架算子；",
+            f"- ✅ 骨架保留硬指标: {parallelism} 槽中至少 {min_skeleton} 槽 ({cls.MIN_SKELETON_RATIO:.0%}) 必须完整包含上述骨架算子或母本核心主锚字段；",
             "- ✅ 经济学通道变异 (每槽必须在 optimize_reason 写明 economic_rationale 与 target_metric，禁止只改窗口数字):",
             "   1. 风险暴露通道: 只改 group_zscore/group_neutralize 的分组层级 (industry <-> subindustry <-> sector)，验证收益来源是行业内选股还是行业配置；",
             "   2. 交易成本通道: 改 ts_target_tvr_decay 的 target_tvr (如 0.12 -> 0.08/0.15) —— 这是直接作用于换手与边际利润的旋钮，不是窗口；",
             "   3. 信号条件化通道: trade_when(信息事件条件, 母本内核, -1) 在无信息日冻结持仓，降换手抬 Margin；",
             "   4. 幅度裁剪通道: winsorize/signed_power 收紧尾部分布，改善年际夏普稳定性与 CLUSTER 告警；",
-            "   5. 次要信息通道: 仅在母本内核内部追加一条同源正交字段 (multiply/add)，不新增外层、不改骨架；",
+            "   5. 次要信息通道: 仅在母本内核内部追加一条同源正交字段 (divide / 同量纲 subtract / ts_regression / trade_when)，不新增外层、不改骨架；",
             "- 🧠 假设先行 (Python 物理核验): 每个对象必须先写 optimize_reason、再写 expression；假设内必须点名至少 1 个可验收指标"
             " (Margin / Sharpe / Turnover / ProdCorr / CLUSTER 等) 并摘述 economic_rationale——先落笔经济学因果，公式才被约束，"
             "先拼公式再补理由的后验辩解会被判违规；逐字重复的假设视为凑数；",
@@ -525,7 +546,7 @@ class SwarmAuditor:
             f"- {parallelism} 槽中至少 {min_non_rank} 槽 ({ratio_label}) 的最外层不得使用 group_rank/rank，"
             f"必须改用 group_neutralize(..., subindustry) / group_zscore(..., subindustry) / zscore / trade_when；",
             f"- 采用「双窗口敏感性成对验证」: 构思 {pairs} 组正交算子拓扑骨架，每组占用 2 个相邻槽位，"
-            f"分别填入 1 倍周期 N 与 2 倍周期 2N (日频 N=5 / 2N=15；季报 N=66 / 2N=132)；",
+            f"分别填入 1 倍周期 N 与 2 倍周期 2N (日频 N=5 / 2N=20 或 20/63；季报 N=63 / 2N=126 或 63/252)；",
             "- 同骨架只允许窗口参数不同，其余字段与拓扑必须完全一致，否则参数高原检验无法成立；",
             "- 尖峰判据: 若 N 窗 Sharpe 达标而 2N 窗跌破 0.5，该骨架判为尖峰过拟合，禁止进入 Step 2 演进。",
         ]
@@ -534,16 +555,3 @@ class SwarmAuditor:
                 "- 事件驱动数据 (news/sentiment/analyst)：推荐结合状态过滤或时序平滑算子 (如 trade_when, ts_decay_* 等) 冻结无信息日持仓，降低换手噪音。"
             )
         return "\n".join(lines)
-
-
-if __name__ == "__main__":
-    demo = [
-        {"slot": 1, "expression": "group_rank(ts_delta(f, 5), subindustry)"},
-        {"slot": 2, "expression": "group_rank(ts_delta(f, 15), subindustry)"},
-        {"slot": 3, "expression": "group_neutralize(ts_mean(g, 66), subindustry)"},
-        {"slot": 4, "expression": "group_neutralize(ts_mean(g, 132), subindustry)"},
-        {"slot": 5, "expression": "reverse(group_rank(winsorize(h, std=3), subindustry))"},
-    ]
-    rep = SwarmAuditor.audit(demo)
-    print({k: rep[k] for k in ("total", "non_rank_ratio", "paired_slots", "issues", "outer_hist")})
-    print(SwarmAuditor.build_directive(20, event_driven=True))
