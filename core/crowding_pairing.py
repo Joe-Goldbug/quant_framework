@@ -158,6 +158,25 @@ class FieldCrowdingProfiler:
     def classify(self, fields_used: List[str]) -> dict:
         """判定一个 Stage 0 种子的字段组合是否构成冷热非对称配对"""
         used = [f for f in (fields_used or []) if f]
+
+        # 单字段自归一判定 (ATOM Alpha 单因子范式)
+        if len(used) == 1:
+            f = used[0]
+            is_cold = self.is_cold_anchor(f) if self.has_crowding_data else True
+            cold_pct = self.percentile(f)
+            issues = []
+            if self.has_crowding_data and not is_cold:
+                issues.append("单字段主信号必须为低拥挤度主锚字段 (后 40%)")
+            return {
+                "is_asymmetric": is_cold,
+                "main_anchor": f,
+                "normalizer": None,
+                "main_anchor_alpha_pct": cold_pct,
+                "main_anchor_tier": self.tier(f) if self.has_crowding_data else "COLD",
+                "normalizer_coverage": None,
+                "pairing_score": 1.0,
+                "issues": issues,
+            }
         cold_anchor = None
         for f in used:
             if self.is_cold_anchor(f):

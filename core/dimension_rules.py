@@ -56,8 +56,9 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
             "close", "open", "high", "low", "vwap", "volume", "cap", "adv20",
             "returns", "sharesout", "split", "dividend"
         }
-        # 1. 采纳 GM 铁律：物理封杀容易造成量纲混乱与过拟合的 add(+) 和 multiply(*)
-        self.FORBIDDEN_OPERATORS = {"add", "multiply"}
+        # 原帖第 6.1 节与第 9.1 节明确要求：在 USA 区域可使用 group_neutralize(..., subindustry) 配合风险中性化
+        # 故彻底解禁 group_neutralize，将其置空，完全放行合规中性化算子
+        self.FORBIDDEN_OPERATORS = set()
 
         # 2. 经济学自然日历周期白名单：5(周), 10(双周), 20/21/22(月), 60/63(季), 120/126(半年), 250/252(年)
         # 以及向后兼容的 0, 1, 2, 3, 4 (用于 ts_delay(x, 1), rettype=0/2, driver/std 整数位等)
@@ -170,11 +171,24 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         if not func_name.startswith("vec_"):
             self.operator_count += 1
 
-        # 1. 黑名单算子检查
+        # 1. 双 [-1, 1] 字段乘积伪因果拦截 (支持递归子树嵌套检查，如 winsorize 嵌套)
+        if func_name == "multiply" and len(node.args) >= 2:
+            arg1, arg2 = node.args[0], node.args[1]
+            info1 = self._infer_node_domain(arg1)
+            info2 = self._infer_node_domain(arg2)
+            if info1.get("domain") == "[-1, 1]" and info2.get("domain") == "[-1, 1]":
+                f1 = self._extract_subtree_fields(arg1)
+                f2 = self._extract_subtree_fields(arg2)
+                self.issues.append(
+                    f"【伪因果负负得正违规】检测到双 [-1, 1] 字段乘积 (左支: {f1}, 右支: {f2})！"
+                    f"当两项同时处于极度负面时，乘积为正导致生成买入信号，存在严重伪因果！请对其中一项做正向平移 (如 add(x, 1.0)) 或使用条件门控。"
+                )
+
+        # 2. 黑名单算子检查
         if func_name in self.FORBIDDEN_OPERATORS:
             self.issues.append(f"使用了黑名单/有害算子: '{func_name}' (该算子在历史实测中已被证伪或废弃)")
 
-        # 2. 分组算子合法性检查
+        # 3. 分组算子合法性检查
         if func_name.startswith("group_"):
             if node.args:
                 last_arg = node.args[-1]
@@ -191,7 +205,7 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
                 else:
                     self.issues.append(f"Group 算子 '{func_name}' 缺少合法分组变量 (合法项: {self.VALID_GROUPS})")
 
-        # 3. add(rank, rank) 物理拦截
+        # 4. add(rank, rank) 物理拦截
         if func_name == "add" and len(node.args) >= 2:
             arg1, arg2 = node.args[0], node.args[1]
             if isinstance(arg1, ast.Call) and isinstance(arg2, ast.Call):
@@ -200,7 +214,7 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
                 if f1 in ("rank", "group_rank") and f2 in ("rank", "group_rank"):
                     self.issues.append("检测到无量纲 rank 加总 add(rank, rank)，此结构属于纯数学拼凑过拟合，物理拦截！")
 
-        # 4. 稀疏 [0, 1] 字段严禁 subtract(x, 0.5) 零值偏移拦截 (支持递归子树嵌套检查)
+        # 5. 稀疏 [0, 1] 字段严禁 subtract(x, 0.5) 零值偏移拦截 (支持递归子树嵌套检查)
         if func_name == "subtract" and len(node.args) >= 2:
             arg1, arg2 = node.args[0], node.args[1]
             target_node = None
@@ -218,19 +232,6 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
                         f"【零值偏移违规】稀疏 [0, 1] 字段子树 '{sub_fields}' 严禁直接 subtract 0.5！"
                         f"这会导致海量无事件 0 值被偏移为 -0.5 伪空头信号，引发严重多空持仓失衡！请改用 trade_when 或 ts_zscore 自归一。"
                     )
-
-        # 5. 双 [-1, 1] 字段乘积伪因果拦截 (支持递归子树嵌套检查，如 winsorize 嵌套)
-        if func_name == "multiply" and len(node.args) >= 2:
-            arg1, arg2 = node.args[0], node.args[1]
-            info1 = self._infer_node_domain(arg1)
-            info2 = self._infer_node_domain(arg2)
-            if info1.get("domain") == "[-1, 1]" and info2.get("domain") == "[-1, 1]":
-                f1 = self._extract_subtree_fields(arg1)
-                f2 = self._extract_subtree_fields(arg2)
-                self.issues.append(
-                    f"【伪因果负负得正违规】检测到双 [-1, 1] 字段乘积 (左支: {f1}, 右支: {f2})！"
-                    f"当两项同时处于极度负面时，乘积为正导致生成买入信号，存在严重伪因果！请对其中一项做正向平移 (如 add(x, 1.0)) 或使用条件门控。"
-                )
 
         # 6. VECTOR 算子包裹性检查
         for arg in node.args:

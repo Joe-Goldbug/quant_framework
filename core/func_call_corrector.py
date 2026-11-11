@@ -19,7 +19,7 @@ import os
 import re
 import sqlite3
 import sys
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 if sys.platform == "win32":
     try:
@@ -35,7 +35,61 @@ class SkeletonTransformer(ast.NodeTransformer):
             return ast.Name(id='NUM', ctx=ast.Load())
         return node
 
+class ParamOrderCorrector(ast.NodeTransformer):
+    """时序算子参数顺序自愈 (如 ts_decay_linear(10, x) -> ts_decay_linear(x, 10))"""
+    def visit_Call(self, node):
+        self.generic_visit(node)
+        func_name = ""
+        if isinstance(node.func, ast.Name):
+            func_name = node.func.id
+        elif isinstance(node.func, ast.Attribute):
+            func_name = node.func.attr
+        if func_name.startswith("ts_") and len(node.args) == 2:
+            if isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, (int, float)) and not (isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, (int, float))):
+                node.args[0], node.args[1] = node.args[1], node.args[0]
+        return node
+
+class CalendarWindowSnapper(ast.NodeTransformer):
+    """遍历 AST 中的时序算子 (ts_*)，将时间窗口吸附到标准自然日历网格，同时保护日频触发器 (d=1)"""
+    def __init__(self, valid_lookbacks: List[int]):
+        super().__init__()
+        self.snap_targets = sorted([x for x in valid_lookbacks if x >= 5])
+        self.valid_set = set(valid_lookbacks)
+
+    def _snap_val(self, val: int) -> int:
+        if val <= 1 or val in self.valid_set:
+            return val
+        return min(self.snap_targets, key=lambda x: abs(x - val))
+
+    def visit_Call(self, node):
+        self.generic_visit(node)
+        func_name = ""
+        if isinstance(node.func, ast.Name):
+            func_name = node.func.id
+        elif isinstance(node.func, ast.Attribute):
+            func_name = node.func.attr
+
+        if func_name.startswith("ts_"):
+            new_args = []
+            for arg in node.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, int) and not isinstance(arg.value, bool):
+                    if arg.value > 1:
+                        new_args.append(ast.Constant(value=self._snap_val(arg.value)))
+                    else:
+                        new_args.append(arg)
+                else:
+                    new_args.append(arg)
+            node.args = new_args
+
+            for kw in node.keywords:
+                if kw.arg in {"d", "d1", "lookback", "window", "days", "time"} and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, int) and not isinstance(kw.value.value, bool):
+                    if kw.value.value > 1:
+                        kw.value = ast.Constant(value=self._snap_val(kw.value.value))
+        return node
+
 class ASTSandboxCorrector:
+    VALID_LOOKBACKS = [1, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252]
+
     OPERATOR_ALIASES = {
         "ts_moving_average": "ts_mean",
         "ts_avg": "ts_mean",
@@ -126,7 +180,100 @@ class ASTSandboxCorrector:
         if "jump_decay(" in cleaned and "sensitivity" not in cleaned and "force" not in cleaned:
             cleaned = re.sub(r'jump_decay\s*\(([^,]+),\s*([0-9.]+)\s*\)', r'jump_decay(\1, \2, sensitivity=0.5, force=0.1)', cleaned)
 
+        # 5. 参数顺序自愈 (如 ts_decay_linear(10, x) -> ts_decay_linear(x, 10))
+        try:
+            tree = ast.parse(cleaned, mode='eval')
+            order_corrector = ParamOrderCorrector()
+            fixed_tree = order_corrector.visit(tree)
+            cleaned = ast.unparse(fixed_tree)
+        except Exception:
+            pass
+
         return cleaned
+
+    @classmethod
+    def snap_economic_calendar_windows(cls, expr: str) -> str:
+        """
+        自动日历网格吸附:
+        保护日频触发器 (d=1)，将非法的时间窗口吸附到最近的标准日历网格
+        [5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252]
+        """
+        if not expr:
+            return expr
+        corrected = cls.correct_expression(expr)
+        try:
+            tree = ast.parse(corrected, mode='eval')
+            snapper = CalendarWindowSnapper(cls.VALID_LOOKBACKS)
+            snapped_tree = snapper.visit(tree)
+            return ast.unparse(snapped_tree)
+        except Exception:
+            return corrected
+
+    @classmethod
+    def audit_atom_stage0_expression(
+        cls, expr: str, valid_dataset_fields: set = None
+    ) -> Tuple[bool, List[str], int, set]:
+        """
+        Stage 0 ATOM Alpha 专属门禁审查:
+        1. 专攻 ATOM Alpha 范式，使用 1~3 个字段
+        2. 算子预算限制：总算子数 op <= 8
+        3. 严禁使用 + 和 *，以及函数形式 add 和 multiply
+        """
+        issues = []
+        op_count = 0
+        used_fields = set()
+
+        if not expr or not expr.strip():
+            return False, ["表达式为空"], 0, set()
+
+        try:
+            tree = ast.parse(expr.strip(), mode='eval')
+        except Exception as e:
+            return False, [f"表达式语法解析失败: {e}"], 0, set()
+
+        group_and_params = {
+            "market", "sector", "subindustry", "industry",
+            "true", "false", "none", "std", "factor", "sensitivity", "force"
+        }
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.BinOp):
+                op_count += 1
+                if isinstance(node.op, ast.Add):
+                    issues.append("Stage 0 严禁使用加法运算符 (+)")
+                elif isinstance(node.op, ast.Mult):
+                    issues.append("Stage 0 严禁使用乘法运算符 (*)")
+            elif isinstance(node, ast.UnaryOp):
+                op_count += 1
+            elif isinstance(node, ast.Call):
+                op_count += 1
+                func_name = ""
+                if isinstance(node.func, ast.Name):
+                    func_name = node.func.id
+                elif isinstance(node.func, ast.Attribute):
+                    func_name = node.func.attr
+
+                if func_name.lower() in {"add", "multiply"}:
+                    issues.append(f"Stage 0 严禁使用加乘算子: '{func_name}'")
+            elif isinstance(node, ast.Name):
+                name = node.id
+                if name.lower() not in group_and_params:
+                    if valid_dataset_fields is not None:
+                        if name in valid_dataset_fields:
+                            used_fields.add(name)
+                    else:
+                        used_fields.add(name)
+
+        if len(used_fields) < 1:
+            issues.append(f"Stage 0 表达式必须包含至少 1 个数据集字段，当前检测到 {len(used_fields)} 个")
+        elif len(used_fields) > 3:
+            issues.append(f"Stage 0 表达式最多允许使用 3 个字段 (ATOM 范式)，当前检测到 {len(used_fields)} 个: {list(used_fields)}")
+
+        if op_count > 8:
+            issues.append(f"Stage 0 算子数超标: {op_count} > 8 (Stage 0 严格控制复杂度)")
+
+        is_valid = len(issues) == 0
+        return is_valid, issues, op_count, used_fields
 
     @classmethod
     def get_canonical_skeleton(cls, expr: str) -> str:
@@ -190,7 +337,19 @@ class ASTSandboxCorrector:
         conn.commit()
         conn.close()
 
-    def check_and_record_batch(self, expressions: list, region: str, universe: str, delay: int, neutralization: str = "NONE", batch_id: str = None, record: bool = True, max_hist_count: int = 8, is_exploit_or_step2: bool = False) -> list:
+    def check_and_record_batch(
+        self,
+        expressions: list,
+        region: str,
+        universe: str,
+        delay: int,
+        neutralization: str = "NONE",
+        batch_id: str = None,
+        record: bool = True,
+        max_hist_count: int = 8,
+        is_exploit_or_step2: bool = False,
+        parent_expression: Optional[str] = None
+    ) -> list:
         """
         双层防重门禁 (Exact MD5 + Skeleton Hash 熔断)
         """
@@ -200,6 +359,18 @@ class ASTSandboxCorrector:
         corrected_exprs = [self.correct_expression(x) for x in expressions]
         skeletons = [self.get_canonical_skeleton(x) for x in corrected_exprs]
         skeleton_hashes = [self.compute_skeleton_hash(s) for s in skeletons]
+
+        # 0. 母本骨架纯常数微调硬拦截 (Anti-Trivial Tuning Gate)
+        if parent_expression:
+            parent_skel = self.get_canonical_skeleton(parent_expression)
+            same_as_parent = [idx + 1 for idx, s in enumerate(skeletons) if s == parent_skel]
+            if len(same_as_parent) >= min(3, len(expressions)):
+                conn.close()
+                raise ValueError(
+                    f"【常数微调硬拦截】检测到变体与母本骨架高度同质化！\n"
+                    f"母本骨架: [{parent_skel}]\n"
+                    f"卡槽 {same_as_parent} 仅微调了常数数值，未引入新的数学拓扑结构！"
+                )
 
         # 1. 批次内部骨架多样性门禁：支持弹性容量缩放 (8槽限2条，20槽限4条；精修/exploit阶段放宽至60%对齐SwarmAuditor)
         ratio_cap = 0.60 if is_exploit_or_step2 else 0.20

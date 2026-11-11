@@ -15,13 +15,22 @@ from typing import Dict, List, Optional
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from quant_framework.core.func_call_corrector import ASTSandboxCorrector
-from quant_framework.core.dimension_rules import DimensionAuditor
-from quant_framework.core.gatekeeper import Gatekeeper
-from quant_framework.core.rag_memory import RAGMemoryEngine
-from quant_framework.core.sim_runner import SimBatchRunner
-from quant_framework.core.concurrency_utils import atomic_save_json
-from quant_framework.main import AegisPipelineController, REGION_NEUTRALIZATIONS_DICT
+try:
+    from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+    from quant_framework.core.dimension_rules import DimensionAuditor
+    from quant_framework.core.gatekeeper import Gatekeeper
+    from quant_framework.core.rag_memory import RAGMemoryEngine
+    from quant_framework.core.sim_runner import SimBatchRunner
+    from quant_framework.core.concurrency_utils import atomic_save_json
+    from quant_framework.main import AegisPipelineController, REGION_NEUTRALIZATIONS_DICT
+except (ModuleNotFoundError, ImportError):
+    from core.func_call_corrector import ASTSandboxCorrector
+    from core.dimension_rules import DimensionAuditor
+    from core.gatekeeper import Gatekeeper
+    from core.rag_memory import RAGMemoryEngine
+    from core.sim_runner import SimBatchRunner
+    from core.concurrency_utils import atomic_save_json
+    from main import AegisPipelineController, REGION_NEUTRALIZATIONS_DICT
 
 class AEGISOrchestrator(AegisPipelineController):
     """

@@ -214,7 +214,10 @@ class TestProdCorrGate(unittest.TestCase):
 
 class TestChampionEligibility(unittest.TestCase):
     def setUp(self):
-        from quant_framework.main import AegisPipelineController
+        try:
+            from quant_framework.main import AegisPipelineController
+        except (ModuleNotFoundError, ImportError):
+            from main import AegisPipelineController
         self.ctl = AegisPipelineController.__new__(AegisPipelineController)
         self.ctl.region = "GLB"
 

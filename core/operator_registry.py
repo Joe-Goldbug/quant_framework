@@ -48,20 +48,21 @@ class OperatorRegistry:
                 print(f"⚠️ [OperatorRegistry] 加载 user_operators.json 失败: {e}")
 
         # Fallback to standard core operators if file missing or empty
-        if not cls._ALL_NAMES:
-            fallback_ops = {
-                "add", "subtract", "multiply", "divide", "reverse", "neg", "abs", "sign",
-                "power", "signed_power", "sqrt", "log", "s_log_1p", "exp", "max", "min",
-                "rank", "group_rank", "quantile", "group_quantile", "scale", "group_scale",
-                "zscore", "group_zscore", "ts_mean", "ts_sum", "ts_std_dev", "ts_min", "ts_max",
-                "ts_rank", "ts_delta", "ts_delay", "ts_corr", "ts_decay_linear", "ts_decay_exp_window",
-                "trade_when", "if_else", "winsorize", "hump", "group_neutralize", "jump_decay",
-                "ts_regression", "ts_arg_max", "ts_arg_min", "ts_skewness", "ts_kurtosis",
-                "bucket", "right_tail", "left_tail", "densify", "pasteurize",
-                "vec_avg", "vec_sum", "vec_max", "vec_min", "vec_stddev", "vec_range", "vec_count"
-            }
-            cls._ALL_NAMES = fallback_ops
-            cls._OPERATORS = {name: {"name": name, "category": "General", "definition": f"{name}(...)"} for name in fallback_ops}
+        fallback_ops = {
+            "add", "subtract", "multiply", "divide", "reverse", "neg", "abs", "sign",
+            "power", "signed_power", "sqrt", "log", "s_log_1p", "exp", "max", "min",
+            "rank", "group_rank", "quantile", "group_quantile", "scale", "group_scale",
+            "zscore", "group_zscore", "ts_mean", "ts_sum", "ts_std_dev", "ts_min", "ts_max",
+            "ts_rank", "ts_delta", "ts_delay", "ts_corr", "ts_decay_linear", "ts_decay_exp_window",
+            "trade_when", "if_else", "winsorize", "hump", "group_neutralize", "jump_decay",
+            "ts_regression", "ts_arg_max", "ts_arg_min", "ts_skewness", "ts_kurtosis",
+            "bucket", "right_tail", "left_tail", "densify", "pasteurize",
+            "vec_avg", "vec_sum", "vec_max", "vec_min", "vec_stddev", "vec_range", "vec_count"
+        }
+        cls._ALL_NAMES = set(cls._OPERATORS.keys()) | fallback_ops
+        for name in fallback_ops:
+            if name not in cls._OPERATORS:
+                cls._OPERATORS[name] = {"name": name, "category": "General", "definition": f"{name}(...)"}
 
         cls._KEEP_TOKENS = (
             cls._ALL_NAMES |

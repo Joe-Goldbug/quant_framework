@@ -480,6 +480,16 @@ class AegisPipelineController:
             if not audit_res_ast.get("is_valid", True):
                 continue
 
+            # 4. 假说类型举证准入 (LEVEL 假说保持严格纯代数/截面，严禁任何时序算子未举证调用)
+            h_type = str(s.get("hypothesis_type", "LEVEL")).upper()
+            temporal_calls = self._get_ast_temporal_calls(expr)
+            if h_type == "SHOCK":
+                if len(temporal_calls) != 1 or temporal_calls[0] not in self.ALLOWED_SHOCK_TEMPORAL:
+                    continue
+            elif h_type == "LEVEL":
+                if len(temporal_calls) > 0:
+                    continue
+
             # 强制使用 Python AST 真实提取的数据集字段列表覆盖 LLM 自报字段
             s["fields_used"] = list(used_fields)
             signals.append(s)

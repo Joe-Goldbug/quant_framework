@@ -293,10 +293,10 @@ class TestAEGISHardnessSystem(unittest.TestCase):
         # 当前批次待测 8 条表达式 (单批每种骨架 <= 2 条，使用未测过的独立测试字段 test_feed_x)
         rnd_field = f"test_feed_x_{int(time.time()*1000)%100000}"
         new_batch = [
-            {"expression": f"group_rank(ts_decay_linear({rnd_field}, {10+i}), subindustry)", "optimize_reason": f"新批次变体 A{i}"}
+            {"expression": f"group_rank(ts_decay_linear({rnd_field}, {[10, 20][i]}), subindustry)", "optimize_reason": f"新批次变体 A{i}"}
             for i in range(2)
         ] + [
-            {"expression": f"group_rank(ts_decay_exp_window({rnd_field}, {10+i}, factor=0.8), subindustry)", "optimize_reason": f"新批次变体 B{i}"}
+            {"expression": f"group_rank(ts_decay_exp_window({rnd_field}, {[10, 20][i]}, factor=0.8), subindustry)", "optimize_reason": f"新批次变体 B{i}"}
             for i in range(2)
         ] + [
             {"expression": f"group_rank(ts_delta({rnd_field}, {3+i}), subindustry)", "optimize_reason": f"新批次变体 C{i}"}

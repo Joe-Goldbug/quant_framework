@@ -22,10 +22,16 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from quant_framework.core.horizon_probe import HorizonProbe
-from quant_framework.core.gatekeeper import Gatekeeper
-from quant_framework.core.swarm_auditor import SwarmAuditor
-from quant_framework.main import AegisPipelineController
+try:
+    from quant_framework.core.horizon_probe import HorizonProbe
+    from quant_framework.core.gatekeeper import Gatekeeper
+    from quant_framework.core.swarm_auditor import SwarmAuditor
+    from quant_framework.main import AegisPipelineController
+except (ModuleNotFoundError, ImportError):
+    from core.horizon_probe import HorizonProbe
+    from core.gatekeeper import Gatekeeper
+    from core.swarm_auditor import SwarmAuditor
+    from main import AegisPipelineController
 
 
 class TestTrap1HorizonProbeAllSharpes(unittest.TestCase):
@@ -321,7 +327,10 @@ class TestGate3RollbackOnGate2Failure(unittest.TestCase):
     """
     def test_rollback_removes_unsubmitted_records(self):
         import tempfile
-        from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+        try:
+            from quant_framework.core.func_call_corrector import ASTSandboxCorrector
+        except (ModuleNotFoundError, ImportError):
+            from core.func_call_corrector import ASTSandboxCorrector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "alphas_record.db")

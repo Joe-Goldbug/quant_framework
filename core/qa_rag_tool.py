@@ -53,3 +53,15 @@ def format_qa_for_prompt(qa_records: List[Dict[str, Any]]) -> str:
         blocks.append(f"\n#### 【启发 {idx}】{q}\n- **关联标签**: `{tags}`\n{a}")
 
     return "\n".join(blocks)
+
+
+def apply_experience_decay(half_life_days: float = 14.0, min_heat: float = 10.0) -> int:
+    """对因果经验库执行半衰期衰减"""
+    mgr = get_qa_manager()
+    return mgr.apply_exponential_decay(half_life_days=half_life_days, min_heat=min_heat)
+
+
+def feedback_experience_outcome(qa_id: str, success: bool = True) -> bool:
+    """向经验库反馈实战回测结果"""
+    mgr = get_qa_manager()
+    return mgr.record_experience_outcome(qa_id=qa_id, success=success)

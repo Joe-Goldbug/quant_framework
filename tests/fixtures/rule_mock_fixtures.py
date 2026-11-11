@@ -34,12 +34,12 @@ def handle_rule_mock(
         expr_templates = [
             lambda a, b: f"subtract({a}, {b})",
             lambda a, b: f"trade_when(greater({a}, {b}), {a}, -1)",
-            lambda a, b: f"ts_decay_linear(divide({a}, {b}), 10)",
-            lambda a, b: f"ts_zscore(subtract({a}, {b}), 20)",
             lambda a, b: f"trade_when(less({a}, {b}), {b}, -1)",
-            lambda a, b: f"ts_corr({a}, {b}, 20)",
-            lambda a, b: f"ts_delta(divide({a}, {b}), 5)",
-            lambda a, b: f"signed_power(divide({a}, {b}), 2)"
+            lambda a, b: f"signed_power(divide({a}, {b}), 2)",
+            lambda a, b: f"signed_power(subtract({a}, {b}), 0.5)",
+            lambda a, b: f"divide(subtract({a}, {b}), {b})",
+            lambda a, b: f"if_else(greater({a}, {b}), subtract({a}, {b}), 0)",
+            lambda a, b: f"group_rank(subtract({a}, {b}), subindustry)"
         ]
         count = ctx.get("count") or 6
         for i in range(count):

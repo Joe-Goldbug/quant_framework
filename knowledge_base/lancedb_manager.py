@@ -149,4 +149,60 @@ class LanceDBQAManager:
                 stats[t] = len(tbl.to_pandas())
             except Exception:
                 stats[t] = 0
-        return stats
+            return stats
+
+    def apply_exponential_decay(
+        self,
+        half_life_days: float = 14.0,
+        min_heat: float = 10.0,
+        table_name: str = FORUM_TABLE
+    ) -> int:
+        """
+        基于创建时间与半衰期，对经验记录执行指数衰减:
+        heat = max(min_heat, initial_heat * 0.5 ** (delta_days / half_life_days))
+        """
+        tbl = self.db.open_table(table_name)
+        df = tbl.to_pandas()
+        if df.empty:
+            return 0
+
+        now_ts = time.time()
+        for idx, row in df.iterrows():
+            created_str = str(row.get("created_at", ""))
+            try:
+                created_ts = time.mktime(time.strptime(created_str, "%Y-%m-%d %H:%M:%S"))
+            except Exception:
+                created_ts = now_ts
+
+            delta_days = max(0.0, (now_ts - created_ts) / 86400.0)
+            cur_heat = float(row.get("heat_score", 50.0))
+            decay_factor = 0.5 ** (delta_days / half_life_days)
+            new_heat = max(min_heat, cur_heat * decay_factor)
+            df.at[idx, "heat_score"] = float(new_heat)
+
+        self.db.create_table(table_name, data=df, schema=self.QA_ARROW_SCHEMA, mode="overwrite")
+        return len(df)
+
+    def record_experience_outcome(
+        self,
+        qa_id: str,
+        success: bool = True,
+        table_name: str = FORUM_TABLE
+    ) -> bool:
+        """
+        根据后续回测结果反馈经验热度:
+        成功 (+15.0 分)，失败 (-10.0 分)
+        """
+        tbl = self.db.open_table(table_name)
+        df = tbl.to_pandas()
+        if df.empty or qa_id not in df["id"].values:
+            return False
+
+        idx = df[df["id"] == qa_id].index[0]
+        cur_heat = float(df.at[idx, "heat_score"])
+        delta = 15.0 if success else -10.0
+        new_heat = max(10.0, min(100.0, cur_heat + delta))
+        df.at[idx, "heat_score"] = float(new_heat)
+
+        self.db.create_table(table_name, data=df, schema=self.QA_ARROW_SCHEMA, mode="overwrite")
+        return True

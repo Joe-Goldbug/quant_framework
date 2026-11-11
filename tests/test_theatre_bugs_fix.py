@@ -16,9 +16,14 @@ sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from quant_framework.main import AegisPipelineController
-from quant_framework.core.agy_client import GeminiClient, VirtualSession, normalize_model_slug
-from quant_framework.core.sim_runner import SimBatchRunner
+try:
+    from quant_framework.main import AegisPipelineController
+    from quant_framework.core.agy_client import GeminiClient, VirtualSession, normalize_model_slug
+    from quant_framework.core.sim_runner import SimBatchRunner
+except (ModuleNotFoundError, ImportError):
+    from main import AegisPipelineController
+    from core.agy_client import GeminiClient, VirtualSession, normalize_model_slug
+    from core.sim_runner import SimBatchRunner
 
 
 class TestTheatreBugsFix(unittest.TestCase):

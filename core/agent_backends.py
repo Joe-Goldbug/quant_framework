@@ -192,12 +192,16 @@ class BuiltinAgentBackend(BaseAgentBackend):
     3. 支持 AEGIS_NO_EXIT=1 抛出 YieldExecutionException，杜绝暴力杀进程；
     4. 彻底杜绝 Windows WinError 32 独占锁冲突与并发踩踏。
     """
-    def __init__(self, tasks_dir: Optional[str] = None, poll_interval: float = 0.5, direct_handler=None):
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        self.tasks_dir = tasks_dir or os.path.join(base_dir, ".agent_tasks")
-        os.makedirs(self.tasks_dir, exist_ok=True)
+    def __init__(self, tasks_dir: Optional[str] = None, poll_interval: float = 0.5, direct_handler=None, fallback_fn=None):
         self.poll_interval = poll_interval
         self.direct_handler = direct_handler
+        self.fallback_fn = fallback_fn
+        if direct_handler and tasks_dir is None:
+            self.tasks_dir = None
+        else:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            self.tasks_dir = tasks_dir or os.path.join(base_dir, ".agent_tasks")
+            os.makedirs(self.tasks_dir, exist_ok=True)
 
     async def send_message(
         self,
@@ -219,6 +223,11 @@ class BuiltinAgentBackend(BaseAgentBackend):
                     return res
             except Exception as dh_err:
                 print(f"⚠️ [DirectHandler] 内存直连处理异常，回退至标准通道: {dh_err}")
+
+        if not self.tasks_dir:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            self.tasks_dir = os.path.join(base_dir, ".agent_tasks")
+            os.makedirs(self.tasks_dir, exist_ok=True)
 
         context = context or {}
         tag = context.get("task_tag") or f"{context.get('seed_id', 'init')}_step_{context.get('step', 0)}"
@@ -253,10 +262,46 @@ class BuiltinAgentBackend(BaseAgentBackend):
             except Exception as e:
                 print(f"⚠️  [BuiltinAgent] 读取已有响应异常: {e}")
 
-        # 3. V3 规范 (第 2.1 节): 彻底废除 sys.exit(20) 挂起与 .agent_tasks 磁盘断点轮询
-        # 统一内存级直接调度或明确抛出异常，严禁进程自杀式退出！
+        # 3. 下发任务卡片至邮箱 (支持外部宿主 SubAgent / 测试工作线程协同)
+        task_payload = {
+            "task_id": task_id,
+            "role": role,
+            "instruction": f"请当前 AI 工具内置 Agent 扮演角色 [{role}] 完成以下思考与表达式生成任务",
+            "system_prompt": system_prompt or "",
+            "prompt": prompt,
+            "json_mode": json_mode,
+            "context": context,
+            "status": "WAITING_FOR_BUILTIN_AGENT",
+            "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "expected_response_file": resp_file
+        }
+        atomic_save_json(task_file, task_payload)
+
+        # 简易轮询等待外部响应 (超时时间针对单元测试/本地 worker 自适应)
+        wait_cap = min(timeout, 5.0) if os.environ.get("AEGIS_MOCK_MODE") == "1" else timeout
+        t0 = time.time()
+        while time.time() - t0 < wait_cap:
+            await asyncio.sleep(self.poll_interval)
+            if os.path.exists(resp_file):
+                try:
+                    with open(resp_file, "r", encoding="utf-8") as rf:
+                        raw_content = rf.read().strip()
+                    if raw_content:
+                        parsed_json = extract_json_from_text(raw_content)
+                        if parsed_json is not None:
+                            try:
+                                if os.path.exists(task_file):
+                                    os.remove(task_file)
+                            except Exception:
+                                pass
+                            print(f"\n✅ [AI 内置 Agent 响应接收成功] 角色: {role} (消费响应，继续推进状态机！)")
+                            return parsed_json if json_mode else raw_content
+                except Exception:
+                    pass
+
+        # 4. 若无外部 Worker 响应，在 MOCK 模式或配置 fallback 时降级至确定性规则沙箱
         if os.environ.get("AEGIS_MOCK_MODE") == "1" or self.fallback_fn:
-            print("⚙️ [AgentBackend] 未配置外部大模型连接，使用 V3 确定性规则沙箱直接产出变体 (0 挂起, 0 阻塞)...")
+            print("⚙️ [AgentBackend] 未捕获到外部响应，使用 V3 确定性规则沙箱直接产出变体 (0 挂起, 0 阻塞)...")
             if self.fallback_fn:
                 return self.fallback_fn(role, prompt, json_mode=json_mode, context=context)
             from core.agy_client import VirtualSession
