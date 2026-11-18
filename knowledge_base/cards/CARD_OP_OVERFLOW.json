@@ -2,9 +2,9 @@
   "card_id": "CARD_OP_OVERFLOW",
   "tag": "operator_count_overflow",
   "domain": "ast_pruning",
-  "title": "算子嵌套过多元气剪枝处方",
-  "one_line": "算子嵌套过多 (>8)：剪枝无效的嵌套归一化，保留核心 因果乘积 + 时序平滑 + 截面中性化 三段式",
-  "symptom": "operator_count > 8，违反 Power Pool 合规上限，产生过拟合风险",
-  "authorized_operators": ["PRUNE_REDUNDANT_OPERATOR_TO_LE_8"],
-  "prescription_recipe": "剥离无意义的多重嵌套，还原为：group_rank(ts_decay_exp_window(因果微核, 10), subindustry)，算子数严格 <= 6。"
+  "title": "算子嵌套过多元气剪枝与奥卡姆准则",
+  "question": "当算子总数超过阶段物理上限时，如何避免虚假繁荣与过度拟合？",
+  "answer": "物理根因：多层嵌套的装饰算子并未增加真实信息增益，反而引入了多重非线性参数过拟合。治理原则：遵循奥卡姆剃刀，剥离与核心因果假设无关的多余嵌套，只保留解决核心摩擦不可或缺的数学变换，保持拓扑极简与强泛化性。",
+  "proven_solution": "遵循奥卡姆剃刀原则剪枝无效嵌套，只保留解决核心摩擦不可或缺的数学拓扑，保持公式极简与强泛化性。",
+  "theoretical_cause": "每增加一层无经济学机制支撑的包装算子，样本外夏普衰减概率成倍上升。"
 }

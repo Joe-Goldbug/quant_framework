@@ -39,11 +39,27 @@ if sys.platform == "win32":
 class ASTSymbolicVisitor(ast.NodeVisitor):
     # 动态从 Single Source of Truth (user_operators.json) 挂载全量 104 个官方授权算子
     KNOWN_OPERATORS = OperatorRegistry.get_all_operator_names()
-    def __init__(self, fields_meta: Dict[str, dict], category: str, allow_pv_cross: bool, max_operators: int = 8):
+    TIME_SERIES_OPS = {
+        "ts_delta", "ts_mean", "ts_sum", "ts_std_dev", "ts_rank", "ts_zscore",
+        "ts_decay_linear", "ts_decay_exp_window", "ts_delay", "ts_corr", "ts_min",
+        "ts_max", "ts_arg_max", "ts_arg_min", "ts_av_diff", "ts_scale", "ts_backfill",
+        "ts_returns", "ts_ir", "ts_skewness", "ts_kurtosis", "ts_quantile",
+        "ts_regression", "ts_count_nans", "ts_product", "jump_decay",
+    }
+    CALENDAR_PRESETS = {1, 2, 3, 4, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252}
+
+    # 非负域集合: 供乘法门控/除法归一/量纲一致性判断统一引用。
+    # "(0, 1]" 是 exp() 对负半轴对数域 (-inf, 0] 的还原结果 (AEGIS v3.2)，
+    # 若此处遗漏会导致 multiply(exp(prob), signal) 被误报为「无界字段裸乘」。
+    NON_NEG_DOMAINS = ("[0, 1]", "(0, 1]", "[0, inf)", "constant")
+    NON_NEG_BOUNDED = ("[0, 1]", "(0, 1]")
+
+    def __init__(self, fields_meta: Dict[str, dict], category: str, allow_pv_cross: bool, max_operators: int = 8, hypothesis: Optional[dict] = None):
         self.fields_meta = fields_meta
         self.category = category.lower()
         self.allow_pv_cross = allow_pv_cross
         self.max_operators = max_operators
+        self.hypothesis = hypothesis or {}
         
         self.issues: List[str] = []
         self.operator_count = 0
@@ -52,22 +68,25 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         self.group_vars: Set[str] = set()
         self.called_operators: Set[str] = set()
 
+        self.allowed_windows = set(self.CALENDAR_PRESETS)
+        if isinstance(self.hypothesis, dict):
+            hm = self.hypothesis.get("horizon_model") or {}
+            for kw in ("short_window", "long_window", "window"):
+                w = hm.get(kw)
+                if isinstance(w, int) and w > 0:
+                    self.allowed_windows.add(w)
+                    self.allowed_windows.add(2 * w)
+
         self.EXTERNAL_PV_FIELDS = {
             "close", "open", "high", "low", "vwap", "volume", "cap", "adv20",
             "returns", "sharesout", "split", "dividend"
         }
-        # 1. 采纳 GM 铁律：物理封杀容易造成量纲混乱与过拟合的 add(+) 和 multiply(*)
-        self.FORBIDDEN_OPERATORS = {"add", "multiply"}
+        # 1. V2: 加乘不再一刀切封杀；量纲与机制合法性交给 HypothesisSpec 语义审计
+        self.FORBIDDEN_OPERATORS = set()
 
-        # 2. 经济学自然日历周期白名单：5(周), 10(双周), 20/21/22(月), 60/63(季), 120/126(半年), 250/252(年)
-        # 以及向后兼容的 0, 1, 2, 3, 4 (用于 ts_delay(x, 1), rettype=0/2, driver/std 整数位等)
-        self.VALID_CALENDAR_INTS = {0, 1, 2, 3, 4, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252}
-
-        # 3. 标准小数参数白名单 (彻底封杀 0.13, 0.37, 1.42 等网格过拟合小数)
-        self.VALID_CANONICAL_FLOATS = {
-            -1.0, 0.0, 0.01, 0.05, 0.08, 0.1, 0.12, 0.15, 0.2, 0.25, 
-            0.5, 0.7, 0.75, 0.8, 0.9, 0.95, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0
-        }
+        # 2. V2: 窗口由字段更新频率与 horizon_model 决定；这里只做物理安全边界
+        self.MAX_WINDOW_DAYS = 252
+        self.MAX_ABS_FLOAT_PARAM = 10.0
 
         self.VALID_GROUPS = {"market", "sector", "industry", "subindustry", "country", "region"}
         self.VECTOR_WRAPPERS = {
@@ -77,29 +96,44 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         }
 
     def _get_field_info(self, field_name: str) -> dict:
+        """
+        字段物理画像解析 (AEGIS v3.2 修正):
+        1. 真实画像优先: 只要 domain 显式存在且不是 None/UNKNOWN/unbounded 占位，一律信任实测值，
+           禁止任何字段名启发式覆盖（如 dl_riskfree_returns 的 42 个 "(-inf, 0]" 对数概率字段）;
+        2. 仅在 domain 缺失或为 unbounded 占位时，才执行保守语义回退;
+        3. 剔除旧版 "名字含 probability => [0, 1] 稀疏" 的模板化误判:
+           prob_rank_bin / log-softmax 类字段真实值域是 (-inf, 0] 或 unbounded。
+        """
         meta = self.fields_meta.get(field_name, {}) if isinstance(self.fields_meta, dict) else {}
-        if meta.get("domain") and meta.get("domain") != "unbounded":
-            return meta
+        raw_dom = meta.get("domain")
+        f_type = meta.get("type") or ("VECTOR" if ("vector" in field_name.lower() or field_name.lower().startswith("vec_")) else "MATRIX")
+        is_sparse = bool(meta.get("is_sparse", meta.get("sparse_zero", False)))
 
-        # 真实定义域启发式纠偏 (AEGIS v3.1 修正)
+        if raw_dom is not None and str(raw_dom).strip().lower() not in ("", "none", "unknown", "unbounded"):
+            # 真实画像优先: 保留原始字符串（如 "[0, 1] integer ordinal"），由调用方按语义处理
+            return {"type": f_type, "domain": str(raw_dom), "is_sparse": is_sparse}
+
         name_lower = field_name.lower()
-        f_type = meta.get("type") or ("VECTOR" if ("vector" in name_lower or name_lower.startswith("vec_")) else "MATRIX")
-        info = {"type": f_type, "domain": meta.get("domain", "unbounded"), "is_sparse": meta.get("is_sparse", False)}
+        dom = str(raw_dom) if raw_dom else "unbounded"
 
-        # 1. 深度学习收益回归预测 (prob_rank_bin1_* 等) 为无界实数
-        if "prob_rank_bin" in name_lower or "return_model" in name_lower or "growth" in name_lower:
-            info["domain"] = "unbounded"
-            info["is_sparse"] = False
-        # 2. news / sentiment 真实画像：mean_sentiment_score_transfer, max_primary_sentiment 真实值域为 [0, 1] 且稀疏！
-        elif any(w in name_lower for w in ["sentiment_score", "primary_sentiment", "sentiment_transfer", "relevance", "prob_", "_prob", "probability"]):
-            info["domain"] = "[0, 1]"
-            info["is_sparse"] = True
-        # 3. 对称得分与相关系数
+        # 1. 对数概率 / 对数似然预测 (log-softmax 输出) 位于负半轴
+        if "probability_label" in name_lower or "log_prob" in name_lower or "logprob" in name_lower:
+            dom = "(-inf, 0]"
+            is_sparse = False
+        # 2. 深度学习收益回归预测 (prob_rank_bin1_* 等) 为无界实数 (优先于 probability 子串)
+        elif "prob_rank_bin" in name_lower or "return_model" in name_lower or "growth" in name_lower:
+            dom = "unbounded"
+            is_sparse = False
+        # 3. news / sentiment 真实画像：值域 [0, 1] 且稀疏
+        elif any(w in name_lower for w in ["sentiment_score", "primary_sentiment", "sentiment_transfer", "relevance"]):
+            dom = "[0, 1]"
+            is_sparse = True
+        # 4. 对称得分与相关系数
         elif any(w in name_lower for w in ["sent_score", "sentiment", "zscore", "ts_corr", "correlation", "divergence", "spread_score"]):
-            info["domain"] = "[-1, 1]"
-            info["is_sparse"] = False
+            dom = "[-1, 1]"
+            is_sparse = False
 
-        return info
+        return {"type": f_type, "domain": dom, "is_sparse": is_sparse}
 
     def _is_dataset_field(self, var_name: str) -> bool:
         if (var_name in self.VALID_GROUPS or 
@@ -122,32 +156,152 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
                 fields.append(n.id)
         return fields
 
+    def _check_unbounded_addition_subtraction(self, left_node: ast.AST, right_node: ast.AST, op_name: str):
+        """
+        跨角色无界加减拦截：
+        当两支均为 unbounded 且涉及不同底层字段时，强制要求其 semantic_role 匹配；
+        若角色不同且 hypothesis 未声明 EXPECTATION_SURPRISE 或 RESIDUAL_EXTRACTION，报错拦截。
+        """
+        f1_list = self._extract_subtree_fields(left_node)
+        f2_list = self._extract_subtree_fields(right_node)
+        s1 = set(f for f in f1_list if self._is_dataset_field(f))
+        s2 = set(f for f in f2_list if self._is_dataset_field(f))
+        if s1 and s2 and s1 != s2:
+            def _get_role(fname: str) -> Optional[str]:
+                if isinstance(self.hypothesis, dict):
+                    roles_list = self.hypothesis.get("field_roles", [])
+                    if isinstance(roles_list, list):
+                        for fr in roles_list:
+                            if isinstance(fr, dict) and fr.get("field_id") == fname:
+                                return fr.get("role")
+                meta = self.fields_meta.get(fname, {}) if isinstance(self.fields_meta, dict) else {}
+                return meta.get("semantic_role")
+
+            roles1 = set(_get_role(f) for f in s1) - {None}
+            roles2 = set(_get_role(f) for f in s2) - {None}
+
+            if roles1 and roles2 and roles1 != roles2:
+                intents = set()
+                if isinstance(self.hypothesis, dict):
+                    intents = set(self.hypothesis.get("mechanism_intents") or [])
+                    itype = self.hypothesis.get("interaction_type")
+                    if itype:
+                        intents.add(itype)
+                allowed_intents = {"EXPECTATION_SURPRISE", "RESIDUAL_EXTRACTION"}
+                if not (intents & allowed_intents):
+                    self.issues.append(
+                        f"【跨角色无界加减违规】{op_name} 左右两支涉及不同语义角色的无界字段 ({s1} 角色为 {roles1} vs {s2} 角色为 {roles2})！"
+                        f"严禁跨角色无界特征直接加减。若存在预期差或残差逻辑，必须在假说 mechanism_intents 中声明 EXPECTATION_SURPRISE 或 RESIDUAL_EXTRACTION。"
+                    )
+
+    def _is_non_neg_gate(self, node: ast.AST) -> bool:
+        """检查节点是否为合法非负门控/权重 (常数、[0, 1]/(0, 1] 或 [0, inf))"""
+        if isinstance(node, (ast.Constant, ast.Num)):
+            val = node.value if isinstance(node, ast.Constant) else node.n
+            return isinstance(val, (int, float)) and not isinstance(val, bool) and val >= 0
+        d_info = self._infer_node_domain(node)
+        return d_info.get("domain") in self.NON_NEG_DOMAINS
+
     def _infer_node_domain(self, node: ast.AST) -> dict:
-        """递归推导 AST 节点的数值定义域与稀疏性"""
+        """递归推导 AST 节点的数值定义域与稀疏性 (覆盖全量 104 官方算子)"""
         if isinstance(node, ast.Name):
             return self._get_field_info(node.id)
-        elif isinstance(node, ast.Constant):
-            return {"type": "CONSTANT", "domain": "constant", "value": node.value, "is_sparse": False}
+        elif isinstance(node, (ast.Constant, ast.Num)):
+            val = node.value if isinstance(node, ast.Constant) else node.n
+            return {"type": "CONSTANT", "domain": "constant", "value": val, "is_sparse": False}
         elif isinstance(node, ast.Call):
             func_name = getattr(node.func, "id", "")
-            # 保留原定义域的平滑或截面算子
-            if func_name in ("winsorize", "ts_decay_linear", "ts_decay_exp_window", "ts_mean", "ts_sum", "ts_min", "ts_max", "group_rank", "rank"):
+            # 1. 排名、分位数、分桶与概率算子归一化至 [0, 1]
+            if func_name in (
+                "group_rank", "rank", "quantile", "ts_quantile", "ts_rank", "group_quantile",
+                "rank_by_side", "sigmoid", "bucket", "right_tail", "left_tail", "fraction",
+                "vec_percentage", "reduce_percentage", "kth_element", "percentile", "ts_percentage",
+                "less", "greater", "equal", "not_equal", "less_equal", "greater_equal", "and", "or", "not", "is_nan"
+            ):
+                return {"type": "MATRIX", "domain": "[0, 1]", "is_sparse": False}
+
+            # 2a. exp 指数还原: 负半轴对数域 (-inf, 0] -> (0, 1] 概率空间 (AEGIS v3.2)
+            elif func_name == "exp":
+                if node.args:
+                    inner_dom = self._infer_node_domain(node.args[0]).get("domain", "unbounded")
+                    if inner_dom == "(-inf, 0]":
+                        return {"type": "MATRIX", "domain": "(0, 1]", "is_sparse": False}
+                return {"type": "MATRIX", "domain": "[0, inf)", "is_sparse": False}
+
+            # 2b. 保号压缩算子: s_log_1p 定义域为全体实数 (sign(x)*log(1+|x|))，值域继承输入符号
+            elif func_name == "s_log_1p":
                 if node.args:
                     return self._infer_node_domain(node.args[0])
+                return {"type": "MATRIX", "domain": "unbounded", "is_sparse": False}
+
+            # 2. 绝对值与非负离散度算子归入非负 [0, inf)
+            elif func_name in (
+                "abs", "sqrt", "ts_std_dev", "ts_variance", "ts_count_nans",
+                "days_from_last_change", "vec_std", "vec_stddev", "vec_range", "vec_count", "vec_norm",
+                "reduce_range", "reduce_norm", "reduce_powersum", "jump_decay", "hump", "ts_entropy"
+            ):
+                return {"type": "MATRIX", "domain": "[0, inf)", "is_sparse": False}
+
+            # 3. 标准化、相关性与去相关算子归入 [-1, 1]
+            elif func_name in (
+                "group_zscore", "ts_zscore", "zscore", "scale", "group_scale", "group_neutralize",
+                "group_normalize", "normalize", "ts_corr", "ts_partial_corr", "ts_co_skewness",
+                "ts_co_kurtosis", "ts_ir", "reduce_ir", "regression_neut", "vector_neut", "sign"
+            ):
+                return {"type": "MATRIX", "domain": "[-1, 1]", "is_sparse": False}
+
+            # 4. 状态保持与条件门控算子继承目标信号定义域
+            elif func_name in ("trade_when", "if_else", "filter"):
+                if len(node.args) >= 2:
+                    return self._infer_node_domain(node.args[1])
+
+            # 5. 保留原定义域的时序平滑、极值与修剪算子
+            elif func_name in (
+                "winsorize", "truncate", "ts_decay_linear", "ts_decay_exp_window", "ts_mean", "ts_sum",
+                "ts_min", "ts_max", "ts_median", "ts_delay", "ts_backfill", "group_mean", "group_median",
+                "group_backfill", "reduce_avg", "reduce_sum", "reduce_min", "reduce_max"
+            ):
+                if node.args:
+                    return self._infer_node_domain(node.args[0])
+
+            # max 带有非负常数时为非负 [0, inf)
+            elif func_name in ("max", "ts_max"):
+                if len(node.args) >= 2:
+                    for a in node.args:
+                        if isinstance(a, (ast.Constant, ast.Num)):
+                            val = a.value if isinstance(a, ast.Constant) else a.n
+                            if isinstance(val, (int, float)) and val >= 0:
+                                return {"type": "MATRIX", "domain": "[0, inf)", "is_sparse": False}
+                if node.args:
+                    return self._infer_node_domain(node.args[0])
+
             # 偶数次方运算转为非负 [0, inf)
             elif func_name == "power":
-                if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant):
-                    val = node.args[1].value
+                if len(node.args) >= 2 and isinstance(node.args[1], (ast.Constant, ast.Num)):
+                    val = node.args[1].value if isinstance(node.args[1], ast.Constant) else node.args[1].n
                     if isinstance(val, (int, float)) and val % 2 == 0:
                         return {"type": "MATRIX", "domain": "[0, inf)", "is_sparse": False}
                 if node.args:
                     return self._infer_node_domain(node.args[0])
+
+            # 除法: 正数常数分母保留分子定义域; 非负/非负相除仍为非负; 其余为无界
+            elif func_name == "divide":
+                if len(node.args) >= 2:
+                    num = self._infer_node_domain(node.args[0])
+                    den_node = node.args[1]
+                    if isinstance(den_node, ast.Constant) and isinstance(den_node.value, (int, float)) \
+                            and not isinstance(den_node.value, bool) and den_node.value > 0:
+                        return num
+                    d_num = num.get("domain", "unbounded")
+                    d_den = self._infer_node_domain(den_node).get("domain", "unbounded")
+                    if d_num in ("[0, inf)", "[0, 1]", "(0, 1]") and d_den in ("[0, inf)", "[0, 1]", "(0, 1]"):
+                        return {"type": "MATRIX", "domain": "[0, inf)", "is_sparse": False}
+                return {"type": "MATRIX", "domain": "unbounded", "is_sparse": False}
+
             # 差分与减法转为无界
             elif func_name in ("ts_delta", "subtract"):
                 return {"type": "MATRIX", "domain": "unbounded", "is_sparse": False}
-            # 标准化算子转为 [-1, 1] 或对齐
-            elif func_name in ("group_zscore", "ts_zscore"):
-                return {"type": "MATRIX", "domain": "[-1, 1]", "is_sparse": False}
+
             # VECTOR 降维包裹算子继承底层字段 domain
             elif func_name in self.VECTOR_WRAPPERS or func_name.startswith("vec_"):
                 if node.args:
@@ -170,18 +324,81 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         if not func_name.startswith("vec_"):
             self.operator_count += 1
 
-        # 1. 双 [-1, 1] 字段乘积伪因果拦截 (支持递归子树嵌套检查，如 winsorize 嵌套)
-        if func_name == "multiply" and len(node.args) >= 2:
+        # 0.1 数学定义域硬拦截: log/sqrt 对「保证为负」的子树会产生连片 NaN (AEGIS v3.2)
+        # 只拦截推导域为 "(-inf, 0]" 的情形——这是唯一「保证为负」的域。
+        # unbounded / [-1, 1] 只是「可能为负」: log(cap) / sqrt(ts_corr) 等教科书级合法压缩大量存在，
+        # 若一并拦截会造成全数据集假阳性（fundamental23 的 1748 个 domain=None 字段全部回退 unbounded）。
+        # 另: s_log_1p 定义域为全体实数 (sign(x)*log(1+|x|))，绝不可列入负数禁令。
+        if func_name in ("log", "sqrt") and node.args:
+            arg_dom = self._infer_node_domain(node.args[0]).get("domain", "unbounded")
+            if arg_dom == "(-inf, 0]":
+                sub_f = self._extract_subtree_fields(node.args[0])
+                self.issues.append(
+                    f"【数学定义域违规】算子 '{func_name}' 要求输入严格为正，但内层子树 (涉及字段 {sub_f}) "
+                    f"推导值域为 '{arg_dom}' (对数概率/对数似然负半轴)，会产生连片 NaN！"
+                    f"请先用 exp() 还原至 (0, 1] 概率空间，或改用保号的 s_log_1p。"
+                )
+
+        # 0. 时序算子窗口参数合法性检查
+        if func_name in self.TIME_SERIES_OPS or func_name.startswith("ts_"):
+            for arg in node.args[1:]:
+                val = None
+                if isinstance(arg, ast.Constant):
+                    val = arg.value
+                elif isinstance(arg, ast.Num):
+                    val = arg.n
+                elif isinstance(arg, ast.UnaryOp) and isinstance(arg.op, ast.USub):
+                    if isinstance(arg.operand, ast.Constant) and isinstance(arg.operand.value, (int, float)):
+                        val = -arg.operand.value
+                    elif isinstance(arg.operand, ast.Num):
+                        val = -arg.operand.n
+                if isinstance(val, (int, float)) and not isinstance(val, bool):
+                    if val <= 0:
+                        self.issues.append(
+                            f"【非法窗口拦截】时序算子 '{func_name}' 的窗口参数 {val} 必须为合法正整数 (> 0)！"
+                        )
+                    elif val > 252:
+                        self.issues.append(
+                            f"【超长窗口拦截】时序算子 '{func_name}' 的窗口参数 {val} 超过平台上限 252 日！"
+                        )
+
+        # 1. 乘法门控与伪因果检查
+        if func_name in ("multiply", "mul") and len(node.args) >= 2:
             arg1, arg2 = node.args[0], node.args[1]
             info1 = self._infer_node_domain(arg1)
             info2 = self._infer_node_domain(arg2)
-            if info1.get("domain") == "[-1, 1]" and info2.get("domain") == "[-1, 1]":
+            d1 = info1.get("domain", "unbounded")
+            d2 = info2.get("domain", "unbounded")
+            
+            if d1 == "[-1, 1]" and d2 == "[-1, 1]":
                 f1 = self._extract_subtree_fields(arg1)
                 f2 = self._extract_subtree_fields(arg2)
                 self.issues.append(
                     f"【伪因果负负得正违规】检测到双 [-1, 1] 字段乘积 (左支: {f1}, 右支: {f2})！"
-                    f"当两项同时处于极度负面时，乘积为正导致生成买入信号，存在严重伪因果！请对其中一项做正向平移 (如 add(x, 1.0)) 或使用条件门控。"
+                    f"当两项同时处于极度负面时，乘积为正导致生成买入信号，存在严重伪因果！请对其中一项做正向平移使值域非负，或使用非负条件门控滤波。"
                 )
+            else:
+                g1 = self._is_non_neg_gate(arg1)
+                g2 = self._is_non_neg_gate(arg2)
+                if not (g1 or g2):
+                    self.issues.append(
+                        "【无界字段裸乘拦截】检测到两个无界实数字段直接裸乘 multiply(f1, f2)，严禁双 unbounded 裸乘导致方差爆炸！乘法必须作为非负门控滤波使用。"
+                    )
+
+        # 1.1 加法与减法量纲一致性检查
+        if func_name in ("add", "subtract") and len(node.args) >= 2:
+            arg1, arg2 = node.args[0], node.args[1]
+            is_const_1 = isinstance(arg1, (ast.Constant, ast.Num))
+            is_const_2 = isinstance(arg2, (ast.Constant, ast.Num))
+            if not (is_const_1 or is_const_2):
+                d1 = self._infer_node_domain(arg1).get("domain", "unbounded")
+                d2 = self._infer_node_domain(arg2).get("domain", "unbounded")
+                if (d1 in self.NON_NEG_BOUNDED and d2 == "unbounded") or (d2 in self.NON_NEG_BOUNDED and d1 == "unbounded"):
+                    self.issues.append(
+                        f"【量纲不一致拦截】{func_name} 左右两支存在 [0, 1] 分位数与无界原始特征混算，严禁直接相加减！请先统一量纲或通过除法归一。"
+                    )
+                elif d1 == "unbounded" and d2 == "unbounded":
+                    self._check_unbounded_addition_subtraction(arg1, arg2, func_name)
 
         # 2. 黑名单算子检查
         if func_name in self.FORBIDDEN_OPERATORS:
@@ -229,7 +446,7 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
                     sub_fields = self._extract_subtree_fields(target_node)
                     self.issues.append(
                         f"【零值偏移违规】稀疏 [0, 1] 字段子树 '{sub_fields}' 严禁直接 subtract 0.5！"
-                        f"这会导致海量无事件 0 值被偏移为 -0.5 伪空头信号，引发严重多空持仓失衡！请改用 trade_when 或 ts_zscore 自归一。"
+                        f"这会导致海量无事件 0 值被偏移为伪空头信号，引发严重多空持仓失衡！请结合数据时序更新特性设计状态保持或时序平滑机制。"
                     )
 
         # 6. VECTOR 算子包裹性检查
@@ -264,46 +481,56 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_BinOp(self, node: ast.BinOp):
-        """拦截表达式中直接写的 + 或 * 符号"""
-        if isinstance(node.op, (ast.Add, ast.Mult)):
-            op_sym = "+" if isinstance(node.op, ast.Add) else "*"
-            self.issues.append(
-                f"【GM 铁律拦截】严禁使用 '{op_sym}' (add/multiply) 运算符！"
-                "多特征交互请改用同量纲 subtract、规模归一 divide、正交残差 ts_regression 或条件门控 trade_when/if_else。"
-            )
+        """V2: 加乘执行量纲与门控校验。"""
+        self.operator_count += 1
+        if isinstance(node.op, ast.Mult):
+            d1 = self._infer_node_domain(node.left).get("domain", "unbounded")
+            d2 = self._infer_node_domain(node.right).get("domain", "unbounded")
+            is_const_1 = isinstance(node.left, (ast.Constant, ast.Num))
+            is_const_2 = isinstance(node.right, (ast.Constant, ast.Num))
+            g1 = is_const_1 or (d1 in self.NON_NEG_DOMAINS)
+            g2 = is_const_2 or (d2 in self.NON_NEG_DOMAINS)
+            if not (g1 or g2):
+                self.issues.append("【无界字段裸乘拦截】检测到两个无界实数字段直接裸乘 A * B，严禁双 unbounded 裸乘导致方差爆炸！乘法必须作为非负门控滤波使用。")
+        elif isinstance(node.op, (ast.Add, ast.Sub)):
+            is_const_1 = isinstance(node.left, (ast.Constant, ast.Num))
+            is_const_2 = isinstance(node.right, (ast.Constant, ast.Num))
+            if not (is_const_1 or is_const_2):
+                d1 = self._infer_node_domain(node.left).get("domain", "unbounded")
+                d2 = self._infer_node_domain(node.right).get("domain", "unbounded")
+                if d1 != d2 and "constant" not in (d1, d2):
+                    self.issues.append(f"【量纲不一致拦截】二元运算符左右两支推断定义域不一致 ({d1} vs {d2})，严禁将不同量纲/值域字段直接加减！")
+                elif d1 == "unbounded" and d2 == "unbounded":
+                    op_sym = "+" if isinstance(node.op, ast.Add) else "-"
+                    self._check_unbounded_addition_subtraction(node.left, node.right, op_sym)
         self.generic_visit(node)
 
     def visit_Constant(self, node: ast.Constant):
-        """拦截无经济学意义的窗口天数 (如 4, 44) 与乱凑的小数参数"""
+        """V2: 不再使用固定日历/小数白名单；只做物理安全边界检查。"""
         val = node.value
         if isinstance(val, bool) or val is None or isinstance(val, str):
             return
         if isinstance(val, int):
-            if abs(val) not in self.VALID_CALENDAR_INTS:
+            if abs(val) > self.MAX_WINDOW_DAYS:
                 self.issues.append(
-                    f"【GM 日历周期铁律拦截】检测到无经济学意义的整数参数 '{val}'！"
-                    f"时序窗口必须严格锚定自然日历周期: 5(周), 10(双周), 20/21(月), 63(季), 126(半年), 252(年)。"
+                    f"【窗口物理边界拦截】整数参数 '{val}' 超过 {self.MAX_WINDOW_DAYS} 天安全上限。"
                 )
         elif isinstance(val, float):
-            if round(val, 4) not in self.VALID_CANONICAL_FLOATS:
+            if abs(val) > self.MAX_ABS_FLOAT_PARAM:
                 self.issues.append(
-                    f"【GM 反调参过拟合拦截】检测到非标准小数参数 '{val}'！"
-                    f"浮点数仅允许使用标准分位或幂次常数: {sorted(list(self.VALID_CANONICAL_FLOATS))}。"
+                    f"【参数物理边界拦截】浮点参数 '{val}' 超过 {self.MAX_ABS_FLOAT_PARAM} 安全上限。"
                 )
         self.generic_visit(node)
 
     def visit_Num(self, node: ast.Num):
+        """兼容旧 Python AST 的数值节点; V2 只做边界检查。"""
         val = node.n
         if isinstance(val, int):
-            if abs(val) not in self.VALID_CALENDAR_INTS:
-                self.issues.append(
-                    f"【GM 日历周期铁律拦截】检测到无经济学意义的整数参数 '{val}'！"
-                )
+            if abs(val) > self.MAX_WINDOW_DAYS:
+                self.issues.append(f"【窗口物理边界拦截】整数参数 '{val}' 超过 {self.MAX_WINDOW_DAYS} 天安全上限。")
         elif isinstance(val, float):
-            if round(val, 4) not in self.VALID_CANONICAL_FLOATS:
-                self.issues.append(
-                    f"【GM 反调参过拟合拦截】检测到非标准小数参数 '{val}'！"
-                )
+            if abs(val) > self.MAX_ABS_FLOAT_PARAM:
+                self.issues.append(f"【参数物理边界拦截】浮点参数 '{val}' 超过 {self.MAX_ABS_FLOAT_PARAM} 安全上限。")
         self.generic_visit(node)
 
 
@@ -315,6 +542,7 @@ class DimensionAuditor:
     # 彻底解禁 group_neutralize，将其置空，完全放行合规截面中性化
     FORBIDDEN_OPERATORS = set()
     VALID_GROUPS = {"market", "sector", "industry", "subindustry", "country", "region"}
+    # 兼容旧测试/调用方的自然日历先验集合；V2 不再用它做硬拦截
     VALID_CALENDAR_INTS = {0, 1, 2, 3, 4, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252}
     KB_FIELDS_DIR = os.path.join(os.path.dirname(__file__), "..", "knowledge_base", "fields")
     _FIELD_CACHE: Dict[str, Optional[dict]] = {}
@@ -363,7 +591,8 @@ class DimensionAuditor:
         step: int = 1,
         allowed_operators: Optional[Set[str]] = None,
         stage0_op_count: int = 0,
-        required_fields: Optional[List[str]] = None
+        required_fields: Optional[List[str]] = None,
+        hypothesis: Optional[dict] = None
     ) -> dict:
         """
         基于 Python AST 抽象语法树的确定性符号与量纲推导编译器 (AEGIS v3.1 Hardness 终极加固版)
@@ -391,7 +620,10 @@ class DimensionAuditor:
                     if "prob_rank_bin" in name_lower or "return_model" in name_lower or "growth" in name_lower:
                         dom = "unbounded"
                         sp = False
-                    elif any(w in name_lower for w in ["sentiment_score", "primary_sentiment", "sentiment_transfer", "relevance", "prob_", "_prob", "probability"]):
+                    elif "probability_label" in name_lower or "log_prob" in name_lower or "logprob" in name_lower:
+                        dom = "(-inf, 0]"
+                        sp = False
+                    elif any(w in name_lower for w in ["sentiment_score", "primary_sentiment", "sentiment_transfer", "relevance"]):
                         dom = "[0, 1]"
                         sp = True
                     elif any(w in name_lower for w in ["sent_score", "sentiment", "zscore", "corr", "correlation"]):
@@ -418,7 +650,8 @@ class DimensionAuditor:
             fields_meta=fields_meta,
             category=category,
             allow_pv_cross=allow_pv_cross,
-            max_operators=max_operators
+            max_operators=max_operators,
+            hypothesis=hypothesis
         )
         visitor.visit(tree)
 

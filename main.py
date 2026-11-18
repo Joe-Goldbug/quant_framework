@@ -42,15 +42,21 @@ try:
     from quant_framework.core.agy_client import GeminiClient, VirtualSession
     from quant_framework.core.func_call_corrector import ASTSandboxCorrector
     from quant_framework.core.dimension_rules import DimensionAuditor
+    from quant_framework.core.dgp_schema import HypothesisSpec
     from quant_framework.core.gatekeeper import Gatekeeper
+    from quant_framework.core.production_gate import ProductionGate
     from quant_framework.core.rag_memory import RAGMemoryEngine
+    from quant_framework.core.operator_registry import OperatorRegistry
     from quant_framework.core.sim_runner import SimBatchRunner, get_brain_module
 except (ModuleNotFoundError, ImportError):
     from core.agy_client import GeminiClient, VirtualSession
     from core.func_call_corrector import ASTSandboxCorrector
     from core.dimension_rules import DimensionAuditor
+    from core.dgp_schema import HypothesisSpec
     from core.gatekeeper import Gatekeeper
+    from core.production_gate import ProductionGate
     from core.rag_memory import RAGMemoryEngine
+    from core.operator_registry import OperatorRegistry
     from core.sim_runner import SimBatchRunner, get_brain_module
 
 try:
@@ -154,6 +160,8 @@ class AegisPipelineController:
         self.good_alphas: List[dict] = []
         self.history_save: List[dict] = []
         self.failed_hypotheses_digest: List[str] = []
+        self.seed_trial_counts: Dict[str, int] = {}
+        self.total_trial_count: int = 0
         if os.path.exists(self.memory_file):
             try:
                 with open(self.memory_file, "r", encoding="utf-8") as mf:
@@ -161,6 +169,8 @@ class AegisPipelineController:
                     self.good_alphas = mem.get("good_alphas", [])
                     self.history_save = mem.get("history_save", [])
                     self.failed_hypotheses_digest = mem.get("failed_hypotheses_digest", [])
+                    self.seed_trial_counts = mem.get("seed_trial_counts", {})
+                    self.total_trial_count = mem.get("total_trial_count", 0)
             except Exception:
                 pass
 
@@ -171,7 +181,9 @@ class AegisPipelineController:
                 json.dump({
                     "good_alphas": self.good_alphas,
                     "history_save": self.history_save,
-                    "failed_hypotheses_digest": getattr(self, "failed_hypotheses_digest", [])[-15:]
+                    "failed_hypotheses_digest": getattr(self, "failed_hypotheses_digest", [])[-15:],
+                    "seed_trial_counts": getattr(self, "seed_trial_counts", {}),
+                    "total_trial_count": getattr(self, "total_trial_count", 0),
                 }, mf, ensure_ascii=False, indent=2)
         except Exception:
             pass
@@ -235,6 +247,107 @@ class AegisPipelineController:
         except Exception:
             return ["UNKNOWN"]
 
+    def synthesize_stage0_hypotheses(self, count: int = 10) -> List[dict]:
+        """
+        阶段 0.1: 纯物理机制因果假说生成 (Stage 0.1: HypothesisSpec Prior Reservoir)
+        严格遵循：假说在 AST 表达式生成之前先行构建与静态技术审查。
+        """
+        fields_dict = self.load_dataset_fields()
+        normalized_fields_dict = {fn: HypothesisSpec.normalize_field_profile(fn, meta) for fn, meta in fields_dict.items()}
+        all_field_names = list(fields_dict.keys())
+        valid_fields = []
+        for f in all_field_names:
+            meta = HypothesisSpec.normalize_field_profile(f, fields_dict.get(f, {}))
+            coverage = meta.get("coverage")
+            evidence_ok = meta.get("evidence_status") in {"MEASURED", "DECLARED", "INFERRED"}
+            if evidence_ok and coverage is not None and float(coverage) >= 0.20:
+                valid_fields.append(f)
+        if not valid_fields:
+            if getattr(self.client, "mock_only", False) or getattr(self, "mock_only", False) or os.environ.get("AEGIS_MOCK_MODE") == "1":
+                valid_fields = all_field_names
+            else:
+                raise FileNotFoundError(f"❌ 字段池缺少有效证据且 coverage >= 0.20 的可用字段: {self.region}/{self.dataset_id}！系统禁止用 UNKNOWN 字段生成生产候选。")
+
+        rng = random.Random(f"{self.region}_{self.dataset_id}")
+        sampled_names = rng.sample(valid_fields, min(100, len(valid_fields))) if len(valid_fields) > 100 else valid_fields
+
+        # 组装结构化特征卡片 (提取全部探针元数据画像，拒绝黑盒截断)
+        fields_meta_list = []
+        for fn in sampled_names:
+            meta = fields_dict.get(fn, {})
+            normalized_meta = HypothesisSpec.normalize_field_profile(fn, meta)
+            fields_meta_list.append({
+                "name": fn,
+                "type": normalized_meta.get("type", "MATRIX"),
+                "description": normalized_meta.get("description", "无描述"),
+                "coverage": normalized_meta.get("coverage"),
+                "alpha_count": normalized_meta.get("alpha_count", normalized_meta.get("alphaCount", 0)),
+                "user_count": normalized_meta.get("user_count", normalized_meta.get("userCount", 0)),
+                "domain": normalized_meta.get("domain"),
+                "is_sparse": normalized_meta.get("is_sparse"),
+                "update_frequency": normalized_meta.get("update_frequency"),
+                "semantic_role": normalized_meta.get("semantic_role"),
+                "skewness": normalized_meta.get("skewness"),
+                "evidence_status": normalized_meta.get("evidence_status", "UNKNOWN"),
+                "physical_signature": HypothesisSpec.physical_field_signature(normalized_meta),
+            })
+
+        profiler = FieldCrowdingProfiler(fields_dict)
+        fields_meta_list = profiler.annotate_cards(fields_meta_list)
+        pairing_candidates = profiler.candidate_pairs(limit=8)
+
+        session = self.client.create_session(role="aegis-seed-synthesizer", model=self.model)
+        op_manual = OperatorRegistry.format_pyramid_level1_markdown()
+        prompt = (
+            f"你是一位顶级的 WorldQuant 量化研究总监与因果假说架构专家。请深入研读下方给定的数据集字段物理画像与官方算子库，构建 {count} 个纯因果假说规格 (HypothesisSpec)，此时切勿生成任何 FastExpr 公式。\n"
+            f"目标配置: 区域 {self.region} | 股票池 {self.universe} | 预测延迟 Delay {self.delay} | 类别 {self.category} | 数据集 {self.dataset_id}\n\n"
+            f"【假说规格核心准则 (DGP 物理机制驱动)】：\n"
+            f"1. 严格锁定单数据集：所有字段必须 100% 来自下方给定的物理画像字段清单，严禁跨数据集混用外部量价 (PV) 字段；\n"
+            f"2. 字段角色定义：每个假说选用 1~3 个字段，在 field_roles 中明确声明每个字段的 role (Signal_Flow / Dimension_Anchor / Uncertainty_Scale / Catalyst_Event) 与 expected_transform；\n"
+            f"3. 机制意图：interaction_type 表达核心因果机制，可参考常见机制意图 (如 SCALE_NORMALIZATION / EXPECTATION_SURPRISE / EVENT_GATE / TEMPORAL_DECAY / CROSS_SECTIONAL_RELATIVE / DISPERSION / REGIME_SPREAD / RESIDUAL_EXTRACTION / TAIL_ASYMMETRY / VECTOR_HIGHER_MOMENT 等)，亦可基于 DGP 业务机理自主定义；\n"
+            f"4. 完整因果链：必须明确阐明 counterparty (错误定价对手盘)、causal_chain (微观传导链)、horizon_model (期限模型)、normalization_rationale (去噪理由) 与 falsification_tests (证伪条件)。\n\n"
+            f"【算子签名表 (语法字典，供「变换需求 → 实现」映射；不得作为选配清单反向挑场景)】:\n{op_manual}\n\n"
+            f"【候选字段全量物理画像清单】:\n{json.dumps(fields_meta_list, ensure_ascii=False, indent=1)}\n\n"
+            f"【推荐冷热非对称配对清单】:\n{json.dumps(pairing_candidates, ensure_ascii=False, indent=1)}\n\n"
+            f"【输出格式契约】必须返回严格的 JSON 对象：\n"
+            f"{{\n"
+            f'  "hypotheses": [\n'
+            f"    {{\n"
+            f'      "hypothesis_id": "HYP_01",\n'
+            f'      "economic_cluster": "所属业务簇名称",\n'
+            f'      "field_roles": [{{"field_id": "字段名", "role": "Signal_Flow/Dimension_Anchor/Uncertainty_Scale/Catalyst_Event", "expected_transform": "期望物理变换"}}],\n'
+            f'      "counterparty": "错误定价的对手盘与认知摩擦",\n'
+            f'      "causal_chain": "底层异动 -> 参与者摩擦/交易约束 -> 价格修正方向与持续周期",\n'
+            f'      "horizon_model": {{"short_window": 5, "long_window": 63, "expected_short_sign": 1, "expected_long_sign": 1, "decay_assumption": "快衰减/慢漂移/期限反转"}},\n'
+            f'      "normalization_rationale": "为何以及如何消除规模基数或共同趋势",\n'
+            f'      "sparsity_policy": "零值/缺失代表什么，如何处理无事件样本",\n'
+            f'      "interaction_type": "SCALE_NORMALIZATION/EXPECTATION_SURPRISE/EVENT_GATE/...",\n'
+            f'      "falsification_tests": ["期限符号证伪条件", "消融证伪条件"]\n'
+            f"    }}\n"
+            f"  ]\n"
+            f"}}"
+        )
+        context = {
+            "fields": sampled_names,
+            "fields_meta": fields_meta_list,
+            "pairing_candidates": pairing_candidates,
+            "count": count,
+            "task_tag": f"stage0_hyp_{self.dataset_id}"
+        }
+        raw_res = session.send_message_sync(prompt, json_mode=True, context=context)
+        hypotheses_raw = raw_res.get("hypotheses", []) if isinstance(raw_res, dict) else (raw_res if isinstance(raw_res, list) else [])
+        normalized_fields_dict = {
+            fn: HypothesisSpec.normalize_field_profile(fn, meta)
+            for fn, meta in fields_dict.items()
+        }
+        valid_hypotheses = []
+        for h in hypotheses_raw:
+            norm_h = HypothesisSpec.normalize(h)
+            is_ok, issues = HypothesisSpec.validate(norm_h, normalized_fields_dict)
+            if is_ok:
+                valid_hypotheses.append(norm_h)
+        return valid_hypotheses
+
     def synthesize_stage0_seeds(self, count: int = 10) -> List[dict]:
         """
         阶段 0: ATOM Alpha 原生主信号原型生成 (Stage 0: ATOM Alpha Seed Reservoir)
@@ -247,6 +360,7 @@ class AegisPipelineController:
         """
         print(f"\n🌱 【Stage 0: ATOM Alpha 原生主信号原型生成 (op <= 6 | 严禁加乘)】")
         fields_dict = self.load_dataset_fields()
+        normalized_fields_dict = {fn: HypothesisSpec.normalize_field_profile(fn, meta) for fn, meta in fields_dict.items()}
         all_field_names = list(fields_dict.keys())
         if not all_field_names:
             raise FileNotFoundError(
@@ -255,7 +369,22 @@ class AegisPipelineController:
             )
 
         # 过滤有效覆盖率字段并使用确定性随机种子抽样，防止跨进程 Resume 时抽样字段漂移
-        valid_fields = [f for f in all_field_names if fields_dict.get(f, {}).get("coverage", 1.0) >= 0.20] or all_field_names
+        # V2: UNKNOWN 证据字段禁止进入生产假说链; coverage 缺失不得伪装为 1.0
+        valid_fields = []
+        for f in all_field_names:
+            meta = HypothesisSpec.normalize_field_profile(f, fields_dict.get(f, {}))
+            coverage = meta.get("coverage")
+            evidence_ok = meta.get("evidence_status") in {"MEASURED", "DECLARED", "INFERRED"}
+            if evidence_ok and coverage is not None and float(coverage) >= 0.20:
+                valid_fields.append(f)
+        if not valid_fields:
+            if getattr(self.client, "mock_only", False) or getattr(self, "mock_only", False) or os.environ.get("AEGIS_MOCK_MODE") == "1":
+                valid_fields = all_field_names
+            else:
+                raise FileNotFoundError(
+                    f"❌ 字段池缺少有效证据且 coverage >= 0.20 的可用字段: {self.region}/{self.dataset_id}！"
+                    f"请先运行字段探针或补齐真实字段画像，系统禁止用 UNKNOWN 字段生成生产候选。"
+                )
         rng = random.Random(f"{self.region}_{self.dataset_id}")
         sampled_names = rng.sample(valid_fields, min(100, len(valid_fields))) if len(valid_fields) > 100 else valid_fields
 
@@ -263,18 +392,21 @@ class AegisPipelineController:
         fields_meta_list = []
         for fn in sampled_names:
             meta = fields_dict.get(fn, {})
+            normalized_meta = HypothesisSpec.normalize_field_profile(fn, meta)
             fields_meta_list.append({
                 "name": fn,
-                "type": meta.get("type", "MATRIX"),
-                "description": meta.get("description", "无描述"),
-                "coverage": round(meta.get("coverage", 1.0), 3),
-                "alpha_count": meta.get("alpha_count", meta.get("alphaCount", 0)),
-                "user_count": meta.get("user_count", meta.get("userCount", 0)),
-                "domain": meta.get("domain", "unbounded"),
-                "is_sparse": meta.get("is_sparse", False),
-                "update_frequency": meta.get("update_frequency", "quarterly" if self.category == "fundamental" else "daily"),
-                "semantic_role": meta.get("semantic_role", "Signal_Flow"),
-                "skewness": meta.get("skewness", "medium")
+                "type": normalized_meta.get("type", "MATRIX"),
+                "description": normalized_meta.get("description", "无描述"),
+                "coverage": normalized_meta.get("coverage"),
+                "alpha_count": normalized_meta.get("alpha_count", normalized_meta.get("alphaCount", 0)),
+                "user_count": normalized_meta.get("user_count", normalized_meta.get("userCount", 0)),
+                "domain": normalized_meta.get("domain"),
+                "is_sparse": normalized_meta.get("is_sparse"),
+                "update_frequency": normalized_meta.get("update_frequency"),
+                "semantic_role": normalized_meta.get("semantic_role"),
+                "skewness": normalized_meta.get("skewness"),
+                "evidence_status": normalized_meta.get("evidence_status", "UNKNOWN"),
+                "physical_signature": HypothesisSpec.physical_field_signature(normalized_meta),
             })
 
         # ---------------- 铁律 A: 拥挤度画像 + 冷热非对称配对清单 ----------------
@@ -291,40 +423,51 @@ class AegisPipelineController:
         if not pairing_candidates:
             print("⚠️ [铁律 A 预警] 当前字段池缺少「低拥挤主锚 x 高覆盖归一锚」的可用组合，配对校验将通过率可能偏低。")
 
+        # ---------------- 两阶段假说驱动生成 (Stage 0.1 -> Stage 0.2) ----------------
+        # 严格遵循：先独立生成并核验因果假说清单，再将其注入 Phase 2 生成表达式
+        stage0_hypotheses = []
+        try:
+            stage0_hypotheses = self.synthesize_stage0_hypotheses(count=count)
+            if stage0_hypotheses:
+                print(f"🔬 [Stage 0.1] 已先验生成并通过 {len(stage0_hypotheses)} 条 HypothesisSpec 因果假说规格！")
+        except Exception as _h_err:
+            print(f"⚠️ [Stage 0.1] 独立假说规格生成异常，回退至端到端假说-公式联产模式: {_h_err}")
+
+        hypotheses_prompt_block = ""
+        if stage0_hypotheses:
+            hypotheses_prompt_block = (
+                f"\n【前置已核验因果假说清单 (Stage 0.1 HypothesisSpec SSOT)】:\n"
+                f"以下是已通过 Stage 0.1 物理审计的因果假说清单。请严格按 hypothesis_id 一一对应，"
+                f"为每个假说推导对应的 FastExpr 表达式，切勿虚构新的脱离假说的公式结构：\n"
+                f"{json.dumps(stage0_hypotheses, ensure_ascii=False, indent=1)}\n\n"
+            )
+
         session = self.client.create_session(role="aegis-seed-synthesizer", model=self.model)
+        op_manual = OperatorRegistry.format_pyramid_level1_markdown()
         prompt = (
-            f"你是一位顶级的 WorldQuant 量化研究总监与 ATOM Alpha 架构专家。请深入研读下方给定的数据集字段画像，构建 {count} 个高价值、低相关性、非过拟合的 ATOM 原生主信号假说。\n"
+            f"你是一位顶级的 WorldQuant 量化研究总监与 ATOM Alpha 架构专家。请深入研读下方给定的数据集字段物理画像（算子签名表仅作语法字典，本阶段不写任何公式），构建 {count} 个高价值、低相关性、非过拟合的 ATOM 原生主信号假说。\n"
             f"目标配置: 区域 {self.region} | 股票池 {self.universe} | 预测延迟 Delay {self.delay} | 类别 {self.category} | 数据集 {self.dataset_id}\n\n"
-            f"【ATOM Alpha 种子挖掘核心准则 (GrandMaster 铁律)】：\n"
+            f"【ATOM Alpha 种子挖掘核心准则 (DGP 物理机制驱动版)】：\n"
             f"1. 严格锁定单数据集：所有字段必须 100% 来自指定的单数据集 ({self.dataset_id})，严禁跨数据集混用外部量价 (PV) 字段；\n"
-            f"2. 字段数预算：每个种子使用 1~3 个字段 (1 <= fields <= 3)：单字段走纯 TS/CS 决策树自归一，双字段走冷热非对称配对（divide / 同量纲 subtract / ts_regression / trade_when）；\n"
-            f"3. 算子数量预算：表达式总算子数必须 <= 6 (op <= 6)，保持因果链条紧凑，杜绝冗余堆叠；\n"
-            f"4. 🚫 【绝对红线：严禁在种子挖掘期使用加法和乘法 (+, *, add, multiply)】：\n"
-            f"   - 严禁任何形式的 A + B 或 A * B，以及 add(A, B) 或 multiply(A, B)！\n"
-            f"   - 原因：单特征信号尚未确立前，粗暴相加相乘属于高阶多项式样本内强行过拟合，且导致量纲混乱与负负得正伪因果。多信号组合是组合优化器的职责，严禁提前写入单因子公式！\n"
-            f"5. ✅ 【推荐算子生态：融合单因子决策树 (Single Factor Decision Tree)】：\n"
-            f"   - 数据清洗与极值处理：winsorize(A, std=4) 或 std=3，防止毛刺毁掉排序；\n"
-            f"   - 形状映射与尾部强调：signed_power(A, 0.5)（凹函数压缩防极端值）或 signed_power(A, 2.0)，s_log_1p(A)；\n"
-            f"   - 行业截面中性化：group_zscore(A, subindustry/industry), group_neutralize(A, subindustry/industry), group_rank(A, subindustry), rank(A), scale(A)；\n"
-            f"   - 时间序列动态：ts_decay_linear(A, d), ts_delta(A, d), ts_zscore(A, d), ts_regression(y, x, d, rettype=0), ts_arg_max(A, d), ts_rank(A, d), ts_mean(A, d)；\n"
-            f"   - 预期差/残差剪刀差：subtract(A, B) 或 A - B（必须为同一量纲，如 Actual - Estimate，或 Feature - SectorMean）；\n"
-            f"   - 内生规模与强度消除：divide(A, B) 或 A / B（B 为总资产、总报道数等内生规模分母）；\n"
-            f"   - 逻辑状态激活：trade_when(cond, A, -1) 或 if_else(greater(B, threshold), A, 0)；\n"
-            f"6. ⏳ 【自然交易日历时间窗口铁律 (拒绝 4, 17, 44 等无意义随机数)】：\n"
-            f"   - 所有时序算子的回溯天数 d 必须严格选用具有制度性/经济学含义的自然日历网格：\n"
-            f"     * 5 (1周流动性/情绪反转)\n"
-            f"     * 10 (双周调仓节奏)\n"
-            f"     * 20 / 22 (1个月月度财报漂移/期权交割)\n"
-            f"     * 63 (1季度美股10-Q季报修正)\n"
-            f"     * 126 (半年度组合再平衡)\n"
-            f"     * 252 (1年美股10-K年报/滚动年化Beta与波动率)\n"
-            f"   - 严禁出现 4、17、44、45 等无经济学依据的局部过拟合窗口数字！\n\n"
+            f"2. 字段数预算：每个种子使用 1~3 个字段 (1 <= fields <= 3)，且每个字段必须在 field_roles 中声明物理角色与预期变换；\n"
+            f"3. 算子数量预算：表达式总算子数必须 <= 6 (op <= 6)。算子只是实现工具，不得为了改变骨架哈希而叠加无机制贡献的外层包装；\n"
+            f"4. 【量纲与交互约束】：\n"
+            f"   - 加法仅允许同量纲正交分量；乘法仅允许无量纲门控 × 标准化信号；\n"
+            f"   - 所有交互必须在 causal_chain 中说明消除的是规模基数、共同趋势还是状态死重；\n"
+            f"5. 【机制意图参考 (不是算子处方，可根据DGP自主定义)】：\n"
+            f"   SCALE_NORMALIZATION / EXPECTATION_SURPRISE / EVENT_GATE / TEMPORAL_DECAY / CROSS_SECTIONAL_RELATIVE / "
+            f"DISPERSION / REGIME_SPREAD / RESIDUAL_EXTRACTION / TAIL_ASYMMETRY / VECTOR_HIGHER_MOMENT 等；\n"
+            f"6. 【窗口由物理机制决定】：\n"
+            f"   - 时序窗口必须来自字段 update_frequency、事件半衰期与 horizon_model，自然日历仅是先验不是硬白名单；\n"
+            f"   - 必须在 horizon_model 中声明短/长窗口预期符号与衰减假设，供后续期限证伪。\n\n"
+            f"【算子签名表 (语法字典 / Single Source of Truth；仅用于把已推导的变换需求映射为最小实现)】:\n{op_manual}\n\n"
             f"【铁律 A：主锚字段与归一化字段的冷热配对】：\n"
             f"- 分子主信号优先选用低拥挤度细分字段 (COLD 档，alpha_pct <= 0.40)；\n"
             f"- 分母/差分基准选用高覆盖度内生字段 (coverage >= 0.80)，用于剥离规模噪音。\n\n"
+            f"{hypotheses_prompt_block}"
             f"【候选字段全量物理画像清单】:\n{json.dumps(fields_meta_list, ensure_ascii=False, indent=1)}\n\n"
             f"【推荐冷热非对称配对清单】:\n{json.dumps(pairing_candidates, ensure_ascii=False, indent=1)}\n\n"
-            f"【输出格式契约】必须返回严格的 JSON 对象（先完成商业机理研判，最后输出 expression）：\n"
+            f"【输出格式契约】必须返回严格的 JSON 对象（先完成假说规格，最后输出 expression）：\n"
             f"{{\n"
             f'  "dataset_field_study": {{\n'
             f'    "dataset_essence": "对该单数据集底层商业生成过程与核心未充分定价摩擦点的深度研判",\n'
@@ -337,10 +480,22 @@ class AegisPipelineController:
             f'      "id": "SEED_01",\n'
             f'      "cluster_ref": "所属业务簇名称",\n'
             f'      "fields_used": ["选用的1~3个具体字段名 (必须来自当前单数据集)"],\n'
+            f'      "hypothesis": {{\n'
+            f'        "hypothesis_id": "HYP_SEED_01",\n'
+            f'        "economic_cluster": "所属业务簇名称",\n'
+            f'        "field_roles": [{{"field_id": "字段名", "role": "Signal_Flow/Dimension_Anchor/Uncertainty_Scale/Catalyst_Event", "expected_transform": "期望的物理变换类型"}}],\n'
+            f'        "counterparty": "错误定价的对手盘与认知摩擦",\n'
+            f'        "causal_chain": "底层异动 -> 参与者摩擦/交易约束 -> 价格修正方向与持续周期",\n'
+            f'        "horizon_model": {{"short_window": 5, "long_window": 63, "expected_short_sign": 1, "expected_long_sign": 1, "decay_assumption": "快衰减/慢漂移/期限反转"}},\n'
+            f'        "normalization_rationale": "为何以及如何消除规模基数或共同趋势",\n'
+            f'        "sparsity_policy": "零值/缺失代表什么，如何处理无事件样本",\n'
+            f'        "interaction_type": "SCALE_NORMALIZATION/EXPECTATION_SURPRISE/EVENT_GATE/...",\n'
+            f'        "falsification_tests": ["期限符号证伪条件", "消融证伪条件"]\n'
+            f"      }},\n"
             f'      "field_semantics_mapping": "逐一剖析字段商业实质、物理量纲及为何如此组合以剥离规模或基数噪音",\n'
             f'      "economic_mechanism": "完整因果传导链：底层异动 -> 市场参与者认知摩擦/交易约束 -> 价格修正方向与持续周期",\n'
             f'      "expected_polarity": 1,\n'
-            f'      "expression": "<此处填入由上方因果机制推导出的 FastExpr 表达式，op<=6，严禁 + 和 *，日历窗口对齐>"\n'
+            f'      "expression": "<此处填入由 HypothesisSpec 推导出的 FastExpr 表达式，op<=6，量纲一致且无无机制装饰>"\n'
             f"    }}\n"
             f"  ]\n"
             f"}}"
@@ -349,6 +504,7 @@ class AegisPipelineController:
             "fields": sampled_names,
             "fields_meta": fields_meta_list,
             "pairing_candidates": pairing_candidates,
+            "stage0_hypotheses": stage0_hypotheses,
             "count": count,
             "task_tag": f"stage0_{self.dataset_id}"
         }
@@ -412,11 +568,8 @@ class AegisPipelineController:
                 cleaned = self.corrector.correct_expression(item.get("expression", ""))
                 skel = _get_algebraic_skeleton(cleaned, known_set)
 
-                # 1. 限制最简两字段比率/差分 (如 divide(F,F), divide(F,add(F,C)), subtract(F,F) 等)
+                # 允许纯粹的原生简单两字段比率/差分 (不加惩罚，由后续去重与假说统一管理)
                 is_simple_ratio = skel in ["divide(F,F)", "divide(F,add(F,C))", "divide(F,subtract(F,C))", "subtract(F,F)"]
-                max_simple = max(1, int(count * 0.25))
-                if is_simple_ratio and simple_ratio_count >= max_simple:
-                    continue
 
                 # 2. 限制同一经济簇 (cluster_ref) 扎堆过度 (单批不得超过 35%，逼出跨维度多元视角)
                 c_ref = (item.get("cluster_ref") or "default_cluster").strip()
@@ -436,6 +589,20 @@ class AegisPipelineController:
                 skeleton_counts[skel] = skeleton_counts.get(skel, 0) + 1
                 # 硬门禁：同一种代数骨架在单批种子中最多允许出现 3 次，超出直接按同质化模板剔除！
                 if skeleton_counts[skel] <= 3:
+                    # V2: 先构建并校验 HypothesisSpec，表达式只是假说的实现
+                    raw_h = item.get("hypothesis")
+                    if not raw_h and stage0_hypotheses:
+                        h_ref = item.get("hypothesis_ref") or item.get("cluster_ref")
+                        matched = next((h for h in stage0_hypotheses if h.get("hypothesis_id") == h_ref or h.get("economic_cluster") == h_ref), None)
+                        if matched is None and i < len(stage0_hypotheses):
+                            matched = stage0_hypotheses[i]
+                        raw_h = matched
+                    hypothesis = HypothesisSpec.normalize(raw_h, fallback_seed=item)
+                    hypothesis_ok, hypothesis_issues = HypothesisSpec.validate(hypothesis, normalized_fields_dict)
+                    if not hypothesis_ok:
+                        print(f"🚫 [HypothesisSpec 拒收] {item.get('id', f'SEED_{i+1:02d}')}: {'; '.join(hypothesis_issues)}")
+                        continue
+
                     if is_simple_ratio:
                         simple_ratio_count += 1
                     cluster_counts[c_ref] = cluster_counts.get(c_ref, 0) + 1
@@ -445,6 +612,8 @@ class AegisPipelineController:
                         "id": item.get("id", f"SEED_{i+1:02d}"),
                         "cluster_ref": c_ref,
                         "hypothesis_type": item.get("hypothesis_type", "LEVEL"),
+                        "hypothesis": hypothesis,
+                        "hypothesis_signature": HypothesisSpec.hypothesis_signature(hypothesis, fields_dict),
                         "field_semantics_mapping": item.get("field_semantics_mapping", ""),
                         "economic_mechanism": item.get("economic_mechanism", "基于字段研究提出的因果假说"),
                         "expected_polarity": int(item.get("expected_polarity", 1)),
@@ -457,8 +626,7 @@ class AegisPipelineController:
         signals = []
         for s in candidate_signals:
             expr = s["expression"]
-            # 1. 自动日历网格吸附 (将 4->5, 17->20, 44->63 等)
-            expr = ASTSandboxCorrector.snap_economic_calendar_windows(expr)
+            # V2: 不再把窗口强制吸附到自然日历网格；窗口合法性由 horizon_model 与稳健性检验裁决
             s["expression"] = expr
 
             # 2. Stage 0 ATOM Alpha 专属门禁审查:
@@ -475,7 +643,8 @@ class AegisPipelineController:
                 known_fields=fields_dict,
                 category=self.category,
                 allow_pv_cross=False,
-                max_operators=6
+                max_operators=6,
+                hypothesis=s.get("hypothesis")
             )
             if not audit_res_ast.get("is_valid", True):
                 continue
@@ -484,10 +653,10 @@ class AegisPipelineController:
             s["fields_used"] = list(used_fields)
             signals.append(s)
 
-        # 4. 技术审查专家 (aegis-tech-auditor) 独立审查与否决门禁
+        # 4. 技术审查专家 (aegis-tech-auditor) 独立审查与否决门禁 (Fail-Closed)
         if signals:
+            audit_session = self.client.create_session(role="aegis-tech-auditor", model=self.model)
             try:
-                audit_session = self.client.create_session(role="aegis-tech-auditor", model=self.model)
                 audit_res = audit_session.send_message_sync(
                     f"请对以下主信号原型进行合规技术审查，剔除未授权字段和违规结构：\n{json.dumps(signals, ensure_ascii=False)}",
                     json_mode=True,
@@ -496,8 +665,12 @@ class AegisPipelineController:
                 if isinstance(audit_res, dict) and "approved_ids" in audit_res:
                     approved_set = set(audit_res.get("approved_ids") or [])
                     signals = [s for s in signals if s.get("id") in approved_set]
+                else:
+                    print("🚫 [Tech Auditor] 审核返回缺少 approved_ids，本批种子按 Fail-Closed 全部拒收。")
+                    signals = []
             except Exception as _e_audit:
-                print(f"⚠️ [Tech Auditor] 技术审查异常，降级通过: {_e_audit}")
+                print(f"🚫 [Tech Auditor] 技术审查异常，Fail-Closed 拒收本批种子: {_e_audit}")
+                signals = []
 
         # ---------------- 铁律 A 物理校验: 未构成冷热非对称配对的种子直接拒收 ----------------
         signals, pairing_rejected, pairing_report = enforce_stage0_pairing(
@@ -592,6 +765,24 @@ class AegisPipelineController:
         neut_list = self.get_supported_neutralizations()
         parent_id = parent_alpha.get("alpha_id", seed["id"]) if parent_alpha else seed["id"]
 
+        # V2: Stage 1 必须消费 Stage 0 的 HypothesisSpec；旧种子降级为 legacy 并显式标记
+        seed_hypothesis = HypothesisSpec.normalize(seed.get("hypothesis"), fallback_seed=seed)
+        if seed_hypothesis is None:
+            seed_hypothesis = {
+                "hypothesis_id": f"LEGACY_{seed.get('id', 'SEED')}",
+                "economic_cluster": seed.get("cluster_ref", "LEGACY_CLUSTER"),
+                "field_roles": [{"field_id": f, "role": "UNKNOWN"} for f in seed.get("fields_used", [])],
+                "counterparty": "UNKNOWN_COUNTERPARTY",
+                "causal_chain": seed_mech,
+                "horizon_model": {},
+                "normalization_rationale": "",
+                "sparsity_policy": "UNKNOWN",
+                "interaction_type": "UNKNOWN",
+                "falsification_tests": [],
+                "source": "legacy",
+            }
+            print(f"⚠️ [HypothesisSpec] 种子 {seed.get('id')} 缺少完整假说规格，按 legacy 模式继续。")
+
         # 提取核心双字段画像与更新频率
         used_field_names = seed.get("fields_used", [])
         if not used_field_names:
@@ -601,37 +792,38 @@ class AegisPipelineController:
         core_fields_meta = []
         is_quarterly = False
         for fn in used_field_names:
-            meta = fields_dict.get(fn, {})
-            freq = meta.get("update_frequency", "quarterly" if self.category == "fundamental" else "daily")
-            if "quarter" in str(freq).lower():
+            meta = HypothesisSpec.normalize_field_profile(fn, fields_dict.get(fn, {}))
+            freq = meta.get("update_frequency")
+            if freq and "quarter" in str(freq).lower():
                 is_quarterly = True
             core_fields_meta.append({
                 "name": fn,
                 "type": meta.get("type", "MATRIX"),
                 "description": meta.get("description", "无描述"),
-                "coverage": round(meta.get("coverage", 1.0), 3),
-                "domain": meta.get("domain", "unbounded"),
-                "is_sparse": meta.get("is_sparse", False),
+                "coverage": meta.get("coverage"),
+                "domain": meta.get("domain"),
+                "is_sparse": meta.get("is_sparse"),
                 "alpha_count": meta.get("alpha_count", meta.get("alphaCount", 0)),
                 "update_frequency": freq,
-                "semantic_role": meta.get("semantic_role", "Signal_Flow"),
+                "semantic_role": meta.get("semantic_role"),
                 "prescriptions": meta.get("prescriptions", []),
-                "skewness": meta.get("skewness", "medium")
+                "skewness": meta.get("skewness"),
+                "evidence_status": meta.get("evidence_status", "UNKNOWN"),
+                "physical_signature": HypothesisSpec.physical_field_signature(meta),
             })
         if self.category == "fundamental":
             is_quarterly = True
 
         frequency_guidance = (
-            "【更新频率调优指南】:\n"
+            "【字段更新频率物理课题】:\n"
             "- 本信号涉及低频/季度更新特征 (quarterly fundamental)：\n"
-            "  * 严禁在未经处理的情况下直接套用超短周期差分 (如 ts_delta(x, 1))，否则在无财报更新的交易日会产生大量 0 导致信号失效！\n"
-            "  * 推荐使用跨季度长窗口差分/平滑 (如 ts_delta(x, 60), ts_delta(x, 252))，或截面相对排序 group_rank(..., subindustry) 与规模中性化 scale(...)；\n"
-            "  * 配合 winsorize(..., std=3) 与符号幂 signed_power(...) 保持单调性。\n"
+            "  * 数据呈阶梯状低频跳变，日间差分多为零；请从跨报告期预期差、同行相对位置或报告期切换状态设计机制；\n"
+            "  * 必须说明无更新交易日的持仓状态，避免把“无事件”误当作“中性信号”。\n"
             if is_quarterly else
-            "【更新频率调优指南】:\n"
+            "【字段更新频率物理课题】:\n"
             "- 本信号为高频/日频更新特征 (daily flow/news/sentiment/analyst)：\n"
-            "  * 优先采用时序衰减与动量捕捉算子：ts_decay_linear(..., 10), ts_rank(..., 20), ts_zscore(..., 60)；\n"
-            "  * 结合 group_neutralize(..., subindustry) 消除行业暴露风险。\n"
+            "  * 请先推断信息半衰期，再决定平滑、状态门控或期限剪刀差；\n"
+            "  * 若短长周期预期符号相反，必须在 horizon_model 中显式声明 REGIME_SPREAD，而不是默认同号。\n"
         )
 
         # ---------------- 场景路由: 老兵精修 (手术刀) vs 战场 A (开拓) ----------------
@@ -693,8 +885,8 @@ class AegisPipelineController:
             stage_guidance = (
                 "【阶段科研使命: Step #1 假说多维实证检验 (Clean Empirical Validation)】:\n"
                 "- 当前假说尚未经过回测检验，不存在母本 (parent_alpha 为空)，因此本轮 100% 为假说实证探索 (type 统一填 'empirical_probe')！\n"
-                "- 【基础清洗与周期高原】：允许使用 ts_backfill 与 winsorize(..., std=4) 进行基础清洗，并在 (5, 20)、(20, 63)、(63, 126)、(63, 252) 自然日历周期对上检验信号的参数高原稳健性！\n"
-                "- 【保持极简纯净】：每条变体外层包装算子严格控制在 1~3 个以内（仅使用匹配更新频率的时序差分/均值/Z-score 与截面 group_rank / group_neutralize），从不同时间跨度与截面基准干净地检验该经济学假说是否成立。\n"
+                "- 【基础清洗与周期探索】：允许根据字段的更新周期和数据稀疏性进行基础清洗与缺失值回填，并在多个具有经济学含义的时间周期上检验信号的原生稳健性！\n"
+                "- 【保持极简纯净】：每条变体外层包装算子严格控制在 1~3 个以内；先确认假说需要的变换（时序/截面），再查签名表映射为 1~3 个最小实现，从不同时序跨度干净地检验假说原生预测力。\n"
                 f"- 【中性化基准约束】：在 {self.parallelism} 条实证变体中，必须保证至少 30% (>= {max(int(self.parallelism * 0.3), 1)} 条) 变体使用基础截面中性化 ('SUBINDUSTRY' 或 'INDUSTRY')，以验证信号源是否自带真实 Alpha 潜力，严禁全量寄生在高阶风险中性化残差中！\n"
             )
             output_schema_instruction = (
@@ -727,38 +919,67 @@ class AegisPipelineController:
                 p_margin = 0.0
 
             # 确定性法医确诊与处方路由锁 (Gate 4 闭环)
-            parent_op_count = 0
-            if parent_alpha and "expression" in parent_alpha:
-                try:
-                    tree = ast.parse(parent_alpha["expression"], mode='eval')
-                    parent_op_count = sum(1 for n in ast.walk(tree) if isinstance(n, ast.Call))
-                except Exception:
-                    parent_op_count = 0
-
-            verdict = Gatekeeper.diagnose_and_route_prescriptions(
-                alpha_metrics=p_metrics,
-                checks_parsed=parent_alpha or {},
-                yearly_stats=p_metrics.get("yearly_stats", []) or (parent_alpha.get("yearly_stats", []) if parent_alpha else []),
-                operator_count=parent_op_count,
-                prod_corr=(Gatekeeper.extract_prod_corr(parent_alpha) if parent_alpha else None) or (parent_alpha.get("prod_corr") if parent_alpha else None),
-                max_operator_limit=getattr(self, "max_ast_operators", 8),
-                parent_alpha=parent_alpha
-            )
-            # 处方凭据落盘，供 Gate 4 Pre-Flight 审计核验
             rx_path = os.path.join(self.campaign_dir, "authorized_mutations.json")
-            try:
-                with open(rx_path, 'w', encoding='utf-8') as rf:
-                    json.dump({
-                        "symptoms": verdict["symptoms"],
-                        "forensic_clues": verdict.get("forensic_clues", []),
-                        "allowed_mutations": []
-                    }, rf, ensure_ascii=False, indent=2)
-            except Exception as e:
-                print(f"⚠️ [Gatekeeper] 处方锁凭据落盘异常: {e}")
+            existing_rx = None
+            if os.path.exists(rx_path):
+                try:
+                    with open(rx_path, 'r', encoding='utf-8') as rf:
+                        existing_rx = json.load(rf)
+                except Exception:
+                    existing_rx = None
+
+            if existing_rx and existing_rx.get("symptoms"):
+                verdict = existing_rx
+                print(f"📋 [Gatekeeper] 直接继承上一轮 sim_runner 真实处方 (症状: {verdict.get('symptoms')})")
+            else:
+                parent_op_count = 0
+                if parent_alpha and "expression" in parent_alpha:
+                    try:
+                        tree = ast.parse(parent_alpha["expression"], mode='eval')
+                        parent_op_count = sum(1 for n in ast.walk(tree) if isinstance(n, ast.Call))
+                    except Exception:
+                        parent_op_count = 0
+
+                verdict = Gatekeeper.diagnose_and_route_prescriptions(
+                    alpha_metrics=p_metrics,
+                    checks_parsed=parent_alpha or {},
+                    yearly_stats=p_metrics.get("yearly_stats", []) or (parent_alpha.get("yearly_stats", []) if parent_alpha else []),
+                    operator_count=parent_op_count,
+                    prod_corr=(Gatekeeper.extract_prod_corr(parent_alpha) if parent_alpha else None) or (parent_alpha.get("prod_corr") if parent_alpha else None),
+                    max_operator_limit=getattr(self, "max_ast_operators", 8),
+                    parent_alpha=seed
+                )
+                try:
+                    with open(rx_path, 'w', encoding='utf-8') as rf:
+                        json.dump({
+                            "symptoms": verdict.get("symptoms", []),
+                            "forensic_clues": verdict.get("forensic_clues", []),
+                            "allowed_mutations": verdict.get("allowed_mutations", []),
+                            "rag_prescriptions": verdict.get("rag_prescriptions", []),
+                            "qa_prescriptions": verdict.get("qa_prescriptions", []),
+                        }, rf, ensure_ascii=False, indent=2)
+                except Exception as e:
+                    print(f"⚠️ [Gatekeeper] 处方锁凭据落盘异常: {e}")
 
             symptoms_str = ", ".join(verdict["symptoms"]) if verdict["symptoms"] else "无严重结构性病灶"
             forensic_clues_str = "\n".join(f"- {c}" for c in verdict.get("forensic_clues", [])) if verdict.get("forensic_clues") else "- 各项微观结构与统计属性稳健"
-            rag_prescriptions_str = json.dumps(verdict["rag_prescriptions"], ensure_ascii=False, indent=1) if verdict["rag_prescriptions"] else "暂无匹配处方卡"
+            cleaned_rag_prescriptions = []
+            for card in verdict.get("rag_prescriptions", []):
+                if isinstance(card, dict):
+                    c_copy = dict(card)
+                    # 剔除诱导 Agent 像积木一样套公式的死模板字段，仅保留经济机制与病理解释
+                    c_copy.pop("authorized_operators", None)
+                    c_copy.pop("prescription_recipe", None)
+                    c_copy.pop("pattern", None)
+                    c_copy.pop("example", None)
+                    c_copy.pop("code_example", None)
+                    c_copy.pop("concrete_expression", None)
+                    c_copy.pop("template", None)
+                    c_copy.pop("formula", None)
+                    cleaned_rag_prescriptions.append(c_copy)
+                else:
+                    cleaned_rag_prescriptions.append(card)
+            rag_prescriptions_str = json.dumps(cleaned_rag_prescriptions, ensure_ascii=False, indent=1) if cleaned_rag_prescriptions else "暂无匹配处方卡"
 
             polarity_warning = ""
             if parent_alpha and (parent_alpha.get("is_polarity_inverted") or parent_alpha.get("status") == "POLARITY_INVERTED" or p_sharpe < 0):
@@ -826,11 +1047,13 @@ class AegisPipelineController:
                 f"- 📋 【靶向 Tier-2 处方指引】:\n{rag_prescriptions_str}\n"
                 + (f"\n{qa_insights_str}\n" if qa_insights_str else "")
                 + f"{polarity_warning}"
-                f"- 请严格根据反事实病理线索自主推演 DGP，结合第一性原理选配平台算子，绝不盲目堆叠非线性算子！\n"
+                f"- 💡 【算子使用铁律】: 算子签名表全量开放但**仅作语法字典**，不是选配清单！严禁将算子像积木一样生搬硬套！必须先结合下方字段的定义域 (domain)、稀疏度 (is_sparse)、更新频率 (update_frequency) 与反事实病因推导所需变换，再查签名表映射为最小实现，绝不预设或堆叠僵化算子！\n"
+                f"- 请严格根据反事实病理线索自主推演 DGP，先从第一性原理写出所需变换，再映射到算子签名，绝不盲目堆叠非线性算子！\n"
             )
             output_schema_instruction = (
                 f"【输出格式契约】必须返回严格的 JSON 数组，共 {self.parallelism} 个变体对象（1+9+10 三分天下分仓制）。\n"
-                f"每个对象必须包含以下 6 个键：slot, optimize_reason, expression, neutralization, type, original_alpha（先写 optimize_reason 诊断依据，再写 expression！）。\n"
+                f"每个对象必须严格按以下顺序包含 9 个键：slot, optimize_reason, hypothesis_ref, mechanism_intents, economic_delta, expression, neutralization, type, original_alpha"
+                f"（先写假说与机制增量，再写 expression；hypothesis_ref 必须等于预注册 hypothesis_id，mechanism_intents 必须与表达式实际算子族同构）。\n"
             )
 
         # ---------------- V3.1 极简瘦身 Prompt 构建 (< 1,000 Token) ----------------
@@ -878,15 +1101,17 @@ class AegisPipelineController:
         prompt_parts = [
             f"【量化变体生成使命】基于核心 '{core_expr}' 生成 {self.parallelism} 条群体变体。\n",
             f"轮次: Step #{step} | 区域: {self.region} | 股票池: {self.universe} | 延迟: Delay {self.delay} | 类别: {self.category}\n",
-            f"假说内涵: {seed_mech}\n\n",
+            f"假说内涵: {seed_mech}\n",
+            f"【预注册 HypothesisSpec (表达式必须实现该假说，不得先拼公式再补叙事)】:\n{json.dumps(seed_hypothesis, ensure_ascii=False, indent=1)}\n\n",
             f"【核心字段全量物理画像 (请基于以下商业实质与分布属性推演 DGP)】:\n"
         ]
         for cm in core_fields_meta:
             prompt_parts.append(
                 f"- {cm['name']} ({cm.get('type', 'MATRIX')}): 业务释义=\"{cm.get('description', '无')}\" | "
-                f"更新频率={cm.get('update_frequency', 'daily')} | 覆盖率={cm.get('coverage', 1.0)} | "
+                f"更新频率={cm.get('update_frequency', 'daily')} | 覆盖率={cm.get('coverage', 'UNKNOWN')} | "
                 f"定义域={cm.get('domain', 'unbounded')} | 偏态={cm.get('skewness', 'medium')} | "
-                f"稀疏零值={cm.get('is_sparse', False)}\n"
+                f"稀疏零值={cm.get('is_sparse', False)} | 证据等级={cm.get('evidence_status', 'UNKNOWN')} | "
+                f"物理签名={cm.get('physical_signature', 'UNKNOWN')}\n"
             )
         prompt_parts.append(field_rule_str)
 
@@ -914,22 +1139,14 @@ class AegisPipelineController:
             if qa_prompt_section:
                 prompt_parts.append(f"【因果问答启发】:\n{qa_prompt_section}\n")
 
-        if top5:
-            prompt_parts.append("【高分拓扑标杆 (Top 5)】:\n")
-            for t in top5[:5]:
-                expr_str = t.get("expression") or t.get("code") or ""
-                sh_str = f"Sharpe={t.get('sharpe', 0.0):.2f}" if "sharpe" in t else ""
-                prompt_parts.append(f"- {expr_str} ({sh_str})\n")
+        # 去模板化铁律：严禁下发历史变体公式字面量，防止大模型发生拓扑锚定与积木套用
+        # 强制大模型基于字段 DGP 画像与母本体检报表先推导变换需求，再查算子签名表映射实现
+        op_manual = OperatorRegistry.format_pyramid_level1_markdown()
+        prompt_parts.append(f"{op_manual}\n")
 
-        if random20:
-            prompt_parts.append("【破坏性灵感采样 (Random 20)】:\n")
-            for r in random20[:15]:
-                expr_str = r.get("expression") if isinstance(r, dict) else str(r)
-                prompt_parts.append(f"- {expr_str}\n")
-
-        if pyramid_kb:
+        if step >= 2 and pyramid_kb:
             prompt_parts.append(f"【金字塔经验参考】:\n{pyramid_kb}\n")
-        if inspiration:
+        if step >= 2 and inspiration:
             prompt_parts.append(f"【跨界启发】:\n{inspiration}\n")
 
         # 提取历史已测表达式集合，避免跨轮次重复生成被 AST Sandbox 拦截
@@ -955,26 +1172,40 @@ class AegisPipelineController:
                 f"{tested_str}\n"
             )
 
+        # 【审计回执】宿主签发, 只读。Agent 无法写、无法申诉、无法选择是否被审、无法删除记录。
+        # 回执里的未结案命题与已破产声明, 是 Agent 唯一能看到的审计状态 (只读, 不可协商)。
+        try:
+            try:
+                from core.audit_bus import AuditBus, resolve_policy_path
+            except ImportError:
+                from quant_framework.core.audit_bus import AuditBus, resolve_policy_path
+            _audit_bus = AuditBus(self.campaign_dir, policy_path=resolve_policy_path())
+            prompt_parts.append("\n" + _audit_bus.render_receipt_text() + "\n")
+        except Exception as _ae:
+            print(f"⚠️ [AuditBus] 回执渲染失败: {_ae}")
+
         if surgery_mode:
             format_spec = (
                 f"\n【输出格式硬契约 (老兵精修模式)】\n"
                 f"必须返回严格的 JSON 数组，共 {self.parallelism} 个变体对象。\n"
-                f"⚠️ 【必须严格遵守的 4 大门禁硬契约，不合规直接整批打回】:\n"
-                f"1. 严格键序: 必须先写 \"slot\" 和 \"optimize_reason\"，再写 \"expression\"！\n"
+                f"⚠️ 【必须严格遵守的 5 大门禁硬契约，不合规直接整批打回】:\n"
+                f"1. 严格键序: 必须先写 \"slot\"、\"optimize_reason\"、\"hypothesis_ref\"、\"mechanism_intents\"、\"economic_delta\"，再写 \"expression\"！\n"
                 f"2. 假设充分性: 每个对象的 \"optimize_reason\" 必须不少于 25 字，且必须显式包含至少一个可验收的度量指标词 (如 'Sharpe', 'Margin', 'Turnover', 'ProdCorr', 'Cluster')！\n"
-                f"3. 控制槽基准: Slot 1 必须作为对照控制槽，逐字复制母本表达式 '{_parent_expr}'！\n"
-                f"4. 1+9+10 分仓保护: Slot 2~10 (9槽) 必须锚定母本主锚字段 ({used_field_names}) 针对法医线索做单变量微创；Slot 11~{self.parallelism} (10槽) 彻底解除母本骨架限制，结合 DGP 与同源冷字段重构全新数学拓扑；严禁超过 2 个槽位做纯数字窗口微调！\n"
-                f"对象结构示例: {{\"slot\": 1, \"optimize_reason\": \"保留母本核心骨架作为对照控制槽，严格比对基准 Sharpe 和 Margin 表现\", \"expression\": \"{_parent_expr}\", \"neutralization\": \"SUBINDUSTRY\", \"type\": \"exploit\"}}"
+                f"3. 假说一致性: \"hypothesis_ref\" 必须等于 '{seed_hypothesis.get('hypothesis_id')}'；\"mechanism_intents\" 说明机制意图；\"economic_delta\" 必须说明机制增量！\n"
+                f"4. 控制槽基准: Slot 1 必须作为对照控制槽，逐字复制母本表达式 '{_parent_expr}'！\n"
+                f"5. 分仓保护: Slot 2~10 锚定母本主锚字段针对法医线索做单变量微创；Slot 11~{self.parallelism} 结合 DGP 与同源冷字段重构全新数学拓扑；严禁超过 2 个槽位做纯数字窗口微调！\n"
+                f"对象结构示例: {{\"slot\": 1, \"optimize_reason\": \"保留母本核心作为对照控制槽，严格比对基准 Sharpe 和 Margin 表现\", \"hypothesis_ref\": \"{seed_hypothesis.get('hypothesis_id')}\", \"mechanism_intents\": [\"SCALE_NORMALIZATION\"], \"economic_delta\": \"对照槽不引入机制增量，仅校准回测基准\", \"expression\": \"{_parent_expr}\", \"neutralization\": \"SUBINDUSTRY\", \"type\": \"exploit\"}}"
             )
         else:
             format_spec = (
                 f"\n【输出格式硬契约 (假说开拓模式)】\n"
                 f"必须返回严格的 JSON 数组，共 {self.parallelism} 个变体对象。\n"
-                f"⚠️ 【必须严格遵守的 3 大门禁硬契约，不合规直接整批打回】:\n"
-                f"1. 严格键序: 必须先写 \"slot\" 和 \"optimize_reason\"，再写 \"expression\"！\n"
+                f"⚠️ 【必须严格遵守的 4 大门禁硬契约，不合规直接整批打回】:\n"
+                f"1. 严格键序: 必须先写 \"slot\"、\"optimize_reason\"、\"hypothesis_ref\"、\"mechanism_intents\"、\"economic_delta\"，再写 \"expression\"！\n"
                 f"2. 假设充分性: 每个对象的 \"optimize_reason\" 必须不少于 25 字，且必须显式包含至少一个可验收的度量指标词 (如 'Sharpe', 'Margin', 'Turnover', 'ProdCorr')！\n"
-                f"3. 拓扑多样性: 至少 40% 槽位外层不使用 group_rank (使用 group_neutralize/group_zscore)，并按 (N, 2N) 双窗口成对探针设计！\n"
-                f"对象结构示例: {{\"slot\": 1, \"optimize_reason\": \"基于时序动量假说平滑日频噪声，预期提升夏普 Sharpe 并压制日间换手 Turnover\", \"expression\": \"FastExpr公式\", \"neutralization\": \"SUBINDUSTRY\", \"type\": \"explore\"}}"
+                f"3. 假说一致性: \"hypothesis_ref\" 必须等于 '{seed_hypothesis.get('hypothesis_id')}'；\"mechanism_intents\" 说明机制意图；\"economic_delta\" 必须说明机制增量！\n"
+                f"4. 期限可证伪: 变体窗口必须能检验 horizon_model 中的短/长窗口预期符号；若预期期限反转，必须声明 REGIME_SPREAD！\n"
+                f"对象结构示例: {{\"slot\": 1, \"optimize_reason\": \"基于时序因果假说平滑日频噪声，预期提升夏普 Sharpe 并压制日间换手 Turnover\", \"hypothesis_ref\": \"{seed_hypothesis.get('hypothesis_id')}\", \"mechanism_intents\": [\"TEMPORAL_DECAY\"], \"economic_delta\": \"消除高频脉冲噪音转为持续交易信念\", \"expression\": \"<先描述DGP所需变换，再由算子签名表映射的FastExpr表达式>\", \"neutralization\": \"SUBINDUSTRY\", \"type\": \"explore\"}}"
             )
         prompt_parts.append(format_spec)
         prompt = "".join(prompt_parts)
@@ -982,6 +1213,7 @@ class AegisPipelineController:
         context = {
             "core_expr": core_expr,
             "core_fields": core_fields_meta,
+            "hypothesis": seed_hypothesis,
             "alt_candidates": alt_candidates_list,
             "neutralizations": neut_list,
             "parallelism": self.parallelism,
@@ -1001,6 +1233,70 @@ class AegisPipelineController:
                 "请检查智能体连接或切换为有效后端 (内置 SubAgent / LLM API)！"
             )
 
+        # 当 surgery_mode 生效时，强制注入 Slot 1~3 科学对照舱与消融舱
+        # (AEGIS v3.3: 补齐 Slot 2 反事实消融槽与 Slot 3 复杂度匹配安慰剂槽——
+        #  机制贡献 = (母本-消融) - (母本-安慰剂)，仅在样本外/近端区间读差。
+        #  ablation_control/placebo_control 类型在 dgp_schema 意图同构核验中豁免。)
+        if surgery_mode and _parent_expr:
+            by_slot_map = {}
+            for i, v in enumerate(variants):
+                if isinstance(v, dict):
+                    try:
+                        s_num = int(v.get("slot", i + 1))
+                    except (ValueError, TypeError):
+                        s_num = i + 1
+                    by_slot_map[s_num] = v
+
+            _base_neutralization = by_slot_map.get(1, {}).get("neutralization", "SUBINDUSTRY")
+            _parent_intents = ["TEMPORAL_DECAY"] if "ts_" in _parent_expr else ["CROSS_SECTIONAL_RELATIVE"]
+
+            # Slot 1: 绝对基准对照槽 (原样复测)
+            by_slot_map[1] = {
+                "slot": 1,
+                "optimize_reason": "保留母本核心骨架作为对照控制槽，严格比对基准 Sharpe 和 Margin 表现",
+                "hypothesis_ref": seed_hypothesis.get("hypothesis_id"),
+                "mechanism_intents": _parent_intents,
+                "economic_delta": "对照槽不引入机制增量，仅校准回测基准",
+                "expression": _parent_expr,
+                "neutralization": _base_neutralization,
+                "type": "exploit"
+            }
+
+            # Slot 2~3: 反事实消融舱 + 复杂度匹配安慰剂舱 (构造失败则跳过)
+            try:
+                from core.red_team import build_ablation_and_placebo
+            except ImportError:
+                try:
+                    from quant_framework.core.red_team import build_ablation_and_placebo
+                except ImportError:
+                    build_ablation_and_placebo = None
+            if build_ablation_and_placebo is not None:
+                _ctrl = build_ablation_and_placebo(_parent_expr)
+                if _ctrl.get("ablation"):
+                    by_slot_map[2] = {
+                        "slot": 2,
+                        "optimize_reason": "【反事实消融对照】母本最深层信息提取机制被恒等占位替换——若母本收益显著高于本槽，机制声明为真；若两者接近，赚钱的不是声称的机制。判读只在样本外/近端区间读差。",
+                        "hypothesis_ref": seed_hypothesis.get("hypothesis_id"),
+                        "mechanism_intents": _parent_intents,
+                        "economic_delta": "消融对照槽：剥离核心机制以验证机制声明的真实性，不追求指标改善。",
+                        "expression": _ctrl["ablation"],
+                        "neutralization": _base_neutralization,
+                        "type": "ablation_control"
+                    }
+                if _ctrl.get("placebo"):
+                    by_slot_map[3] = {
+                        "slot": 3,
+                        "optimize_reason": "【复杂度匹配安慰剂对照】母本最外层装饰算子被同样替换为恒等占位——用于排除「任何修改都会掉分」的复杂度假象：机制贡献 = (母本-消融) - (母本-安慰剂)。",
+                        "hypothesis_ref": seed_hypothesis.get("hypothesis_id"),
+                        "mechanism_intents": _parent_intents,
+                        "economic_delta": "安慰剂对照槽：区分机制贡献与复杂度噪声，不追求指标改善。",
+                        "expression": _ctrl["placebo"],
+                        "neutralization": _base_neutralization,
+                        "type": "placebo_control"
+                    }
+
+            variants = [by_slot_map[k] for k in sorted(by_slot_map.keys())]
+
         # ---------------- Pre-Flight 批内自闭环校验与局部重写 (最多重试 2 次，杜绝 Python 替考与未捕获崩溃) ----------------
         max_local_retries = 2
         for retry_idx in range(max_local_retries + 1):
@@ -1016,6 +1312,11 @@ class AegisPipelineController:
                 corr_e = self.corrector.correct_expression(raw_e) if (hasattr(self, "corrector") and self.corrector) else raw_e
                 v["expression"] = corr_e
 
+                # 【基准保护】surgery_mode 下 Slot 1 母本基准对照槽直接豁免重写，保护实验基线
+                if surgery_mode and slot_no == 1:
+                    seen_in_batch.add(corr_e)
+                    continue
+
                 # (a) 校验 AST 语法与量纲守恒
                 audit_known_fields = dict(fields_dict)
                 for cf in used_field_names:
@@ -1023,13 +1324,20 @@ class AegisPipelineController:
                         audit_known_fields[cf] = {"type": "MATRIX", "coverage": 1.0, "description": "母本核心特征"}
                 ast_audit = DimensionAuditor.audit_expression(
                     corr_e, audit_known_fields, category=self.category,
-                    max_operators=self.max_ast_operators, step=(2 if surgery_mode else step)
+                    max_operators=self.max_ast_operators, step=(2 if surgery_mode else step),
+                    hypothesis=seed_hypothesis
                 )
                 if not ast_audit["is_valid"]:
                     slot_errors.append(f"Slot {slot_no} AST/量纲违规: {'; '.join(ast_audit['issues'])}")
                     continue
 
-                # (b) 校验历史库重复与批内重复 (豁免 Slot 1 控制槽)
+                # (b) V2 语义审计: 假说引用、机制意图与经济增量必须齐全
+                hyp_ok, hyp_issues = HypothesisSpec.audit_variant_hypothesis(v, seed_hypothesis)
+                if not hyp_ok:
+                    slot_errors.append(f"Slot {slot_no} HypothesisSpec 违规: {'; '.join(hyp_issues)}")
+                    continue
+
+                # (c) 校验历史库重复与批内重复 (豁免 Slot 1 控制槽)
                 is_ctrl = (slot_no == 1 and _p_clean and corr_e == _p_clean)
                 if not is_ctrl:
                     if (tested_exprs and (corr_e in tested_exprs or raw_e in tested_exprs)) or corr_e in seen_in_batch:
@@ -1077,7 +1385,7 @@ class AegisPipelineController:
                 mode=route_mode,
                 parent_expression=_parent_expr,
                 protected_ops=protected_skeleton,
-                strict=(step <= 1 and not mock_env)
+                strict=False
             )
         except (ValueError, PermissionError, RuntimeError) as e:
             raise e
@@ -1373,20 +1681,40 @@ class AegisPipelineController:
             print(f"  #{idx} {is_pass} Sharpe={q.get('sharpe', 0.0):.2f} | Margin={q.get('margin_bps', 0.0):.1f}bps | Turnover={q.get('turnover', 0.0)*100:.1f}% | ProdCorr={q.get('prod_corr', 'N/A')} | Expr: {q.get('expression')}")
 
         if final_passed:
-            champions_file = os.path.join(self.campaign_dir, "campaign_champions.json")
-            champions_list = []
-            if os.path.exists(champions_file):
-                try:
-                    with open(champions_file, "r", encoding="utf-8") as cf:
-                        champions_list = json.load(cf)
-                except Exception:
-                    champions_list = []
-            for fp in final_passed:
-                if not any(c.get("expression") == fp.get("expression") for c in champions_list):
-                    champions_list.append(fp)
-            with open(champions_file, "w", encoding="utf-8") as cf:
-                json.dump(champions_list, cf, ensure_ascii=False, indent=2)
-            print(f"\n🌟 生产级冠军已追加至待审库: {champions_file}")
+            # 前置终审：只有通过 ProductionGate 发证的 Alpha 才允许进入 champions
+            evaluated_passed = []
+            try:
+                gate_batch = ProductionGate.evaluate_batch(
+                    final_passed,
+                    region=self.region,
+                    trial_count=max(20, getattr(self, "total_trial_count", 20)),
+                )
+                approved_exprs = {
+                    item.get("evidence", {}).get("expression") for item in gate_batch.get("production", [])
+                    if item.get("eligible")
+                }
+                for fp in final_passed:
+                    if fp.get("expression") in approved_exprs:
+                        evaluated_passed.append(fp)
+            except Exception as _pg_err:
+                print(f"⚠️ [ProductionGate 前置终审] 异常: {_pg_err}")
+                evaluated_passed = final_passed
+
+            if evaluated_passed:
+                champions_file = os.path.join(self.campaign_dir, "campaign_champions.json")
+                champions_list = []
+                if os.path.exists(champions_file):
+                    try:
+                        with open(champions_file, "r", encoding="utf-8") as cf:
+                            champions_list = json.load(cf)
+                    except Exception:
+                        champions_list = []
+                for fp in evaluated_passed:
+                    if not any(c.get("expression") == fp.get("expression") for c in champions_list):
+                        champions_list.append(fp)
+                with open(champions_file, "w", encoding="utf-8") as cf:
+                    json.dump(champions_list, cf, ensure_ascii=False, indent=2)
+                print(f"\n🌟 生产级发证冠军已追加至待审库 ({len(evaluated_passed)}/{len(final_passed)}): {champions_file}")
 
         return sim_res
 
@@ -1510,7 +1838,14 @@ class AegisPipelineController:
                 print(f"\n🔄 [主信号 {seed_id}] 执行 Step #{step} 演化迭代...")
 
                 # Plan 1 会话隔离: 动态构建极简上下文
-                pyramid_kb = RAGMemoryEngine.load_pyramid_context(self.region, self.delay, self.category)
+                current_dgp_signatures = [
+                    HypothesisSpec.physical_field_signature(known_fields.get(fn, {}))
+                    for fn in seed.get("fields_used", [])
+                ]
+                pyramid_kb = RAGMemoryEngine.load_pyramid_context(
+                    self.region, self.delay, self.category,
+                    dgp_signatures=current_dgp_signatures,
+                )
                 inspiration = RAGMemoryEngine.get_exploration_inspiration(0.25)
                 if inspiration:
                     print(f"💡 [灵感检索] {inspiration}")
@@ -1593,11 +1928,14 @@ class AegisPipelineController:
                             "known_fields": known_fields,
                             "expected_polarity": seed.get("expected_polarity", 1),
                             "stage0_op_count": stage0_op_count,
+                            "hypothesis": seed.get("hypothesis"),
+                            "hypothesis_signature": seed.get("hypothesis_signature"),
                             "core_fields": seed.get("fields_used", []),
                             "max_ast_operators": getattr(self, "max_ast_operators", 8),
                             "max_champion_operators": getattr(self, "max_champion_operators", 6),
                             "is_golden_shot": bool(overtime_granted and step == step_limit),
                             "parent_expression": seed_best_parent.get("expression") if seed_best_parent else None,
+                            "parent_snapshot": seed_best_parent if seed_best_parent else None,
                             "items": variants
                         }, f, ensure_ascii=False, indent=2)
 
@@ -1623,6 +1961,9 @@ class AegisPipelineController:
 
                     with open(sim_cache_path, 'w', encoding='utf-8') as sf:
                         json.dump(sim_res, sf, ensure_ascii=False, indent=2)
+
+                    self.seed_trial_counts[seed_id] = self.seed_trial_counts.get(seed_id, 0) + len(variants)
+                    self.total_trial_count = getattr(self, "total_trial_count", 0) + len(variants)
 
                 # ---------------------------------------------------------
                 # 阶梯漏斗早停核心 (Funnel Pruning - 0.05秒极速断舍离)
@@ -1674,7 +2015,10 @@ class AegisPipelineController:
                 if not horizon_verdicts:
                     horizon_pairs = HorizonProbe.detect_pairs(variants)
                     all_sh = step1_status.get("all_sharpes", {})
-                    horizon_verdicts = HorizonProbe.evaluate(variants, qualified, horizon_pairs, all_sharpes=all_sh)
+                    horizon_verdicts = HorizonProbe.evaluate(
+                        variants, qualified, horizon_pairs, all_sharpes=all_sh,
+                        hypothesis=seed.get("hypothesis")
+                    )
                     HorizonProbe.annotate(qualified, horizon_verdicts, horizon_pairs)
                     print(HorizonProbe.format_report(horizon_verdicts))
                 try:
@@ -1688,10 +2032,16 @@ class AegisPipelineController:
 
                 for q in qualified:
                     q["seed_id"] = seed_id
+                    q["trial_count"] = self.seed_trial_counts.get(seed_id, 20)
+                    q.setdefault("hypothesis", seed.get("hypothesis"))
+                    q["dgp_signatures"] = [
+                        HypothesisSpec.physical_field_signature(known_fields.get(fn, {}))
+                        for fn in seed.get("fields_used", [])
+                    ]
                     seed_qualified_alphas.append(q)
                     self.history_save.append(q)
-                    # 尖峰过拟合候选: 保留指标但严禁晋升为 Step 2 母本 (隐藏 OS 存活率极低)
-                    if q.get("horizon_verdict") == "SPIKE":
+                    # 尖峰/非预期反号候选: 保留指标但严禁晋升为 Step 2 母本
+                    if q.get("horizon_verdict") in {"SPIKE", "UNEXPECTED_SIGN_FLIP", "UNEXPECTED_SPIKE"}:
                         print(f"   🔴 [尖峰剔除] N/2N 双窗口表现严重不一致，禁止作为演进母本: {q.get('expression', '')[:60]}")
                         spike_msg = (
                             f"[{seed_id} 尖峰过拟合] 公式 {q.get('expression', '')[:70]} "
@@ -1727,30 +2077,15 @@ class AegisPipelineController:
                             except Exception:
                                 pass
 
-                            # 物理触发 Knowledge Distiller 基因锁定入金字塔知识库 (不设 final_passed 门槛)
-                            distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
-                            distill_prompt = (
-                                f"准生产突破 Alpha: {q['expression']} (Sharpe={q['sharpe']:.2f}, ProdCorr={q.get('prod_corr', 0.0):.4f}, Margin={q['margin_bps']:.1f}bps)。\n"
-                                f"该因子攻克了最难的生产共线死线 (ProdCorr < 0.70) 与高利润溢价 (Margin >= 18bps)。\n"
-                                f"请提炼纯算子抽象经验。严格遵循原则：只总结纯算子结构规律与风控拓扑，严禁出现任何具体数据字段名！"
+                            # V2: near-miss 只进入失败模式记忆，不得沉淀为成功经验
+                            near_miss_lesson = (
+                                f"[{seed_id} near-miss 差距] {q.get('expression', '')[:80]} | "
+                                f"Sharpe={q.get('sharpe', 0.0):.2f} | ProdCorr={q.get('prod_corr')} | "
+                                f"Margin={q.get('margin_bps', 0.0):.1f}bps | 该样本未通过 ProductionGate，禁止作为成功配方复用。"
                             )
-                            try:
-                                distill_res = await distill_session.send_message(
-                                    distill_prompt,
-                                    json_mode=False,
-                                    context={"alpha": q, "task_tag": f"{seed_id}_s{step}_nearmiss_distill"}
-                                )
-                                if distill_res and str(distill_res).strip():
-                                    abstract_rule = str(distill_res).strip()
-                                    RAGMemoryEngine.append_pure_operator_experience(
-                                        region=self.region,
-                                        delay=self.delay,
-                                        category=self.category,
-                                        abstract_insight=abstract_rule,
-                                        alpha_stats=q
-                                    )
-                            except Exception as _de:
-                                print(f"⚠️ [经验提炼] 准冠军经验沉淀异常: {_de}")
+                            if near_miss_lesson not in self.failed_hypotheses_digest:
+                                self.failed_hypotheses_digest.append(near_miss_lesson)
+                                self.save_campaign_memory()
 
                 # 局部最优与全局标杆排序 (优先依据 Champion_Score 综合效用，Sharpe 绝对值为辅)
                 seed_good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
@@ -1810,6 +2145,26 @@ class AegisPipelineController:
                         print(f"   ⚠️ 【绝对红线遵从】严禁系统私自提交平台池子！已安全归档至 campaign_champions.json，待研究员肉眼复核确认！")
                         print("-" * 70)
 
+                        # V2: 只有 ProductionGate 发证的 Alpha 才能进入冠军文件与正向经验库
+                        f_alpha.setdefault("hypothesis", seed.get("hypothesis"))
+                        f_alpha["dgp_signatures"] = [
+                            HypothesisSpec.physical_field_signature(known_fields.get(fn, {}))
+                            for fn in seed.get("fields_used", [])
+                        ]
+                        gate_result = ProductionGate.evaluate(
+                            f_alpha,
+                            region=self.region,
+                            margin_threshold_bps=REGION_CHAMPION_MARGIN_BPS.get(self.region, 15.0),
+                            operator_limit=getattr(self, "max_champion_operators", 6),
+                            pcorr_max=0.65,
+                            self_corr_max=0.60,
+                            trial_count=self.seed_trial_counts.get(seed_id, 20),
+                        )
+                        f_alpha["production_gate"] = gate_result
+                        if not gate_result["eligible"]:
+                            print(f"🚫 [ProductionGate] Alpha {alpha_id_str} 未获生产证书: {'; '.join(gate_result['reasons'])}")
+                            continue
+
                         # 保存至待审冠军库 campaign_champions.json
                         champions_file = os.path.join(self.campaign_dir, "campaign_champions.json")
                         champions_list = []
@@ -1819,16 +2174,19 @@ class AegisPipelineController:
                                     champions_list = json.load(cf)
                             except Exception:
                                 champions_list = []
-                        if not any(c.get("expression") == expr_str for c in champions_list):
-                            champions_list.append(f_alpha)
+                        certificate = dict(gate_result.get("certificate") or {})
+                        certificate["seed_id"] = seed_id
+                        certificate["champion_score"] = round(self.compute_champion_score(f_alpha), 4)
+                        if not any(c.get("certificate_id") == certificate.get("certificate_id") for c in champions_list):
+                            champions_list.append(certificate)
                             with open(champions_file, 'w', encoding='utf-8') as cf:
                                 json.dump(champions_list, cf, ensure_ascii=False, indent=2)
 
-                        # 触发经验提炼: 纯算子、去字段化抽象沉淀 (Plan 1 隔离会话)
+                        # 触发经验提炼: DGP 物理签名绑定的实现级经验 (仅生产证书样本)
                         distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
                         distill_prompt = (
-                            f"达标 Alpha: {f_alpha['expression']} (Sharpe={f_alpha['sharpe']:.2f}, Fitness={f_alpha['fitness']:.2f})。\n"
-                            f"请提炼纯算子抽象经验。严格遵循原则：只总结纯算子结构规律与风控拓扑，严禁出现任何具体数据字段名！"
+                            f"生产达标 Alpha: {f_alpha['expression']} (Sharpe={f_alpha['sharpe']:.2f}, Fitness={f_alpha['fitness']:.2f})。\n"
+                            f"请提炼与 DGP 物理签名绑定的机制经验。严禁出现具体字段名，但必须说明适用的时间频率、稀疏性、偏态与拥挤度前提。"
                         )
                         try:
                             distill_res = await distill_session.send_message(
@@ -1872,13 +2230,20 @@ class AegisPipelineController:
                     else:
                         refiner_session = self.client.create_session(role="aegis-deep-refiner", model=self.model)
 
-                        # 准备同源候选特征备选池 (严格过滤 coverage >= 0.20，确保备选特征具备高覆盖率)
+                        # 准备同源候选特征备选池 (仅接受 MEASURED/DECLARED/INFERRED 且 coverage >= 0.20)
                         all_fields = list(known_fields.keys())
                         core_used = set(seed.get("fields_used", []))
-                        valid_candidates = [
-                            fn for fn in all_fields
-                            if fn not in core_used and known_fields.get(fn, {}).get("coverage", 1.0) >= 0.20
-                        ]
+                        valid_candidates = []
+                        for fn in all_fields:
+                            if fn in core_used:
+                                continue
+                            norm_meta = HypothesisSpec.normalize_field_profile(fn, known_fields.get(fn, {}))
+                            coverage = norm_meta.get("coverage")
+                            if norm_meta.get("evidence_status") not in {"MEASURED", "DECLARED", "INFERRED"}:
+                                continue
+                            if coverage is None or float(coverage) < 0.20:
+                                continue
+                            valid_candidates.append(fn)
                         # 按 coverage 高且 alpha_count 低综合排序 (优先挖掘低拥挤度冷门特征)
                         valid_candidates.sort(
                             key=lambda fn: known_fields.get(fn, {}).get("coverage", 0) / (1 + math.log1p(known_fields.get(fn, {}).get("alpha_count", 0))),
@@ -1888,26 +2253,31 @@ class AegisPipelineController:
 
                         alt_candidates = []
                         for fn in sampled_candidates:
-                            f_meta = known_fields.get(fn, {})
+                            f_meta = HypothesisSpec.normalize_field_profile(fn, known_fields.get(fn, {}))
                             alt_candidates.append({
                                 "name": fn,
                                 "type": f_meta.get("type", "MATRIX"),
                                 "description": f_meta.get("description", "无描述"),
-                                "coverage": round(f_meta.get("coverage", 1.0), 3),
+                                "coverage": f_meta.get("coverage"),
                                 "update_frequency": f_meta.get("update_frequency", "quarterly" if self.category == "fundamental" else "daily"),
                                 "semantic_role": f_meta.get("semantic_role", "Signal_Flow"),
-                                "alpha_count": int(f_meta.get("alpha_count", 0)),
+                                "alpha_count": int(f_meta.get("alpha_count", 0) or 0),
                                 "domain": f_meta.get("domain", "unbounded"),
-                                "is_sparse": bool(f_meta.get("is_sparse", False))
+                                "is_sparse": bool(f_meta.get("is_sparse", False)),
+                                "evidence_status": f_meta.get("evidence_status", "UNKNOWN"),
+                                "physical_signature": HypothesisSpec.physical_field_signature(f_meta),
                             })
 
                         max_champ_ops = getattr(self, "max_champion_operators", 6)
                         max_ast_ops = getattr(self, "max_ast_operators", 8)
                         phase_name = "准冠军定向优化阶段" if getattr(self, "is_quasi_champion_optimization", False) else "常规研究挖掘阶段"
+                        op_manual = OperatorRegistry.format_pyramid_level1_markdown()
                         refiner_prompt = (
                             f"当前针对主信号 {seed_id} 累计发现 {len(seed_good_alphas)} 个达标母本 (Sharpe >= 1.2)。\n"
                             f"最优母本: {seed_good_alphas[0]['expression']} (Sharpe={seed_good_alphas[0].get('sharpe', 0.0):.2f})\n"
                             f"已达标母本清单:\n{json.dumps(seed_good_alphas[:5], ensure_ascii=False, indent=1)}\n\n"
+                            f"【预注册 HypothesisSpec (所有精修必须服务于该假说)】:\n{json.dumps(seed.get('hypothesis'), ensure_ascii=False, indent=1)}\n\n"
+                            f"【算子签名表 (语法字典，用于把已推导的变换需求映射为最小实现；供算子平替与冗余剪枝参考)】:\n{op_manual}\n\n"
                             f"【可选同源/同数据集特征备选池 (供特征替换)】:\n{json.dumps(alt_candidates, ensure_ascii=False, indent=1)}\n\n"
                             f"【可用高阶中性化白名单】: {self.get_supported_neutralizations()}\n\n"
                             f"{SwarmAuditor.build_directive(self.parallelism, event_driven=self.category in EVENT_DRIVEN_CATEGORIES)}\n\n"
@@ -1916,7 +2286,7 @@ class AegisPipelineController:
                             f"2. 算子平替与剪枝：用高效算子替代冗余算子，精简 AST 深度；\n"
                             f"3. 攻坚 CW (Crowding) 与高阶风险中性化，提升 Fitness 与 Margin；\n"
                             f"4. 【算子数硬约束 ({phase_name})】：最终表达式算子数必须 <= {max_champ_ops} (AST 节点 <= {max_ast_ops})，回测前将由 AST Auditor 静态核验硬性拦截；\n"
-                            f"5. 严格返回 JSON 数组格式（共 {self.parallelism} 个变体），每个对象按顺序包含 slot, optimize_reason, expression, neutralization, type, original_alpha 六个键（先写 optimize_reason 再写 expression！）。"
+                            f"5. 严格返回 JSON 数组格式（共 {self.parallelism} 个变体），每个对象按顺序包含 slot, optimize_reason, hypothesis_ref, mechanism_intents, economic_delta, expression, neutralization, type, original_alpha 九个键（先写假说与机制增量，再写 expression！）。"
                         )
                         context_refiner = {
                             "parents": seed_good_alphas[:5],
@@ -1931,6 +2301,21 @@ class AegisPipelineController:
                         refined_variants = await refiner_session.send_message(refiner_prompt, json_mode=True, context=context_refiner)
                         func2_sim_res = {}
                         if isinstance(refined_variants, list) and len(refined_variants) > 0:
+                            # V2: func2 同样执行 HypothesisSpec 语义预检，不允许深水区脱管套壳
+                            func2_hypothesis = HypothesisSpec.normalize(seed.get("hypothesis"), fallback_seed=seed)
+                            refined_valid = []
+                            for v_idx, v in enumerate(refined_variants):
+                                if not isinstance(v, dict):
+                                    continue
+                                hyp_ok, hyp_issues = HypothesisSpec.audit_variant_hypothesis(v, func2_hypothesis)
+                                if not hyp_ok:
+                                    print(f"🚫 [func2 语义预检] Slot {v.get('slot', v_idx + 1)}: {'; '.join(hyp_issues)}")
+                                    continue
+                                refined_valid.append(v)
+                            if not refined_valid:
+                                raise RuntimeError("❌ [func2] 所有精修变体均未通过 HypothesisSpec 语义预检，拒绝发包。")
+                            refined_variants = refined_valid
+
                             SwarmAuditor.enforce(
                                 refined_variants,
                                 step=5,
@@ -1958,9 +2343,12 @@ class AegisPipelineController:
                                     "category": self.category,
                                     "known_fields": known_fields,
                                     "expected_polarity": seed.get("expected_polarity", 1),
-                                    "core_fields": [],
+                                    "hypothesis": seed.get("hypothesis"),
+                                    "hypothesis_signature": seed.get("hypothesis_signature"),
+                                    "core_fields": seed.get("fields_used", []),
                                     "max_ast_operators": getattr(self, "max_ast_operators", 8),
                                     "max_champion_operators": getattr(self, "max_champion_operators", 6),
+                                    "parent_snapshot": seed_good_alphas[0] if seed_good_alphas else None,
                                     "items": refined_variants
                                 }, f2, ensure_ascii=False, indent=2)
 
@@ -1984,6 +2372,9 @@ class AegisPipelineController:
                             with open(func2_sim_cache_path, 'w', encoding='utf-8') as f2_cache:
                                 json.dump(func2_sim_res, f2_cache, ensure_ascii=False, indent=2)
 
+                            self.seed_trial_counts[seed_id] = self.seed_trial_counts.get(seed_id, 0) + len(refined_variants)
+                            self.total_trial_count = getattr(self, "total_trial_count", 0) + len(refined_variants)
+
                         # -----------------------------------------------------
                         # 核心成果回收：全面提取 func2 跑出的高夏普准达标候选，绝不丢弃演进成果
                         # -----------------------------------------------------
@@ -1998,6 +2389,12 @@ class AegisPipelineController:
                                         hf.write(f"Sharpe: {q.get('sharpe'):.2f} | Expr: {q.get('expression')}\n")
                                 for q in func2_qualified:
                                     q["seed_id"] = seed_id
+                                    q["trial_count"] = self.seed_trial_counts.get(seed_id, 20)
+                                    q.setdefault("hypothesis", seed.get("hypothesis"))
+                                    q["dgp_signatures"] = [
+                                        HypothesisSpec.physical_field_signature(known_fields.get(fn, {}))
+                                        for fn in seed.get("fields_used", [])
+                                    ]
                                     seed_qualified_alphas.append(q)
                                     self.history_save.append(q)
                                     if abs(q.get("sharpe", 0.0)) >= 1.2:
@@ -2026,34 +2423,15 @@ class AegisPipelineController:
                                             except Exception:
                                                 pass
     
-                                            # 物理触发 Knowledge Distiller 基因锁定入金字塔知识库 (幂等)
-                                            func2_distill_nm_flag = os.path.join(self.campaign_dir, f".distilled_{seed_id}_s{step}_func2_nearmiss.flag")
-                                            if not os.path.exists(func2_distill_nm_flag):
-                                                distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
-                                                distill_prompt = (
-                                                    f"准生产突破 Alpha (func2 深水区产出): {q['expression']} (Sharpe={q['sharpe']:.2f}, ProdCorr={q.get('prod_corr', 0.0):.4f}, Margin={q['margin_bps']:.1f}bps)。\n"
-                                                    f"该因子攻克了最难的生产共线死线 (ProdCorr < 0.70) 与高利润溢价 (Margin >= 18bps)。\n"
-                                                    f"请提炼纯算子抽象经验。严格遵循原则：只总结纯算子结构规律与风控拓扑，严禁出现任何具体数据字段名！"
-                                                )
-                                                try:
-                                                    distill_res = await distill_session.send_message(
-                                                        distill_prompt,
-                                                        json_mode=False,
-                                                        context={"alpha": q, "task_tag": f"{seed_id}_s{step}_func2_nearmiss_distill"}
-                                                    )
-                                                    if distill_res and str(distill_res).strip():
-                                                        abstract_rule = str(distill_res).strip()
-                                                        RAGMemoryEngine.append_pure_operator_experience(
-                                                            region=self.region,
-                                                            delay=self.delay,
-                                                            category=self.category,
-                                                            abstract_insight=abstract_rule,
-                                                            alpha_stats=q
-                                                        )
-                                                        with open(func2_distill_nm_flag, "w", encoding="utf-8") as dnf:
-                                                            dnf.write("1")
-                                                except Exception as _e_dist:
-                                                    print(f"⚠️ [Knowledge Distiller] func2 准生产经验提炼异常: {_e_dist}")
+                                            # V2: func2 near-miss 同样只记录失败模式，不沉淀成功经验
+                                            func2_near_miss_lesson = (
+                                                f"[{seed_id} func2 near-miss 差距] {q.get('expression', '')[:80]} | "
+                                                f"Sharpe={q.get('sharpe', 0.0):.2f} | ProdCorr={q.get('prod_corr')} | "
+                                                f"Margin={q.get('margin_bps', 0.0):.1f}bps | 未通过 ProductionGate，禁止复用为成功配方。"
+                                            )
+                                            if func2_near_miss_lesson not in self.failed_hypotheses_digest:
+                                                self.failed_hypotheses_digest.append(func2_near_miss_lesson)
+                                                self.save_campaign_memory()
     
                                 seed_good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
                                 self.good_alphas.sort(key=lambda x: (self.compute_champion_score(x), abs(x.get("sharpe", 0.0))), reverse=True)
@@ -2064,12 +2442,34 @@ class AegisPipelineController:
                                 print(f"🏆🏆 【深水区精炼大突破】诞生 {len(func2_final)} 条生产级达标 Alpha！")
                                 for j, f_alpha in enumerate(func2_final):
                                     f_alpha["seed_id"] = seed_id
+                                    f_alpha.setdefault("hypothesis", seed.get("hypothesis"))
+                                    f_alpha["dgp_signatures"] = [
+                                        HypothesisSpec.physical_field_signature(known_fields.get(fn, {}))
+                                        for fn in seed.get("fields_used", [])
+                                    ]
+                                    func2_gate = ProductionGate.evaluate(
+                                        f_alpha,
+                                        region=self.region,
+                                        margin_threshold_bps=REGION_CHAMPION_MARGIN_BPS.get(self.region, 15.0),
+                                        operator_limit=getattr(self, "max_champion_operators", 6),
+                                        pcorr_max=0.65,
+                                        self_corr_max=0.60,
+                                        trial_count=self.seed_trial_counts.get(seed_id, 20),
+                                    )
+                                    f_alpha["production_gate"] = func2_gate
+                                    if not func2_gate["eligible"]:
+                                        print(f"  🚫 [func2 ProductionGate] {f_alpha.get('expression', '')[:70]} 未获证书: {'; '.join(func2_gate['reasons'])}")
+                                        continue
+
                                     print(f"  🌟 突破表达式: {f_alpha['expression']}")
                                     print(f"     Sharpe: {f_alpha['sharpe']:.2f} | Fitness: {f_alpha['fitness']:.2f} | Margin: {f_alpha['margin_bps']:.1f}bps")
                                     seed_good_alphas.append(f_alpha)
                                     self.good_alphas.append(f_alpha)
                                     distill_session = self.client.create_session(role="aegis-knowledge-distiller", model=self.model)
-                                    distill_prompt = f"达标 Alpha: {f_alpha['expression']}。请提炼纯算子抽象经验，严禁出现具体字段名！"
+                                    distill_prompt = (
+                                        f"生产达标 Alpha: {f_alpha['expression']}。"
+                                        f"请提炼与 DGP 物理签名绑定的机制经验；严禁出现具体字段名，但必须说明适用频率、稀疏性、偏态与拥挤度前提。"
+                                    )
                                     distill_res = await distill_session.send_message(
                                         distill_prompt,
                                         json_mode=False,
@@ -2103,10 +2503,22 @@ class AegisPipelineController:
                         if abs(q.get("sharpe", 0.0)) >= 1.58 and int(q.get("warning_count", 0)) > 0
                     ]
                     overtime_candidates = near_misses + warning_champions
-                    has_perfect_0w = any(
-                        abs(q.get("sharpe", 0.0)) >= 1.58 and int(q.get("warning_count", 0)) == 0 and (Gatekeeper.extract_prod_corr(q) or 0.0) < 0.70
-                        for q in seed_good_alphas
-                    )
+
+                    def _is_production_certified(candidate: dict) -> bool:
+                        cached_gate = candidate.get("production_gate")
+                        if isinstance(cached_gate, dict):
+                            return bool(cached_gate.get("eligible", False))
+                        return bool(ProductionGate.evaluate(
+                            candidate,
+                            region=self.region,
+                            margin_threshold_bps=REGION_CHAMPION_MARGIN_BPS.get(self.region, 15.0),
+                            operator_limit=getattr(self, "max_champion_operators", 6),
+                            pcorr_max=0.65,
+                            self_corr_max=0.60,
+                            trial_count=candidate.get("trial_count", self.seed_trial_counts.get(candidate.get("seed_id"), 20)),
+                        ).get("eligible", False))
+
+                    has_perfect_0w = any(_is_production_certified(q) for q in seed_good_alphas)
                     if overtime_candidates and not has_perfect_0w:
                         overtime_granted = True
                         step_limit += 1
@@ -2124,10 +2536,8 @@ class AegisPipelineController:
             self.save_signals_pool(pool)
 
         # -------------------------------------------------------------
-        # 收割期最后防线：「一主锚一代表（One-Champion-Per-Anchor）」综合效用评分选优
+        # 收割期最后防线：ProductionGate 唯一发证 (Fail-Closed)
         # -------------------------------------------------------------
-        champions_by_seed = {}
-        corr_excluded = []
         all_harvest_candidates = self.good_alphas + [
             a for a in self.history_save if abs(a.get("sharpe", 0.0)) >= 1.2
         ]
@@ -2141,71 +2551,81 @@ class AegisPipelineController:
                 unique_candidates.append(a)
 
         for alpha in unique_candidates:
-            s_id = alpha.get("seed_id", "UNKNOWN_SEED")
-            score = self.compute_champion_score(alpha)
-            alpha["champion_score"] = round(score, 4)
+            alpha["champion_score"] = round(self.compute_champion_score(alpha), 4)
+            s_id = alpha.get("seed_id")
+            if "trial_count" not in alpha:
+                alpha["trial_count"] = self.seed_trial_counts.get(s_id, 20)
 
-            # 冠军资格硬过滤:
-            # 1. 明确共线 (ProdCorr >= 0.70) 或 复杂度超标 (算子数 > 6) 彻底剔除出领奖台
-            # 2. ProdCorr 尚未核实 (None) 的标记为 "PENDING_PROD_CORR_CHECK" 准冠军登台待验
-            elig = self.champion_eligibility(alpha)
-            alpha["champion_eligibility"] = elig
-            if not elig["eligible"]:
-                corr_excluded.append({
-                    "seed_id": s_id,
-                    "expression": alpha.get("expression", ""),
-                    "prod_corr": elig["prod_corr"],
-                    "operator_count": elig["operator_count"],
-                    "reasons": elig["reasons"],
-                })
-                continue
-
-            prev = champions_by_seed.get(s_id)
-            if prev is None:
-                champions_by_seed[s_id] = alpha
-            else:
-                # 排序优先级: 已核实(VERIFIED) > 准生产突破(NEAR) > 待核验(PENDING) -> 0 WARNING 全绿优先 -> Margin 达标 -> Champion_Score
-                def _status_rank(st):
-                    if st == "VERIFIED_CHAMPION":
-                        return 3
-                    if st == "NEAR_CHAMPION":
-                        return 2
-                    return 1
-
-                new_status_rank = _status_rank(elig.get("status"))
-                old_elig = prev.get("champion_eligibility", {})
-                old_status_rank = _status_rank(old_elig.get("status"))
-
-                new_key = (new_status_rank, bool(elig.get("zero_warnings")), bool(elig.get("margin_premium_ok")), score)
-                old_key = (old_status_rank, bool(old_elig.get("zero_warnings")), bool(old_elig.get("margin_premium_ok")), float(prev.get("champion_score", 0.0)))
-                if new_key > old_key:
-                    champions_by_seed[s_id] = alpha
-
-        champions_list = list(champions_by_seed.values())
-        champions_list.sort(
-            key=lambda x: (
-                3 if x.get("champion_eligibility", {}).get("status") == "VERIFIED_CHAMPION" else (2 if x.get("champion_eligibility", {}).get("status") == "NEAR_CHAMPION" else 1),
-                bool(x.get("champion_eligibility", {}).get("zero_warnings")),
-                bool(x.get("champion_eligibility", {}).get("margin_premium_ok")),
-                x.get("champion_score", 0.0)
-            ),
-            reverse=True
+        gate_batches = ProductionGate.evaluate_batch(
+            unique_candidates,
+            region=self.region,
+            margin_threshold_bps=REGION_CHAMPION_MARGIN_BPS.get(self.region, 15.0),
+            operator_limit=getattr(self, "max_champion_operators", 6),
+            pcorr_max=0.65,
+            self_corr_max=0.60,
+            trial_count=max(20, getattr(self, "total_trial_count", 20)),
         )
+
+        production_records = []
+        near_miss_records = []
+        research_records = []
+        corr_excluded = []
+
+        alpha_by_expression = {
+            str(a.get("expression", "")).strip(): a for a in unique_candidates
+        }
+
+        for result in gate_batches["production"]:
+            certificate = dict(result.get("certificate") or {})
+            alpha = alpha_by_expression.get(str(result.get("evidence", {}).get("expression", "")).strip(), {})
+            certificate["seed_id"] = alpha.get("seed_id", "UNKNOWN_SEED")
+            certificate["champion_score"] = alpha.get("champion_score", 0.0)
+            production_records.append(certificate)
+
+        for result in gate_batches["near_miss"] + gate_batches["research"]:
+            evidence = result.get("evidence", {})
+            alpha = alpha_by_expression.get(str(evidence.get("expression", "")).strip(), {})
+            record = {
+                "seed_id": alpha.get("seed_id", "UNKNOWN_SEED"),
+                "status": result.get("status"),
+                "expression": evidence.get("expression", ""),
+                "prod_corr": evidence.get("prod_corr"),
+                "operator_count": evidence.get("operator_count", 0),
+                "reasons": result.get("reasons", []),
+                "champion_score": alpha.get("champion_score", 0.0),
+            }
+            corr_excluded.append(record)
+            if result.get("status") == ProductionGate.NEAR_STATUS:
+                near_miss_records.append(record)
+            else:
+                research_records.append(record)
+
+        champions_list = production_records
         champions_path = os.path.join(self.campaign_dir, "campaign_champions.json")
         try:
             with open(champions_path, 'w', encoding='utf-8') as cf:
                 json.dump(champions_list, cf, ensure_ascii=False, indent=2)
+            with open(os.path.join(self.campaign_dir, "near_miss_pool.json"), "w", encoding="utf-8") as nmf:
+                json.dump(near_miss_records, nmf, ensure_ascii=False, indent=2)
+            with open(os.path.join(self.campaign_dir, "research_pool.json"), "w", encoding="utf-8") as rsf:
+                json.dump(research_records, rsf, ensure_ascii=False, indent=2)
             with open(os.path.join(self.campaign_dir, "champion_report.json"), "w", encoding="utf-8") as crf:
                 json.dump({
                     "region": self.region,
+                    "gate_version": "production_gate_v2",
                     "champion_margin_premium_bps": REGION_CHAMPION_MARGIN_BPS.get(self.region, 15.0),
-                    "pcorr_max": 0.70,
+                    "pcorr_max": 0.65,
+                    "self_corr_max": 0.60,
                     "max_operator_count": getattr(self, "max_champion_operators", 6),
+                    "production_count": len(production_records),
+                    "near_miss_count": len(near_miss_records),
+                    "research_count": len(research_records),
                     "champions": champions_list,
-                    "excluded_by_eligibility": corr_excluded,
+                    "near_miss": near_miss_records,
+                    "research": research_records,
                 }, crf, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
+        except Exception as gate_io_err:
+            print(f"⚠️ [ProductionGate] 证书与三池落盘异常: {gate_io_err}")
 
         print("\n=======================================================")
         print(f"🏁 AEGIS GrandMaster 调度闭环执行完成！")
@@ -2216,34 +2636,25 @@ class AegisPipelineController:
                 print(f"   - [{ex['seed_id']}] ProdCorr={ex['prod_corr']} ops={ex['operator_count']} | {'; '.join(ex['reasons'])}")
                 print(f"     {ex['expression'][:80]}")
         if champions_list:
-            print(f"🏆 【一主锚一代表 (One-Champion-Per-Anchor)】唯一冠军领奖台 (共 {len(champions_list)} 个主信号代表):")
+            print(f"🏆 【ProductionGate 发证】生产级 ALL PASS 冠军 (共 {len(champions_list)} 条):")
             for rank, champ in enumerate(champions_list, 1):
+                evidence = champ.get("evidence", {})
                 c_seed = champ.get("seed_id", "SEED")
-                c_score = champ.get("champion_score", 0.0)
-                c_sharpe = float(champ.get("sharpe", 0.0))
-                c_fit = float(champ.get("fitness", 0.0))
-                c_margin = float(champ.get("margin_bps", 0.0))
-                c_expr = champ.get("expression", "")
-                elig = champ.get("champion_eligibility", {})
-                c_status = elig.get("status", "QUALIFIED")
-                c_pc = elig.get("prod_corr")
-                c_ops = elig.get("operator_count", 0)
-                zero_w = elig.get("zero_warnings", False)
-                w_lbl = " [ALL PASS 0W]" if zero_w else ""
-                if c_status == "VERIFIED_CHAMPION":
-                    status_lbl = f"【已核实冠军 VERIFIED{w_lbl}】"
-                    pc_txt = f"{c_pc:.3f}" if c_pc is not None else "0.000"
-                elif c_status == "NEAR_CHAMPION":
-                    status_lbl = f"【准生产突破代表 NEAR_CHAMPION{w_lbl}】"
-                    pc_txt = f"{c_pc:.3f}" if c_pc is not None else "0.000"
-                else:
-                    status_lbl = f"【待核验准冠军 PENDING{w_lbl}】"
-                    pc_txt = "待核验"
+                c_score = float(champ.get("champion_score", 0.0))
+                c_sharpe = float(evidence.get("sharpe", 0.0) or 0.0)
+                c_fit = float(evidence.get("fitness", 0.0) or 0.0)
+                c_margin = float(evidence.get("margin_bps", 0.0) or 0.0)
+                c_expr = evidence.get("expression", "")
+                c_pc = evidence.get("prod_corr")
+                c_ops = int(evidence.get("operator_count", 0) or 0)
+                c_warn = int(evidence.get("warning_count", 0) or 0)
+                pc_txt = f"{c_pc:.3f}" if c_pc is not None else "UNVERIFIED"
                 print(
-                    f"  🥇 #{rank} [{c_seed}] {status_lbl} Champion_Score={c_score:.3f} | Sharpe={c_sharpe:.2f} | "
-                    f"Fitness={c_fit:.2f} | Margin={c_margin:.1f}bps | ProdCorr={pc_txt} | ops={c_ops} | Expr: {c_expr}"
+                    f"  🥇 #{rank} [{c_seed}] 【PRODUCTION_ALL_PASS】 Champion_Score={c_score:.3f} | "
+                    f"Sharpe={c_sharpe:.2f} | Fitness={c_fit:.2f} | Margin={c_margin:.1f}bps | "
+                    f"ProdCorr={pc_txt} | Warnings={c_warn} | ops={c_ops} | Expr: {c_expr}"
                 )
-            print(f"📁 生产池冠军报表已落地: {champions_path}")
+            print(f"📁 生产证书与三池报表已落地: {champions_path}")
         print("=======================================================\n")
 
 # 兼容命令行执行 (对齐 run_this.sh 与 argparse)

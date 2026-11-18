@@ -12,14 +12,16 @@
 
 ## 二、 经验提炼三大铁律 (WS29639 原帖核心机密)
 
-1. **构造经验的时候只有运算符、无数据字段 (Zero Field Mention)**：
-   - **绝对严禁记录具体字段名**（如 `news_sentiment_score`, `analyst_eps_mean_30d` 等）；
-   - 必须将经验高度抽象为纯算子逻辑组合。
-   - 正例：“在 USA Delay 1 的盈利预期差/新闻类因子中，时序一阶差分（`ts_delta` 5日）结合指数衰减（`ts_decay_exp_window` 10日）能够有效捕捉动量；前置使用 `winsorize(..., std=3)` 抑制极值震荡，外层包裹 `group_neutralize(..., subindustry)` 结合风险中性化能显著提升 Margin 表现。”
-   - 负例：“使用 `sentiment_score` 减去 `mean_sentiment`...” ❌（出现具体字段，破坏泛化性）。
+1. **原子化因果问答提炼 (Atomic QA-Driven Experience, 无死模板、无数据字段)**：
+   - **绝对严禁记录具体字段名**（如 `news_sentiment_score`, `analyst_eps_mean_30d` 等），必须抽象为特征物理属性（如低频跳跃存量、高频脉冲事件、非负无量纲门控）；
+   - **严禁写死固定算子积木公式或硬编码流水线**，经验必须提炼为原子化 QA 机制问答：
+     - **Q (物理场景与病理问题)**: 面对何种数据生成过程 (DGP)、信息半衰期或平台检查病灶（如换手过高、长尾离群、共线性饱和）？
+     - **A (因果机制与拓扑原理)**: 为何某种数学机制变换（如时间衰减匹配、内生基数剥离、凸凹压缩、特质残差分离）能够有效消除该摩擦？其数学与经济学逻辑是什么？
+   - **正例**：“Q: 面对离散突发的事件驱动数据，日间频繁调仓导致换手率严重超标且侵蚀 Margin，如何从机制层面优化？ A: 依据事件发生的时间戳弹性引入状态识别与信息保持机制，仅在事件产生显著变动时更新持仓权重，无事件区间冻结历史信念，可大幅压低无效调仓摩擦，使换手率回归目标区间并提升边际利润。”
+   - **负例**：“使用 winsorize + ts_decay_exp_window + group_neutralize 组合...” ❌（死模板积木，剥夺后续探索自由度）。
 
-2. **明确痛点病灶与算子处方映射 (Symptom-to-Operator Mapping)**：
-   - 明确指出：针对什么物理缺陷（如 Sub-universe Sharpe 失败、换手率过高、集中度违规），采取了什么具体数学算子（如 `winsorize`、`ts_decay_exp_window`、`s_log_1p`），带来了多少量化增益。
+2. **明确痛点病灶与数学机制映射 (Symptom-to-Mechanism Mapping)**：
+   - 明确指出：针对什么物理缺陷与数据生成过程（DGP）特征，采取了何种数学变换机制与拓扑结构，带来了多少量化增益。
 
 3. **四级金字塔增量归档 (Incremental Pyramid Merge)**：
    - 以增量追加形式写入 `alpha_experience/{REGION}_{DELAY}_{CATEGORY}.md`；

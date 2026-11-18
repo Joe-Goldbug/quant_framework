@@ -175,13 +175,17 @@ class TestAEGISHardnessSystem(unittest.TestCase):
         self.assertIn("cluster_collinearity", rx["symptoms"])
         self.assertIn("dead_weight_imbalance", rx["symptoms"])
         self.assertIn("turnover_overflow", rx["symptoms"])
+        self.assertEqual(rx["allowed_mutations"], [], "Gatekeeper 已彻底废除预制算子名单")
+        self.assertTrue(len(rx["forensic_clues"]) >= 4, "客观法医病理线索必须完备")
 
-        # 2. 验证处方锁双向闭环：将处方写入 authorized_mutations.json，若下批未遵守则阻断
+        # 2. 验证处方锁双向闭环：当模拟显式注入特定靶向治愈算子时，若下批未遵守则阻断
         campaign_dir = os.path.join(self.temp_dir, "campaign_test")
         os.makedirs(campaign_dir, exist_ok=True)
         rx_file = os.path.join(campaign_dir, "authorized_mutations.json")
+        rx_with_lock = dict(rx)
+        rx_with_lock["allowed_mutations"] = ["winsorize", "ts_decay_exp_window"]
         with open(rx_file, 'w', encoding='utf-8') as f:
-            json.dump(rx, f)
+            json.dump(rx_with_lock, f)
 
         # 构造未遵从处方的批次 (8 槽每种骨架 <= 2 条，使用未授权算子 如 ts_mean, ts_std_dev, quantile, power)
         disobedient_batch = [

@@ -39,6 +39,22 @@ except (ImportError, ValueError):
         except ImportError:
             HorizonProbe = None
 
+try:
+    from .func_call_corrector import ASTSandboxCorrector
+except (ImportError, ValueError):
+    try:
+        from core.func_call_corrector import ASTSandboxCorrector
+    except ImportError:
+        ASTSandboxCorrector = None
+
+try:
+    from .dgp_schema import MECHANISM_INTENTS
+except (ImportError, ValueError):
+    try:
+        from core.dgp_schema import MECHANISM_INTENTS
+    except ImportError:
+        MECHANISM_INTENTS = set()
+
 
 RANK_FAMILY = {
     "rank", "group_rank", "quantile", "group_quantile",
@@ -175,9 +191,9 @@ def is_rank_outer(expr: str) -> bool:
 class SwarmAuditor:
     MODE_EXPLORATION = MODE_EXPLORATION
     MODE_REFINEMENT = MODE_REFINEMENT
-    MIN_NON_RANK_RATIO = 0.40      # 铁律 B: 至少 40% 槽位外层不用 group_rank
-    MIN_PAIRED_SLOTS = 8           # 10 组骨架 x 2 槽 (20 槽批次)
-    PAIRED_SLOTS_8 = 4             # 8 槽批次的最小成对槽位数
+    MIN_NON_RANK_RATIO = 0.20      # V2: 降低刚性配额，避免为凑比例堆装饰；rank 是否合适由假说决定
+    MIN_PAIRED_SLOTS = 2           # V2: 至少 1 组双窗口对照做期限稳健性，不再强制 10 组拓扑
+    PAIRED_SLOTS_8 = 2             # 8 槽批次同样至少 1 组对照
     MIN_SKELETON_RATIO = 0.45      # 精修模式: 至少 45% 槽位保留母本主锚字段/骨架 (1+9+10 三分天下制)
     MAX_WINDOW_ONLY_RATIO = 0.50   # 精修模式: 纯窗口数字微调不得超过一半槽位
 
@@ -204,6 +220,8 @@ class SwarmAuditor:
         missing: List[int] = []
         too_short: List[int] = []
         no_metric: List[int] = []
+        intents_missing: List[int] = []
+        intents_invalid: List[int] = []
         seen: Dict[str, List[int]] = {}
 
         for idx, v in enumerate(variants or []):
@@ -219,6 +237,12 @@ class SwarmAuditor:
             if "optimize_reason" in keys and "expression" in keys:
                 if keys.index("optimize_reason") > keys.index("expression"):
                     ordered_bad.append(slot)
+
+            intents = v.get("mechanism_intents")
+            if not isinstance(intents, list) or not intents:
+                intents_missing.append(slot)
+            elif not all(isinstance(intent, str) and intent.strip() for intent in intents):
+                intents_invalid.append(slot)
 
             reason = str(v.get("optimize_reason") or v.get("economic_rationale") or "").strip()
             if not reason:
@@ -249,6 +273,10 @@ class SwarmAuditor:
             issues.append(
                 f"{len(no_metric)} 槽假设未点名任何可验收指标 (槽位 {no_metric})，回测无法证伪该论断"
             )
+        if intents_missing:
+            issues.append(f"{len(intents_missing)} 槽缺少 mechanism_intents，无法做语义—AST 审计 (槽位 {intents_missing})")
+        if intents_invalid:
+            issues.append(f"{len(intents_invalid)} 槽存在非法 mechanism_intents (槽位 {intents_invalid})")
         if total and (dup_slots / total) > HYPOTHESIS_MAX_DUP_RATIO:
             issues.append(
                 f"逐字重复的假设涉及 {dup_slots}/{total} 槽 (> {HYPOTHESIS_MAX_DUP_RATIO:.0%})，"
@@ -261,10 +289,61 @@ class SwarmAuditor:
             "missing_slots": missing,
             "too_short_slots": too_short,
             "no_metric_slots": no_metric,
+            "intents_missing_slots": intents_missing,
+            "intents_invalid_slots": intents_invalid,
             "duplicate_groups": dup_groups,
             "compliant": not issues,
             "issues": issues,
         }
+
+    @classmethod
+    def upgrade_6key_to_9key(cls, variants: List[dict], default_hypothesis_id: str = "HYP_BATCH_DEFAULT") -> List[dict]:
+        """
+        迁移适配器: 将旧版 6 键手工脚本变体无损升级为 V3.2 规范的 9 键结构。
+        键序严格为: slot -> optimize_reason -> hypothesis_ref -> mechanism_intents -> economic_delta -> expression ...
+        注意: 若批次携带预注册 HypothesisSpec，调用方应把其 hypothesis_id 传入 default_hypothesis_id，
+        否则 audit_variant_hypothesis 会因 hypothesis_ref 与预注册假说不一致而拦截（Phase B）。
+        """
+        upgraded = []
+        for idx, v in enumerate(variants or []):
+            if not isinstance(v, dict):
+                continue
+            expr = str(v.get("expression") or "")
+            reason = str(v.get("optimize_reason") or v.get("economic_rationale") or
+                         "基于底层字段物理分布进行去噪与截面映射，提升 Sharpe 与 Margin 并压低 ProdCorr")
+            inferred_intents = v.get("mechanism_intents")
+            if not isinstance(inferred_intents, list) or not inferred_intents:
+                inferred_intents = []
+                if any(k in expr for k in ("trade_when", "if_else", "ts_backfill", "days_from_last_change")):
+                    inferred_intents.append("EVENT_GATE")
+                if any(k in expr for k in ("ts_decay", "ts_mean", "hump", "jump_decay", "ts_target_tvr_decay")):
+                    inferred_intents.append("TEMPORAL_DECAY")
+                if any(k in expr for k in ("divide", "scale", "zscore", "group_zscore", "group_neutralize")):
+                    inferred_intents.append("SCALE_NORMALIZATION")
+                if any(k in expr for k in ("ts_delta", "ts_zscore", "ts_rank")):
+                    inferred_intents.append("REGIME_SPREAD")
+                if not inferred_intents:
+                    inferred_intents.append("CROSS_SECTIONAL_RELATIVE")
+
+            economic_delta = v.get("economic_delta")
+            if not economic_delta:
+                economic_delta = reason if len(reason) >= 20 else (
+                    reason + "（由 6 键存量批次迁移补齐，确保机制增量描述可审查）"
+                )
+
+            ordered_item = {
+                "slot": v.get("slot", idx + 1),
+                "optimize_reason": reason,
+                "hypothesis_ref": v.get("hypothesis_ref") or default_hypothesis_id,
+                "mechanism_intents": inferred_intents[:3],
+                "economic_delta": economic_delta,
+                "expression": expr,
+                "neutralization": v.get("neutralization", "SUBINDUSTRY"),
+                "type": v.get("type", "explore"),
+                "original_alpha": v.get("original_alpha", default_hypothesis_id),
+            }
+            upgraded.append(ordered_item)
+        return upgraded
 
     @classmethod
     def _audit_refinement(cls, variants: List[dict], parent_expression: str = "",
@@ -284,6 +363,13 @@ class SwarmAuditor:
             "target_tvr", "factor", "pct", "percentage", "True", "False", "driver", "gaussian"
         }
         parent_fields = _extract_fields(parent_expression) - non_field_ids
+        parent_core_skeleton = (
+            ASTSandboxCorrector.get_core_skeleton(parent_expression, mechanism_intents=set())
+            if ASTSandboxCorrector is not None and parent_expression
+            else ""
+        )
+        effective_parallelism = int(parallelism or 20)
+        reconstruction_start = max(10, effective_parallelism // 2 + 1)
 
         exprs = []
         for idx, v in enumerate(variants or []):
@@ -297,15 +383,18 @@ class SwarmAuditor:
                 slot = int(slot)
             except (TypeError, ValueError):
                 slot = idx + 1
-            exprs.append((slot, expr))
+            exprs.append((slot, expr, v))
 
         total = len(exprs)
         skeleton_slots: List[int] = []
         control_slots: List[int] = []
         window_only_slots: List[int] = []
         broken_slots: List[int] = []
+        reconstruction_total = 0
+        reconstruction_valid = 0
+        reconstruction_failed_slots: List[int] = []
 
-        for slot, expr in exprs:
+        for slot, expr, variant in exprs:
             is_ctrl = parent_norm and (normalize_expr(expr) == parent_norm)
             if is_ctrl:
                 control_slots.append(slot)
@@ -318,6 +407,20 @@ class SwarmAuditor:
                     skeleton_slots.append(slot)
                 elif slot <= 10:
                     broken_slots.append(slot)
+
+            if slot >= reconstruction_start:
+                reconstruction_total += 1
+                expr_fields = _extract_fields(expr) - non_field_ids
+                has_new_field = bool(expr_fields - parent_fields)
+                if ASTSandboxCorrector is not None and parent_core_skeleton:
+                    # 零意图对称剥离律: 双方统一强制使用 mechanism_intents=set() 进行裸核比对
+                    core_changed = ASTSandboxCorrector.get_core_skeleton(expr, mechanism_intents=set()) != parent_core_skeleton
+                else:
+                    core_changed = has_new_field
+                if core_changed or has_new_field:
+                    reconstruction_valid += 1
+                else:
+                    reconstruction_failed_slots.append(slot)
 
             if is_window_only_tweak(expr, parent_expression):
                 window_only_slots.append(slot)
@@ -336,6 +439,11 @@ class SwarmAuditor:
                 f"纯窗口数字微调占 {len(window_only_slots)}/{total} 槽，超过 {cls.MAX_WINDOW_ONLY_RATIO:.0%} 上限；"
                 f"这类变体没有经济学信息增量"
             )
+        if reconstruction_total and reconstruction_valid < reconstruction_total:
+            issues.append(
+                f"重构舱 {reconstruction_valid}/{reconstruction_total} 槽未改变核心经济骨架或引入新字段；"
+                f"仅外层换壳槽位: {reconstruction_failed_slots}。重构舱必须提供机制级增量。"
+            )
 
         hyp = cls.audit_hypothesis(variants)
         if hyp["issues"]:
@@ -351,6 +459,9 @@ class SwarmAuditor:
             "control_slots": control_slots,
             "window_only_slots": window_only_slots,
             "broken_skeleton_slots": broken_slots,
+            "reconstruction_total": reconstruction_total,
+            "reconstruction_valid": reconstruction_valid,
+            "reconstruction_failed_slots": reconstruction_failed_slots,
             "compliant": not issues,
             "issues": issues,
         }
@@ -416,8 +527,16 @@ class SwarmAuditor:
                 f"未构成 10 组骨架 x (N, 2N) 的参数高原探针矩阵"
             )
 
+        # 假设先行核验必须在探索模式同样生效: Step 1 批次与母本 Sharpe < 1.2 的批次均走 MODE_EXPLORATION，
+        # 若此分支缺失核验，「先写假说再写公式 / 可证伪指标 / 意图非空 / 假设去重」在探索期将完全脱管。
+        hyp = cls.audit_hypothesis(variants)
+        if hyp["issues"]:
+            issues.extend(f"假设先行: {i}" for i in hyp["issues"])
+
         return {
+            "mode": MODE_EXPLORATION,
             "total": total,
+            "hypothesis": hyp,
             "non_rank_count": len(non_rank_slots),
             "non_rank_ratio": round(ratio, 3),
             "required_non_rank": required_non_rank,
@@ -433,55 +552,52 @@ class SwarmAuditor:
 
     @classmethod
     def enforce(cls, variants: List[dict], step: int = 1, parallelism: Optional[int] = None,
-                strict: bool = True, event_driven: bool = False, min_non_rank_ratio: Optional[float] = None,
+                strict: bool = False, event_driven: bool = False, min_non_rank_ratio: Optional[float] = None,
                 mode: str = MODE_EXPLORATION, parent_expression: str = "",
                 protected_ops: Optional[List[str]] = None) -> dict:
         """
-        strict=True 且不达标时抛 PermissionError (与 Gate 3 骨架熔断同级)。
-        step >= 2 时完全交由 Step 1 对照槽实测胜率决定外壳，强制 strict=False，不再硬性拦截。
-        mode=refinement (老兵精修) 时铁律 B 整体停用: 骨架属于资产, 只告警不熔断。
+        铁律 B 审计与报告记录。
+        默认 strict=False 仅做软性诊断告警，绝不通过硬性配额剥夺大模型自主选择算子与数学拓扑的权力；
+        当显式传入 strict=True 时执行硬性门禁核验。
         """
-        if mode == MODE_REFINEMENT:
-            strict = False   # 手术刀模式不做整批熔断, 只告警 + 记录
-        elif step >= 2:
-            strict = False
-
         report = cls.audit(
             variants, parallelism=parallelism, event_driven=event_driven,
             min_non_rank_ratio=min_non_rank_ratio, mode=mode,
             parent_expression=parent_expression, protected_ops=protected_ops
         )
 
+        if strict and report["issues"]:
+            raise PermissionError(
+                f"【铁律 B 门禁拦截】本批变体未通过铁律 B 物理核验:\n"
+                + "\n".join(f"  - {i}" for i in report["issues"])
+            )
+
         if mode == MODE_REFINEMENT:
-            tag = "场景路由·老兵精修 (手术刀) 骨架保护告警"
+            tag = "场景路由·老兵精修 (手术刀) 骨架保护诊断"
             if report["issues"]:
                 msg = (
-                    f"【{tag}】本批 {report['total']} 槽未按精修契约执行:\n"
+                    f"【{tag}】本批 {report['total']} 槽精修执行提示:\n"
                     + "\n".join(f"  - {i}" for i in report["issues"])
-                    + f"\n骨架算子: {report['protected_ops']} | 控制槽: {report['control_slots']}\n"
-                    f"修正要求: 至少 {max(1, int(round(report['total'] * cls.MIN_SKELETON_RATIO)))} 槽保留母本骨架，"
-                    f"并留 1 个逐字复现母本的控制槽；纯窗口数字微调不得超过半数槽位。"
+                    + f"\n控制槽: {report['control_slots']}\n"
+                    f"建议: 保持对母本主锚字段的关注，并留 1 个逐字复现母本的控制槽；纯窗口数字微调不宜过多。"
                 )
                 print("⚠️ " + msg)
             else:
                 print(
-                    f"✅ [场景路由·老兵精修] 骨架保护 {len(report['skeleton_slots'])}/{report['total']} "
+                    f"✅ [场景路由·老兵精修] 主锚保护 {len(report['skeleton_slots'])}/{report['total']} "
                     f"({report['skeleton_ratio']:.0%})，控制槽 {report['control_slots']}，"
                     f"纯窗口微调 {len(report['window_only_slots'])} 槽，契约合规。"
                 )
             return report
 
-        tag = "铁律 B 幅度保留熔断" if step <= 1 else "铁律 B 幅度保留告警"
+        tag = "铁律 B 幅度保留诊断"
         if report["issues"]:
             msg = (
-                f"【{tag}】本批 {report['total']} 槽的截面形态结构不合规:\n"
+                f"【{tag}】本批 {report['total']} 槽的截面形态结构诊断提示:\n"
                 + "\n".join(f"  - {i}" for i in report["issues"])
                 + f"\n外层算子分布: {report['outer_hist']}\n"
-                f"修正要求: 至少 {report['required_non_rank']} 槽改用 group_neutralize / group_zscore / zscore / "
-                f"trade_when 等保留连续幅度的外层，并把相邻两槽组成 (N, 2N) 同骨架双窗口对。"
+                f"建议: 鼓励根据特征分布物理机理保留连续幅度分布的外层结构，避免全量使用单一算子拍平极值。"
             )
-            if strict:
-                raise PermissionError(msg)
             print("⚠️ " + msg)
         else:
             print(
@@ -493,22 +609,19 @@ class SwarmAuditor:
     @classmethod
     def _build_refinement_directive(cls, parallelism: int = 20, protected_ops: Optional[List[str]] = None,
                                    parent_expression: str = "", parent_settings: Optional[dict] = None) -> str:
-        """老兵精修 (手术刀) 契约: 锁骨架 + 经济学通道变异 + 控制槽 + 相对改进验收"""
-        prot = [op for op in (protected_ops if protected_ops is not None else extract_skeleton_ops(parent_expression)) if op]
-        skeleton_str = " / ".join(prot) if prot else "母本最外层算子链"
-        min_skeleton = max(1, int(round(parallelism * cls.MIN_SKELETON_RATIO)))
+        """老兵精修 (手术刀) 契约: 聚焦主锚核心 + 经济学维度变异 + 控制槽 + 相对改进验收 (严禁死锁固定算子)"""
+        min_anchor = max(1, int(round(parallelism * cls.MIN_SKELETON_RATIO)))
         lines = [
-            "【场景路由 = 老兵精修 (Veteran Refinement)｜1+9+10 三分天下制（Slot 1 基准锚 5% + Slot 2~10 微创正交舱 45% + Slot 11~20 第一性原理重构舱 50%）】:",
-            f"- 母本已被 10 年历史与近 2 年区间双重验证，骨架 [{skeleton_str}] 是资产而不是待拆的脚手架；",
-            "- ⚖️ Slot 2~10 锁定母本主锚字段做微创，Slot 11~20 彻底解除骨架限制重构全新拓扑；",
-            "   严禁把母本拆成 N/2N 双窗口孪生对——这些是战场 A 的开拓手段，用在局部极值上等于砍断脊梁；",
-            f"- ✅ 骨架保留硬指标: {parallelism} 槽中至少 {min_skeleton} 槽 ({cls.MIN_SKELETON_RATIO:.0%}) 必须完整包含上述骨架算子或母本核心主锚字段；",
-            "- ✅ 经济学通道变异 (每槽必须在 optimize_reason 写明 economic_rationale 与 target_metric，禁止只改窗口数字):",
-            "   1. 风险暴露通道: 只改 group_zscore/group_neutralize 的分组层级 (industry <-> subindustry <-> sector)，验证收益来源是行业内选股还是行业配置；",
-            "   2. 交易成本通道: 改 ts_target_tvr_decay 的 target_tvr (如 0.12 -> 0.08/0.15) —— 这是直接作用于换手与边际利润的旋钮，不是窗口；",
-            "   3. 信号条件化通道: trade_when(信息事件条件, 母本内核, -1) 在无信息日冻结持仓，降换手抬 Margin；",
-            "   4. 幅度裁剪通道: winsorize/signed_power 收紧尾部分布，改善年际夏普稳定性与 CLUSTER 告警；",
-            "   5. 次要信息通道: 仅在母本内核内部追加一条同源正交字段 (divide / 同量纲 subtract / ts_regression / trade_when)，不新增外层、不改骨架；",
+            "【场景路由 = 老兵精修 (Veteran Refinement)｜1+9+10 三分天下制（Slot 1 基准锚 5% + Slot 2~10 微创深化舱 45% + Slot 11~20 第一性原理重构舱 50%）】:",
+            "- 🎯 母本已被 10 年历史与近 2 年区间验证，具有显著的因果经济学内涵；",
+            "- ⚖️ Slot 2~10 聚焦母本主锚字段与病灶定向攻坚，Slot 11~20 鼓励引入同源冷门特征或探索全新数学拓扑；",
+            f"- 自由算子探索: 严禁机械套用死算子或死骨架！先根据字段物理属性与病灶推导所需变换 (去偏/归一/尾部压缩/状态保持/事件门控)，再从算子签名表映射实现；Slot 2~10 建议至少 {min_anchor} 槽保持母本核心主锚字段的经济学因果链；",
+            "- ✅ 经济学维度变异 (每槽必须在 optimize_reason 写明 economic_rationale 与 target_metric，禁止无意义的窗口微调):",
+            "   1. 风险暴露与风格剥离方向: 先判断收益来源是行业内选股还是宏观/行业配置，再决定是否需要截面离差或风险对冲变换，最后查签名表映射实现；",
+            "   2. 换手与交易成本控制方向: 根据信号的信息半衰期与衰减动态控制调仓频率与边际利润，消除日间无意义的高频抖动；",
+            "   3. 状态条件化与事件激活方向: 结合字段更新频率与稀疏零值特性，在无真实事件变动时过滤噪音，保留有效信号；",
+            "   4. 分布形态与极端值收敛方向: 根据字段真实定义域与偏态分布进行极值压缩或尺度规范化，提升跨期稳定性；",
+            "   5. 正交机制升维方向: 结合同源低拥挤冷门特征进行非对称或预期剪刀差交互，提供真正的经济学边际增量；",
             "- 🧠 假设先行 (Python 物理核验): 每个对象必须先写 optimize_reason、再写 expression；假设内必须点名至少 1 个可验收指标"
             " (Margin / Sharpe / Turnover / ProdCorr / CLUSTER 等) 并摘述 economic_rationale——先落笔经济学因果，公式才被约束，"
             "先拼公式再补理由的后验辩解会被判违规；逐字重复的假设视为凑数；",
@@ -539,19 +652,18 @@ class SwarmAuditor:
 
         effective_min_ratio = 0.20 if event_driven else cls.MIN_NON_RANK_RATIO
         min_non_rank = max(1, int(round(parallelism * effective_min_ratio)))
-        pairs = parallelism // 2
         ratio_label = "20% (稀疏/事件驱动特征已自适应放宽)" if event_driven else f"{cls.MIN_NON_RANK_RATIO:.0%}"
         lines = [
-            "【铁律 B 硬配额 (本批由 Python 物理核验，不合规整批打回)】:",
-            f"- {parallelism} 槽中至少 {min_non_rank} 槽 ({ratio_label}) 的最外层不得使用 group_rank/rank，"
-            f"必须改用 group_neutralize(..., subindustry) / group_zscore(..., subindustry) / zscore / trade_when；",
-            f"- 采用「双窗口敏感性成对验证」: 构思 {pairs} 组正交算子拓扑骨架，每组占用 2 个相邻槽位，"
-            f"分别填入 1 倍周期 N 与 2 倍周期 2N (日频 N=5 / 2N=20 或 20/63；季报 N=63 / 2N=126 或 63/252)；",
-            "- 同骨架只允许窗口参数不同，其余字段与拓扑必须完全一致，否则参数高原检验无法成立；",
-            "- 尖峰判据: 若 N 窗 Sharpe 达标而 2N 窗跌破 0.5，该骨架判为尖峰过拟合，禁止进入 Step 2 演进。",
+            "【期限稳健性与形态保留约束 (由 Python 物理核验)】:",
+            f"- {parallelism} 槽中至少 {min_non_rank} 槽 ({ratio_label}) 的最外层不得使用 group_rank/rank；"
+            f"rank 是否合适由 HypothesisSpec 的截面机制决定，不得为凑配额堆装饰；",
+            "- 至少构造 1 组同骨架双窗口对照，用于检验 horizon_model 的期限稳健性；窗口来自字段更新频率与信息半衰期，"
+            "不使用固定日历白名单；",
+            "- 若假说预注册了短长周期反号 (REGIME_SPREAD)，双窗口反号是预期结果，不判为失败；",
+            "- 若 N 窗达标而 2N 窗跌破 0.5 且假说未预注册反转，该骨架判为尖峰过拟合，禁止进入 Step 2 演进。",
         ]
         if event_driven:
             lines.append(
-                "- 事件驱动数据 (news/sentiment/analyst)：推荐结合状态过滤或时序平滑算子 (如 trade_when, ts_decay_* 等) 冻结无信息日持仓，降低换手噪音。"
+                "- 事件驱动数据 (news/sentiment/analyst)：请结合字段物理稀疏性与半衰期设计状态过滤或时序平滑，降低换手噪音。"
             )
         return "\n".join(lines)

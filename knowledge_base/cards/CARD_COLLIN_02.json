@@ -2,9 +2,9 @@
   "card_id": "CARD_COLLIN_02",
   "tag": "cluster_collinearity",
   "domain": "decorrelation",
-  "title": "同簇共线性与 Cluster 降维处方",
-  "one_line": "同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta",
-  "symptom": "is.checks.cluster_sharpe < 1.58 或与已有生产库严重撞车 (ProdCorr >= 0.70)",
-  "authorized_operators": ["SUBSTITUTE_LOW_ALPHA_COUNT_FIELD", "ts_delta", "quantile_spread_subtract"],
-  "prescription_recipe": "1. 严禁只修改滑动窗口大小！2. 从 fields_kb.json 中查询 alpha_count <= 3 的冷门同类字段做 1:1 结构替换；3. 使用 ts_delta(F, 5) 捕捉二阶加速度变动源。"
+  "title": "同簇共线性与 Cluster 降维机理解析",
+  "question": "当 Cluster Sharpe < 1.58 出现同簇共线性警告，或与平台存量库撞车时，如何实现正交突围？",
+  "answer": "物理根因：与平台上已有同质因子使用了相同的主锚变动源，微调参数（如轻微改动窗口大小）绝不能带来正交性。治理原则：必须回到数据底层，从同源数据簇中寻找未被充分开采的冷门细分特征（低 alpha_count）作为全新主锚，或通过捕捉二阶加速度变动源剥离一阶共线趋势。",
+  "proven_solution": "从同源数据簇中寻找低拥挤度冷门细分特征替换主锚，或构建二阶变动加速度以剥离共线趋势，严禁无效微调参数。",
+  "theoretical_cause": "相关性由底层特征的信息来源决定，微调参数无法跳出拥挤子空间。"
 }

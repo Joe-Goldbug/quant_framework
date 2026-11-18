@@ -1,13 +1,10 @@
 {
   "card_id": "CARD_CW_01",
-  "admission_type": "FALSIFICATION_PHYSICAL_WALL",
-  "verification_rounds": 98,
-  "issue": "集中度 CW > 0.10 导致平台硬拦截",
-  "falsified_attempts": [
-    "表达式内使用 winsorize 或 truncate (零效果)",
-    "设置层使用 truncation 0.02 / 0.08 (零效果)",
-    "使用 zscore 或 ts_zscore 自身标准化 (零效果)"
-  ],
-  "proven_solution": "使用凹函数压缩极值: s_log_1p(X) 或 rank(X)",
-  "theoretical_cause": "收益来源于极少数发行人的极端重定价，仿射变换不改变排序与极值权重分布，只有凹压缩能拉平极值。"
+  "tag": "cw_bottleneck",
+  "domain": "risk_management",
+  "title": "权重过度集中 (CONCENTRATED_WEIGHT) 物理机理解析",
+  "question": "当个股持仓权重超过平台上限 (CW > 0.10) 产生告警或拦截时，其物理根因是什么？如何从 DGP 机制层面治理？",
+  "answer": "物理根因：收益来源于极少数标的的极端重定价，仿射线性变换无法打破排序与极值权重分布。治理原则：必须深入研读数据是否具有重尾偏态，通过非线性凹函数压缩拉平极端离群值，或利用截面排序映射为均匀持仓，从而分散组合集中度风险。",
+  "proven_solution": "依据极端重定价与长尾分布机理，使用非线性凹函数压缩极值或通过截面均匀分布映射平滑持仓集中度，从机制上分散权重。",
+  "theoretical_cause": "收益来源于极少数发行人的极端重定价，仿射变换不改变排序与极值权重分布，只有非线性压缩能拉平极值。"
 }

@@ -22,6 +22,11 @@ import json
 import random
 from typing import Dict, List, Optional, Any
 
+try:
+    from quant_framework.core.dgp_schema import HypothesisSpec
+except ModuleNotFoundError:
+    from core.dgp_schema import HypothesisSpec
+
 
 class DatasetFieldResolver:
     """数据集字段画像解析器与跨市场容灾引擎"""
@@ -68,7 +73,13 @@ class DatasetFieldResolver:
                     if fn in base_dict:
                         resolved[fn] = base_dict[fn]
                     else:
-                        resolved[fn] = {"type": "MATRIX", "description": f"命令行显式指定字段 {fn}", "coverage": 1.0}
+                        # 未知字段显式 UNKNOWN，禁止再用 coverage=1.0 伪装成高覆盖已知字段
+                        resolved[fn] = {
+                            "type": "MATRIX",
+                            "description": f"命令行显式指定字段 {fn}",
+                            "coverage": None,
+                            "evidence_status": "UNKNOWN",
+                        }
                 return resolved
 
         # 2. 优先级二: 显式指定的外部字段文件 (--fields-file <path>)
@@ -175,16 +186,16 @@ class DatasetFieldResolver:
                 entry.setdefault("type", item.get("type", "MATRIX"))
                 entry.setdefault("description", item.get("role_note", item.get("description", "无描述")))
                 try:
-                    entry["coverage"] = float(item.get("coverage", item.get("dateCoverage", 1.0)))
+                    raw_coverage = item.get("coverage", item.get("dateCoverage"))
+                    entry["coverage"] = float(raw_coverage) if raw_coverage is not None else None
                 except (ValueError, TypeError):
-                    entry["coverage"] = 1.0
+                    entry["coverage"] = None
                 entry["user_count"] = item.get("userCount", item.get("user_count", 0))
                 entry["alpha_count"] = item.get("alphaCount", item.get("alpha_count", 0))
                 cat_val = item.get("category", {}).get("name", "Unknown") if isinstance(item.get("category"), dict) else str(item.get("category", ""))
                 entry.setdefault("category", cat_val)
-                entry.setdefault("skewness", "medium")
-                entry.setdefault("domain", item.get("domain", "unbounded"))
-                entry.setdefault("is_sparse", item.get("is_sparse", False))
+                # 严禁在 normalize_field_profile 之前注入任何静态物理属性默认值！
+                entry = HypothesisSpec.normalize_field_profile(fid, entry)
                 result[fid] = entry
             return result
 
@@ -204,28 +215,24 @@ class DatasetFieldResolver:
                     entry.setdefault("type", "MATRIX")
                     entry.setdefault("description", v.get("role_note", v.get("description", "无描述")))
                     try:
-                        entry["coverage"] = float(v.get("coverage", 1.0))
+                        raw_coverage = v.get("coverage")
+                        entry["coverage"] = float(raw_coverage) if raw_coverage is not None else None
                     except (ValueError, TypeError):
-                        entry["coverage"] = 1.0
+                        entry["coverage"] = None
                     entry.setdefault("alpha_count", v.get("alphaCount", v.get("alpha_count", 0)))
                     entry.setdefault("user_count", v.get("userCount", v.get("user_count", 0)))
-                    entry.setdefault("domain", v.get("domain", "unbounded"))
-                    entry.setdefault("is_sparse", v.get("is_sparse", False))
-                    entry.setdefault("update_frequency", v.get("update_frequency", "daily"))
-                    entry.setdefault("semantic_role", v.get("semantic_role", "Signal_Flow"))
-                    entry.setdefault("skewness", v.get("skewness", "medium"))
+                    # 严禁在此注入 domain/is_sparse/update_frequency/skewness 默认值，交由 normalize_field_profile 严格审计
+                    entry = HypothesisSpec.normalize_field_profile(k, entry)
                     result[k] = entry
                 else:
-                    result[k] = {
+                    raw_entry = {
                         "type": "MATRIX",
                         "description": str(v),
-                        "coverage": 1.0,
-                        "skewness": "medium",
-                        "domain": "unbounded",
-                        "is_sparse": False,
+                        "coverage": None,
                         "alpha_count": 0,
                         "user_count": 0
                     }
+                    result[k] = HypothesisSpec.normalize_field_profile(k, raw_entry)
             return result
 
         return {}

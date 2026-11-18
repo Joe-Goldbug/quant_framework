@@ -147,7 +147,13 @@ class Gatekeeper:
             results = sim_result_data.get("alpha_results", [sim_result_data])
         else:
             results = [sim_result_data]
-        
+
+        # 平台门战役扩展 (R38 修正): Margin 非平台提交门，Step 1 漏斗的 Margin>=5.0 门槛
+        # 会误剪 Sharpe>=1.58 但 Margin<5.0 的平台门级 alpha。仅当 env 显式设置时覆盖默认
+        # (1.2 / 5.0)，保持内部双阈值战役语义与既有测试 (显式传参) 完全不变。
+        min_sharpe = float(os.environ.get("AEGIS_STEP1_MIN_SHARPE", min_sharpe))
+        min_margin_bps = float(os.environ.get("AEGIS_STEP1_MIN_MARGIN_BPS", min_margin_bps))
+
         qualified_seeds = []
         all_sharpes = {}
         max_abs_sharpe = 0.0
@@ -218,8 +224,14 @@ class Gatekeeper:
                     continue
 
                 # 因果极性一致性审计 (expected_polarity)
+                norm_polarity = 1
+                if isinstance(expected_polarity, str):
+                    norm_polarity = -1 if expected_polarity.lower() in ("negative", "-1") else 1
+                elif isinstance(expected_polarity, (int, float)):
+                    norm_polarity = -1 if expected_polarity < 0 else 1
+
                 has_reverse = ("reverse(" in expr.lower()) or expr.strip().startswith("-")
-                effective_polarity = -expected_polarity if has_reverse else expected_polarity
+                effective_polarity = -norm_polarity if has_reverse else norm_polarity
                 is_polarity_inverted = bool(sharpe < 0 or (effective_polarity * sharpe < 0))
                 status_str = "POLARITY_INVERTED" if is_polarity_inverted else "STEP1_PASSED"
 
@@ -291,7 +303,22 @@ class Gatekeeper:
         is_data = res.get("is") or res.get("metrics") or {}
         checks_list = is_data.get("checks")
         if checks_list is None:
-            checks_list = res.get("checks", [])
+            checks_list = res.get("checks")
+
+        # Fail-Closed: checks 缺失或为空时不得被解释为“全部通过”
+        if checks_list is None:
+            checks_verified = False
+            checks_list = []
+        elif isinstance(checks_list, list):
+            checks_verified = len(checks_list) > 0
+        elif isinstance(checks_list, dict):
+            checks_verified = any(
+                key in checks_list
+                for key in ("fail", "fails", "warning", "warnings", "result", "results")
+            )
+        else:
+            checks_verified = False
+            checks_list = []
 
         fails = []
         warnings = []
@@ -329,8 +356,13 @@ class Gatekeeper:
                     except (ValueError, TypeError):
                         pass
         elif isinstance(checks_list, dict):
-            fails = list(checks_list.get("fails", []))
-            warnings = list(checks_list.get("warnings", []))
+            # 同时兼容复数键 (fails/warnings) 与单数键 (fail/warning)
+            raw_fails = checks_list.get("fails", checks_list.get("fail", []))
+            raw_warnings = checks_list.get("warnings", checks_list.get("warning", []))
+            for item in raw_fails if isinstance(raw_fails, list) else []:
+                fails.append(item.get("name", str(item)) if isinstance(item, dict) else str(item))
+            for item in raw_warnings if isinstance(raw_warnings, list) else []:
+                warnings.append(item.get("name", str(item)) if isinstance(item, dict) else str(item))
             cluster_sharpe = checks_list.get("cluster_sharpe")
 
         # 兼容旧测试数据中的 ra 字典
@@ -350,6 +382,7 @@ class Gatekeeper:
             "fail_count": len(fails),
             "fails": fails,
             "warnings": warnings,
+            "checks_verified": checks_verified,
             "cluster_sharpe": cluster_sharpe,
             "ladder_2y_sharpe": ladder_2y_sharpe,
             "sub_universe_sharpe": sub_universe_sharpe,
@@ -593,6 +626,8 @@ class Gatekeeper:
             sc = cls.extract_self_corr(res)
 
             fails = []
+            # V2: checks 缺失的 Fail-Closed 拦截由 ProductionGate 统一执行；
+            # Gatekeeper 保留研究层兼容行为，但 parse 结果会携带 checks_verified=False。
             if sharpe < 1.58:
                 fails.append(f"Sharpe {sharpe:.2f} < 1.58")
             if fitness < 1.00:
@@ -643,6 +678,11 @@ class Gatekeeper:
                     "prod_corr": pcorr,
                     "prod_corr_verified": pcorr_verified,
                     "sc": sc,
+                    "self_corr": sc,
+                    "self_corr_verified": res.get("self_corr_verified", sc is not None),
+                    "horizon_verdict": res.get("horizon_verdict"),
+                    "horizon_robust": res.get("horizon_robust"),
+                    "plateau_pass": res.get("plateau_pass"),
                     "fail_count": fail_num,
                     "fails": fail_checks,
                     "warning_count": warn_num,
@@ -651,6 +691,12 @@ class Gatekeeper:
                     "ladder_2y_sharpe": parsed_checks["ladder_2y_sharpe"],
                     "sub_universe_sharpe": parsed_checks["sub_universe_sharpe"],
                     "two_year_sharpe": two_year,
+                    "yearly_stats": res.get("yearly_stats") or is_m.get("yearly_stats") or [],
+                    "checks": res.get("checks") or is_m.get("checks") or {},
+                    "metrics": is_m,
+                    "hypothesis": res.get("hypothesis"),
+                    "hypothesis_ref": res.get("hypothesis_ref"),
+                    "slot": res.get("slot"),
                     "good_flag_details": gf_res,
                     "status": "APPROVED_SUBMITTABLE"
                 })
@@ -809,13 +855,12 @@ class Gatekeeper:
             d_margin = cur_margin - p_margin
             if d_turn < -0.03 and d_margin < -1.0:
                 forensic_clues.append(
-                    f"【法医病理 3·换手—利润负弹性警告】相比母本换手率下降 {abs(d_turn)*100:.1f}%，但 Margin 反而萎缩 {abs(d_margin):.1f}bps！"
-                    f"证明该信号属于快衰减高频脉冲，过度平滑正在扼杀 Alpha 峰值，严禁继续拉长时序衰减窗口！"
+                    f"【换手—利润负弹性】相比母本换手率下降 {abs(d_turn)*100:.1f}%，但 Margin 同步萎缩 {abs(d_margin):.1f}bps。"
+                    f"平滑降换手导致单位调仓收益率下降，表明该信号包含短周期脉冲，过度平滑存在钝化损耗。"
                 )
 
-        # 其余客观平台检查项归因（只报物理病症，不开算子药方）
-        allowed_ast_ops = set(["group_rank", "subindustry", "industry"])
-
+        # 其余客观平台检查项归因（只报客观体检数字与物理病症，严禁开具任何具体算子药方）
+        # 【去模板化铁律】: 彻底废除 allowed_ast_ops 预制名单，全量 104 个官方算子由 Agent 自主动态选择
         if prod_corr is not None:
             try:
                 pc = float(prod_corr)
@@ -824,53 +869,77 @@ class Gatekeeper:
             if pc is not None and pc >= 0.65:
                 symptoms.append("prod_corr_overflow" if pc >= 0.70 else "prod_corr_elevated_above_065")
                 forensic_clues.append(
-                    f"【共线性超标】当前 ProdCorr={pc:.4f} >= 0.65。底层主信号或外层截面映射与存量库高度同质化，"
-                    f"请在重构舱启用低 alpha_count 同源冷字段平替、VECTOR 高阶矩（分歧度/偏度）或特质残差剥离。"
+                    f"【生产库相关性违规】当前 ProdCorr={pc:.4f} >= 0.65 (安全红线 < 0.65)。与平台存量生产库高度共线，"
+                    f"表明当前信号特征或截面映射已严重同质化，请深入研读底层字段商业实质寻找正交差异源。"
                 )
-                allowed_ast_ops.update(["group_neutralize", "group_zscore", "ts_delta", "quantile_spread_subtract", "SUBSTITUTE_LOW_ALPHA_COUNT_FIELD"])
 
         cluster_sharpe = checks_parsed.get("cluster_sharpe")
         if (cluster_sharpe is not None and cluster_sharpe < 1.58) or "CLUSTER" in all_issues_str:
             symptoms.append("cluster_collinearity")
-            forensic_clues.append("【同簇共线性警告】与已有同质 Alpha 簇产生共振，建议使用正交残差回归或非线性特征交互破除共线性。")
-            allowed_ast_ops.update(["SUBSTITUTE_LOW_ALPHA_COUNT_FIELD", "ts_delta", "group_neutralize", "group_zscore", "quantile_spread_subtract", "winsorize", "signed_power"])
+            c_sh_val = f"{cluster_sharpe:.2f}" if cluster_sharpe is not None else "未知"
+            forensic_clues.append(f"【同簇共线性警告】当前 Cluster Sharpe={c_sh_val} < 1.58。在已有同质 Alpha 簇中缺乏边际超额收益贡献。")
 
         if any(k in all_issues_str for k in ("EMEA", "APAC", "REGIONAL", "LOW_SHARPE")):
             symptoms.append("regional_or_sharpe_deficit")
-            forensic_clues.append("【区域或临界夏普缺口】在特定区域存在性能滑坡，建议通过组内均衡或风险中性化改善局部泛化能力。")
-            allowed_ast_ops.update(["winsorize", "signed_power", "s_log_1p", "group_neutralize", "group_zscore", "subindustry", "country", "ts_decay_linear", "ts_decay_exp_window"])
+            forensic_clues.append(f"【区域或临界夏普缺口】在特定区域市场回测出现 Sharpe 下滑或告警 (检出项: {all_issues_str})，存在跨市场结构性泛化缺陷。")
 
         if "CONCENTRATED" in all_issues_str or checks_parsed.get("cw_failed"):
             symptoms.append("cw_bottleneck")
-            forensic_clues.append("【权重集中度违规 (CW)】少数极端离群标的垄断了组合权重，请结合字段偏态分布设计尾部收敛或组内均衡映射。")
-            allowed_ast_ops.update(["s_log_1p", "winsorize", "signed_power"])
+            forensic_clues.append("【权重集中度违规 (CW)】个股持仓权重超限 (cw_failed=True)。个股头寸由少数极端离群标的垄断，组合多空分散度不足。")
 
         if any(k in all_issues_str for k in ("SUB_UNIVERSE", "LADDER", "2Y", "ROBUST")):
             symptoms.append("sub_universe_or_2y_instability")
-            forensic_clues.append("【子池/近2年稳健性不足】请排查是否存在大小盘基数鸿沟（Level Bias）或回溯窗口过长导致的跨周期均值滞后。")
-            allowed_ast_ops.update(["winsorize", "ts_zscore", "ts_decay_exp_window", "signed_power", "trade_when"])
+            forensic_clues.append(f"【子池/近2年稳健性不足】子池回测或近 2 年回测性能显著衰退 (检出项: {all_issues_str})，存在跨市值规模或跨宏观周期脆弱性。")
 
-        if cur_turn > 0.40 or "TURNOVER" in all_issues_str:
-            allowed_ast_ops.update(["trade_when", "ts_decay_exp_window", "ts_decay_linear"])
         if cur_turn > 0.35 or "TURNOVER" in all_issues_str:
             symptoms.append("turnover_overflow")
-            forensic_clues.append(f"【换手率超标】当前换手率 {cur_turn*100:.1f}% > 35% 黄金区间上限，日间微幅噪音触发了过多无效调仓。")
+            forensic_clues.append(f"【换手率超标】当前换手率 {cur_turn*100:.1f}% > 35% 黄金区间上限，日间调仓频率过高，交易摩擦损耗严重。")
 
         if operator_count > max_operator_limit:
             symptoms.append("operator_count_overflow")
-            forensic_clues.append(f"【算子复杂度超限】当前算子数 {operator_count} > {max_operator_limit}，请执行奥卡姆剃刀剔除无信息增量的冗余嵌套。")
-            allowed_ast_ops.add(f"PRUNE_REDUNDANT_OPERATOR_TO_LE_{max_operator_limit}")
+            forensic_clues.append(f"【算子复杂度超限】当前算子数 {operator_count} > 物理上限 {max_operator_limit}，公式冗余嵌套过深，违反平台奥卡姆准则。")
 
         print(f"\n🩺 [Gatekeeper 法医诊断] 确诊病灶: {symptoms}")
         if forensic_clues:
-            print(f"🔬 [法医病理线索]: {len(forensic_clues)} 条反事实线索已就绪")
+            print(f"🔬 [法医病理线索]: {len(forensic_clues)} 条客观事实线索已就绪")
+
+        # 接通经验检索: 症状 -> 处方卡 / QA 启发。检索失败时显式降级，不再硬编码空列表。
+        rag_prescriptions = []
+        qa_prescriptions = []
+        try:
+            from quant_framework.core.rag_memory import RAGMemoryEngine
+        except ModuleNotFoundError:
+            from core.rag_memory import RAGMemoryEngine
+        for symptom in symptoms:
+            try:
+                card = RAGMemoryEngine.get_card_on_demand(symptom)
+                if isinstance(card, dict) and card.get("card_id"):
+                    rag_prescriptions.append(card)
+            except Exception as card_err:
+                print(f"⚠️ [RAG 处方卡] 症状 {symptom} 检索异常: {card_err}")
+
+        try:
+            from quant_framework.core.qa_rag_tool import search_qa_knowledge
+        except ModuleNotFoundError:
+            try:
+                from core.qa_rag_tool import search_qa_knowledge
+            except Exception:
+                search_qa_knowledge = None
+        if search_qa_knowledge is not None:
+            for symptom in symptoms[:3]:
+                try:
+                    records = search_qa_knowledge(query=symptom, symptom=symptom, top_k=2)
+                    if records:
+                        qa_prescriptions.extend(records)
+                except Exception as qa_err:
+                    print(f"⚠️ [QA RAG] 症状 {symptom} 检索异常: {qa_err}")
 
         return {
             "symptoms": symptoms,
             "forensic_clues": forensic_clues,
-            "allowed_mutations": sorted(list(allowed_ast_ops)),
-            "rag_prescriptions": [],
-            "qa_prescriptions": []
+            "allowed_mutations": [],  # 彻底废除预制算子名单，104 官方算子全量对齐自主推演
+            "rag_prescriptions": rag_prescriptions,
+            "qa_prescriptions": qa_prescriptions
         }
 
     @classmethod

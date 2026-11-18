@@ -90,7 +90,11 @@ class TestIronLawA(unittest.TestCase):
 
 
 def _make_batch(pairs=10, non_rank_ratio=0.5):
-    """构造 20 槽批次: 每 2 槽一组同骨架 (N, 2N)"""
+    """构造 20 槽批次: 每 2 槽一组同骨架 (N, 2N)
+
+    注: V3.2 起 SwarmAuditor.audit() 在 MODE_EXPLORATION 下同样执行假设先行核验，
+    因此辅助批次必须携带 optimize_reason (>=24 字、含可验收指标) 与 mechanism_intents。
+    """
     variants = []
     slot = 1
     n_non_rank = int(pairs * 2 * non_rank_ratio)
@@ -99,6 +103,8 @@ def _make_batch(pairs=10, non_rank_ratio=0.5):
         for w in (5, 15):
             variants.append({
                 "slot": slot,
+                "optimize_reason": f"同骨架双窗口期限稳健性探针 (字段组 {i}, 窗口 {w})，预期 2N 窗口下 Sharpe 与 Margin 不显著衰减。",
+                "mechanism_intents": ["REGIME_SPREAD"],
                 "expression": f"{outer}(ts_delta(field_{i}, {w}), subindustry)",
                 "neutralization": "SUBINDUSTRY",
             })
@@ -207,9 +213,10 @@ class TestProdCorrGate(unittest.TestCase):
             prod_corr=0.7164,
         )
         self.assertIn("prod_corr_overflow", verdict["symptoms"])
-        self.assertIn("group_zscore", verdict["allowed_mutations"])
-        # 换手 46% (>40%) 应提前解锁状态记忆算子
-        self.assertIn("trade_when", verdict["allowed_mutations"])
+        self.assertIn("turnover_overflow", verdict["symptoms"])
+        self.assertEqual(verdict["allowed_mutations"], [], "新架构下废除预制算子名单，allowed_mutations 恒为空")
+        self.assertTrue(any("换手率超标" in c for c in verdict["forensic_clues"]))
+        self.assertTrue(any("生产库相关性" in c or "ProdCorr" in c for c in verdict["forensic_clues"]))
 
 
 class TestChampionEligibility(unittest.TestCase):

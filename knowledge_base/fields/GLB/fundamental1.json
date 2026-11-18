@@ -1,0 +1,932 @@
+{
+  "dataset_id": "fundamental1",
+  "region": "GLB",
+  "universe": "MINVOL1M",
+  "delay": 1,
+  "total_fields": 101,
+  "dataset_meta": {
+    "name": "Management and Executive Data",
+    "platform_category": "fundamental",
+    "framework_category": "fundamental",
+    "field_count": 101,
+    "source": "LIVE BRAIN /data-fields?region=GLB&delay=1&universe=MINVOL1M&dataset.id=fundamental1&filter_sharpe=false, fetched 2026-11-15",
+    "evidence_status": "MEASURED",
+    "description": "Director-level and board-level governance, tenure, qualification, remuneration and equity-incentive disclosures. All 101 fields are VECTOR (multiple directors per issuer), so every expression MUST scalarize with vec_avg/vec_sum/vec_max/vec_std etc. before any cross-sectional operator.",
+    "physical_mechanism_note": "Annual-report disclosures are step functions: raw levels are frozen between filings, so ts_delta / days_from_last_change / event-gate and paired N/2N horizon probes are economically motivated. Compensation and option-award fields are sparse (zero means no grant, not a small value) and heavily right-skewed in mixed currencies; board composition ratios are bounded and step-stable. Currency ISO codes are categorical metadata with no numeric domain and are excluded from the production hypothesis chain.",
+    "portrait_completion": "domain / is_sparse / skewness / semantic_role / update_frequency / horizon / crowding_tier / alpha_pct annotated per-field by the host LLM from physical meaning; numeric metadata (id/type/coverage/userCount/alphaCount/description) measured from LIVE BRAIN API. domain=None rate = 0.0%.",
+    "domain_missing_rate": 0.0,
+    "coverage_gate_note": "49 of 101 fields have coverage >= 0.20 and enter the production hypothesis chain; 52 sub-threshold compensation/option fields remain in the portrait solely to keep the crowding percentile well-defined (prevents physical bucketing from degenerating to 2 buckets).",
+    "crowding_tier_note": "bisect-left percentile over all 101 alphaCount values: COLD <= 0.40, WARM 0.40~0.70, HOT >= 0.70. Iron Law A: cold anchor + hot normalization anchor."
+  },
+  "fields": {
+    "aggregate_director_compensation_2": {
+      "type": "VECTOR", "description": "Sum of the director's salary and bonus for the report period",
+      "coverage": 0.1055, "user_count": 13, "alpha_count": 14,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.891,
+      "evidence_status": "MEASURED"
+    },
+    "annual_base_salary": {
+      "type": "VECTOR", "description": "Base annual cash salary for the director in the report period",
+      "coverage": 0.1017, "user_count": 7, "alpha_count": 7,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.713,
+      "evidence_status": "MEASURED"
+    },
+    "annual_bonus_payment": {
+      "type": "VECTOR", "description": "Bonus payment received by the director during the report period",
+      "coverage": 0.0882, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "board_nationality_diversity_ratio_2": {
+      "type": "VECTOR", "description": "Proportion of directors from different countries among executive directors (board nationality diversity)",
+      "coverage": 0.4849, "user_count": 37, "alpha_count": 50,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, 1]", "is_sparse": false, "skewness": "low",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.980,
+      "evidence_status": "MEASURED"
+    },
+    "bonus_proportion_total_comp": {
+      "type": "VECTOR", "description": "Bonus amount as a proportion of total direct compensation excluding defined contribution pension",
+      "coverage": 0.0849, "user_count": 4, "alpha_count": 4,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, 1]", "is_sparse": true, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.515,
+      "evidence_status": "MEASURED"
+    },
+    "cash_incentive_plan_value": {
+      "type": "VECTOR", "description": "Value of any cash-based incentive plan awarded",
+      "coverage": 0.0593, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "cash_incentive_plan_value_ltip": {
+      "type": "VECTOR", "description": "Value held in cash-based incentive plans for the director or period",
+      "coverage": 0.0541, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "compensation_change_percent_2": {
+      "type": "VECTOR", "description": "Percentage change in total compensation from previous report period for the director",
+      "coverage": 0.0892, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Catalyst_Event",
+      "domain": "(-inf, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "20d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "compensation_currency_code_2": {
+      "type": "VECTOR", "description": "ISO code of the currency in which all reported values are displayed (categorical metadata, NOT numeric)",
+      "coverage": 0.5334, "user_count": 5, "alpha_count": 5,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Metadata",
+      "domain": "categorical(ISO-4217)", "is_sparse": false, "skewness": "none",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.594,
+      "evidence_status": "UNKNOWN"
+    },
+    "current_other_board_total": {
+      "type": "VECTOR", "description": "Number of other boards the director serves on as of the selected annual report date",
+      "coverage": 0.2191, "user_count": 8, "alpha_count": 8,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.772,
+      "evidence_status": "MEASURED"
+    },
+    "current_other_listed_boards_count_2": {
+      "type": "VECTOR", "description": "Number of other boards the individual currently serves on as of the annual report date",
+      "coverage": 0.2068, "user_count": 11, "alpha_count": 14,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.891,
+      "evidence_status": "MEASURED"
+    },
+    "director_attrition_ratio_2": {
+      "type": "VECTOR", "description": "Proportion of executive directors who have left roles relative to average number for the preceding reporting period",
+      "coverage": 0.4697, "user_count": 61, "alpha_count": 92,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Catalyst_Event",
+      "domain": "[0, 1]", "is_sparse": false, "skewness": "medium",
+      "horizon": "20d", "crowding_tier": "HOT", "alpha_pct": 0.990,
+      "evidence_status": "MEASURED"
+    },
+    "director_attrition_ratio_3yr": {
+      "type": "VECTOR", "description": "Proportion of executive directors who have left roles relative to average number for the preceding 3 years",
+      "coverage": 0.4597, "user_count": 29, "alpha_count": 40,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Catalyst_Event",
+      "domain": "[0, 1]", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.970,
+      "evidence_status": "MEASURED"
+    },
+    "director_current_other_listed_boards_count": {
+      "type": "VECTOR", "description": "Number of other types of boards the individual currently serves on at the selected date",
+      "coverage": 0.5455, "user_count": 9, "alpha_count": 14,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.891,
+      "evidence_status": "MEASURED"
+    },
+    "director_total_other_listed_boards_count": {
+      "type": "VECTOR", "description": "Total number of other types of boards the individual has served on up to the selected date",
+      "coverage": 0.5455, "user_count": 11, "alpha_count": 13,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.871,
+      "evidence_status": "MEASURED"
+    },
+    "employer_pension_contribution_2": {
+      "type": "VECTOR", "description": "Employer defined pension contribution for each director during the reporting period",
+      "coverage": 0.0736, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "equity_linked_compensation_ratio_2": {
+      "type": "VECTOR", "description": "Equity-linked compensation (shares/options/LTIPs) as a proportion of total compensation",
+      "coverage": 0.0885, "user_count": 3, "alpha_count": 3,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, 1]", "is_sparse": true, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.446,
+      "evidence_status": "MEASURED"
+    },
+    "estimated_value_exercisable_options": {
+      "type": "VECTOR", "description": "Estimated value of exercisable options awarded in the period, valued at closing stock price on annual report date",
+      "coverage": 0.0229, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "estimated_value_exercisable_options_ltip": {
+      "type": "VECTOR", "description": "Estimated valuation of exercisable options awarded in the period",
+      "coverage": 0.0105, "user_count": 4, "alpha_count": 4,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.515,
+      "evidence_status": "MEASURED"
+    },
+    "estimated_value_options_awarded_2": {
+      "type": "VECTOR", "description": "Estimated value of options awarded to the director during the period",
+      "coverage": 0.0694, "user_count": 3, "alpha_count": 4,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.515,
+      "evidence_status": "MEASURED"
+    },
+    "estimated_value_options_held": {
+      "type": "VECTOR", "description": "Estimated value of options held at end of period by the director, valued at annual report closing price",
+      "coverage": 0.0783, "user_count": 3, "alpha_count": 3,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.446,
+      "evidence_status": "MEASURED"
+    },
+    "estimated_value_unexercisable_options": {
+      "type": "VECTOR", "description": "Estimated value of unexercisable options awarded in the period, valued at closing stock price on annual report date",
+      "coverage": 0.0215, "user_count": 0, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "estimated_value_unexercisable_options_ltip": {
+      "type": "VECTOR", "description": "Estimated valuation of unexercisable options awarded in the period",
+      "coverage": 0.0214, "user_count": 1, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "exercisable_option_quantity": {
+      "type": "VECTOR", "description": "Maximum number of exercisable options awarded for that incentive plan in the period",
+      "coverage": 0.0229, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "exercisable_option_quantity_ltip": {
+      "type": "VECTOR", "description": "Number of exercisable options awarded in the incentive plan",
+      "coverage": 0.0105, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "expired_option_quantity": {
+      "type": "VECTOR", "description": "Number of expired options in the incentive plan",
+      "coverage": 0.0021, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "expired_option_quantity_ltip": {
+      "type": "VECTOR", "description": "Number of expired options in the incentive plan",
+      "coverage": 0.0001, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_avgtimeothco": {
+      "type": "VECTOR", "description": "Average time executive directors serve on other quoted boards (excluding the one analyzed)",
+      "coverage": 0.5328, "user_count": 25, "alpha_count": 32,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.950,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_noquals": {
+      "type": "VECTOR", "description": "Total number of educational qualifications at undergraduate level or above as of the annual report date",
+      "coverage": 0.5329, "user_count": 16, "alpha_count": 25,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.941,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_timebrd": {
+      "type": "VECTOR", "description": "Average time spent on the board by executive directors as of the selected annual report date",
+      "coverage": 0.5329, "user_count": 20, "alpha_count": 22,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.931,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_timeinco": {
+      "type": "VECTOR", "description": "Average time spent at the company by executive directors as of the selected annual report date",
+      "coverage": 0.5329, "user_count": 10, "alpha_count": 12,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.861,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_timeretirement": {
+      "type": "VECTOR", "description": "Average time to retirement for executive directors as of the selected annual report date",
+      "coverage": 0.5312, "user_count": 6, "alpha_count": 6,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.653,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_timerole": {
+      "type": "VECTOR", "description": "The average length of time executive directors have served in their current role",
+      "coverage": 0.5329, "user_count": 13, "alpha_count": 13,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.871,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_totcurrnolstdbrd": {
+      "type": "VECTOR", "description": "The average number of quoted (public) boards currently served on by executive directors in the company",
+      "coverage": 0.5329, "user_count": 7, "alpha_count": 7,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.713,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_totcurrnounlstdbrd": {
+      "type": "VECTOR", "description": "The average number of private (unlisted) boards currently served on by executive directors in the company",
+      "coverage": 0.5054, "user_count": 5, "alpha_count": 6,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.653,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_totnolstdbrd": {
+      "type": "VECTOR", "description": "The average cumulative number of quoted (public) boards served on over time by executive directors",
+      "coverage": 0.5329, "user_count": 3, "alpha_count": 3,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.446,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_board_characteristics_totnounlstdbrd": {
+      "type": "VECTOR", "description": "Average number of private boards served on over time by Executive Directors",
+      "coverage": 0.5266, "user_count": 6, "alpha_count": 8,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.772,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_avgtimeothco": {
+      "type": "VECTOR", "description": "Average time the director sits on boards of quoted (public) companies",
+      "coverage": 0.5329, "user_count": 7, "alpha_count": 7,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.713,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_avgtimeothco": {
+      "type": "VECTOR", "description": "Average time the director sits on the boards of other quoted companies (filtered director set)",
+      "coverage": 0.5455, "user_count": 6, "alpha_count": 6,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.653,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_noquals": {
+      "type": "VECTOR", "description": "Total number of educational qualifications (undergraduate and above) held by the individual (filtered director set)",
+      "coverage": 0.5455, "user_count": 5, "alpha_count": 5,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.594,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_timebrd": {
+      "type": "VECTOR", "description": "Length of time the individual has served on the board at the selected annual report date (filtered director set)",
+      "coverage": 0.5455, "user_count": 9, "alpha_count": 10,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.822,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_timeinco": {
+      "type": "VECTOR", "description": "Total time the individual has been with the company at the selected annual report date (filtered director set)",
+      "coverage": 0.5455, "user_count": 14, "alpha_count": 16,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.921,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_timeretirement": {
+      "type": "VECTOR", "description": "Time to retirement for the individual at the selected annual report date (filtered director set)",
+      "coverage": 0.5455, "user_count": 5, "alpha_count": 6,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.653,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_timerole": {
+      "type": "VECTOR", "description": "Length of time the individual has served in the current role at the selected annual report date (filtered director set)",
+      "coverage": 0.5455, "user_count": 6, "alpha_count": 9,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.802,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_totcurrnolstdbrd": {
+      "type": "VECTOR", "description": "Number of quoted boards the individual currently serves on at the selected date (filtered director set)",
+      "coverage": 0.5455, "user_count": 6, "alpha_count": 7,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.713,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_totcurrnounlstdbrd": {
+      "type": "VECTOR", "description": "Number of private boards the individual currently serves on at the selected date (filtered director set)",
+      "coverage": 0.5455, "user_count": 2, "alpha_count": 3,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.446,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_totnolstdbrd": {
+      "type": "VECTOR", "description": "Total number of quoted (public) boards the individual has served on up to the selected date (filtered director set)",
+      "coverage": 0.5455, "user_count": 3, "alpha_count": 3,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.446,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_filtered_totnounlstdbrd": {
+      "type": "VECTOR", "description": "Total number of private boards the individual has served on up to the selected date (filtered director set)",
+      "coverage": 0.5455, "user_count": 10, "alpha_count": 11,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.832,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_noquals": {
+      "type": "VECTOR", "description": "Total number of educational qualifications (undergraduate and above) for the director as of the selected annual report date",
+      "coverage": 0.5329, "user_count": 4, "alpha_count": 5,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.594,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_timebrd": {
+      "type": "VECTOR", "description": "Time spent by the director on the board as of the selected annual report date",
+      "coverage": 0.5329, "user_count": 4, "alpha_count": 5,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.594,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_timeinco": {
+      "type": "VECTOR", "description": "Time spent by the director in the company as of the selected annual report date",
+      "coverage": 0.5329, "user_count": 4, "alpha_count": 5,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.594,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_timeretirement": {
+      "type": "VECTOR", "description": "Number of years or time until the director's retirement at the annual report date",
+      "coverage": 0.5315, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_timerole": {
+      "type": "VECTOR", "description": "Time spent by the director in their current role as of the selected annual report date",
+      "coverage": 0.5329, "user_count": 5, "alpha_count": 6,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.653,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_totcurrnolstdbrd": {
+      "type": "VECTOR", "description": "Number of quoted (public) boards the director serves on as of the selected annual report date",
+      "coverage": 0.5329, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_totcurrnounlstdbrd": {
+      "type": "VECTOR", "description": "Number of private (unlisted) boards the director serves on as of the selected annual report date",
+      "coverage": 0.5249, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_totnolstdbrd": {
+      "type": "VECTOR", "description": "Total number of quoted (publicly-listed) boards the director has served on historically up to the selected annual report date",
+      "coverage": 0.5329, "user_count": 3, "alpha_count": 3,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.446,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_director_characteristics_totnounlstdbrd": {
+      "type": "VECTOR", "description": "Total number of private (unlisted) boards served by the director up to the selected annual report date",
+      "coverage": 0.5312, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_genderratio": {
+      "type": "VECTOR", "description": "Proportion of male directors among executive directors",
+      "coverage": 0.5327, "user_count": 7, "alpha_count": 9,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Dimension_Anchor",
+      "domain": "[0, 1]", "is_sparse": false, "skewness": "low",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.802,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_numberdirectors": {
+      "type": "VECTOR", "description": "Number of Executive Directors on the board",
+      "coverage": 0.5329, "user_count": 4, "alpha_count": 4,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.515,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_stdevage": {
+      "type": "VECTOR", "description": "Standard deviation of ages of Executive Directors",
+      "coverage": 0.5312, "user_count": 11, "alpha_count": 11,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Uncertainty_Scale",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.832,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_stdevnoquals": {
+      "type": "VECTOR", "description": "The standard deviation of the number of educational qualifications (undergraduate and above) for executive directors",
+      "coverage": 0.5329, "user_count": 7, "alpha_count": 8,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Uncertainty_Scale",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.772,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_stdevtimebrd": {
+      "type": "VECTOR", "description": "Standard deviation of time on board for executive directors (how long they have sat on boards)",
+      "coverage": 0.5329, "user_count": 7, "alpha_count": 11,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Uncertainty_Scale",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.832,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_stdevtimeincompany": {
+      "type": "VECTOR", "description": "Standard deviation of time in company among executive directors",
+      "coverage": 0.5329, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Uncertainty_Scale",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_stdevtotcurrnolstdbrd": {
+      "type": "VECTOR", "description": "Standard deviation of the number of quoted boards currently served on by executive directors",
+      "coverage": 0.5329, "user_count": 6, "alpha_count": 7,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Uncertainty_Scale",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.713,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_stdevtotnolstdbrd": {
+      "type": "VECTOR", "description": "Standard deviation of total number of quoted boards served on over time among executive directors",
+      "coverage": 0.5329, "user_count": 4, "alpha_count": 4,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Uncertainty_Scale",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.515,
+      "evidence_status": "MEASURED"
+    },
+    "fnd1_succession": {
+      "type": "VECTOR", "description": "Degree to which Executive Directors' ages are clustered near retirement age, indicating succession risk",
+      "coverage": 0.5325, "user_count": 25, "alpha_count": 37,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Catalyst_Event",
+      "domain": "[0, 1]", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.960,
+      "evidence_status": "MEASURED"
+    },
+    "intrinsic_value_exercisable_options": {
+      "type": "VECTOR", "description": "Exercise price at which the exercisable options can be exercised",
+      "coverage": 0.0195, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "intrinsic_value_exercisable_options_ltip": {
+      "type": "VECTOR", "description": "Valuation of exercisable options awarded, based on closing stock price at annual report date",
+      "coverage": 0.0077, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "intrinsic_value_options_awarded_2": {
+      "type": "VECTOR", "description": "Intrinsic value of options awarded during the period, valued at annual report date closing stock price",
+      "coverage": 0.0623, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "intrinsic_value_options_held_2": {
+      "type": "VECTOR", "description": "Value of stock options held by the director at period end, using closing stock price from the annual report date",
+      "coverage": 0.0757, "user_count": 3, "alpha_count": 3,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.446,
+      "evidence_status": "MEASURED"
+    },
+    "intrinsic_value_unexercisable_options": {
+      "type": "VECTOR", "description": "Valuation of unexercisable options awarded in the period, using the closing stock price at the annual report date",
+      "coverage": 0.0181, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "intrinsic_value_unexercisable_options_ltip": {
+      "type": "VECTOR", "description": "Valuation of unexercisable options awarded, based on closing stock price at annual report date",
+      "coverage": 0.0176, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "ltip_award_value_2": {
+      "type": "VECTOR", "description": "Value of Long-Term Incentive Plans (LTIPs) awarded during the period, valued at closing stock price on the annual report date",
+      "coverage": 0.0829, "user_count": 0, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "ltip_plan_value_held_2": {
+      "type": "VECTOR", "description": "Value of LTIPs held at period end, valued at closing stock price on annual report date",
+      "coverage": 0.0836, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "ltip_to_total_remuneration_ratio_2": {
+      "type": "VECTOR", "description": "Ratio of LTIP value to total awards for the period (LTIPValue/TotRemPeriod)",
+      "coverage": 0.0791, "user_count": 0, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, 1]", "is_sparse": true, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "ltip_wealth_stock_price": {
+      "type": "VECTOR", "description": "Stock price for the awarded security on the annual report date (in-dataset grant-date reference price, NOT external close/open PV)",
+      "coverage": 0.1553, "user_count": 3, "alpha_count": 4,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.515,
+      "evidence_status": "MEASURED"
+    },
+    "matched_share_award_quantity": {
+      "type": "VECTOR", "description": "Maximum number of shares awarded plus the matched percentage in the period under a specific incentive plan",
+      "coverage": 0.0065, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "matched_share_award_quantity_ltip": {
+      "type": "VECTOR", "description": "Maximum number of shares awarded plus any matched percentage in the period for the relevant incentive plan",
+      "coverage": 0.0056, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "matched_share_award_value": {
+      "type": "VECTOR", "description": "Value of shares awarded plus matched percentage for the given incentive plan",
+      "coverage": 0.0065, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "matched_share_award_value_ltip": {
+      "type": "VECTOR", "description": "Total value of shares awarded, including the value of any additional matched shares, for a given incentive plan during the period",
+      "coverage": 0.0056, "user_count": 0, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "monetary_unit_code": {
+      "type": "VECTOR", "description": "ISO code of the currency in which all monetary values are reported (categorical metadata, NOT numeric)",
+      "coverage": 0.1553, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Metadata",
+      "domain": "categorical(ISO-4217)", "is_sparse": false, "skewness": "none",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "UNKNOWN"
+    },
+    "monetary_unit_code_ltip": {
+      "type": "VECTOR", "description": "ISO 4217 code of the currency used for monetary values in this module (categorical metadata, NOT numeric)",
+      "coverage": 0.1549, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Metadata",
+      "domain": "categorical(ISO-4217)", "is_sparse": false, "skewness": "none",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "UNKNOWN"
+    },
+    "option_strike_price": {
+      "type": "VECTOR", "description": "Price at which awarded options can be exercised",
+      "coverage": 0.0374, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "option_strike_price_ltip": {
+      "type": "VECTOR", "description": "Price at which awarded options can be exercised (LTIP module)",
+      "coverage": 0.038, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "other_board_total_count": {
+      "type": "VECTOR", "description": "Total number of other boards the director has served on up to the selected annual report date",
+      "coverage": 0.3395, "user_count": 6, "alpha_count": 6,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.653,
+      "evidence_status": "MEASURED"
+    },
+    "other_cash_payments_2": {
+      "type": "VECTOR", "description": "Annual value of ad hoc cash payments such as relocation allowances",
+      "coverage": 0.0942, "user_count": 0, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "security_market_price_ltip": {
+      "type": "VECTOR", "description": "Stock price at the grant date (or annual report date) for the awarded plan (in-dataset reference price, NOT external close/open PV)",
+      "coverage": 0.1549, "user_count": 0, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "share_award_quantity": {
+      "type": "VECTOR", "description": "Maximum number of shares awarded during the period for the specified incentive plan",
+      "coverage": 0.1442, "user_count": 3, "alpha_count": 4,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.515,
+      "evidence_status": "MEASURED"
+    },
+    "share_award_quantity_ltip": {
+      "type": "VECTOR", "description": "Maximum number of shares awarded in the period for a given incentive plan (LTIP module)",
+      "coverage": 0.1327, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "share_award_value_2": {
+      "type": "VECTOR", "description": "Value of shares awarded during the period, using closing stock price on the annual report date",
+      "coverage": 0.0166, "user_count": 0, "alpha_count": 0,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.000,
+      "evidence_status": "MEASURED"
+    },
+    "share_award_value_3": {
+      "type": "VECTOR", "description": "Total value of shares awarded for a given incentive plan",
+      "coverage": 0.1442, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "share_award_value_ltip": {
+      "type": "VECTOR", "description": "Value of shares awarded for a given incentive plan (LTIP module)",
+      "coverage": 0.1327, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "total_director_cash_comp": {
+      "type": "VECTOR", "description": "Total direct compensation: sum of salary, bonus, other cash, and pension employer contributions for the director",
+      "coverage": 0.1055, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "total_equity_at_risk_2": {
+      "type": "VECTOR", "description": "Total stock held at risk by the director",
+      "coverage": 0.0914, "user_count": 4, "alpha_count": 4,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.515,
+      "evidence_status": "MEASURED"
+    },
+    "total_equity_linked_wealth_2": {
+      "type": "VECTOR", "description": "Total valuation of director's equity-linked wealth at period end, calculated at closing stock price of the annual report date",
+      "coverage": 0.0988, "user_count": 1, "alpha_count": 0,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.000,
+      "evidence_status": "MEASURED"
+    },
+    "total_other_listed_boards_count_2": {
+      "type": "VECTOR", "description": "Total number of other (non-quoted, non-private) boards an individual has served on as of the annual report date",
+      "coverage": 0.2986, "user_count": 4, "alpha_count": 5,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": false, "skewness": "medium",
+      "horizon": "60d", "crowding_tier": "WARM", "alpha_pct": 0.594,
+      "evidence_status": "MEASURED"
+    },
+    "total_remuneration_period": {
+      "type": "VECTOR", "description": "Total remuneration or awards received by the director during the period",
+      "coverage": 0.1001, "user_count": 0, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "total_shareholding_value_2": {
+      "type": "VECTOR", "description": "Value of shares held by the director at the end of the reporting period, calculated using the annual report date's closing stock price",
+      "coverage": 0.0963, "user_count": 0, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "unexercisable_option_quantity": {
+      "type": "VECTOR", "description": "Maximum number of unexercisable options awarded for the incentive plan in the period",
+      "coverage": 0.0215, "user_count": 1, "alpha_count": 1,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.020,
+      "evidence_status": "MEASURED"
+    },
+    "unexercisable_option_quantity_ltip": {
+      "type": "VECTOR", "description": "Number of unexercisable options awarded in the incentive plan (LTIP module)",
+      "coverage": 0.0214, "user_count": 2, "alpha_count": 2,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "COLD", "alpha_pct": 0.297,
+      "evidence_status": "MEASURED"
+    },
+    "wealth_sensitivity_to_stock_2": {
+      "type": "VECTOR", "description": "Change in the director's company-specific wealth for a 1% change in stock price at the annual report date",
+      "coverage": 0.0964, "user_count": 7, "alpha_count": 7,
+      "category": "fundamental", "subcategory": "Management and Executive Data",
+      "update_frequency": "annual", "semantic_role": "Signal_Flow",
+      "domain": "[0, inf)", "is_sparse": true, "skewness": "high",
+      "horizon": "60d", "crowding_tier": "HOT", "alpha_pct": 0.713,
+      "evidence_status": "MEASURED"
+    }
+  }
+}

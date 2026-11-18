@@ -47,7 +47,7 @@ except (ImportError, ValueError):
 TIME_SERIES_OPS = {
     "ts_delta", "ts_mean", "ts_sum", "ts_std_dev", "ts_rank", "ts_zscore",
     "ts_decay_linear", "ts_decay_exp_window", "ts_delay", "ts_corr", "ts_min",
-    "ts_max", "ts_arg_max", "ts_arg_min", "ts_av_diff", "ts_scale", "ts_backfill",
+    "ts_max", "ts_median", "ts_arg_max", "ts_arg_min", "ts_av_diff", "ts_scale", "ts_backfill",
     "ts_returns", "ts_ir", "ts_skewness", "ts_kurtosis", "ts_quantile",
     "ts_regression", "ts_count_nans", "ts_product", "jump_decay",
 }
@@ -184,10 +184,26 @@ class HorizonProbe:
         min_sharpe: float = 1.0,
         spike_floor: float = 0.5,
         all_sharpes: Optional[Dict[str, float]] = None,
+        hypothesis: Optional[dict] = None,
     ) -> List[dict]:
-        """基于 Step 1 回测结果，对每对窗口给出参数高原 / 尖峰判决"""
+        """基于预注册 horizon_model，对每对窗口给出期限结构判决。"""
         pairs = pairs if pairs is not None else cls.detect_pairs(variants)
         sharpe_map: Dict[str, float] = {}
+
+        horizon_model = hypothesis.get("horizon_model") if isinstance(hypothesis, dict) else {}
+        if not isinstance(horizon_model, dict):
+            horizon_model = {}
+        expected_short_sign = horizon_model.get("expected_short_sign")
+        expected_long_sign = horizon_model.get("expected_long_sign")
+        exp_short_sign = expected_short_sign if expected_short_sign is not None else (hypothesis.get("expected_polarity", 1) if isinstance(hypothesis, dict) else 1)
+        exp_long_sign = expected_long_sign if expected_long_sign is not None else exp_short_sign
+        decay_assumption = str(horizon_model.get("decay_assumption") or "").lower()
+        is_fast_decay = any(k in decay_assumption for k in ("fast", "decay", "impulse", "pulse"))
+        expected_reversal = (
+            isinstance(expected_short_sign, (int, float))
+            and isinstance(expected_long_sign, (int, float))
+            and expected_short_sign * expected_long_sign < 0
+        )
 
         # 1. 优先载入全量回测夏普字典 (覆盖 |Sharpe| in [0.50, 0.99] 的配对窗口)
         if all_sharpes and isinstance(all_sharpes, dict):
@@ -227,15 +243,40 @@ class HorizonProbe:
                 vals = [abs(v) for v in (sa, sb) if v is not None]
                 both_pass = all(abs(v) >= min_sharpe for v in (sa, sb) if v is not None) and len(vals) == 2
                 same_sign = (sa is not None and sb is not None and sa * sb > 0)
+                opposite_sign = (sa is not None and sb is not None and sa * sb < 0)
                 any_spike = (len(vals) == 2 and max(vals) >= min_sharpe and min(vals) < spike_floor)
                 # 兼容健康参数高原 (Parameter Plateau):
                 # 例如 (1.28, 0.92): 一窗达标 (>= 1.0)，另一窗未坍塌 (>= 0.75) 且同号
                 plateau_pass = bool(same_sign and len(vals) == 2 and max(vals) >= min_sharpe and min(vals) >= 0.75)
+                reversal_pass = bool(opposite_sign and both_pass and expected_reversal)
 
-                if (both_pass or plateau_pass) and same_sign:
-                    verdict = "PLATEAU"
+                # 符号预期比对: 严防非预期符号翻转
+                short_sign_match = (sa is None) or (sa * exp_short_sign > 0)
+                long_sign_match = (sb is None) or (sb * exp_long_sign > 0)
+                sign_match = short_sign_match and long_sign_match
+
+                # 预期衰减分支 (EXPECTED_DECAY): 声明了快衰减，短窗强 (|sa| >= 1.20)，长窗在 [0.60, |sa|] 且同号且符号符合预期
+                decay_pass = bool(
+                    is_fast_decay and same_sign and short_sign_match and len(vals) == 2
+                    and sa is not None and sb is not None
+                    and abs(sa) >= 1.20 and 0.60 <= abs(sb) <= abs(sa)
+                )
+
+                if reversal_pass:
+                    verdict = "EXPECTED_REVERSAL"
+                elif decay_pass:
+                    verdict = "EXPECTED_DECAY"
                 elif any_spike:
                     verdict = "SPIKE"
+                elif (both_pass or plateau_pass) and same_sign:
+                    if sign_match:
+                        verdict = "PLATEAU"
+                    else:
+                        verdict = "UNEXPECTED_SIGN_FLIP"
+                elif opposite_sign:
+                    verdict = "UNEXPECTED_SIGN_FLIP"
+                elif not sign_match and len(vals) == 2:
+                    verdict = "UNEXPECTED_SIGN_FLIP"
                 elif len(vals) < 2:
                     verdict = "NO_DATA"
                 else:
@@ -252,7 +293,9 @@ class HorizonProbe:
                 "sharpe_long": sb,
                 "stable_min_abs_sharpe": stable_min,
                 "verdict": verdict,
-                "plateau_pass": (verdict == "PLATEAU"),
+                "plateau_pass": (verdict in {"PLATEAU", "EXPECTED_PLATEAU"}),
+                "horizon_robust": verdict in {"PLATEAU", "EXPECTED_PLATEAU", "EXPECTED_DECAY", "EXPECTED_REVERSAL", "STATIC_CROSS_SECTION"},
+                "expected_reversal": expected_reversal,
                 "skeleton": p["skeleton"],
             })
         return verdicts
@@ -272,22 +315,42 @@ class HorizonProbe:
         for c in candidates or []:
             if not isinstance(c, dict):
                 continue
-            key = _norm_expr(c.get("expression", ""))
+            raw_expr = c.get("expression", "")
+            key = _norm_expr(raw_expr)
             vd = expr_to_verdict.get(key)
+            if vd is None and raw_expr:
+                # 纯截面公式豁免: 若 AST 中不含任何 TIME_SERIES_OPS，赋予 STATIC_CROSS_SECTION
+                has_ts = False
+                try:
+                    tree = ast.parse(raw_expr.strip(), mode="eval")
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.Call):
+                            fname = getattr(node.func, "id", getattr(node.func, "attr", ""))
+                            if fname in TIME_SERIES_OPS:
+                                has_ts = True
+                                break
+                except Exception:
+                    pass
+                if not has_ts:
+                    vd = "STATIC_CROSS_SECTION"
+                    expr_to_verdict[key] = vd
+
             c["horizon_verdict"] = vd
-            c["plateau_pass"] = (vd == "PLATEAU") if vd else None
+            c["plateau_pass"] = (vd in {"PLATEAU", "EXPECTED_PLATEAU", "STATIC_CROSS_SECTION"}) if vd else None
+            c["horizon_robust"] = vd in {"PLATEAU", "EXPECTED_PLATEAU", "EXPECTED_DECAY", "EXPECTED_REVERSAL", "STATIC_CROSS_SECTION"} if vd else None
         return expr_to_verdict
 
     @classmethod
     def filter_parents(cls, candidates: List[dict]) -> Tuple[List[dict], List[dict]]:
         """
-        母本过滤: 剔除 SPIKE (尖峰过拟合)，其余保留。
+        母本过滤: 剔除 SPIKE 与非预期反号；EXPECTED_REVERSAL 是预注册机制，允许保留。
         未参与配对 (horizon_verdict is None) 的候选视为「无配对证据」，予以保留。
         """
+        rejected = {"SPIKE", "UNEXPECTED_SIGN_FLIP", "UNEXPECTED_SPIKE"}
         kept, dropped = [], []
         for c in candidates or []:
             vd = c.get("horizon_verdict")
-            if vd == "SPIKE":
+            if vd in rejected:
                 dropped.append(c)
             else:
                 kept.append(c)
@@ -296,11 +359,18 @@ class HorizonProbe:
     # ---------------- 4. 摘要 ----------------
     @classmethod
     def summarize(cls, verdicts: List[dict]) -> dict:
-        counts = {"PLATEAU": 0, "SPIKE": 0, "WEAK": 0, "NO_DATA": 0}
+        counts = {
+            "PLATEAU": 0,
+            "EXPECTED_REVERSAL": 0,
+            "SPIKE": 0,
+            "UNEXPECTED_SIGN_FLIP": 0,
+            "WEAK": 0,
+            "NO_DATA": 0,
+        }
         for v in verdicts:
             counts[v["verdict"]] = counts.get(v["verdict"], 0) + 1
-        plateau_slots = [v["slots"] for v in verdicts if v["verdict"] == "PLATEAU"]
-        spike_slots = [v["slots"] for v in verdicts if v["verdict"] == "SPIKE"]
+        plateau_slots = [v["slots"] for v in verdicts if v["verdict"] in {"PLATEAU", "EXPECTED_REVERSAL"}]
+        spike_slots = [v["slots"] for v in verdicts if v["verdict"] in {"SPIKE", "UNEXPECTED_SIGN_FLIP"}]
         return {
             "pairs": len(verdicts),
             "counts": counts,
@@ -317,14 +387,23 @@ class HorizonProbe:
         for v in verdicts:
             sa = "N/A" if v["sharpe_short"] is None else f"{v['sharpe_short']:.2f}"
             sb = "N/A" if v["sharpe_long"] is None else f"{v['sharpe_long']:.2f}"
-            icon = {"PLATEAU": "🟢", "SPIKE": "🔴", "WEAK": "🟡", "NO_DATA": "⚪"}.get(v["verdict"], "⚪")
+            icon = {
+                "PLATEAU": "🟢",
+                "EXPECTED_REVERSAL": "🟢",
+                "SPIKE": "🔴",
+                "UNEXPECTED_SIGN_FLIP": "🔴",
+                "WEAK": "🟡",
+                "NO_DATA": "⚪",
+            }.get(v["verdict"], "⚪")
             lines.append(
                 f"  {icon} slots {v['slots']} | N={v['windows'][0]} Sharpe={sa} vs 2N={v['windows'][1]} Sharpe={sb} -> {v['verdict']}"
             )
         s = cls.summarize(verdicts)
         head = (
             f"🔬 [双窗口探针] 识别 {s['pairs']} 组配对 | 参数高原 {s['counts']['PLATEAU']} 组 | "
-            f"尖峰过拟合 {s['counts']['SPIKE']} 组 | 证据不足 {s['counts']['WEAK']} 组"
+            f"预注册期限反转 {s['counts'].get('EXPECTED_REVERSAL', 0)} 组 | "
+            f"尖峰/非预期反号 {s['counts']['SPIKE'] + s['counts'].get('UNEXPECTED_SIGN_FLIP', 0)} 组 | "
+            f"证据不足 {s['counts']['WEAK']} 组"
         )
         return head + "\n" + "\n".join(lines)
 

@@ -58,9 +58,7 @@ class ParamOrderCorrector(ast.NodeTransformer):
         return node
 
 class CalendarWindowSnapper(ast.NodeTransformer):
-    """遍历 AST 中的时序算子 (ts_*) 及非线性算子，将时间窗口吸附到标准自然日历网格，同时保护日频触发器 (d=1) 并离散化参数"""
-    VALID_WINSORIZE_STDS = [2.5, 3.0, 3.5, 4.0]
-    VALID_POWERS = [0.5, 2.0]
+    """遍历 AST 中的时序算子 (ts_*)，将时间窗口吸附到标准自然日历网格，同时保护日频触发器 (d=1)"""
 
     def __init__(self, valid_lookbacks: List[int]):
         super().__init__()
@@ -72,9 +70,6 @@ class CalendarWindowSnapper(ast.NodeTransformer):
             return val
         return min(self.snap_targets, key=lambda x: abs(x - val))
 
-    def _snap_float(self, val: float, targets: List[float]) -> float:
-        return min(targets, key=lambda x: abs(x - val))
-
     def visit_Call(self, node):
         self.generic_visit(node)
         func_name = ""
@@ -83,6 +78,7 @@ class CalendarWindowSnapper(ast.NodeTransformer):
         elif isinstance(node.func, ast.Attribute):
             func_name = node.func.attr
 
+        # 仅在显式调用时协助吸附时序离散窗口，彻底删去对 winsorize 和 power 的硬编码死参数吸附
         if func_name.startswith("ts_"):
             new_args = []
             for arg in node.args:
@@ -99,20 +95,6 @@ class CalendarWindowSnapper(ast.NodeTransformer):
                 if kw.arg in {"d", "d1", "lookback", "window", "days", "time"} and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, int) and not isinstance(kw.value.value, bool):
                     if kw.value.value > 1:
                         kw.value = ast.Constant(value=self._snap_val(kw.value.value))
-
-        elif func_name == "winsorize":
-            if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, (int, float)):
-                node.args[1] = ast.Constant(value=self._snap_float(float(node.args[1].value), self.VALID_WINSORIZE_STDS))
-            for kw in node.keywords:
-                if kw.arg == "std" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, (int, float)):
-                    kw.value = ast.Constant(value=self._snap_float(float(kw.value.value), self.VALID_WINSORIZE_STDS))
-
-        elif func_name in ("power", "signed_power"):
-            if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, (int, float)):
-                node.args[1] = ast.Constant(value=self._snap_float(float(node.args[1].value), self.VALID_POWERS))
-            for kw in node.keywords:
-                if kw.arg in {"exp", "exponent", "p"} and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, (int, float)):
-                    kw.value = ast.Constant(value=self._snap_float(float(kw.value.value), self.VALID_POWERS))
 
         return node
 
@@ -246,7 +228,7 @@ class ASTSandboxCorrector:
         Stage 0 ATOM Alpha 专属门禁审查:
         1. 专攻 ATOM Alpha 范式，使用 1~3 个字段
         2. 算子预算限制：总算子数 op <= 6 (豁免 vec_* 降维包裹算子)
-        3. 严禁使用 + 和 *，以及函数形式 add 和 multiply
+        3. 加法/乘法不再一刀切禁止；是否合法由 HypothesisSpec 的量纲与机制意图审计决定
         """
         issues = []
         op_count = 0
@@ -269,10 +251,7 @@ class ASTSandboxCorrector:
         for node in ast.walk(tree):
             if isinstance(node, ast.BinOp):
                 op_count += 1
-                if isinstance(node.op, ast.Add):
-                    issues.append("Stage 0 严禁使用加法运算符 (+)")
-                elif isinstance(node.op, ast.Mult):
-                    issues.append("Stage 0 严禁使用乘法运算符 (*)")
+                # V2: 加乘是否合法交给量纲/机制审计；这里只计数，不再逼 Agent 堆一元装饰算子
             elif isinstance(node, ast.UnaryOp):
                 op_count += 1
             elif isinstance(node, ast.Call):
@@ -285,9 +264,6 @@ class ASTSandboxCorrector:
                 # 豁免 vec_* 降维标量化包裹算子
                 if not func_name.startswith("vec_"):
                     op_count += 1
-
-                if func_name.lower() in {"add", "multiply"}:
-                    issues.append(f"Stage 0 严禁使用加乘算子: '{func_name}'")
             elif isinstance(node, ast.Name):
                 name = node.id
                 name_lower = name.lower()
@@ -335,6 +311,173 @@ class ASTSandboxCorrector:
     def compute_skeleton_hash(cls, skeleton_str: str) -> str:
         """计算骨架 SHA256/MD5 指纹"""
         return hashlib.md5(skeleton_str.encode('utf-8')).hexdigest()
+
+    @classmethod
+    def get_core_skeleton(cls, expr: str, mechanism_intents: Optional[set] = None) -> str:
+        """
+        V2: 提取“核心经济骨架”。
+
+        装饰算子不能靠固定名单一刀切:
+        - 若假说声明 TEMPORAL_DECAY，则 ts_decay_* 是核心机制，不剥离;
+        - 若声明 TAIL_ASYMMETRY，则 winsorize/signed_power/s_log_1p 是核心机制;
+        - 若声明 CROSS_SECTIONAL_RELATIVE，则 rank/group_rank 等截面映射是核心机制。
+        """
+        intents = set(mechanism_intents or [])
+        corrected = cls.correct_expression(expr)
+        try:
+            tree = ast.parse(corrected, mode='eval')
+        except Exception:
+            return cls.get_canonical_skeleton(corrected)
+
+        always_decoration = set()
+        conditional_decoration = {
+            "signed_power": "TAIL_ASYMMETRY",
+            "power": "TAIL_ASYMMETRY",
+            "winsorize": "TAIL_ASYMMETRY",
+            "s_log_1p": "TAIL_ASYMMETRY",
+            "abs": "TAIL_ASYMMETRY",
+            "ts_decay_linear": "TEMPORAL_DECAY",
+            "ts_decay_exp_window": "TEMPORAL_DECAY",
+            "jump_decay": "TEMPORAL_DECAY",
+            "rank": "CROSS_SECTIONAL_RELATIVE",
+            "group_rank": "CROSS_SECTIONAL_RELATIVE",
+            "group_zscore": "CROSS_SECTIONAL_RELATIVE",
+            "group_neutralize": "CROSS_SECTIONAL_RELATIVE",
+        }
+
+        def _is_decoration_call(node: ast.AST) -> bool:
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                return False
+            name = node.func.id
+            if name in always_decoration:
+                return True
+            required_intent = conditional_decoration.get(name)
+            return bool(required_intent and required_intent not in intents)
+
+        changed = True
+        while changed:
+            changed = False
+
+            def _strip(node: ast.AST) -> ast.AST:
+                nonlocal changed
+                if _is_decoration_call(node) and node.args:
+                    changed = True
+                    return node.args[0]
+                for field_name, value in ast.iter_fields(node):
+                    if isinstance(value, list):
+                        new_values = []
+                        for child in value:
+                            if _is_decoration_call(child) and isinstance(child, ast.Call) and child.args:
+                                changed = True
+                                new_values.append(child.args[0])
+                            else:
+                                new_values.append(_strip(child) if isinstance(child, ast.AST) else child)
+                        setattr(node, field_name, new_values)
+                    elif isinstance(value, ast.AST):
+                        setattr(node, field_name, _strip(value))
+                return node
+
+            tree = _strip(tree)
+
+        try:
+            transformed = SkeletonTransformer().visit(tree)
+            core = ast.unparse(transformed)
+            return re.sub(r'\s+', '', core)
+        except Exception:
+            return cls.get_canonical_skeleton(corrected)
+
+    @classmethod
+    def strip_decoration_operators(cls, expr: str, mechanism_intents: Optional[set] = None) -> str:
+        """
+        剥离外层装饰算子，保留内部原始表达式结构（不替换常数，不转为抽象骨架）。
+        用于消融测试裸核构造等场景。
+        """
+        intents = set(mechanism_intents or [])
+        corrected = cls.correct_expression(expr)
+        try:
+            tree = ast.parse(corrected, mode='eval')
+        except Exception:
+            return corrected
+
+        always_decoration = set()
+        conditional_decoration = {
+            "signed_power": "TAIL_ASYMMETRY",
+            "power": "TAIL_ASYMMETRY",
+            "winsorize": "TAIL_ASYMMETRY",
+            "s_log_1p": "TAIL_ASYMMETRY",
+            "abs": "TAIL_ASYMMETRY",
+            "ts_decay_linear": "TEMPORAL_DECAY",
+            "ts_decay_exp_window": "TEMPORAL_DECAY",
+            "jump_decay": "TEMPORAL_DECAY",
+            "rank": "CROSS_SECTIONAL_RELATIVE",
+            "group_rank": "CROSS_SECTIONAL_RELATIVE",
+            "group_zscore": "CROSS_SECTIONAL_RELATIVE",
+            "group_neutralize": "CROSS_SECTIONAL_RELATIVE",
+        }
+
+        def _is_decoration_call(node: ast.AST) -> bool:
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                return False
+            name = node.func.id
+            if name in always_decoration:
+                return True
+            required_intent = conditional_decoration.get(name)
+            return bool(required_intent and required_intent not in intents)
+
+        changed = True
+        while changed:
+            changed = False
+
+            def _strip(node: ast.AST) -> ast.AST:
+                nonlocal changed
+                if _is_decoration_call(node) and node.args:
+                    changed = True
+                    return node.args[0]
+                for field_name, value in ast.iter_fields(node):
+                    if isinstance(value, list):
+                        new_values = []
+                        for child in value:
+                            if _is_decoration_call(child) and isinstance(child, ast.Call) and child.args:
+                                changed = True
+                                new_values.append(child.args[0])
+                            else:
+                                new_values.append(_strip(child) if isinstance(child, ast.AST) else child)
+                        setattr(node, field_name, new_values)
+                    elif isinstance(value, ast.AST):
+                        setattr(node, field_name, _strip(value))
+                return node
+
+            tree = _strip(tree)
+
+        try:
+            ast.fix_missing_locations(tree)
+            return ast.unparse(tree)
+        except Exception:
+            return corrected
+
+    @classmethod
+    def get_dual_signatures(cls, expr: str, mechanism_intents: Optional[set] = None) -> dict:
+        """返回实现签名与核心经济骨架签名。"""
+        implementation = cls.get_canonical_skeleton(expr)
+        core = cls.get_core_skeleton(expr, mechanism_intents=mechanism_intents)
+        return {
+            "implementation_signature": implementation,
+            "implementation_hash": cls.compute_skeleton_hash(implementation),
+            "core_signature": core,
+            "core_hash": cls.compute_skeleton_hash(core),
+        }
+
+    @classmethod
+    def is_decoration_only_variant(
+        cls,
+        expr: str,
+        parent_expression: str,
+        mechanism_intents: Optional[set] = None
+    ) -> bool:
+        """判断变体是否只是在外层叠加装饰算子而没有改变核心经济骨架。"""
+        if not parent_expression:
+            return False
+        return cls.get_core_skeleton(expr, mechanism_intents) == cls.get_core_skeleton(parent_expression, mechanism_intents)
 
     def compute_fingerprint(self, expr: str, region: str, universe: str, delay: int, neutralization: str = "NONE") -> str:
         """计算 Exact 组合指纹"""
@@ -399,6 +542,25 @@ class ASTSandboxCorrector:
         corrected_exprs = [self.correct_expression(x) for x in expressions]
         skeletons = [self.get_canonical_skeleton(x) for x in corrected_exprs]
         skeleton_hashes = [self.compute_skeleton_hash(s) for s in skeletons]
+        core_skeletons = [self.get_core_skeleton(x) for x in corrected_exprs]
+
+        # V2 核心经济骨架套壳熔断: 只换外层装饰、不改核心机制的变体不得挤占探索槽
+        # 小批次保留参数敏感性空间；20 槽探索批最多允许 6 条同核心骨架。
+        core_cap = max(8, int(len(expressions) * 0.60)) if is_exploit_or_step2 else max(6, int(len(expressions) * 0.30))
+        core_freq: Dict[str, List[int]] = {}
+        for idx, core_s in enumerate(core_skeletons):
+            core_freq.setdefault(core_s, []).append(idx + 1)
+        overpopulated_cores = {k: v for k, v in core_freq.items() if len(v) > core_cap}
+        if overpopulated_cores:
+            conn.close()
+            core_details = []
+            for core_s, slots in overpopulated_cores.items():
+                core_details.append(f"  - 核心骨架 [{core_s}] 占据卡槽 {slots} (共 {len(slots)} 条 > {core_cap} 条上限)")
+            raise ValueError(
+                "【核心机制套壳熔断】检测到多条变体仅在外层叠加装饰算子，核心经济骨架未发生机制级变化！\\n"
+                "请更换字段角色、交互类型、期限结构或事件状态；纯外层包装或常数微调不能作为新机制。\\n"
+                + "\\n".join(core_details)
+            )
 
         # 0. 母本骨架纯常数微调硬拦截 (Anti-Trivial Tuning Gate)
         if parent_expression:
@@ -428,7 +590,7 @@ class ASTSandboxCorrector:
             raise ValueError(
                 f"【AST Skeleton 摸鱼微调熔断】检测到单批变体中同质化骨架堆叠！\n"
                 f"系统硬性规定：单批中相同算子骨架最多只允许 {max_allowed_per_skel} 条（参数敏感性验证），严禁网格调参！\n"
-                f"违规骨架详情:\n" + "\n".join(details) + "\n请引入不同的数学拓扑（如指数半衰期平滑 vs 行业中性化 vs 动量差分）！"
+                f"违规骨架详情:\n" + "\n".join(details) + "\n请结合底层数据生成过程 (DGP) 自主推演差异化因果拓扑与不同经济学假说机制，严禁同质化骨架堆叠！"
             )
 
         # 2. 数据库历史去重 (Exact MD5) 与 跨批次历史骨架累积查重 (Gate 3 终极加固)

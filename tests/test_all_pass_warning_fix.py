@@ -82,22 +82,21 @@ class TestAllPassWarningResolution(unittest.TestCase):
 
         self.assertIn("cw_bottleneck", verdict["symptoms"])
         self.assertIn("sub_universe_or_2y_instability", verdict["symptoms"])
-        self.assertIn("winsorize", verdict["allowed_mutations"])
-        self.assertIn("s_log_1p", verdict["allowed_mutations"])
-        self.assertIn("signed_power", verdict["allowed_mutations"])
-        self.assertIn("trade_when", verdict["allowed_mutations"])
+        self.assertEqual(verdict["allowed_mutations"], [], "新架构彻底废除硬编码预制算子名单，allowed_mutations 恒为空")
+        self.assertTrue(any("CW" in c or "集中度" in c for c in verdict["forensic_clues"]))
+        self.assertTrue(any("子池" in c or "稳健性" in c for c in verdict["forensic_clues"]))
 
-        # 验证 Gate 2 (DimensionAuditor.audit_expression) 处方校验：
-        # Agent 主动加上 winsorize(..., std=3) 与 s_log_1p 不再被 Gate 2 拦截！
+        # 验证 Gate 2 (DimensionAuditor.audit_expression)：
+        # Agent 自主选用 winsorize(..., std=3) 与 s_log_1p 在全量 104 官方算子库下完全合规放行，无需算子白名单豁免！
         curative_expr = "group_rank(s_log_1p(winsorize(test_f, std=3)), subindustry)"
         gate2_res = DimensionAuditor.audit_expression(
             curative_expr,
             known_fields={"test_f": {"coverage": 0.9, "category": "news"}},
             category="news",
             step=2,
-            allowed_operators=verdict["allowed_mutations"]
+            allowed_operators=None
         )
-        self.assertTrue(gate2_res["is_valid"], f"Gate 2 不应误杀已授权的治愈算子: {gate2_res['issues']}")
+        self.assertTrue(gate2_res["is_valid"], f"Gate 2 不应误杀官方合法算子: {gate2_res['issues']}")
 
     def test_03_champion_zero_warning_priority(self):
         """测试补丁 3: 冠军加冕优先 ALL PASS (0 FAIL + 0 WARNING)"""

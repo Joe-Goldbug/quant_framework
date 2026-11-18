@@ -52,10 +52,32 @@ class RAGMemoryEngine:
     # 1. 金字塔四级经验按需挂载 (Pyramid Knowledge Mount)
     # -------------------------------------------------------------
     @classmethod
-    def load_pyramid_context(cls, region: str, delay: int, category: str, operators_path: str = None) -> str:
+    def _filter_dgp_scoped_experience(cls, content: str, dgp_signatures: Optional[List[str]]) -> str:
+        """只保留 DGP 物理签名匹配的实现级经验；无签名时返回空，禁止跨物理形态复用。"""
+        if not dgp_signatures:
+            return ""
+        signature_set = {str(s) for s in dgp_signatures if s}
+        blocks = content.split("<!-- SKELETON_HASH:")
+        matched = []
+        for block in blocks[1:]:
+            if any(signature in block for signature in signature_set):
+                matched.append("<!-- SKELETON_HASH:" + block)
+        return "\n".join(matched).strip()
+
+    @classmethod
+    def load_pyramid_context(
+        cls,
+        region: str,
+        delay: int,
+        category: str,
+        operators_path: str = None,
+        dgp_signatures: Optional[List[str]] = None,
+    ) -> str:
         """
-        自顶向下构建四级金字塔经验 Context，遵循“未找到直接跳过”的优雅容错原则：
-        第 2 级 (垂直实战手册) -> 第 3 级 (区域风控) -> 第 4 级 (全局底座)
+        自顶向下构建四级金字塔经验 Context:
+        - 第 1 级是语法事实，可全量挂载;
+        - 第 2 级实现级经验必须匹配 DGP 物理签名后才挂载;
+        - 第 3/4 级是风控与通用原则，不提供具体算子处方。
         """
         cls._ensure_dirs()
         region_clean = region.upper()
@@ -74,19 +96,27 @@ class RAGMemoryEngine:
             except Exception as e:
                 print(f"⚠️ [RAG Memory] 读取指定算子文件失败: {e}")
         else:
-            # 自动加载当前账号可用的 104 个官方算子库精要
+            # 自动加载当前账号可用的算子签名库精要 (语法字典，非选配清单)
             pyramid_sections.append(OperatorRegistry.format_pyramid_level1_markdown())
 
         # 第二级: 垂直特异经验手册 ({REGION}_{DELAY}_{CATEGORY}.md)
+        # V2: 仅当 DGP 物理签名匹配时才挂载实现级经验，切断跨物理形态乱套算子
         vertical_filename = f"{region_clean}_{delay}_{category_clean}.md"
         vertical_path = os.path.join(cls.EXP_DIR, vertical_filename)
         if os.path.exists(vertical_path):
             with open(vertical_path, 'r', encoding='utf-8') as f:
                 content = f.read().strip()
-                if content:
+                # None 表示 legacy 调用，保留旧行为；显式签名列表为空则不挂载实现级经验
+                scoped_content = content if dgp_signatures is None else cls._filter_dgp_scoped_experience(content, dgp_signatures)
+                if scoped_content:
                     pyramid_sections.append(
-                        f"### 【第 2 级垂直实战经验 ({vertical_filename})】\n"
-                        f"{content}"
+                        f"### 【第 2 级 DGP 匹配实战经验 ({vertical_filename})】\n"
+                        f"{scoped_content}"
+                    )
+                elif dgp_signatures:
+                    pyramid_sections.append(
+                        "### 【第 2 级 DGP 匹配实战经验】\n"
+                        "当前字段物理签名没有历史实现级经验，请从 HypothesisSpec 第一性原理推导。"
                     )
 
         # 第三级: 区域风控与论坛专项约束 ({REGION}_forum.md)
@@ -105,9 +135,8 @@ class RAGMemoryEngine:
             if region_clean == "USA":
                 pyramid_sections.append(
                     "### 【第 3 级区域风控指引 (USA)】\n"
-                    "- 美股在 Step 1 实证期保留 30% SUBINDUSTRY/INDUSTRY 作为基准对照，其余及 Step 2+ 优先在 REVERSION_AND_MOMENTUM、STATISTICAL、CROWDING、FAST、SLOW 中选择；\n"
-                    "- 或外层包裹 group_neutralize(..., subindustry) 配合风险中性化；\n"
-                    "- Margin 死线: >= 10.0 bps。"
+                    "- 美股在 Step 1 实证期保留 30% SUBINDUSTRY/INDUSTRY 作为基准对照，其余及 Step 2+ 优先根据信号经济内涵自主选择中性化方式；\n"
+                    "- Margin 生产底线: >= 10.0 bps。"
                 )
 
         # 第四级: 全局底座跨品类通用模式 (summary.md)
@@ -123,10 +152,10 @@ class RAGMemoryEngine:
         else:
             pyramid_sections.append(
                 "### 【第 4 级通用量化底座】\n"
-                "- 时序一阶差分 ts_delta 捕捉预期差动量；\n"
-                "- 结合 ts_decay_exp_window 指数衰减可有效压低换手率与提升 Fitness；\n"
-                "- 前置 winsorize(..., std=3) 可抑制 Sub-universe 震荡；\n"
-                "- 集中度过高时使用 s_log_1p 或 signed_power 凹压缩。"
+                "- 先声明信息事件、对手盘与期限结构，再决定数学实现；\n"
+                "- 稀疏事件与连续存量字段不得共用同一套平滑假设；\n"
+                "- 任何外层包装必须能通过消融检验，否则视为装饰；\n"
+                "- 相关性与稳健性证据缺失时保持 PENDING，不得视为通过。"
             )
 
         if not pyramid_sections:
@@ -141,40 +170,67 @@ class RAGMemoryEngine:
     def get_exploration_inspiration(cls, epsilon: float = 0.25) -> Optional[str]:
         """
         借鉴强化学习思想，设定 if random.random() < epsilon 的探索触发率。
-        在大多数轮次专注就地深化，少数轮次引入外部论坛与跨品类火花。
+        在大多数轮次专注就地深化，少数轮次引入外部论坛与跨品类启发。
+        严禁泄露具体算子表达式或死模板，仅提取高维因果与病理治理启示。
         """
         if random.random() >= epsilon:
             return None
 
-        # 随机从已有经验中抽取跨界灵感
+        # 随机从已有经验中抽取跨界因果启发
         cls._ensure_dirs()
         exp_files = [f for f in os.listdir(cls.EXP_DIR) if f.endswith(".md")]
         if not exp_files:
-            return "【ε-Greedy 灵感】尝试在时序算子外层嵌套 group_neutralize(..., subindustry) 并搭配 REVERSION_AND_MOMENTUM 中性化。"
+            return "【ε-Greedy 灵感】尝试从字段更新频率、零值语义与信息半衰期重新推导期限结构，先写出所需变换再查算子签名表映射实现，而不是套用历史外壳。"
 
         chosen_file = random.choice(exp_files)
         try:
             with open(os.path.join(cls.EXP_DIR, chosen_file), 'r', encoding='utf-8') as f:
-                lines = [line.strip() for line in f if line.strip() and not line.startswith("#")]
-                if lines:
-                    sample_line = random.choice(lines[:10])
-                    return f"【ε-Greedy 跨界灵感 ({chosen_file})】{sample_line}"
+                content = f.read()
+
+            # 提取所有 QA 块或启发条目，严禁输出具体代码/公式模板
+            sections = re.split(r'\n(?=###?\s+)', content)
+            valid_insights = []
+            for sec in sections:
+                clean_sec = sec.strip()
+                if not clean_sec or clean_sec.startswith("# "):
+                    continue
+                lines = [l.strip() for l in clean_sec.split('\n') if l.strip()]
+                # 剔除代码块和类似单纯公式表达式的行
+                meaningful_lines = [
+                    l for l in lines 
+                    if not l.startswith("```") and not re.search(r'^[a-z_]{2,}\([a-z0-9_,\s\(\)]+\)$', l)
+                ]
+                if meaningful_lines:
+                    valid_insights.append("\n".join(meaningful_lines[:4]))
+
+            if valid_insights:
+                chosen_insight = random.choice(valid_insights)
+                return f"【ε-Greedy 跨界因果启发 ({chosen_file})】:\n{chosen_insight}"
         except Exception:
             pass
-        return None
+        return "【ε-Greedy 灵感】从 DGP 数据生成过程出发，根据字段连续/离散与偏态特征，动态选择截面或时序算子解耦噪声。"
 
     # -------------------------------------------------------------
-    # 3. 经验沉淀写入: 纯算子、去字段化抽象 (对齐 WS29639 规范)
+    # 3. 经验沉淀写入: DGP 物理签名绑定的算子拓扑经验
     # -------------------------------------------------------------
     @classmethod
     def append_pure_operator_experience(cls, region: str, delay: int, category: str, 
                                         abstract_insight: str, alpha_stats: dict = None):
         """
-        将高分达标 Alpha 的演化规律抽象为纯算子模式写入 {REGION}_{DELAY}_{CATEGORY}.md。
-        严禁写入具体字段名！基于 ASTSandboxCorrector.get_canonical_skeleton 与 skeleton_hash
-        进行拓扑骨架聚类与计数累加，防膨胀去重。
+        将生产达标 Alpha 的演化规律写入 {REGION}_{DELAY}_{CATEGORY}.md。
+
+        V2 规则:
+        1. 不写具体字段名，但必须写 DGP 物理签名 (Role/Freq/Sparse/Skew/Crowding);
+        2. 缺少 DGP 签名的样本拒绝沉淀，防止变成无物理前提的纯算子模板;
+        3. 检索侧只挂载签名匹配的实现级经验。
         """
         cls._ensure_dirs()
+        alpha_stats = alpha_stats if isinstance(alpha_stats, dict) else {}
+        dgp_signatures = alpha_stats.get("dgp_signatures") or []
+        if not isinstance(dgp_signatures, list) or not dgp_signatures:
+            print("🚫 [RAG Engine] 样本缺少 dgp_signatures，拒绝沉淀无物理前提的纯算子经验。")
+            return False
+
         region_clean = region.upper()
         category_clean = category.lower()
         target_file = os.path.join(cls.EXP_DIR, f"{region_clean}_{delay}_{category_clean}.md")
@@ -236,17 +292,20 @@ class RAGMemoryEngine:
                 print(f"📖 [RAG Engine] 纯算子拓扑 [{skel_hash}] 命中已有聚类，验证计数累加至 {cur_count}: {target_file}")
                 return
 
-        # 新增算子骨架拓扑聚类
+        # 新增算子骨架拓扑聚类 (仅记录哈希与物理因果规律，不向 Markdown 正文暴露死骨架)
+        dgp_scope = " | ".join(str(s) for s in dgp_signatures)
         entry = (
             f"\n{hash_marker}\n"
-            f"### 算子拓扑范式: `{skel_tag if skel_tag else '抽象拓扑'}`\n"
+            f"### 因果机制沉淀条目 [{skel_hash}]\n"
+            f"- **DGP_SCOPE**: {dgp_scope}\n"
             f"- **[达标验证次数: 1]**{stat_summary}\n"
             f"  * 核心机制: {abstract_insight.strip()}\n"
             f"<!-- END_SKELETON: {skel_hash} -->\n"
         )
         with open(target_file, 'a', encoding='utf-8') as f:
             f.write(entry)
-        print(f"📖 [RAG Engine] 新算子拓扑 [{skel_hash}] 经验已沉淀至: {target_file}")
+        print(f"📖 [RAG Engine] 新 DGP 绑定算子拓扑 [{skel_hash}] 经验已沉淀至: {target_file}")
+        return True
 
     # -------------------------------------------------------------
     # 4. 兼容老接口 (避免测试或外部模块崩溃)

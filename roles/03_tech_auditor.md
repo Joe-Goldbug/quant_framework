@@ -16,15 +16,15 @@
   `close`, `open`, `high`, `low`, `vwap`, `returns`, `volume`, `cap`, `adv20` 等外部量价字段；
 - **只要发现哪怕 1 个外部量价字段，直接亮红灯打回！**
 
-### 3. 加乘符号与函数硬性拦截 (100% Ban on + / * / add / multiply)
-- 严禁出现二进制算术运算符 `+` 与 `*`；
-- 严禁出现函数调用 `add(...)` 与 `multiply(...)`（Stage 0 仅允许使用 `subtract`, `divide`, `ts_regression`, `trade_when`, `if_else`）。
+### 3. 加法与乘法物理量纲与门控规则 (Physical Dimension & Gated Multiplication Rules)
+- **乘法门控约束**：严禁双无界实数字段直接裸乘 (`multiply(A, B)` 或 `A * B`)；乘法必须作为非负门控滤波使用（至少有一方为值域处于 $[0, 1]$ 或 $[0, \infty)$ 的非负门控/权重，或常数），严禁两个定义域均在 $[-1, 1]$ 的特征直接相乘导致“负负得正”生成虚假买入信号；
+- **量纲加减约束**：加法与减法仅允许同量纲或同语义角色（如同为 `Signal_Flow`）的分量进行 `add` / `subtract`；跨不同语义角色（如 `Dimension_Anchor` 与 `Signal_Flow`）的无界加减必须在假说中声明 `EXPECTATION_SURPRISE` 或 `RESIDUAL_EXTRACTION`，否则视为量纲违规予以拦截。
 
 ### 4. FastExpr 语法与时序自然日历周期合规核查 (Valid Syntax & Calendar Snapping)
 - 括号必须严格平衡；
 - 算子命名必须符合 WorldQuant FastExpr 官方标准；
 - Group 算子最后一个参数必须为裸字面量 `market/sector/industry/subindustry`，严禁加引号；
-- **时序窗口冻结红线**：时序算子（`ts_quantile`, `ts_zscore`, `ts_rank`, `ts_decay_*`, `ts_delta` 等）的窗口参数 $d$ 必须属于自然日历周期白名单 `[1, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252]`，绝对严禁超过 `252` 天，回填窗口严禁超过 `30` 天。
+- **时序窗口合规要求**：时序算子的窗口参数 $d$ 必须为合法正整数，严禁负数或非整数参数，窗口大小必须结合特征字段的信息半衰期与更新频率合理设定。
 
 ---
 
@@ -36,7 +36,7 @@
   "approved_ids": ["SEED_01", "SEED_02", "SEED_03", "SEED_04"],
   "rejected_reasons": {
     "SEED_05": "使用了外部量价字段 close，存在跨数据集污染",
-    "SEED_06": "使用了加乘算子 add，违反 Stage 0 严禁加乘规范"
+    "SEED_06": "使用了双无界字段直接裸乘 multiply，缺少非负门控滤波违反量纲规范"
   }
 }
 ```

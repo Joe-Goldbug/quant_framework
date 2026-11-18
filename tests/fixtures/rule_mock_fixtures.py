@@ -64,13 +64,41 @@ def handle_rule_mock(
             f2_expr = f"vec_avg({f2})" if str(f2).lower().startswith("vec_") else f2
 
             tmpl = expr_templates[i % len(expr_templates)]
+            mechanism = (
+                f"测试宏观信号原型 {i+1}: 当 {f1} 相对 {f2} 出现未定价变化时，"
+                f"参与者认知摩擦导致价格滞后修正，预期在短窗口先行反应并在长窗口延续。"
+            )
             seeds.append({
                 "id": f"SEED_{i+1:02d}",
                 "cluster_ref": f"cluster_{i+1}",
                 "hypothesis_type": f"TYPE_{i+1}",
+                "hypothesis": {
+                    "hypothesis_id": f"HYP_SEED_{i+1:02d}",
+                    "economic_cluster": f"cluster_{i+1}",
+                    "field_roles": [
+                        {"field_id": f1, "role": "Signal_Flow", "expected_transform": "LEVEL"},
+                        {"field_id": f2, "role": "Dimension_Anchor", "expected_transform": "SCALE"},
+                    ],
+                    "counterparty": "滞后定价的被动指数与噪声交易者",
+                    "causal_chain": mechanism,
+                    "horizon_model": {
+                        "short_window": 5,
+                        "long_window": 63,
+                        "expected_short_sign": 1,
+                        "expected_long_sign": 1,
+                        "decay_assumption": "short_reaction_long_drift",
+                    },
+                    "normalization_rationale": f"用 {f2} 剥离 {f1} 的规模基数",
+                    "sparsity_policy": "zero_means_no_event",
+                    "interaction_type": "EXPECTATION_SURPRISE",
+                    "falsification_tests": [
+                        "短窗口符号与预期相反即证伪",
+                        "去掉归一字段后信号不衰减即证伪",
+                    ],
+                },
                 "expression": tmpl(f1_expr, f2_expr),
                 "fields_used": [f1, f2],
-                "economic_mechanism": f"测试宏观信号原型 {i+1}"
+                "economic_mechanism": mechanism
             })
         return seeds
 
@@ -95,6 +123,8 @@ def handle_rule_mock(
         win2 = 125 if is_fnd else 63
         pyramid_kb = ctx.get("pyramid_kb") or ""
         neut_list = ctx.get("neutralizations") or ["STATISTICAL", "CROWDING"]
+        hypothesis = ctx.get("hypothesis") if isinstance(ctx.get("hypothesis"), dict) else {}
+        hypothesis_id = hypothesis.get("hypothesis_id") or f"HYP_{seed_id}"
 
         # 10 组成对骨架 (N, 2N)，吻合自然交易日历
         pair_generators = [
@@ -131,6 +161,9 @@ def handle_rule_mock(
             variants.append({
                 "slot": slot,
                 "optimize_reason": f"针对母本 {orig_alpha} 进行第 {slot} 槽因果探索，调节窗口为自然日历周期",
+                "hypothesis_ref": hypothesis_id,
+                "mechanism_intents": ["TEMPORAL_DECAY"],
+                "economic_delta": f"第 {slot} 槽检验不同期限下的信息半衰期与截面形态",
                 "expression": expr,
                 "neutralization": neut,
                 "type": v_type,

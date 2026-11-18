@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "enabled": true,
+  "sampling": {
+    "explore_rate_permille": 50,
+    "min_batches_between_probes": 4,
+    "control_every_n_probes": 4
+  },
+  "budget": {
+    "daily_probe_slots": 40,
+    "daily_probe_calls": 8,
+    "max_slots_per_probe": 6,
+    "daily_always_audit_calls": 20,
+    "daily_control_calls": 4
+  },
+  "always_audit": {
+    "near_champion": true,
+    "production_candidate": true,
+    "novel_operator": true
+  },
+  "rules": {
+    "as_lint_only": true,
+    "block_on_reject": true
+  },
+  "decider": {
+    "metric": "sharpe_2y",
+    "min_delta": 0.30,
+    "require_positive_parent": true
+  }
+}

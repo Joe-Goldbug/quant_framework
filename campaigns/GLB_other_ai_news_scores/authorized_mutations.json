@@ -1,31 +1,82 @@
 {
   "symptoms": [
-    "regional_or_sharpe_deficit",
-    "sub_universe_or_2y_instability"
+    "cluster_collinearity",
+    "regional_or_sharpe_deficit"
   ],
-  "allowed_mutations": [
-    "country",
-    "group_neutralize",
-    "group_rank",
-    "group_zscore",
-    "industry",
-    "s_log_1p",
-    "signed_power",
-    "subindustry",
-    "trade_when",
-    "ts_decay_exp_window",
-    "ts_decay_linear",
-    "ts_zscore",
-    "winsorize"
+  "allowed_mutations": [],
+  "forensic_clues": [
+    "【同簇共线性警告】当前 Cluster Sharpe=未知 < 1.58。在已有同质 Alpha 簇中缺乏边际超额收益贡献。",
+    "【区域或临界夏普缺口】在特定区域市场回测出现 Sharpe 下滑或告警 (检出项: PLATFORM_FAILED LOW_GLB_EMEA_SHARPE LOW_GLB_EMEA_SHARPE CLUSTER_TEST MATCHES_COMPETITION MATCHES_THEMES)，存在跨市场结构性泛化缺陷。"
   ],
   "rag_prescriptions": [
     {
-      "card_id": "regional_or_sharpe_deficit",
-      "proven_solution": "使用纯算子金字塔经验库替代"
+      "card_id": "CARD_COLLIN_02",
+      "tag": "cluster_collinearity",
+      "domain": "decorrelation",
+      "title": "同簇共线性与 Cluster 降维机理解析",
+      "question": "当 Cluster Sharpe < 1.58 出现同簇共线性警告，或与平台存量库撞车时，如何实现正交突围？",
+      "answer": "物理根因：与平台上已有同质因子使用了相同的主锚变动源，微调参数（如轻微改动窗口大小）绝不能带来正交性。治理原则：必须回到数据底层，从同源数据簇中寻找未被充分开采的冷门细分特征（低 alpha_count）作为全新主锚，或通过捕捉二阶加速度变动源剥离一阶共线趋势。",
+      "proven_solution": "从同源数据簇中寻找低拥挤度冷门细分特征替换主锚，或构建二阶变动加速度以剥离共线趋势，严禁无效微调参数。",
+      "theoretical_cause": "相关性由底层特征的信息来源决定，微调参数无法跳出拥挤子空间。"
     },
     {
-      "card_id": "sub_universe_or_2y_instability",
+      "card_id": "regional_or_sharpe_deficit",
       "proven_solution": "使用纯算子金字塔经验库替代"
     }
-  ]
+  ],
+  "qa_prescriptions": [
+    {
+      "id": "QA_CARD_COLLIN_02",
+      "question": "在量化研发中，如何诊断与应对关于 [同簇共线性与 Cluster 降维处方] 的病灶与权衡？",
+      "answer": "【核心机理】：\n同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta\n\n【决策启示】：\n{\n  \"card_id\": \"CARD_COLLIN_02\",\n  \"tag\": \"cluster_collinearity\",\n  \"domain\": \"decorrelation\",\n  \"title\": \"同簇共线性与 Cluster 降维处方\",\n  \"one_line\": \"同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta\",\n  \"symptom\": \"is.checks.cluster_sharpe < 1.58 或与已有生产库严重撞车 (ProdCorr >= 0.70)\",\n  \"authorized_operators\": [\n    \"SUBSTITUTE_LOW_ALPHA_COUNT_FIELD\",\n    \"ts_delta\",\n    \"quantile_spread_subtract\"\n  ],\n  \"prescription_recipe\": \"1. 严禁只修改滑动窗口大小！2. 从 fields_kb.json 中查询 alpha_count <= 3 的冷门同类字段做 1:1 结构替换；3. 使用 ts_delta(F, 5) 捕捉二阶加速度变动源。\"\n}",
+      "symptom": "is.checks.cluster_sharpe < 1.58 或与已有生产库严重撞车 (ProdCorr >= 0.70)",
+      "tags": "cluster_collinearity",
+      "source_type": "forum",
+      "source_id": "CARD_COLLIN_02",
+      "heat_score": 10.0,
+      "created_at": "2026-11-06 14:29:56"
+    },
+    {
+      "id": "QA_CARD_COLLIN_02",
+      "question": "在量化研发中，如何诊断与应对关于 [同簇共线性与 Cluster 降维处方] 的病灶与权衡？",
+      "answer": "【核心机理】：\n同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta\n\n【决策启示】：\n{\n  \"card_id\": \"CARD_COLLIN_02\",\n  \"tag\": \"cluster_collinearity\",\n  \"domain\": \"decorrelation\",\n  \"title\": \"同簇共线性与 Cluster 降维处方\",\n  \"one_line\": \"同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta\",\n  \"symptom\": \"is.checks.cluster_sharpe < 1.58 或与已有生产库严重撞车 (ProdCorr >= 0.70)\",\n  \"authorized_operators\": [\n    \"SUBSTITUTE_LOW_ALPHA_COUNT_FIELD\",\n    \"ts_delta\",\n    \"quantile_spread_subtract\"\n  ],\n  \"prescription_recipe\": \"1. 严禁只修改滑动窗口大小！2. 从 fields_kb.json 中查询 alpha_count <= 3 的冷门同类字段做 1:1 结构替换；3. 使用 ts_delta(F, 5) 捕捉二阶加速度变动源。\"\n}",
+      "symptom": "is.checks.cluster_sharpe < 1.58 或与已有生产库严重撞车 (ProdCorr >= 0.70)",
+      "tags": "cluster_collinearity",
+      "source_type": "forum",
+      "source_id": "CARD_COLLIN_02",
+      "heat_score": 10.0,
+      "created_at": "2026-11-06 14:30:18"
+    },
+    {
+      "id": "QA_CARD_ANTI_CURVE_FITTING_01",
+      "question": "当使用文本情绪、事件计数等低频另类数据时，为什么时序 Z-Score (ts_zscore) 容易在历史早期 (如 2015/2018) 出现严重失血？有哪些替代算子及其权衡取舍？",
+      "answer": "【微观根因】：\n另类数据通常含有大量零值或阶段性讨论断流。冷门标的的 250 天滚动标准差 σ_250 -> 0。此时 ts_zscore 存在分母趋零爆炸风险，偶发脉冲会被放大为 +50 ~ +100 的极端异常值，严重扭曲空头排序。\n\n【权衡决策树】：\n1. ts_zscore：仅适用于数据稠密连续、方差平稳的高频或宏观特征。遇到稀疏零膨胀数据严禁裸用。\n2. ts_av_diff：消除均值偏置且不除以方差，但缺乏跨时间方差稳态，截面离散度随时间大幅漂移 (实测夏普往往仅 0.4~0.6)。\n3. ts_rank：严格有界于 [0, 1] 免疫分母爆炸，但均匀阶梯分布抹平了极端情绪的肥尾凸性 (实测夏普约 1.26)。\n4. ts_quantile：先通过经验分位数有界于 [0, 1] 杜绝除零发散，再通过逆正态累积分布 Φ^(-1) 映射保留高斯尾部敏感度。适合既需要尾部非线性惩罚、又必须杜绝零方差爆炸的场景 (实战夏普可达 1.63+)。\n\n【反模式】：\n切勿在未做零方差检查时直接对另类数据套用 ts_zscore；当数据含大量 0 时，优先评估 ts_quantile。",
+      "symptom": "历史早期 (如 2015/2018) 夏普断崖式下跌，底层含大量零值，ts_zscore 分母爆炸",
+      "tags": "ts_quantile,ts_zscore,zero_variance,sparse_data,sentiment",
+      "source_type": "forum",
+      "source_id": "CARD_ANTI_CURVE_FITTING_01",
+      "heat_score": 10.0,
+      "created_at": "2026-11-06 14:29:56"
+    },
+    {
+      "id": "QA_CARD_COLLIN_02",
+      "question": "在量化研发中，如何诊断与应对关于 [同簇共线性与 Cluster 降维处方] 的病灶与权衡？",
+      "answer": "【核心机理】：\n同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta\n\n【决策启示】：\n{\n  \"card_id\": \"CARD_COLLIN_02\",\n  \"tag\": \"cluster_collinearity\",\n  \"domain\": \"decorrelation\",\n  \"title\": \"同簇共线性与 Cluster 降维处方\",\n  \"one_line\": \"同簇共线性 (Cluster Sharpe < 1.58)：严禁改参数，强制平替为 Alpha<=3 的低拥挤度字段或加注二阶差分 ts_delta\",\n  \"symptom\": \"is.checks.cluster_sharpe < 1.58 或与已有生产库严重撞车 (ProdCorr >= 0.70)\",\n  \"authorized_operators\": [\n    \"SUBSTITUTE_LOW_ALPHA_COUNT_FIELD\",\n    \"ts_delta\",\n    \"quantile_spread_subtract\"\n  ],\n  \"prescription_recipe\": \"1. 严禁只修改滑动窗口大小！2. 从 fields_kb.json 中查询 alpha_count <= 3 的冷门同类字段做 1:1 结构替换；3. 使用 ts_delta(F, 5) 捕捉二阶加速度变动源。\"\n}",
+      "symptom": "is.checks.cluster_sharpe < 1.58 或与已有生产库严重撞车 (ProdCorr >= 0.70)",
+      "tags": "cluster_collinearity",
+      "source_type": "forum",
+      "source_id": "CARD_COLLIN_02",
+      "heat_score": 10.0,
+      "created_at": "2026-11-06 14:29:56"
+    }
+  ],
+  "parent_snapshot": {
+    "id": "XgaPMGpz",
+    "sharpe": 1.68,
+    "fitness": 1.0,
+    "margin_bps": 7.19,
+    "turnover": 0.1231,
+    "emea_sharpe": 0.32,
+    "cluster_sharpe": 1.14
+  }
 }

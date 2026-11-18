@@ -240,9 +240,13 @@ class SimBatchRunner:
         batch_verdict_file = batch_file_path.replace(".json", "_red_team.json")
         target_verdict_file = batch_verdict_file if os.path.exists(batch_verdict_file) else verdict_file
 
-        # 2. Gate 1: 红队旁路机制 (GrandMaster 架构中回测前 0 文字审判，仅在 Hardness 加固测试旧凭证存在时执行兼容签名)
+        # 2. Gate 1: 红队双盲通行证强制签发与 all_passed 硬拦截
+        # 2026-11-13 根因修复: 原实现把签发与拦截整体包在 `if os.path.exists(target_verdict_file)` 内，
+        # 导致「首次投递的全新批次」因无历史凭证而整块跳过红队审计，且 REJECT 结论从不阻断发包。
+        # 现改为: 无条件取得与本批表达式逐一对应的有效凭证，并按 strict_hardness 硬拦截未通过槽位。
+        need_re_audit = True
+        verdict_doc = {}
         if os.path.exists(target_verdict_file):
-            need_re_audit = True
             try:
                 with open(target_verdict_file, 'r', encoding='utf-8') as f:
                     verdict_doc = json.load(f)
@@ -251,14 +255,79 @@ class SimBatchRunner:
                 if len(reviewed_exprs) == len(current_exprs) and all(r == c for r, c in zip(reviewed_exprs, current_exprs)):
                     need_re_audit = False
                 else:
-                    print("⚠️ 检测到 red_team_verdict.json 为历史批次遗留的旧通行证 (表达式内容不匹配)，强制作废并重新签发！")
+                    print("⚠️ 检测到旧通行证 (表达式内容不匹配)，强制作废并重新签发！")
             except Exception:
                 need_re_audit = True
 
-            if need_re_audit:
-                fields_meta = known_fields if isinstance(known_fields, dict) else {f: {} for f in known_fields}
-                DoubleBlindRedTeam.sign_batch_verdicts(expressions_data, fields_meta, target_verdict_file)
-                print(f"✅ [Gate 1 - Legacy Hardness Passport] 兼容通行证已更新: {target_verdict_file}")
+        if need_re_audit:
+            if isinstance(known_fields, dict):
+                fields_meta = known_fields
+            else:
+                # list 型批次必须加载真实 KB 画像: 否则 {f: {}} 会让所有字段 domain 退化为 unbounded，
+                # 红队新增的 (-inf, 0] 负半轴与 [0, 1] 稀疏零值检查在 list 型批次上 100% 失效。
+                fields_meta = {
+                    f: (DimensionAuditor.load_field_meta_from_kb(f) or {})
+                    for f in (known_fields or [])
+                }
+            # 签发目标沿用 target_verdict_file: 批次级凭证存在时覆盖批次级，否则覆盖 campaign 级，
+            # 与既有 Hardness 测试契约保持一致（跨批污染由下方「表达式逐一比对」保证）。
+            verdict_doc = DoubleBlindRedTeam.sign_batch_verdicts(expressions_data, fields_meta, target_verdict_file)
+            print(f"✅ [Gate 1 - RedTeam Passport] 双盲通行证已签发: {target_verdict_file}")
+
+        if strict_hardness and not verdict_doc.get("all_passed", False):
+            failed_slots = [
+                f"Slot {idx + 1}: {'; '.join(v.get('issues') or ['未通过双盲审判'])}"
+                for idx, v in enumerate(verdict_doc.get("verdicts", []))
+                if v.get("verdict") != "PASS"
+            ]
+            raise PermissionError(
+                "【Gate 1 红队审判驳回】本批存在未通过双盲审判的槽位 (all_passed=False):\n"
+                + "\n".join(failed_slots[:5])
+                + "\n请修正定义域/因果保真/同态冗余问题后重新投递。"
+            )
+        print(f"✅ [Gate 1 - RedTeam] all_passed=True ({len(verdict_doc.get('verdicts', []))} 槽全数通过双盲审判)")
+
+        # ---------------- Gate 6: 审计总线 (宿主侧抽样, 回测之前; 此刻世上还不存在任何指标) ----------------
+        # 抽样预算/间隔/必审全部由 AuditBus 集中裁决, 主 Agent 无任何写入口。
+        try:
+            try:
+                from core.audit_bus import AuditBus, resolve_policy_path
+            except ImportError:
+                from quant_framework.core.audit_bus import AuditBus, resolve_policy_path
+            _audit = AuditBus(campaign_dir, policy_path=resolve_policy_path())
+            _ticket = _audit.begin_batch(expressions_data, {
+                "region": region, "universe": universe, "delay": delay,
+                "category": category, "neutralization": neutralization,
+            })
+            _audit.record_rule_lint(_ticket.batch_id, verdict_doc)
+            _prod = any(bool(x.get("production_candidate")) for x in expressions_data if isinstance(x, dict))
+            _near = any(bool(x.get("near_champion")) for x in expressions_data if isinstance(x, dict))
+            _dec = _audit.decide_sampling(_ticket, near_champion=_near, production_candidate=_prod)
+            print(f"🧾 [Gate 6 - AuditBus] {_ticket.batch_id} "
+                  f"抽样={'是' if _dec.sampled else '否'} | {_dec.reason}")
+            if _dec.sampled:
+                # 只生成待审作业, 不调用 LLM; 由独立出题器消费。主 Agent 读不到该文件路径。
+                _job_path = os.path.join(campaign_dir, f"audit_probe_job_{_ticket.batch_id}.json")
+                with open(_job_path, "w", encoding="utf-8") as _jf:
+                    json.dump({
+                        "batch_id": _ticket.batch_id,
+                        "batch_seq": _ticket.batch_seq,
+                        "commit_hash": _ticket.commit_hash,
+                        "bucket": _dec.bucket, "threshold": _dec.threshold,
+                        "mandatory": _dec.mandatory,
+                        "spec": {"region": region, "universe": universe, "delay": delay,
+                                 "category": category, "neutralization": neutralization},
+                        "items": [
+                            {k: x.get(k) for k in ("slot", "expression", "optimize_reason",
+                                                   "hypothesis_ref", "mechanism_intents", "economic_delta")}
+                            for x in expressions_data if isinstance(x, dict)
+                        ],
+                    }, _jf, ensure_ascii=False, indent=2)
+                print(f"   ↳ 已生成待审作业: {os.path.basename(_job_path)}")
+        except PermissionError:
+            raise
+        except Exception as _ae:
+            print(f"⚠️ [Gate 6 - AuditBus] 抽样异常(不阻断): {_ae}")
 
         # 3. Gate 4: 靶向处方遵从度核验 (仅在存在上一轮确诊病灶且处于加固模式时生效)
         rx_path = os.path.join(campaign_dir, "authorized_mutations.json")
@@ -287,22 +356,25 @@ class SimBatchRunner:
                     except Exception:
                         return 9999
 
-                if symptoms and (curative_ops or action_ops):
-                    rx_compliant_slots = 0
-                    for s_idx, item in enumerate(expressions_data):
-                        e_text = item.get("expression", "")
-                        compliant = any(op in e_text for op in curative_ops) if curative_ops else False
-                        if not compliant and action_ops:
-                            op_cnt = _count_operators(e_text)
-                            compliant = all(op_cnt <= limit for limit in action_ops.values())
-                        if compliant:
-                            rx_compliant_slots += 1
-                    if getattr(cls, "_strict_prescription_lock", False) and rx_compliant_slots < 4:
-                        raise PermissionError(
-                            f"【Gate 4 处方锁拦截】上一轮回测确诊病灶: {symptoms} 并签发了靶向处方算子: {list(curative_ops)}！\n"
-                            f"但当前批次仅有 {rx_compliant_slots} 槽包含靶向治愈算子 (< 4 槽最低门槛)！"
-                        )
-                    print(f"ℹ️ [Gate 4 - 靶向处方建议与自主探索审计] 上一轮确诊病灶: {symptoms}，推荐靶向处方: {list(curative_ops)}。本批共有 {rx_compliant_slots} 槽采用推荐处方，其余槽位自主选用合法算子探索。")
+                if symptoms:
+                    if getattr(cls, "_strict_prescription_lock", False) and (curative_ops or action_ops):
+                        rx_compliant_slots = 0
+                        for s_idx, item in enumerate(expressions_data):
+                            e_text = item.get("expression", "")
+                            compliant = any(op in e_text for op in curative_ops) if curative_ops else False
+                            if not compliant and action_ops:
+                                op_cnt = _count_operators(e_text)
+                                compliant = all(op_cnt <= limit for limit in action_ops.values())
+                            if compliant:
+                                rx_compliant_slots += 1
+                        if rx_compliant_slots < 4:
+                            raise PermissionError(
+                                f"【Gate 4 处方锁拦截】上一轮回测确诊病灶: {symptoms} 并签发了靶向处方算子: {list(curative_ops)}！\n"
+                                f"但当前批次仅有 {rx_compliant_slots} 槽包含靶向治愈算子 (< 4 槽最低门槛)！"
+                            )
+                        print(f"ℹ️ [Gate 4 - 靶向处方建议与自主探索审计] 上一轮确诊病灶: {symptoms}，推荐靶向处方: {list(curative_ops)}。本批共有 {rx_compliant_slots} 槽采用推荐处方，其余槽位自主选用合法算子探索。")
+                    else:
+                        print(f"ℹ️ [Gate 4 - 靶向病理诊断审计] 上一轮确诊病灶: {symptoms}。算子签名表全量开放，系统强制要求 Agent 基于数据生成过程 (DGP) 与商业实质先推导变换需求、再映射算子实现，绝不预设任何死模板与算子积木。")
             except PermissionError:
                 raise
             except Exception as ex:
@@ -317,6 +389,7 @@ class SimBatchRunner:
         is_golden_shot = False
         has_parent = False
         parent_expr = None
+        b_meta = {}
         if os.path.exists(batch_file_path):
             try:
                 with open(batch_file_path, 'r', encoding='utf-8') as bf:
@@ -345,6 +418,89 @@ class SimBatchRunner:
                                         break
             except Exception:
                 pass
+
+        # 4.5 Gate 1.5: 反套积木契约审计咽喉点挂载 (Phase A 观测落盘 → Phase B 硬熔断)
+        # 修复「--run-batch 外部投递批次绕过 SwarmAuditor / HypothesisSpec」的结构性双轨漏洞:
+        # 无论来自主状态机自动生成、func2 深水区精炼，还是手工脚本投递，100% 经过同一套契约审计。
+        try:
+            from quant_framework.core.swarm_auditor import SwarmAuditor
+            from quant_framework.core.dgp_schema import HypothesisSpec
+        except ImportError:
+            from core.swarm_auditor import SwarmAuditor
+            from core.dgp_schema import HypothesisSpec
+
+        # 场景路由严格对齐 main.py surgery_mode 语义: 母本存在且 |Sharpe| >= 1.2 才进入老兵精修。
+        # 若不做 Sharpe 门槛，has_parent 批次会全部落入 MODE_REFINEMENT 并跳过铁律 B 的非 rank 配额与双窗口检验。
+        parent_sharpe = 0.0
+        snapshot = None
+        if isinstance(b_meta, dict):
+            snapshot = b_meta.get("parent_snapshot") or b_meta.get("parent_alpha")
+        if isinstance(snapshot, dict):
+            # 兼容扁平与 Brain 原生嵌套结构: snapshot.sharpe / snapshot.metrics.sharpe / snapshot.is.sharpe
+            for _box in (snapshot, snapshot.get("metrics") or {}, snapshot.get("is") or {}):
+                if not isinstance(_box, dict):
+                    continue
+                for _sk in ("sharpe", "is_sharpe", "Sharpe"):
+                    _sv = _box.get(_sk)
+                    if _sv is not None:
+                        try:
+                            parent_sharpe = abs(float(_sv))
+                            break
+                        except (TypeError, ValueError):
+                            continue
+                if parent_sharpe > 0:
+                    break
+        refinement_eligible = bool(
+            (has_parent or bool(parent_expr) or (batch_step and batch_step >= 2))
+            and parent_sharpe >= 1.2
+        )
+        route_mode = SwarmAuditor.MODE_REFINEMENT if refinement_eligible else SwarmAuditor.MODE_EXPLORATION
+        event_driven_cat = str(category).lower() in {"news", "sentiment", "analyst", "socialmedia", "earnings", "insider"}
+        # Phase A (默认): 仅观测告警并落盘审计报告，100% 兼容 6 键存量脚本；
+        # Phase B: 设置 AEGIS_GATE15_STRICT=1 后开启硬熔断（要求 9 键契约）。
+        gate15_phase_b = bool(strict_hardness and os.environ.get("AEGIS_GATE15_STRICT") == "1")
+        legacy_6key_batch = bool(expressions_data) and all(
+            isinstance(item, dict) and "mechanism_intents" not in item for item in expressions_data
+        )
+        if legacy_6key_batch and gate15_phase_b:
+            raise PermissionError(
+                "【Gate 1.5 契约版本拦截】本批次仍为 6 键存量格式 (缺少 mechanism_intents/hypothesis_ref/economic_delta)，"
+                "而 AEGIS_GATE15_STRICT=1 要求 9 键契约。请先调用 SwarmAuditor.upgrade_6key_to_9key() 完成无损迁移，"
+                "或保持 AEGIS_GATE15_STRICT=0 以 Phase A 观测模式运行。"
+            )
+
+        swarm_report = SwarmAuditor.enforce(
+            expressions_data,
+            step=batch_step or 1,
+            parallelism=len(expressions_data),
+            strict=gate15_phase_b,
+            event_driven=event_driven_cat,
+            mode=route_mode,
+            parent_expression=parent_expr or "",
+        )
+        try:
+            atomic_save_json(batch_file_path.replace(".json", "_swarm_audit.json"), swarm_report)
+        except Exception:
+            pass
+
+        # 若批次携带预注册 HypothesisSpec，逐槽执行「意图—AST 算子族同构」核验 (Phase A 仅计数，Phase B 硬拦截)
+        hyp_deviation_slots = 0
+        if isinstance(b_meta.get("hypothesis"), dict) and not legacy_6key_batch:
+            for _it in expressions_data:
+                _ok, _iss = HypothesisSpec.audit_variant_hypothesis(
+                    _it, b_meta.get("hypothesis"), known_fields if isinstance(known_fields, dict) else None
+                )
+                if not _ok:
+                    hyp_deviation_slots += 1
+                    if gate15_phase_b:
+                        raise PermissionError(
+                            f"【Gate 1.5 语义—AST 脱节拦截】Slot {_it.get('slot', '?')} 未通过假说同构核验: {'; '.join(_iss)}"
+                        )
+        print(
+            f"ℹ️ [Gate 1.5 - Anti-Lego] 契约模式={route_mode} (母本Sharpe={parent_sharpe:.2f}) | "
+            f"Phase={'B(硬熔断)' if gate15_phase_b else 'A(观测)'} | 6键存量={'是' if legacy_6key_batch else '否'} | "
+            f"假说偏离={hyp_deviation_slots} 槽 | 审计报告已落盘"
+        )
 
         # 5. Gate 5: Tabu 禁忌表全槽位扫描 (在靶向母本精修模式 has_parent 下，母本核心字段与基准对照槽豁免禁忌锁定)
         ledger_file = ledger_path or os.path.join(campaign_dir, "exploration_ledger.json")
@@ -407,7 +563,8 @@ class SimBatchRunner:
             audit = DimensionAuditor.audit_expression(
                 expr, known_fields, category=category, allow_pv_cross=False, max_operators=batch_max_ops,
                 step=batch_step, allowed_operators=rx_allowed, stage0_op_count=stage0_op_count,
-                required_fields=core_fields if (batch_step == 1 and not (locals().get('b_meta', {}).get('has_parent')) and core_fields) else None
+                required_fields=core_fields if (batch_step == 1 and not (locals().get('b_meta', {}).get('has_parent')) and core_fields) else None,
+                hypothesis=item.get("hypothesis") or (b_meta.get("hypothesis") if 'b_meta' in locals() and isinstance(b_meta, dict) else None)
             )
             if not audit["is_valid"]:
                 corrector.remove_records(corrected_exprs, region, universe, delay, neutralization)
@@ -602,9 +759,27 @@ class SimBatchRunner:
 
         print(f"\n📊 全部 {total_chunks} 个子批回测执行完毕，累计 {len(results)} 条结果。")
 
+        # 回填 items 中的元数据 (slot, hypothesis 等) 到 results (对齐真实 Brain API 返回体)
+        if ASTSandboxCorrector is not None:
+            item_by_expr = {
+                ASTSandboxCorrector.correct_expression(it.get("expression", "")): it
+                for it in items if isinstance(it, dict)
+            }
+            for r in results:
+                r_expr = ASTSandboxCorrector.correct_expression(Gatekeeper.extract_expression(r))
+                if r_expr in item_by_expr:
+                    matched_item = item_by_expr[r_expr]
+                    r.setdefault("slot", matched_item.get("slot"))
+                    r.setdefault("hypothesis", matched_item.get("hypothesis"))
+                    r.setdefault("hypothesis_ref", matched_item.get("hypothesis_ref"))
+                    r.setdefault("optimize_reason", matched_item.get("optimize_reason"))
+                    r.setdefault("type", matched_item.get("type"))
+
         # 3. 预先为高潜候选拉取真实生产库相关性 (ProdCorr)，破解 Catch-22 循环死锁
         if bm:
             corr_candidates = []
+            crossing_candidates = []
+            near_candidates = []
             for r in results:
                 if not isinstance(r, dict):
                     continue
@@ -630,7 +805,11 @@ class SimBatchRunner:
                 is_near_candidate = Gatekeeper.is_near_miss_champion(r, region=region, allow_pending_prod_corr=True)
 
                 if not cw_failed and len(structural_fails) == 0 and (parsed_chk["fail_count"] == 0 or is_near_candidate or s_val >= 1.2):
-                    corr_candidates.append((s_val, a_id, r))
+                    # 冲线候选: |Sharpe| >= 1.58 且无结构性硬伤，必须全量补齐相关性证据
+                    if s_val >= 1.58:
+                        crossing_candidates.append((s_val, a_id, r))
+                    else:
+                        near_candidates.append((s_val, a_id, r))
 
             def _corr_priority(item):
                 cand_s, cand_id, cand_r = item
@@ -641,8 +820,10 @@ class SimBatchRunner:
                 # 排序优先级: 准冠军雏形 (is_nm) > 极简结构 (op_cnt <= 6) > 夏普绝对值
                 return (is_nm, is_simple, cand_s)
 
-            corr_candidates.sort(key=_corr_priority, reverse=True)
-            for s_val, a_id, r in corr_candidates[:8]:
+            # 冲线候选不允许被 top-8 截断; 非冲线候选按预算补齐
+            near_candidates.sort(key=_corr_priority, reverse=True)
+            corr_worklist = crossing_candidates + near_candidates[:8]
+            for s_val, a_id, r in corr_worklist:
                 try:
                     corr_res = None
                     if hasattr(bm, "check_correlation"):
@@ -665,8 +846,37 @@ class SimBatchRunner:
                                 r["metrics"]["prodCorrelation"] = extracted_pcorr
                                 r["metrics"]["prod_corr_verified"] = True
                             print(f"🔗 [Brain ProdCorr] 成功拉取 Alpha {a_id} 生产库相关性: {extracted_pcorr:.4f}")
+
+                    # 同步提取/查询自相关性 (Self Correlation)
+                    extracted_sc = Gatekeeper.extract_self_corr(corr_res) if corr_res else None
+                    if extracted_sc is None:
+                        for fn_name in ("check_self_correlation", "get_self_correlation", "check_self_corr"):
+                            if hasattr(bm, fn_name):
+                                try:
+                                    s_fn = getattr(bm, fn_name)
+                                    sc_res = await s_fn(a_id) if asyncio.iscoroutinefunction(s_fn) else s_fn(a_id)
+                                    if isinstance(sc_res, dict):
+                                        extracted_sc = Gatekeeper.extract_self_corr(sc_res)
+                                    elif isinstance(sc_res, (int, float)):
+                                        extracted_sc = float(sc_res)
+                                    if extracted_sc is not None:
+                                        break
+                                except Exception:
+                                    pass
+                    if extracted_sc is not None:
+                        extracted_sc = float(extracted_sc)
+                        r["self_corr"] = extracted_sc
+                        r["sc"] = extracted_sc
+                        r["self_corr_verified"] = True
+                        if isinstance(r.get("is"), dict):
+                            r["is"]["selfCorrelation"] = extracted_sc
+                            r["is"]["self_corr_verified"] = True
+                        if isinstance(r.get("metrics"), dict):
+                            r["metrics"]["selfCorrelation"] = extracted_sc
+                            r["metrics"]["self_corr_verified"] = True
+                        print(f"🔗 [Brain SelfCorr] 成功拉取 Alpha {a_id} 自相关性: {extracted_sc:.4f}")
                 except Exception as _ce:
-                    print(f"⚠️ [ProdCorr] 查询 Alpha {a_id} 相关性异常: {_ce}")
+                    print(f"⚠️ [ProdCorr/SelfCorr] 查询 Alpha {a_id} 相关性异常: {_ce}")
 
                 # 同步拉取逐年统计数据 (Yearly Stats) 供图 1 黄金契约与微观法医诊断
                 try:
@@ -709,23 +919,65 @@ class SimBatchRunner:
         batch_fitness_list = [_fitness_of(r) for r in results]
         max_batch_fitness = max(batch_fitness_list) if batch_fitness_list else 0.0
 
-        # 获取字段名
-        first_expr = corrected_exprs[0]
-        tokens = [t for t in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', first_expr) if t in (known_fields if isinstance(known_fields, list) else known_fields.keys())]
-        sig_f = tokens[0] if len(tokens) >= 1 else "signal"
-        cat_f = tokens[1] if len(tokens) >= 2 else None
-        
         # Gate 5: 登记账本并检测 Tabu 连续停滞 (仅在开拓探索阶段生效，老兵精修模式豁免锁定母本字段)
+        # 2026-11-13 根因修复: 原实现只按 corrected_exprs[0] 的字段对记账，导致单批 20 槽中
+        # 其余 19 槽探索的字段对全部漏记，Tabu 水位线停滞检测与穷尽覆盖率长期失真。
+        # 现改为遍历全批槽位，按每槽实际使用的 (signal_field, catalyst_field) 分组记录本批最高 Fitness。
         if not batch_data.get("has_parent", False):
+            known_field_set = set(known_fields if isinstance(known_fields, list) else known_fields.keys())
+            pair_stats: Dict[Tuple[str, Optional[str]], Dict[str, Union[float, List[str]]]] = {}
+            # 2026-11-17 根因修复: 原实现 zip(corrected_exprs, results) 假定 results 与槽位同序，
+            # 但部分回测(4/8 等) results 按平台完成顺序返回, 与槽位错位 -> 把 A 槽 fitness 记到 B 字段,
+            # 导致必测网格漏记/错记。改为逐结果从其自带 code(自身表达式) 提取字段令牌, 与顺序无关。
+            for r_obj in results:
+                expr_str = r_obj.get("code") or r_obj.get("expression") or ""
+                if not expr_str:
+                    continue
+                matched_tokens = []
+                for tok in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', expr_str):
+                    if tok in known_field_set and tok not in matched_tokens:
+                        matched_tokens.append(tok)
+                if not matched_tokens:
+                    continue
+                sig_token = matched_tokens[0]
+                cat_token = matched_tokens[1] if len(matched_tokens) >= 2 else None
+                pair_key = (sig_token, cat_token)
+                fit_val = _fitness_of(r_obj)
+                if pair_key not in pair_stats:
+                    pair_stats[pair_key] = {"max_fitness": fit_val, "exprs": [expr_str]}
+                else:
+                    pair_stats[pair_key]["max_fitness"] = max(float(pair_stats[pair_key]["max_fitness"]), fit_val)
+                    pair_stats[pair_key]["exprs"].append(expr_str)
+
             batch_id = os.path.basename(batch_file_path).replace(".json", "")
-            tabu_update = AntiLazinessAuditor.update_ledger_and_check_tabu(
-                ledger_path=ledger_path,
-                batch_id=batch_id,
-                signal_field=sig_f,
-                catalyst_field=cat_f,
-                batch_max_fitness=max_batch_fitness,
-                expressions=corrected_exprs
-            )
+            for (sig_f, cat_f), stat_info in pair_stats.items():
+                AntiLazinessAuditor.update_ledger_and_check_tabu(
+                    ledger_path=ledger_path,
+                    batch_id=batch_id,
+                    signal_field=sig_f,
+                    catalyst_field=cat_f,
+                    batch_max_fitness=max(0.0, float(stat_info["max_fitness"])),
+                    expressions=list(stat_info["exprs"])
+                )
+
+        # ---------------- Gate 6: 审计总线结算 (裁决只认结果文件, 不接受任何自述) ----------------
+        try:
+            try:
+                from core.audit_bus import AuditBus, resolve_policy_path
+            except ImportError:
+                from quant_framework.core.audit_bus import AuditBus, resolve_policy_path
+            _ab = AuditBus(campaign_dir, policy_path=resolve_policy_path())
+            _settled = _ab.settle_pending(output_path)
+            if _settled:
+                print(f"⚖️ [Gate 6 - AuditBus] 本批结算 {len(_settled)} 条命题")
+            _ctrl = _ab.maybe_issue_control(output_path)
+            if _ctrl:
+                _ctrl_path = os.path.join(campaign_dir, "audit_control_job.json")
+                with open(_ctrl_path, "w", encoding="utf-8") as _cf:
+                    json.dump(_ctrl, _cf, ensure_ascii=False, indent=2)
+                print(f"🧪 [Gate 6 - AuditBus] 对照组命题已签发 -> {os.path.basename(_ctrl_path)}")
+        except Exception as _ae:
+            print(f"⚠️ [Gate 6 - AuditBus] 结算异常(不阻断回测主链路): {_ae}")
 
         if step1_res["should_prune"]:
             print("❌ 触发 AEGIS Step 1 极速早停熔断！当前主信号无统计显著性，自动剪枝！")
@@ -740,11 +992,8 @@ class SimBatchRunner:
         step2_passed = Gatekeeper.audit_step2_batch({"alpha_results": results}, region=region)
         print(f"🏆 Step 2 合规通过数: {len(step2_passed)} / {len(items)} 条！")
 
-        # 终极生产准入门禁 (V3.1 ALL PASS 0 FAIL 0 WARNING 铁律)
-        final_passed = Gatekeeper.audit_final_alpha({"alpha_results": results}, region=region, strict_zero_warnings=True)
-        print(f"🌟 达到终极生产准入标准 (可提交) 数量: {len(final_passed)} 条！")
-
-        # ---------------- 双窗口敏感性成对验证 (参数高原压力测试器) ----------------
+        # ---------------- 双窗口敏感性成对验证 (必须先于终审) ----------------
+        # 原实现先终审后 Horizon，导致 SPIKE 候选可先进入 final_passed 再被旁路。
         horizon_summary = {}
         h_verdicts = []
         try:
@@ -761,13 +1010,70 @@ class SimBatchRunner:
                     items,
                     step1_res.get("qualified_seeds", []),
                     h_pairs,
-                    all_sharpes=step1_res.get("all_sharpes", {})
+                    all_sharpes=step1_res.get("all_sharpes", {}),
+                    hypothesis=batch_data.get("hypothesis"),
                 )
                 HorizonProbe.annotate(step1_res.get("qualified_seeds", []), h_verdicts, h_pairs)
+                HorizonProbe.annotate(results, h_verdicts, h_pairs)
+
+                # ---------------- 补充继承逻辑 ----------------
+                # 1. 建立本批次 core_skeleton -> horizon_verdict 映射 (同批继承)
+                skel_to_verdict = {}
+                for r_item in results:
+                    v_val = r_item.get("horizon_verdict")
+                    if v_val and v_val not in ("SPIKE", "UNEXPECTED_SIGN_FLIP"):
+                        expr_val = Gatekeeper.extract_expression(r_item)
+                        if expr_val and ASTSandboxCorrector is not None:
+                            try:
+                                c_skel = ASTSandboxCorrector.get_core_skeleton(expr_val, mechanism_intents=set())
+                                skel_to_verdict[c_skel] = v_val
+                            except Exception:
+                                pass
+
+                # 2. Step 2+ 条件继承: 若子代未改变母本核心时序算子与窗口，继承母本 horizon_verdict
+                parent_snapshot = batch_data.get("parent_snapshot") or batch_data.get("parent_alpha")
+                parent_verdict = parent_snapshot.get("horizon_verdict") if isinstance(parent_snapshot, dict) else None
+                from .horizon_probe import extract_windows
+                parent_windows = extract_windows(parent_snapshot.get("expression", "")) if isinstance(parent_snapshot, dict) else []
+
+                for r_item in results + step1_res.get("qualified_seeds", []):
+                    if r_item.get("horizon_verdict") is None:
+                        expr_val = Gatekeeper.extract_expression(r_item)
+                        if batch_data.get("has_parent", False) and parent_verdict:
+                            child_windows = extract_windows(expr_val)
+                            if child_windows == parent_windows:
+                                r_item["horizon_verdict"] = parent_verdict
+                                r_item["horizon_robust"] = True
+                                r_item["plateau_pass"] = (parent_verdict in {"PLATEAU", "EXPECTED_PLATEAU", "STATIC_CROSS_SECTION"})
+                                continue
+
+                        if ASTSandboxCorrector is not None and expr_val:
+                            try:
+                                c_skel = ASTSandboxCorrector.get_core_skeleton(expr_val, mechanism_intents=set())
+                                if c_skel in skel_to_verdict:
+                                    inh_v = skel_to_verdict[c_skel]
+                                    r_item["horizon_verdict"] = inh_v
+                                    r_item["horizon_robust"] = inh_v in {"PLATEAU", "EXPECTED_PLATEAU", "EXPECTED_DECAY", "EXPECTED_REVERSAL", "STATIC_CROSS_SECTION"}
+                                    r_item["plateau_pass"] = (inh_v in {"PLATEAU", "EXPECTED_PLATEAU", "STATIC_CROSS_SECTION"})
+                            except Exception:
+                                pass
+
                 horizon_summary = HorizonProbe.summarize(h_verdicts)
                 print(HorizonProbe.format_report(h_verdicts))
             except Exception as _hx:
-                print(f"⚠️ [双窗口探针] 执行异常，已跳过参数高原判定: {_hx}")
+                print(f"⚠️ [双窗口探针] 执行异常，本批候选将缺失 Horizon 证据: {_hx}")
+
+        # 终极生产准入门禁 (V3.1 ALL PASS 0 FAIL 0 WARNING 铁律)
+        final_passed = Gatekeeper.audit_final_alpha({"alpha_results": results}, region=region, strict_zero_warnings=True)
+        accepted_horizon = {
+            "PLATEAU", "EXPECTED_PLATEAU", "EXPECTED_DECAY",
+            "EXPECTED_REVERSAL", "REGIME_REVERSAL_CONFIRMED", "STATIC_CROSS_SECTION",
+        }
+        final_passed = [
+            fp for fp in final_passed
+            if fp.get("horizon_verdict") in accepted_horizon or bool(fp.get("horizon_robust"))
+        ]
+        print(f"🌟 达到终极生产准入标准 (可提交) 数量: {len(final_passed)} 条！")
 
         # Gate 4: 法医诊断病灶并生成下一轮定向处方白名单
         # 严禁盲目取 results[0]！按最高 Fitness 选取本批最优候选进行法医诊断
@@ -780,30 +1086,66 @@ class SimBatchRunner:
         op_count = expr_str.count("(") if expr_str else 0
 
         max_op_limit = batch_data.get("max_ast_operators", 8)
+        parent_snapshot = batch_data.get("parent_snapshot") or batch_data.get("parent_alpha")
         prescriptions = Gatekeeper.diagnose_and_route_prescriptions(
             alpha_metrics=alpha_metrics,
             checks_parsed=checks_parsed,
             yearly_stats=yearly_stats,
             operator_count=op_count,
             prod_corr=Gatekeeper.extract_prod_corr(best_alpha),
-            max_operator_limit=max_op_limit
+            max_operator_limit=max_op_limit,
+            parent_alpha=parent_snapshot
         )
+
+        # 反事实消融检验: Slot 1 (exploit 控制槽) vs Slot 2 (ablation 裸核槽)
+        if batch_data.get("has_parent", False):
+            r_slot1 = None
+            r_slot2 = None
+            for r in results:
+                s_idx = r.get("slot")
+                if s_idx == 1:
+                    r_slot1 = r
+                elif s_idx == 2:
+                    r_slot2 = r
+
+            # 备用容错：若未通过 slot 字段匹配到，尝试按 items 中的 Slot 1 与 Slot 2 表达式进行二次定位
+            if (r_slot1 is None or r_slot2 is None) and ASTSandboxCorrector is not None:
+                s1_expr = next((ASTSandboxCorrector.correct_expression(it.get("expression", "")) for it in items if it.get("slot") == 1), None)
+                s2_expr = next((ASTSandboxCorrector.correct_expression(it.get("expression", "")) for it in items if it.get("slot") == 2), None)
+                for r in results:
+                    re_str = ASTSandboxCorrector.correct_expression(Gatekeeper.extract_expression(r))
+                    if s1_expr and re_str == s1_expr and r_slot1 is None:
+                        r_slot1 = r
+                    elif s2_expr and re_str == s2_expr and r_slot2 is None:
+                        r_slot2 = r
+
+            if r_slot1 is not None and r_slot2 is not None:
+                m1 = r_slot1.get("is_metrics", {}) or r_slot1.get("metrics", {}) or r_slot1.get("is", {})
+                m2 = r_slot2.get("is_metrics", {}) or r_slot2.get("metrics", {}) or r_slot2.get("is", {})
+                sharpe1 = float(m1.get("sharpe", 0.0) or 0.0)
+                sharpe2 = float(m2.get("sharpe", 0.0) or 0.0)
+                ablation_sharpe_ratio = abs(sharpe2) / max(abs(sharpe1), 0.01)
+                if abs(sharpe2) < 0.65 and abs(sharpe1) >= 1.25:
+                    clues = prescriptions.setdefault("forensic_clues", [])
+                    warn_msg = "【反事实消融警告：外层算子寄生】裸核 Slot 2 夏普坍塌 (<0.65)，禁止继续叠加外层包装算子！"
+                    if warn_msg not in clues:
+                        clues.append(warn_msg)
 
         # 将授权处方写盘给下一轮使用 (清空旧算子白名单，彻底杜绝历史处方锁绑架 Agent 自主探索)
         rx_path = os.path.join(campaign_dir, "authorized_mutations.json")
+        rx_payload = {
+            "symptoms": prescriptions.get("symptoms", []),
+            "allowed_mutations": [],
+            "forensic_clues": prescriptions.get("forensic_clues", []),
+            "rag_prescriptions": prescriptions.get("rag_prescriptions", []),
+            "qa_prescriptions": prescriptions.get("qa_prescriptions", []),
+            "parent_snapshot": parent_snapshot,
+        }
         try:
-            atomic_save_json(rx_path, {
-                "symptoms": prescriptions.get("symptoms", []),
-                "allowed_mutations": [],
-                "rag_prescriptions": prescriptions.get("rag_prescriptions", [])
-            })
+            atomic_save_json(rx_path, rx_payload)
         except Exception:
             with open(rx_path, 'w', encoding='utf-8') as f:
-                json.dump({
-                    "symptoms": prescriptions.get("symptoms", []),
-                    "allowed_mutations": [],
-                    "rag_prescriptions": prescriptions.get("rag_prescriptions", [])
-                }, f, ensure_ascii=False, indent=2)
+                json.dump(rx_payload, f, ensure_ascii=False, indent=2)
 
         # 生成对齐图 1 格式的生产级黄金诊断契约 (Golden Schema)
         golden_results = [cls.extract_golden_alpha_result(r) for r in results]

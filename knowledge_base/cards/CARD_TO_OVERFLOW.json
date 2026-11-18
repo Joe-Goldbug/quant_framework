@@ -2,9 +2,9 @@
   "card_id": "CARD_TO_OVERFLOW",
   "tag": "turnover_overflow",
   "domain": "decay_smoothing",
-  "title": "换手率过高脉冲平滑处方",
-  "one_line": "换手率过高 (>50%)：使用 ts_decay_exp_window(x, 10, factor=0.8) 或 ts_decay_linear(x, 15) 平滑脉冲",
-  "symptom": "is.turnover > 0.50，高频抖动导致交易滑点迅速吞噬策略利润",
-  "authorized_operators": ["ts_decay_exp_window", "ts_decay_linear"],
-  "prescription_recipe": "在外层包裹 ts_decay_exp_window(..., 10, factor=0.8) 或 ts_decay_linear(..., 15)，平滑持仓脉冲并将换手率压缩至 15%~35% 黄金区间。"
+  "title": "换手率过高脉冲平滑与时间戳匹配机理",
+  "question": "当换手率超过黄金上限 (Turnover > 35%) 导致严重交易摩擦滑点时，如何从因果机制调整？",
+  "answer": "物理根因：高频噪点波动或离散突发事件导致权重逐日剧烈换手。治理原则：依据特征字段的信息半衰期设计合适的信息平滑或状态保持机制，将快速跳变的脉冲信号映射为具有持续性的趋势信念，消除无效高频微调，使换手率回归目标区间并提纯边际利润 Margin。",
+  "proven_solution": "依据特征字段的信息半衰期自主推导时间加权平滑或状态识别机制，消除日间无意义的高频微调，使换手率回归目标区间并提纯边际利润 Margin。",
+  "theoretical_cause": "离散脉冲的高频调仓损耗交易成本，需与信息发布真实半衰期对齐时序衰减节奏。"
 }

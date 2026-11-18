@@ -1,68 +1,132 @@
 {
   "good_alphas": [
     {
-      "alpha_id": "N1NAbJ1e",
-      "role": "CHAMPION",
-      "seed_id": "SEED_01_TAIL_ASYM_5Q60D",
-      "expression": "group_neutralize(ts_decay_linear(subtract(probability_label4_5quantile_60day_ohlcv_img_2, probability_label0_5quantile_60day_ohlcv_img), 24), subindustry)",
-      "settings": {"region": "GLB", "universe": "MINVOL1M", "delay": 1, "neutralization": "COUNTRY", "decay": 0, "truncation": 0.025},
-      "metrics": {"sharpe": 2.98, "fitness": 2.95, "turnover": 0.066, "margin_bps": 37.5, "prod_corr": 0.8793},
-      "checks": {"fail": 0, "warning": ["MATCHES_THEMES"], "cluster_test": "PASS", "amer": "PASS", "emea": "PASS", "apac": "PASS"},
-      "champion_score": 2.13,
-      "operator_count": 3
+      "alpha_id": "j2aRNXX5",
+      "role": "STEP1_BEST_SHARPE / STEP2_PARENT",
+      "seed_id": "SEED_05",
+      "expression": "group_neutralize(subtract(ts_zscore(probability_label1_3quantile_60day_ohlcv_img, 63), ts_zscore(probability_label1_3quantile_5day_ohlcv_img, 63)), subindustry)",
+      "settings": {
+        "region": "GLB",
+        "universe": "MINVOL10M",
+        "delay": 1,
+        "neutralization": "COUNTRY",
+        "decay": 0,
+        "truncation": 0.025
+      },
+      "metrics": {
+        "sharpe": 2.05,
+        "fitness": 0.6,
+        "turnover": 0.6199,
+        "margin_bps": 1.69,
+        "returns": 0.0524,
+        "two_year_sharpe": 1.58,
+        "sub_universe_sharpe": 1.0
+      },
+      "prod_corr": 0.4327,
+      "prod_corr_verified": true,
+      "self_corr": 0.0,
+      "checks": {
+        "fail": [],
+        "warning": [
+          "LOW_FITNESS",
+          "LOW_GLB_AMER_SHARPE(0.83)",
+          "LOW_GLB_EMEA_SHARPE(0.65)",
+          "CLUSTER_TEST(0.93)",
+          "MATCHES_COMPETITION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "status": "NOT_SUBMITTABLE: ra_failed=true; Step1 batch PRUNED; used as Step2 parent control only",
+      "operator_count": 4
     },
     {
-      "alpha_id": "VkxO7Nqw",
-      "role": "HIGHEST_SHARPE_VARIANT",
-      "seed_id": "SEED_01_TAIL_ASYM_4Q20D",
-      "expression": "group_neutralize(ts_decay_linear(subtract(probability_label3_4quantile_20day_ohlcv_img, probability_label0_4quantile_20day_ohlcv_img), 8), subindustry)",
-      "settings": {"region": "GLB", "universe": "MINVOL1M", "delay": 1, "neutralization": "COUNTRY", "decay": 0, "truncation": 0.025},
-      "metrics": {"sharpe": 4.16, "fitness": 4.24, "turnover": 0.141, "margin_bps": 20.8, "prod_corr": 0.9179},
-      "checks": {"fail": 0, "warning": ["MATCHES_THEMES"], "cluster_test": "PASS"},
-      "champion_score": 1.78,
-      "operator_count": 3
-    },
-    {
-      "alpha_id": "d5Wdjag2",
-      "role": "HIGHEST_FITNESS_VARIANT",
-      "seed_id": "SEED_01_TAIL_ASYM_5Q5D",
-      "expression": "group_neutralize(ts_decay_linear(subtract(probability_label4_5quantile_5day_ohlcv_img, probability_label0_5quantile_5day_ohlcv_img), 8), subindustry)",
-      "settings": {"region": "GLB", "universe": "MINVOL1M", "delay": 1, "neutralization": "COUNTRY", "decay": 0, "truncation": 0.025},
-      "metrics": {"sharpe": 4.13, "fitness": 4.33, "turnover": 0.144, "margin_bps": 22.0, "prod_corr": 0.9231},
-      "checks": {"fail": 0, "warning": ["MATCHES_THEMES"], "cluster_test": "PASS", "amer": "PASS", "emea": "PASS", "apac": "PASS"},
-      "champion_score": 1.74,
-      "operator_count": 3
-    },
-    {
-      "alpha_id": "3qozpkq6",
-      "role": "REFERENCE",
-      "seed_id": "SEED_01_TAIL_ASYM_5Q60D",
-      "expression": "group_neutralize(ts_decay_linear(subtract(probability_label4_5quantile_60day_ohlcv_img_2, probability_label0_5quantile_60day_ohlcv_img), 8), subindustry)",
-      "settings": {"region": "GLB", "universe": "MINVOL1M", "delay": 1, "neutralization": "COUNTRY", "decay": 0, "truncation": 0.025},
-      "metrics": {"sharpe": 3.38, "fitness": 3.38, "turnover": 0.134, "margin_bps": 20.0, "prod_corr": 0.9009},
-      "checks": {"fail": 0, "warning": ["MATCHES_THEMES"]},
-      "champion_score": 1.68,
-      "operator_count": 3
+      "alpha_id": "88N9AE8a",
+      "role": "STEP1_BEST_MARGIN_AMONG_0FAIL",
+      "seed_id": "SEED_05",
+      "expression": "group_zscore(ts_mean(ts_regression(probability_label1_3quantile_60day_ohlcv_img, probability_label1_3quantile_5day_ohlcv_img, 63, rettype=0), 20), industry)",
+      "settings": {
+        "region": "GLB",
+        "universe": "MINVOL10M",
+        "delay": 1,
+        "neutralization": "COUNTRY",
+        "decay": 0,
+        "truncation": 0.025
+      },
+      "metrics": {
+        "sharpe": 1.18,
+        "fitness": 0.58,
+        "turnover": 0.1036,
+        "margin_bps": 5.75,
+        "returns": 0.0298
+      },
+      "prod_corr": 0.4518,
+      "prod_corr_verified": true,
+      "self_corr": 0.0,
+      "checks": {
+        "fail": [],
+        "warning": [
+          "LOW_SHARPE",
+          "LOW_FITNESS",
+          "LOW_GLB_AMER_SHARPE",
+          "LOW_GLB_EMEA_SHARPE",
+          "LOW_GLB_APAC_SHARPE",
+          "CLUSTER_TEST",
+          "LOW_2Y_SHARPE",
+          "MATCHES_COMPETITION",
+          "MATCHES_THEMES"
+        ]
+      },
+      "status": "NOT_SUBMITTABLE: ra_failed=true",
+      "operator_count": 5
     }
   ],
-  "falsified": [
-    {"hypothesis": "肩部 vs 深度尾部 log-odds (SEED_01 原始主信号)", "reason": "ProdCorr 0.875~0.879 且 AMER 子夏普天花板 0.99，区域与相关性双卡死", "best_sharpe": 2.0},
-    {"hypothesis": "一阶差分 / 时序偏离骨架", "reason": "换手 89%~115%、Margin 0.3~0.8bps，经济性结构性失败", "best_sharpe": 1.54},
-    {"hypothesis": "分布曲率 P2-0.5(P0+P4)", "reason": "Sharpe 仅 0.28~0.45 信号强度不足；PC 0.937 说明仍未脱开收益水平", "best_sharpe": 0.45},
-    {"hypothesis": "hump 状态冻结算子", "reason": "平台判为非法算子，整批 ERROR", "best_sharpe": null}
-  ],
   "history_save": [
-    {"stage": "stage1_round1", "alphas": 8, "note": "10 骨架双窗口；ts_mean/ts_decay_linear 构成参数高原"},
-    {"stage": "stage2_neutralization_matrix", "alphas": 16, "note": "COUNTRY 中性化修复 EMEA/APAC，Sharpe 1.61→2.00"},
-    {"stage": "stage3_amer_ceiling", "alphas": 12, "note": "凹压缩/decay/短窗均无法突破 AMER 0.99"},
-    {"stage": "stage4_tail_asymmetry", "alphas": 12, "note": "尾部分布不对称，Sharpe 最高 4.16，0 FAIL"},
-    {"stage": "stage5_prodcorr_frontier", "alphas": 21, "note": "去相关前沿：水平0.90→序数贴现0.86→去均值0.83→离散序数比0.80→变化+贴现0.74；PC与Margin硬对抗，0.65不可达"}
+    {
+      "stage": "STEP0",
+      "alphas": 20,
+      "note": "MINVOL10M 原生 ATOM 种子池落盘 total_signals.json; 20/20 通过 op<=6 / fields<=3 / 禁 add,multiply / 窗口网格 / 零幻觉字段审计"
+    },
+    {
+      "stage": "STEP1_EXPLORATION",
+      "alphas": 20,
+      "note": "batch_SEED_05_s1.json; 10 正交拓扑 x 双自然日历窗口; Gate3 首次因核心骨架 10/20>6 熔断, 修正后 8 骨架 / max 6 通过; 6 个子批全部完成"
+    },
+    {
+      "stage": "STEP1_VERDICT",
+      "alphas": 0,
+      "note": "PRUNED: 无槽同时满足 |Sharpe|>=1.20 且 Margin>=5.0bps; 最高 Sharpe 2.05 (槽20), 最高 Margin 7.79bps (槽10 但 5 FAIL)"
+    },
+    {
+      "stage": "FORENSIC",
+      "alphas": 2,
+      "note": "j2aRNXX5 PC=0.4327, 88N9AE8a PC=0.4518, SelfCorr=0.0；确认 Margin恒等式 M=20*R/TO；确认低 PC 不再构成约束"
+    },
+    {
+      "stage": "STEP2_REFINEMENT",
+      "alphas": 20,
+      "note": "batch_SEED_05_s2.json; 1 控制 + 9 母本锚定微创 + 10 冷字段 DGP 重建; 首次运行触发 Gate3 常数微调硬拦截(5 槽同母本骨架), 修正为 1 槽后全部预检通过"
+    }
   ],
-  "prodcorr_frontier": [
-    {"alpha_id": "O0Aor2e1", "type": "水平+序数贴现", "sharpe": 2.56, "fitness": 2.62, "turnover": 0.06, "margin_bps": 44.1, "prod_corr": 0.8615, "warning": ["CLUSTER_TEST 1.55", "MATCHES_THEMES"]},
-    {"alpha_id": "LLMkN9v2", "type": "去自身120日均值", "sharpe": 3.33, "fitness": 2.34, "turnover": 0.159, "margin_bps": 9.9, "prod_corr": 0.8342, "warning": ["MATCHES_THEMES"]},
-    {"alpha_id": "2rAJjQbP", "type": "离散序数比 5桶/2桶 24d", "sharpe": 2.21, "fitness": 1.67, "turnover": 0.098, "margin_bps": 14.4, "prod_corr": 0.8, "warning": ["CLUSTER_TEST 1.09", "MATCHES_THEMES"]},
-    {"alpha_id": "58EMj301", "type": "离散序数比 5桶/2桶 8d", "sharpe": 2.51, "fitness": 1.48, "turnover": 0.208, "margin_bps": 6.9, "prod_corr": 0.8046, "warning": ["CLUSTER_TEST 1.16", "MATCHES_THEMES"]},
-    {"alpha_id": "P0ov2ZVE", "type": "20日变化+序数贴现", "sharpe": 2.19, "fitness": 1.16, "turnover": 0.207, "margin_bps": 5.6, "prod_corr": 0.7395, "warning": ["AMER 0.91", "CLUSTER_TEST 1.21", "LOW_2Y_SHARPE 1.40"]}
-  ]
+  "failed_hypotheses_digest": [
+    "差分型拓扑 (ts_av_diff/ts_delta/ts_zscore5) 结构性失败: TVR>64%, Margin<1bps",
+    "ts_mean 均匀平滑: Margin 改善但 Sharpe/Fitness 塌陷, 不可单独达标",
+    "MATCHES_THEMES 在 20/20 槽恒为 WARNING; 0 WARNING 红线尚未攻克",
+    "GLB Margin 死线 15bps 需 R/TO>=0.75; 残差族 R/TO 仅 0.08~0.30",
+    "Gate3 母本纯常数微调硬拦截: 同 parent canonical skeleton 槽位 >=3 即熔断 (step2 修复后仅留 1 槽)",
+    "ZYa3lgGn 去拥挤战役: 3 轮 40 槽, 21 个 ProdCorr 实测落在 [0.7229, 0.8142], 0 条 <0.65 —— 同源换芯(5/3/2 分位桶、20d/5d/期限结构)+换形+换分组三轴全部无效, 该数据集已因子饱和",
+    "期限结构差(长减短)与残差化(ts_regression rettype=0) 是反向操作: ProdCorr 0.8289 / TVR>60%, 越'正交'越拥挤",
+    "降相关只能靠高频成分换来的小幅提升(0.7564->0.7229), 与 Margin 15bps 死线不可兼得; 有效前沿为 ProdCorr-Turnover 权衡",
+    "内层 group_neutralize(subindustry) 之后, 外层 COUNTRY/MARKET/NONE 三者指标逐位相同, 中性化维度只需测 sector 一档",
+    "两桶/五桶极端剪刀差信号经 winsorize+平滑会归零(Sharpe 3.11->0.41->0.00), 需改用逐股分位归一面非尾控",
+    "换经济学假设能提升质量但不能降相关：本轮 4 个新信号族里期限结构 Sharpe 3.30 / Margin 27.20bps / 0 FAIL 创质量新高，PC 仍 0.8136。",
+    "同数据集 ProdCorr 地板 ≈ 0.77，且 PC 与 Margin 单调对立（PC 0.694 ↔ Margin 6.11bps vs PC 0.8136 ↔ Margin 27.20bps）。",
+    "降 PC 唯一有效但不伤质量的是 trade_when 双轴确认门（0.8136→0.7801，代价 0.39 Sharpe）；二阶差分曲率免费降 0.04（0.7707）。",
+    "S6 网格 24 项全覆盖（coverage 100%，verify_exhaustion_claim allowed_to_give_up=True）：P1 自身动力学 12 项、P2 门控交互 12 项，已把 dl_riskfree_returns 的 57 字段两两遍历完毕。",
+    "门控方向错误即反号：probability_label1_4quantile_20day / probability_label2_5quantile_20day_2 族在 GLB 上 Sharpe 为 -0.80~-0.90，与其 2 桶/单桶同伴方向相反，不能混用。"
+  ],
+  "seed_trial_counts": {
+    "SEED_05": 35,
+    "SEED_ZYa3lgGn_s6_grid": 24
+  },
+  "total_trial_count": 95
 }

@@ -27,36 +27,106 @@ class AntiLazinessAuditor:
     TABU_MIN_FITNESS_DELTA = 0.03
 
     @classmethod
-    def generate_required_interactions(cls, kb_fields_json_path: str) -> list:
-        """根据知识库中的字段画像，自动构建必测交互表"""
+    def generate_required_interactions(cls, kb_fields_json_path: str, max_grid_size: int = 0) -> list:
+        """
+        基于物理画像分桶 (type x domain x is_sparse x skewness) 构建有界正交必测网格 (AEGIS v3.2):
+        1. 兼容全 Signal_Flow 数据集 (如 dl_riskfree_returns): 无 Anchor/Catalyst 标签时，
+           自动构建同源跨桶信号相对差配对 (Peer_Spread)，彻底解决角色笛卡尔积为空的问题;
+        2. 兼容 domain=None 的原始画像 (如 fundamental23): 自动回退为 unbounded 桶，不依赖角色标签;
+        3. 严格封顶网格总规模（默认按候选池动态 24~40），防止穷尽覆盖率 (80%) 分母失控膨胀
+           —— 原实现在 fundamental23 上生成 32566 项必测 (80% = 26053 项 ≈ 1300+ 批)，
+           使「允许宣布穷尽」在数学上永远不可达。
+        """
         with open(kb_fields_json_path, 'r', encoding='utf-8') as f:
             kb = json.load(f)
-        
-        fields = kb.get("fields", {})
-        signals = [k for k, v in fields.items() if "Signal" in v.get("semantic_role", "")]
-        catalysts = [k for k, v in fields.items() if "Catalyst" in v.get("semantic_role", "") or "Scale" in v.get("semantic_role", "")]
+
+        fields = kb.get("fields", kb) if isinstance(kb, dict) else {}
+        valid_items = []
+        for fid, meta in fields.items():
+            if not isinstance(meta, dict) or fid in ("dataset_id", "region", "universe", "delay", "total_fields"):
+                continue
+            cov = meta.get("coverage")
+            try:
+                cov_f = float(cov) if cov is not None else 1.0
+            except (TypeError, ValueError):
+                cov_f = 1.0
+            if cov_f < 0.20:
+                continue
+            try:
+                ac = float(meta.get("alpha_count", meta.get("alphaCount", 0)) or 0)
+            except (TypeError, ValueError):
+                ac = 0.0
+            dom = str(meta.get("domain") or "unbounded")
+            sparse = bool(meta.get("is_sparse", meta.get("sparse_zero", False)))
+            skew = str(meta.get("skewness") or "medium")
+            ftype = str(meta.get("type") or "MATRIX").upper()
+            role = str(meta.get("semantic_role") or "Signal_Flow")
+            bucket_key = f"{ftype}|{dom}|sp={int(sparse)}|sk={skew}"
+            valid_items.append((fid, ac, cov_f, role, bucket_key))
+
+        if not valid_items:
+            return []
+
+        # 动态封顶: 小数据集 24 项、大数据集最多 40 项（避免从「永不可穷尽」摆到「1 批即穷尽」）
+        effective_max = max_grid_size or min(40, max(24, 24 + len(valid_items) // 100))
+
+        # 优先选择高覆盖、低拥挤 (alpha_count 低) 的代表性字段
+        valid_items.sort(key=lambda x: (x[1], -x[2]))
+
+        # 从每个物理分桶轮询抽取代表性主信号 (最多 8 个核心主锚)
+        by_bucket: Dict[str, List[tuple]] = {}
+        for item in valid_items:
+            by_bucket.setdefault(item[4], []).append(item)
+
+        core_signals = []
+        while len(core_signals) < min(8, len(valid_items)):
+            added = False
+            for b_key in sorted(by_bucket.keys()):
+                if by_bucket[b_key]:
+                    core_signals.append(by_bucket[b_key].pop(0))
+                    added = True
+                    if len(core_signals) >= 8:
+                        break
+            if not added:
+                break
+
+        # 辅助锚点池: 优先使用 Catalyst/Scale/Anchor 角色；全部缺失时（纯 Signal_Flow 数据集）
+        # 退化为高覆盖低拥挤的异桶字段做 Peer_Spread 相对强弱配对
+        aux_pool = [x[0] for x in valid_items if any(r in x[3] for r in ("Catalyst", "Scale", "Anchor", "Uncertainty"))]
+        if not aux_pool:
+            aux_pool = [x[0] for x in sorted(valid_items, key=lambda x: (-x[2], x[1]))[:4]]
 
         required_grid = []
-        for sig in signals:
-            # 1. 自身时序稳态与动态
+        for fid, _, _, _, b_key in core_signals:
+            # 1) 自身时序与分布形态探针 (id 命名与 update_ledger_and_check_tabu 记账保持兼容)
             required_grid.append({
                 "paradigm": "Self_Dynamics",
-                "signal_field": sig,
+                "physics_bucket": b_key,
+                "signal_field": fid,
                 "catalyst_field": None,
-                "anchor_field": "ts_mean",
-                "id": f"P1_{sig}_self_dynamics"
+                "anchor_field": None,
+                "id": f"P1_{fid}_self_dynamics",
             })
-            # 2. 内部催化剂/尺度交互
-            for cat in catalysts:
+            # 2) 跨字段正交交互探针 (每个核心主信号最多配对 2 个正交锚，严控网格规模)
+            paired_cnt = 0
+            for aux_f in aux_pool:
+                if aux_f == fid:
+                    continue
                 required_grid.append({
-                    "paradigm": "Catalyst_Gated",
-                    "signal_field": sig,
-                    "catalyst_field": cat,
-                    "anchor_field": cat,
-                    "id": f"P2_{sig}_gated_by_{cat}"
+                    "paradigm": "Orthogonal_Interaction",
+                    "physics_bucket": b_key,
+                    "signal_field": fid,
+                    "catalyst_field": aux_f,
+                    "anchor_field": aux_f,
+                    "id": f"P2_{fid}_gated_by_{aux_f}",
                 })
-        
-        return required_grid
+                paired_cnt += 1
+                if paired_cnt >= 2 or len(required_grid) >= effective_max:
+                    break
+            if len(required_grid) >= effective_max:
+                break
+
+        return required_grid[:effective_max]
 
     @classmethod
     def load_ledger(cls, ledger_path: str) -> dict:

@@ -3,15 +3,15 @@
     "field_total": 105,
     "alpha_count_known": 105,
     "tier_counts": {
-      "COLD": 54,
-      "WARM": 26,
-      "HOT": 25,
+      "COLD": 99,
+      "WARM": 0,
+      "HOT": 6,
       "UNKNOWN": 0
     }
   },
   "pairing_candidates": [
     {
-      "main_anchor": "neutral_score_maximum_value_4",
+      "main_anchor": "negative_score_average_value_3",
       "main_anchor_alpha_count": 1.0,
       "main_anchor_alpha_pct": 0.0,
       "main_anchor_coverage": 0.7,
@@ -20,86 +20,109 @@
       "normalizer_alpha_pct": 0.9905
     },
     {
-      "main_anchor": "neutral_score_median_value_3",
-      "main_anchor_alpha_count": 1.0,
-      "main_anchor_alpha_pct": 0.0,
-      "main_anchor_coverage": 0.7,
-      "normalizer": "negative_score_average_value_2",
-      "normalizer_coverage": 0.705,
-      "normalizer_alpha_pct": 0.981
-    },
-    {
-      "main_anchor": "neutral_score_standard_deviation_3",
-      "main_anchor_alpha_count": 1.0,
-      "main_anchor_alpha_pct": 0.0,
-      "main_anchor_coverage": 0.7,
-      "normalizer": "positive_score_average_value",
-      "normalizer_coverage": 0.705,
-      "normalizer_alpha_pct": 0.9714
-    },
-    {
-      "main_anchor": "positive_score_maximum_value_3",
-      "main_anchor_alpha_count": 1.0,
-      "main_anchor_alpha_pct": 0.0,
-      "main_anchor_coverage": 0.7,
-      "normalizer": "negative_score_confidence_lower_bound_2",
-      "normalizer_coverage": 0.705,
-      "normalizer_alpha_pct": 0.9429
-    },
-    {
-      "main_anchor": "positive_score_maximum_value_4",
+      "main_anchor": "negative_score_average_value_4",
       "main_anchor_alpha_count": 1.0,
       "main_anchor_alpha_pct": 0.0,
       "main_anchor_coverage": 0.7,
       "normalizer": "negative_score_average_value_5",
       "normalizer_coverage": 0.705,
-      "normalizer_alpha_pct": 0.9238
+      "normalizer_alpha_pct": 0.981
     },
     {
-      "main_anchor": "positive_score_minimum_value_3",
+      "main_anchor": "negative_score_confidence_lower_bound_3",
       "main_anchor_alpha_count": 1.0,
       "main_anchor_alpha_pct": 0.0,
       "main_anchor_coverage": 0.7,
-      "normalizer": "negative_score_maximum_value",
+      "normalizer": "negative_score_confidence_upper_bound",
       "normalizer_coverage": 0.705,
-      "normalizer_alpha_pct": 0.8952
+      "normalizer_alpha_pct": 0.9619
     },
     {
-      "main_anchor": "neutral_score_average_value_2",
+      "main_anchor": "negative_score_confidence_lower_bound_4",
       "main_anchor_alpha_count": 1.0,
       "main_anchor_alpha_pct": 0.0,
-      "main_anchor_coverage": 0.705,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "neutral_score_standard_deviation",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.9619
+    },
+    {
+      "main_anchor": "negative_score_confidence_upper_bound_3",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "neutral_score_confidence_lower_bound_5",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.9429
+    },
+    {
+      "main_anchor": "negative_score_confidence_upper_bound_4",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
+      "normalizer": "positive_score_average_value",
+      "normalizer_coverage": 0.705,
+      "normalizer_alpha_pct": 0.9429
+    },
+    {
+      "main_anchor": "negative_score_maximum_value_3",
+      "main_anchor_alpha_count": 1.0,
+      "main_anchor_alpha_pct": 0.0,
+      "main_anchor_coverage": 0.7,
       "normalizer": "negative_score_average_value",
       "normalizer_coverage": 0.705,
       "normalizer_alpha_pct": 0.9905
     },
     {
-      "main_anchor": "neutral_score_confidence_lower_bound_2",
+      "main_anchor": "negative_score_maximum_value_4",
       "main_anchor_alpha_count": 1.0,
       "main_anchor_alpha_pct": 0.0,
-      "main_anchor_coverage": 0.705,
-      "normalizer": "negative_score_average_value_2",
+      "main_anchor_coverage": 0.7,
+      "normalizer": "negative_score_average_value_5",
       "normalizer_coverage": 0.705,
       "normalizer_alpha_pct": 0.981
     }
   ],
   "report": {
-    "total": 20,
-    "kept": 20,
-    "rejected": 0,
-    "survival_ratio": 1.0,
+    "total": 18,
+    "kept": 16,
+    "rejected": 2,
+    "survival_ratio": 0.889,
     "min_required": 10,
     "should_reject_all": false,
     "profiler": {
       "field_total": 105,
       "alpha_count_known": 105,
       "tier_counts": {
-        "COLD": 54,
-        "WARM": 26,
-        "HOT": 25,
+        "COLD": 99,
+        "WARM": 0,
+        "HOT": 6,
         "UNKNOWN": 0
       }
     }
   },
-  "rejected": []
+  "rejected": [
+    {
+      "id": "SEED_15",
+      "fields_used": [
+        "negative_score_median_value",
+        "negative_score_median_value_3"
+      ],
+      "expression": "divide(ts_mean(negative_score_median_value_3, 5), ts_mean(negative_score_median_value, 63))",
+      "issues": [
+        "缺少高覆盖度总量归一锚 (要求 coverage >= 0.71)"
+      ]
+    },
+    {
+      "id": "SEED_16",
+      "fields_used": [
+        "positive_score_average_value",
+        "negative_score_average_value"
+      ],
+      "expression": "subtract(ts_zscore(positive_score_average_value, 20), ts_zscore(negative_score_average_value, 20))",
+      "issues": [
+        "缺少低拥挤度主锚字段 (要求 coverage >= 0.25 且 alpha_count 位于数据集后 40%)；当前全是拥挤热点: ['positive_score_average_value', 'negative_score_average_value']"
+      ]
+    }
+  ]
 }

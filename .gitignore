@@ -18,12 +18,18 @@ build/
 # Personal work logs, tasks, and memory
 .workbuddy/
 .workbuddy-ai/
-.agent_tasks/
+.agent_tasks*/
 
-# Temporary files
+# Temporary files & scratch dumps
 tmp/
 temp/
 *.tmp
+*.bak
+*.bak.*
+prompt_*.txt
+prompt_dump.txt
+_b*_exps.json
+gen_response.py
 
 # Credentials & environment
 *.env
@@ -31,7 +37,18 @@ temp/
 *.secret
 *config*.json
 !knowledge_base/**/*.json
+knowledge_base/**/*.bak*
 !campaigns/**/*.json
+campaigns/**/_archive*
+campaigns/**/_stale*
+campaigns/**/results_*
+campaigns/**/sweep_*
+campaigns/**/refine_*
+campaigns/**/alphas_record.db*
+campaigns/**/*.log
+campaigns/**/*.err
+campaigns/**/*.lock
+campaigns/**/*.bak*
 
 # LanceDB binary data (large embeddings)
 knowledge_base/lancedb_data/

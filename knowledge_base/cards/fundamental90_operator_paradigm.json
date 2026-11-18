@@ -1,50 +1,10 @@
 {
-  "region": "USA",
-  "universe": "TOP1000",
-  "delay": 1,
-  "dataset_family": "fundamental (VECTOR 事件型)",
-  "distilled_at": "2026-10-29 01:10:50",
-  "paradigms": [
-    {
-      "name": "类型降维前置范式",
-      "pattern": "ts_*(vec_avg(字段), 窗口)",
-      "gain": "从'平台拒绝执行'到'回测可跑'，是该类数据集的唯一入场券",
-      "note": "vec_* 属类型强制转换，不应计入数学算子预算。"
-    },
-    {
-      "name": "外层时序平滑消死重范式",
-      "pattern": "ts_mean(<因果合成>, 20)",
-      "gain": "换手 42.5% -> 3.7%，Margin -0.18bps -> 10.24bps，CONCENTRATED_WEIGHT 由 FAIL 转为 PASS",
-      "note": "必须置于最外层；置于内层(逐腿平滑)效果反转为负 (R5 Slot5 Sharpe -0.13)。"
-    },
-    {
-      "name": "去中枢后做减法的符号守恒范式",
-      "pattern": "subtract(ts_zscore(A, 252), ts_zscore(B, 252))",
-      "gain": "避开双有符号变量相乘的伪因果；本战役全部正 Sharpe 候选均出自该结构",
-      "note": "严禁裸乘；严禁对稀疏 [0,1] 字段减 0.5。"
-    },
-    {
-      "name": "截面排序拉平持仓范式",
-      "pattern": "rank(<外层平滑后的合成>)",
-      "gain": "在保持 Sharpe 0.60 的同时把 Sub-universe Sharpe 抬到 0.76 (本批最高)",
-      "note": "对 CONCENTRATED_WEIGHT 有效，但对 Fitness 提升有限。"
-    }
-  ],
-  "counter_paradigms": [
-    {
-      "name": "rank 直接加总",
-      "pattern": "add(rank(A), rank(B))",
-      "verdict": "被 AST 量纲编译器物理封杀 (无量纲排序加总属数学拼凑)"
-    },
-    {
-      "name": "裸 z-score 合成不加平滑",
-      "pattern": "add(ts_zscore(A), ts_zscore(B))",
-      "verdict": "换手 44.6%，Margin 0.50bps，CW FAIL"
-    },
-    {
-      "name": "逐腿平滑替代外层平滑",
-      "pattern": "subtract(group_rank(ts_mean(A,20)), group_rank(ts_mean(B,20)))",
-      "verdict": "Sharpe -0.13，优于外层平滑方案的 0.60，证明平滑位置必须外置"
-    }
-  ]
+  "card_id": "CARD_FUNDAMENTAL_VECTOR_DGP",
+  "tag": "fundamental_vector_dgp",
+  "domain": "vector_reduction_and_smoothing",
+  "title": "基本面向量型 (VECTOR) 特征降维与低频时序机制解析",
+  "question": "针对 fundamental 类型的向量 (VECTOR) 事件型数据，如何处理其类型降维、低频时序平滑与无量纲防伪因果？",
+  "answer": "物理根因：VECTOR 字段通常为多维数组或不同到期日序列，无法直接参与标量截面运算；季度低频发布具有跳变性与非平稳方差。治理原则：必须前置进行向量降维聚合；针对低频发布脉冲，平滑算子应置于因果合成的最外层以控制换手率，避免内层逐腿平滑扭曲相对时序动量；必须遵循量纲守恒，严禁无量纲排序或有符号变量简单加总。",
+  "proven_solution": "前置向量降维聚合，因果合成最外层适度平滑控制换手与冲击，量纲对齐去中枢相对比较，截面均匀映射平滑权重集中度。",
+  "theoretical_cause": "向量字段必须降维为标量才能进行截面分析，低频跳变脉冲需外层平滑过滤，跨量纲直接加减破坏经济学守恒规律。"
 }

@@ -115,7 +115,8 @@ class TestOperatorPhaseConstraints(unittest.TestCase):
             max_operator_limit=8
         )
         self.assertIn("operator_count_overflow", v_disc["symptoms"])
-        self.assertIn("PRUNE_REDUNDANT_OPERATOR_TO_LE_8", v_disc["allowed_mutations"])
+        self.assertTrue(any("算子复杂度超限" in c and "8" in c for c in v_disc["forensic_clues"]))
+        self.assertEqual(v_disc["allowed_mutations"], [], "新架构彻底废除硬编码预制算子名单")
 
         # 准冠军优化阶段 (max_operator_limit=10): 9 算子不超限；11 算子触发 LE_10
         v_opt_9 = Gatekeeper.diagnose_and_route_prescriptions(
@@ -131,7 +132,8 @@ class TestOperatorPhaseConstraints(unittest.TestCase):
             max_operator_limit=10
         )
         self.assertIn("operator_count_overflow", v_opt_11["symptoms"])
-        self.assertIn("PRUNE_REDUNDANT_OPERATOR_TO_LE_10", v_opt_11["allowed_mutations"])
+        self.assertTrue(any("算子复杂度超限" in c and "10" in c for c in v_opt_11["forensic_clues"]))
+        self.assertEqual(v_opt_11["allowed_mutations"], [], "新架构彻底废除硬编码预制算子名单")
 
 if __name__ == "__main__":
     unittest.main()

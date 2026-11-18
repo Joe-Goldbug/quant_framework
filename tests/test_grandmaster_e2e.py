@@ -149,17 +149,26 @@ class TestAEGISGrandMaster(unittest.TestCase):
             "前置使用 winsorize(std=3) 抑制极值震荡，外层包裹 subindustry 中性化能突破 Margin 死线。"
         )
         RAGMemoryEngine.EXP_DIR = os.path.join(self.temp_dir, "alpha_experience")
+        dgp_signature = "FIELD[Role:Signal_Flow|Freq:Daily|Sparse:True|Skew:High|Crowd:COLD|Type:MATRIX]"
         RAGMemoryEngine.append_pure_operator_experience(
             region="USA",
             delay=1,
             category="news",
             abstract_insight=pure_op_pattern,
-            alpha_stats={"sharpe": 1.94, "fitness": 1.42, "margin_bps": 13.6}
+            alpha_stats={
+                "sharpe": 1.94,
+                "fitness": 1.42,
+                "margin_bps": 13.6,
+                "dgp_signatures": [dgp_signature],
+            }
         )
 
-        # 2. 读取金字塔四级经验
-        context = RAGMemoryEngine.load_pyramid_context(region="USA", delay=1, category="news")
+        # 2. 读取金字塔四级经验 (仅挂载 DGP 物理签名匹配的实现级经验)
+        context = RAGMemoryEngine.load_pyramid_context(
+            region="USA", delay=1, category="news", dgp_signatures=[dgp_signature]
+        )
         self.assertIn("USA_1_news.md", context)
+        self.assertIn("DGP_SCOPE", context)
         self.assertIn("ts_decay_exp_window", context)
         self.assertIn("winsorize", context)
         print("  ✅ 成功验证：经验库严格遵循‘只有运算符、无数据字段’，四级金字塔 Markdown 体系运转正常！")
