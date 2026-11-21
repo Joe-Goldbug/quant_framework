@@ -21,6 +21,8 @@ import json
 import math
 import os
 import re
+import sys
+import uuid
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Set, Tuple, TypeVar
 
 import numpy as np
@@ -640,17 +642,32 @@ class ResearchService:
         summary = store.get_summary(campaign_id)
         hygiene = check_directory_hygiene(cdir)
         hyps = store.list_hypotheses(campaign_id)
+        active_jobs = [
+            {
+                "job_id": j["job_id"],
+                "job_type": j["job_type"],
+                "hypothesis_id": j.get("hypothesis_id") or "",
+                "mode": j.get("mode") or "",
+                "status": j["status"],
+                "cli_command": self._job_cli_command(campaign_id, j["job_id"]),
+                "updated_at": j.get("updated_at"),
+            }
+            for j in store.list_jobs(campaign_id, limit=15)
+            if j.get("status") in ("QUEUED", "RUNNING")
+        ]
 
-        if prof is None:
+        if active_jobs:
+            next_action = f"run background job via CLI: {active_jobs[0]['cli_command']}"
+        elif prof is None:
             next_action = "profile_dataset"
         elif not hyps:
             next_action = "register_hypothesis"
         elif summary["total_experiments"] == 0:
-            next_action = "run_experiment(mode='discovery')"
+            next_action = "run_experiment(mode='discovery', enqueue=True)"
         elif summary["open_near_miss_leads"]:
-            next_action = "run_experiment(mode='surgery') or request_verdict(action='CERTIFY_ALPHA')"
+            next_action = "run_experiment(mode='surgery', enqueue=True) or request_verdict(action='CERTIFY_ALPHA')"
         else:
-            next_action = "register_hypothesis / run_experiment / request_verdict"
+            next_action = "register_hypothesis / run_experiment(enqueue=True) / request_verdict"
 
         return {
             "campaign_id": campaign_id,
@@ -667,14 +684,19 @@ class ResearchService:
                 {"hypothesis_id": h["hypothesis_id"], "status": h["status"], "intents": h["mechanism_intents"]}
                 for h in hyps
             ],
+            "pending_jobs": active_jobs,
             "summary": summary,
             "directory_hygiene": hygiene,
             "certified_champions": store.get_certified_champions(),
             "next_recommended_action": next_action,
         }
 
+    @staticmethod
+    def _job_cli_command(campaign_id: str, job_id: str) -> str:
+        return f"python3 aegis_mcp_server.py cli run-job --campaign {campaign_id} --job {job_id}"
+
     # ------------------------------------------------------------------
-    # Tool 3: profile_dataset (async + sync wrapper)
+    # Tool 3: profile_dataset (async + sync wrapper + enqueue support)
     # ------------------------------------------------------------------
     async def profile_dataset_async(
         self,
@@ -682,6 +704,7 @@ class ResearchService:
         fields_meta: Optional[Dict[str, dict]] = None,
         pnl_series_map: Optional[Dict[str, List[float]]] = None,
         use_live_probe: bool = False,
+        enqueue: bool = False,
     ) -> Dict[str, Any]:
         _, store = self._get_store(campaign_id)
         camp = store.get_campaign(campaign_id)
@@ -693,6 +716,59 @@ class ResearchService:
         live_pnl_map = pnl_series_map
         measured_physics: Dict[str, Dict[str, Any]] = {}
         live_probe_warning: Optional[str] = None
+
+        if use_live_probe and enqueue and not live_pnl_map:
+            # Save offline baseline profile immediately, then enqueue live P0Y0M probe job in campaign.db (<1s return!)
+            ceff, spectrum, method = self._estimate_offline_effective_rank(resolved, pnl_series_map=None)
+            has_vec = any(str(m.get("type", "")).upper() == "VECTOR" for m in resolved.values())
+            role_counts: Dict[str, int] = {}
+            freq_counts: Dict[str, int] = {}
+            for m in resolved.values():
+                r = str(m.get("semantic_role") or "Unassigned")
+                u = str(m.get("update_frequency") or "daily")
+                role_counts[r] = role_counts.get(r, 0) + 1
+                freq_counts[u] = freq_counts.get(u, 0) + 1
+            store.save_dataset_profile(
+                campaign_id=campaign_id,
+                effective_rank=ceff,
+                has_vector_fields=has_vec,
+                field_count=len(resolved),
+                eigen_spectrum=spectrum,
+                profile_data={
+                    "method": method,
+                    "role_counts": role_counts,
+                    "frequency_counts": freq_counts,
+                    "semantic_clusters": clusters,
+                    "measured_physics": {},
+                },
+            )
+            sample_fids = self._select_stratified_probe_fields(resolved, clusters, max_fields=12)
+            job_id = f"JOB_PROF_{uuid.uuid4().hex[:8].upper()}"
+            store.enqueue_job(
+                job_id=job_id,
+                campaign_id=campaign_id,
+                job_type="profile_probe",
+                mode="profile_probe",
+                payload={
+                    "sample_fids": sample_fids,
+                    "fields_meta_override": fields_meta,
+                },
+            )
+            chunk_count = max(1, (len(sample_fids) + LIVE_CHUNK_SIZE - 1) // LIVE_CHUNK_SIZE)
+            return {
+                "status": "QUEUED",
+                "job_id": job_id,
+                "campaign_id": campaign_id,
+                "job_type": "profile_probe",
+                "probe_field_count": len(sample_fids),
+                "chunk_count": chunk_count,
+                "offline_effective_rank": ceff,
+                "field_count": len(resolved),
+                "semantic_cluster_count": len(clusters),
+                "has_vector_fields": has_vec,
+                "cli_command": self._job_cli_command(campaign_id, job_id),
+                "note": "离线画像已落盘且实盘 P0Y0M 探针已持久化入队。请以非阻塞后台任务运行 cli_command 静默执行，完成后自动升级 campaign.db 并回传 <1KB 实测物理摘要。",
+            }
 
         if use_live_probe and not live_pnl_map:
             probe_out = await self._run_live_p0y0m_probe_async(camp, resolved, clusters)
@@ -710,6 +786,26 @@ class ResearchService:
                     if phys.get("measured_is_sparse") is not None:
                         resolved[fid]["is_sparse"] = phys["measured_is_sparse"]
 
+        return self._persist_and_format_profile(
+            store=store,
+            campaign_id=campaign_id,
+            resolved=resolved,
+            clusters=clusters,
+            live_pnl_map=live_pnl_map,
+            measured_physics=measured_physics,
+            live_probe_warning=live_probe_warning,
+        )
+
+    def _persist_and_format_profile(
+        self,
+        store: CampaignStore,
+        campaign_id: str,
+        resolved: Dict[str, dict],
+        clusters: List[Dict[str, Any]],
+        live_pnl_map: Optional[Dict[str, List[float]]],
+        measured_physics: Dict[str, Dict[str, Any]],
+        live_probe_warning: Optional[str] = None,
+    ) -> Dict[str, Any]:
         ceff, spectrum, method = self._estimate_offline_effective_rank(resolved, pnl_series_map=live_pnl_map)
         has_vec = any(str(m.get("type", "")).upper() == "VECTOR" for m in resolved.values())
         role_counts: Dict[str, int] = {}
@@ -790,6 +886,7 @@ class ResearchService:
         fields_meta: Optional[Dict[str, dict]] = None,
         pnl_series_map: Optional[Dict[str, List[float]]] = None,
         use_live_probe: bool = False,
+        enqueue: bool = False,
     ) -> Dict[str, Any]:
         return _run_coro_sync(
             self.profile_dataset_async(
@@ -797,6 +894,7 @@ class ResearchService:
                 fields_meta=fields_meta,
                 pnl_series_map=pnl_series_map,
                 use_live_probe=use_live_probe,
+                enqueue=enqueue,
             )
         )
 
@@ -805,37 +903,55 @@ class ResearchService:
         camp: dict,
         resolved: Dict[str, dict],
         clusters: List[Dict[str, Any]],
+        sample_fids_override: Optional[List[str]] = None,
+        checkpoint_state: Optional[Dict[str, Any]] = None,
+        checkpoint_save_cb: Optional[Callable[[Dict[str, Any]], None]] = None,
+        progress_log_cb: Optional[Callable[[str], None]] = None,
+        initial_wait_sec: float = 0.0,
     ) -> Dict[str, Any]:
-        """按语义簇分层抽样 <= 12 代表字段，分块 (<=4) 执行 P0Y0M 实盘探针：测量 PnL 有效秩 + 实测覆盖/跳变频率/稀疏度。"""
+        """按语义簇分层抽样 <= 12 代表字段，分块 (<=4) 执行 P0Y0M 实盘探针（支持断点续传与静默轮询）。"""
         bm = get_brain_module()
         if not (bm and hasattr(bm, "create_multi_simulation") and hasattr(bm, "get_alpha_pnl")):
             return {"pnl_map": None, "measured_physics": {}, "warning": "Brain MCP 未连接，回退至离线结构代理"}
 
-        sample_fids = self._select_stratified_probe_fields(resolved, clusters, max_fields=12)
+        sample_fids = list(sample_fids_override) if sample_fids_override else self._select_stratified_probe_fields(resolved, clusters, max_fields=12)
+        sample_fids = [f for f in sample_fids if f in resolved]
         if len(sample_fids) < 2:
             return {"pnl_map": None, "measured_physics": {}, "warning": "字段数不足 2 个，跳过实盘谱探针"}
 
         base_url = str(getattr(getattr(bm, "brain_client", None), "base_url", "https://api.worldquantbrain.com")).rstrip("/")
         univ_size = float(self._universe_approx_size(camp.get("universe", "TOP1000")))
+        poll_sleep_min = float(os.environ.get("AEGIS_LIVE_POLL_MIN_SEC", "1.0"))
+        poll_default = float(os.environ.get("AEGIS_LIVE_POLL_INTERVAL_SEC", "15.0"))
+        max_polls = int(os.environ.get("AEGIS_LIVE_POLL_MAX_STEPS", "120"))
+        retry_backoff_sec = float(os.environ.get("AEGIS_LIVE_RETRY_BACKOFF_SEC", "5.0"))
 
         async def _poll(u: str) -> dict:
             full = _join_sim_url(base_url, u)
-            for _ in range(45):
+            for _ in range(max_polls):
                 resp = await bm.brain_client._request("GET", full)
                 data = resp.json() if hasattr(resp, "json") else (resp if isinstance(resp, dict) else {})
                 ra = float(getattr(resp, "headers", {}).get("Retry-After", 0) or 0)
                 st = str(data.get("status", "")).upper()
                 if (ra == 0 and (data.get("children") or data.get("alpha") or st in ("COMPLETE", "COMPLETED", "DONE"))) or st in ("ERROR", "CANCELLED"):
                     return data
-                await asyncio.sleep(max(0.05, min(ra or 5.0, 15.0)))
-            return {}
+                await asyncio.sleep(max(poll_sleep_min, min(ra or poll_default, 30.0)))
+            return {"status": "ERROR"}
 
-        pnl_map: Dict[str, List[float]] = {}
-        measured_physics: Dict[str, Dict[str, Any]] = {}
-        warnings: List[str] = []
+        state: Dict[str, Any] = checkpoint_state if isinstance(checkpoint_state, dict) else {}
+        chunks_ckpt: Dict[str, Dict[str, Any]] = state.setdefault("chunks", {})
+        pnl_map: Dict[str, List[float]] = dict(state.get("pnl_map") or {})
+        measured_physics: Dict[str, Dict[str, Any]] = dict(state.get("measured_physics") or {})
+        warnings: List[str] = list(state.get("warnings") or [])
 
+        total_chunks = (len(sample_fids) + LIVE_CHUNK_SIZE - 1) // LIVE_CHUNK_SIZE
         # Chunk into <= 4 per request (brain-mcp hard cap is 8; 4 minimizes queue contention)
-        for start in range(0, len(sample_fids), LIVE_CHUNK_SIZE):
+        for c_idx, start in enumerate(range(0, len(sample_fids), LIVE_CHUNK_SIZE)):
+            ck_key = str(c_idx)
+            ck_entry = chunks_ckpt.get(ck_key) or {}
+            if ck_entry.get("status") == "DONE":
+                continue
+
             chunk_fids = sample_fids[start:start + LIVE_CHUNK_SIZE]
             items = []
             for fid in chunk_fids:
@@ -865,64 +981,102 @@ class ResearchService:
                 items.append(dict(items[0]))
                 padded_single = True
 
-            try:
-                sub = await bm.create_multi_simulation(items)
-                loc = sub.get("location") if isinstance(sub, dict) else None
-                if not loc:
-                    warnings.append(f"分块探针提交失败: {sub}")
-                    continue
-                parent_state = await _poll(loc)
-                children = parent_state.get("children") or []
-                effective_children = children[:1] if padded_single else children[:len(chunk_fids)]
-                for idx, child_url in enumerate(effective_children):
-                    fid = chunk_fids[idx]
-                    c_state = await _poll(child_url)
-                    aid = c_state.get("alpha")
-                    if not aid:
-                        continue
-                    pnl_res = await bm.get_alpha_pnl(aid)
-                    records = (pnl_res or {}).get("records", []) if isinstance(pnl_res, dict) else []
-                    series = []
-                    for row in records:
-                        if isinstance(row, (list, tuple)) and len(row) >= 2 and isinstance(row[1], (int, float)):
-                            series.append(float(row[1]))
-                        elif isinstance(row, dict) and row.get("pnl") is not None:
-                            series.append(float(row["pnl"]))
-                    if len(series) >= 3:
-                        diffs = [series[i] - series[i - 1] for i in range(1, len(series))]
-                        pnl_map[fid] = diffs
+            for attempt in range(3):
+                try:
+                    loc = ck_entry.get("location") if ck_entry.get("status") == "SUBMITTED" else None
+                    resumed = bool(loc)
+                    if not loc:
+                        sub = await bm.create_multi_simulation(items)
+                        loc = sub.get("location") if isinstance(sub, dict) else None
+                        if not loc:
+                            if attempt < 2:
+                                await asyncio.sleep(retry_backoff_sec * (attempt + 1))
+                                continue
+                            warnings.append(f"分块探针 #{c_idx + 1} 提交失败: {sub}")
+                            break
+                        ck_entry = {"status": "SUBMITTED", "location": loc, "padded_single": padded_single}
+                        chunks_ckpt[ck_key] = ck_entry
+                        if checkpoint_save_cb:
+                            checkpoint_save_cb(state)
+                        if progress_log_cb:
+                            progress_log_cb(f"[AEGIS probe] chunk {c_idx + 1}/{total_chunks} submitted ({len(chunk_fids)} fields)")
+                        if initial_wait_sec > 0:
+                            await asyncio.sleep(initial_wait_sec)
+                    elif progress_log_cb:
+                        progress_log_cb(f"[AEGIS probe] chunk {c_idx + 1}/{total_chunks} resuming from saved location")
 
-                    # Empirical field physics from probe alpha details
-                    if hasattr(bm, "get_alpha_details"):
-                        try:
-                            det = await bm.get_alpha_details(aid)
-                            is_b = (det or {}).get("is") or {}
-                            tvr = is_b.get("turnover")
-                            lc = is_b.get("longCount")
-                            sc = is_b.get("shortCount")
-                            phys_entry: Dict[str, Any] = {
-                                "probe_alpha_id": aid,
-                                "evidence_status": "MEASURED",
-                            }
-                            if lc is not None and sc is not None:
-                                active = float(lc) + float(sc)
-                                cov = round(min(1.0, max(0.0, active / univ_size)), 4)
-                                phys_entry["measured_coverage"] = cov
-                                phys_entry["measured_is_sparse"] = bool(cov < 0.35)
-                            if tvr is not None:
-                                tvr_f = float(tvr)
-                                phys_entry["measured_rank_turnover"] = round(tvr_f, 4)
-                                if tvr_f < 0.03:
-                                    phys_entry["measured_update_frequency"] = "quarterly"
-                                elif tvr_f < 0.12:
-                                    phys_entry["measured_update_frequency"] = "monthly"
-                                else:
-                                    phys_entry["measured_update_frequency"] = "daily"
-                            measured_physics[fid] = phys_entry
-                        except Exception as det_err:
-                            warnings.append(f"字段 {fid} 详情提取失败: {det_err}")
-            except Exception as chunk_err:
-                warnings.append(f"分块实盘探针异常: {chunk_err}")
+                    parent_state = await _poll(loc)
+                    if str(parent_state.get("status", "")).upper() == "CANCELLED" and attempt < 2:
+                        ck_entry = {"status": "PENDING"}
+                        chunks_ckpt[ck_key] = ck_entry
+                        if checkpoint_save_cb:
+                            checkpoint_save_cb(state)
+                        await asyncio.sleep(retry_backoff_sec * (attempt + 1))
+                        continue
+
+                    children = parent_state.get("children") or []
+                    eff_pad = bool(ck_entry.get("padded_single", padded_single))
+                    effective_children = children[:1] if eff_pad else children[:len(chunk_fids)]
+                    for idx, child_url in enumerate(effective_children):
+                        fid = chunk_fids[idx]
+                        c_state = await _poll(child_url)
+                        aid = c_state.get("alpha")
+                        if not aid:
+                            continue
+                        pnl_res = await bm.get_alpha_pnl(aid)
+                        records = (pnl_res or {}).get("records", []) if isinstance(pnl_res, dict) else []
+                        series = []
+                        for row in records:
+                            if isinstance(row, (list, tuple)) and len(row) >= 2 and isinstance(row[1], (int, float)):
+                                series.append(float(row[1]))
+                            elif isinstance(row, dict) and row.get("pnl") is not None:
+                                series.append(float(row["pnl"]))
+                        if len(series) >= 3:
+                            diffs = [series[i] - series[i - 1] for i in range(1, len(series))]
+                            pnl_map[fid] = diffs
+
+                        if hasattr(bm, "get_alpha_details"):
+                            try:
+                                det = await bm.get_alpha_details(aid)
+                                is_b = (det or {}).get("is") or {}
+                                tvr = is_b.get("turnover")
+                                lc = is_b.get("longCount")
+                                sc = is_b.get("shortCount")
+                                phys_entry: Dict[str, Any] = {
+                                    "probe_alpha_id": aid,
+                                    "evidence_status": "MEASURED",
+                                }
+                                if lc is not None and sc is not None:
+                                    active = float(lc) + float(sc)
+                                    cov = round(min(1.0, max(0.0, active / univ_size)), 4)
+                                    phys_entry["measured_coverage"] = cov
+                                    phys_entry["measured_is_sparse"] = bool(cov < 0.35)
+                                if tvr is not None:
+                                    tvr_f = float(tvr)
+                                    phys_entry["measured_rank_turnover"] = round(tvr_f, 4)
+                                    if tvr_f < 0.03:
+                                        phys_entry["measured_update_frequency"] = "quarterly"
+                                    elif tvr_f < 0.12:
+                                        phys_entry["measured_update_frequency"] = "monthly"
+                                    else:
+                                        phys_entry["measured_update_frequency"] = "daily"
+                                measured_physics[fid] = phys_entry
+                            except Exception as det_err:
+                                warnings.append(f"字段 {fid} 详情提取失败: {det_err}")
+
+                    ck_entry = {"status": "DONE", "location": loc}
+                    chunks_ckpt[ck_key] = ck_entry
+                    state["pnl_map"] = pnl_map
+                    state["measured_physics"] = measured_physics
+                    state["warnings"] = warnings
+                    if checkpoint_save_cb:
+                        checkpoint_save_cb(state)
+                    if progress_log_cb:
+                        progress_log_cb(f"[AEGIS probe] chunk {c_idx + 1}/{total_chunks} done (resumed={resumed})")
+                    break
+                except Exception as chunk_err:
+                    warnings.append(f"分块实盘探针异常: {chunk_err}")
+                    break
 
         return {
             "pnl_map": pnl_map if len(pnl_map) >= 2 else None,
@@ -1304,6 +1458,7 @@ class ResearchService:
         mode: str = "discovery",
         settings: Optional[dict] = None,
         dry_run: bool = False,
+        enqueue: bool = False,
         sim_executor: Optional[Callable[[dict, dict], Any]] = None,
         fields_meta: Optional[Dict[str, dict]] = None,
     ) -> Dict[str, Any]:
@@ -1381,6 +1536,7 @@ class ResearchService:
 
         validated_variants: List[dict] = []
         batch_exact_seen: Set[str] = set()
+        pending_canon_keys = store.get_pending_canonical_keys(campaign_id)
         batch_cal_sigs_seen: Set[str] = set()
         batch_topo_entries: Dict[str, List[Tuple[int, List[int]]]] = {}
         batch_core_counts: Dict[str, int] = {}
@@ -1490,10 +1646,10 @@ class ResearchService:
 
             if not is_control and mode_l != "settings_calibration":
                 non_control_total += 1
-                # Layer 1: exact canonical uniqueness (blocks variable rename / `+` vs `add` / exact re-runs)
-                if exact_key in batch_exact_seen or store.has_canonical_key(campaign_id, exact_key):
+                # Layer 1: exact canonical uniqueness (blocks variable rename / `+` vs `add` / exact re-runs / duplicate in-flight queue)
+                if exact_key in batch_exact_seen or exact_key in pending_canon_keys or store.has_canonical_key(campaign_id, exact_key):
                     raise ValueError(
-                        f"【Exact Canonical Tabu 拦截】Slot {slot} 精确等价表达式已被历史或同批占坑，严禁变相重复回测"
+                        f"【Exact Canonical Tabu 拦截】Slot {slot} 精确等价表达式已被历史、在途队列或同批占坑，严禁变相重复回测"
                     )
                 batch_exact_seen.add(exact_key)
 
@@ -1584,6 +1740,39 @@ class ResearchService:
                 res_dry["recommended_surgery_controls"] = recommended_surgery_controls
             return res_dry
 
+        if enqueue:
+            job_id = f"JOB_EXP_{uuid.uuid4().hex[:8].upper()}"
+            store.enqueue_job(
+                job_id=job_id,
+                campaign_id=campaign_id,
+                job_type="experiment",
+                hypothesis_id=hypothesis_id,
+                mode=mode_l,
+                payload={
+                    "hypothesis_id": hypothesis_id,
+                    "mode": mode_l,
+                    "settings": eff_settings,
+                    "validated_variants": validated_variants,
+                    "recommended_surgery_controls": recommended_surgery_controls,
+                    "fields_meta_override": fields_meta,
+                },
+            )
+            chunk_count = max(1, (len(validated_variants) + LIVE_CHUNK_SIZE - 1) // LIVE_CHUNK_SIZE)
+            q_resp: Dict[str, Any] = {
+                "status": "QUEUED",
+                "job_id": job_id,
+                "campaign_id": campaign_id,
+                "hypothesis_id": hypothesis_id,
+                "mode": mode_l,
+                "variant_count": len(validated_variants),
+                "chunk_count": chunk_count,
+                "cli_command": self._job_cli_command(campaign_id, job_id),
+                "note": "静态门禁已 100% 通过并持久化入队。请通过后台任务或轻量执行子 Agent 运行 cli_command 静默执行回测，完成后将自动落盘 campaign.db 并回传 <1KB 脱敏关键摘要。",
+            }
+            if recommended_surgery_controls:
+                q_resp["recommended_surgery_controls"] = recommended_surgery_controls
+            return q_resp
+
         # 6. Execute simulations (injected executor in tests/offline, else chunked Brain MCP live runner)
         raw_results: List[dict] = []
         if sim_executor is not None:
@@ -1595,7 +1784,31 @@ class ResearchService:
         else:
             raw_results = await self._execute_live_variants_async(camp, validated_variants, eff_settings, mode_l=mode_l)
 
-        # 7. Persist full internal truth in campaign.db; auto-evaluate HorizonProbe; return Holdout-masked view to caller
+        return self._finalize_experiment_results(
+            store=store,
+            campaign_id=campaign_id,
+            hypothesis_id=hypothesis_id,
+            mode_l=mode_l,
+            eff_settings=eff_settings,
+            validated_variants=validated_variants,
+            raw_results=raw_results,
+            resolved_fields=resolved_fields,
+            recommended_surgery_controls=recommended_surgery_controls,
+        )
+
+    def _finalize_experiment_results(
+        self,
+        store: CampaignStore,
+        campaign_id: str,
+        hypothesis_id: str,
+        mode_l: str,
+        eff_settings: Dict[str, Any],
+        validated_variants: List[dict],
+        raw_results: List[dict],
+        resolved_fields: Dict[str, dict],
+        recommended_surgery_controls: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """将全量真实结果持久化至 campaign.db、补齐 HorizonProbe，并向调用方返回严格 Holdout 屏蔽后的结果视图。"""
         agent_results: List[dict] = []
         recorded_meta: List[Tuple[dict, dict, str]] = []
         for idx, (vv, raw) in enumerate(zip(validated_variants, raw_results)):
@@ -1745,6 +1958,93 @@ class ResearchService:
             resp["recommended_surgery_controls"] = recommended_surgery_controls
         return resp
 
+    @staticmethod
+    def _build_compact_experiment_summary(full_resp: Dict[str, Any], job_id: str) -> Dict[str, Any]:
+        """裁剪为 < 1KB 级高密度脱敏关键摘要，杜绝长报文污染主 Agent 上下文并严格保持 Holdout 屏蔽。"""
+        masked_mode = bool(full_resp.get("holdout_masked"))
+        compact_rows: List[Dict[str, Any]] = []
+        decrowd_summary: Optional[Dict[str, Any]] = None
+
+        for r in full_resp.get("results") or []:
+            row: Dict[str, Any] = {
+                "slot": r.get("slot"),
+                "id": r.get("alpha_id"),
+                "is_core": round(float(r["is_core_sharpe"]), 2) if r.get("is_core_sharpe") is not None else None,
+                "trim_is": round(float(r["trimmed_is_sharpe"]), 2) if r.get("trimmed_is_sharpe") is not None else None,
+                "fit": round(float(r["fitness"]), 2) if r.get("fitness") is not None else None,
+                "tvr": round(float(r["turnover"]), 3) if r.get("turnover") is not None else None,
+                "mgn": round(float(r["margin_bps"]), 1) if r.get("margin_bps") is not None else None,
+            }
+            if not masked_mode:
+                if r.get("sharpe") is not None:
+                    row["sh"] = round(float(r["sharpe"]), 2)
+                if r.get("holdout_2y_sharpe") is not None:
+                    row["h2y"] = round(float(r["holdout_2y_sharpe"]), 2)
+            if r.get("prod_corr") is not None:
+                row["pcorr"] = round(float(r["prod_corr"]), 3)
+            if r.get("self_corr") is not None:
+                row["scorr"] = round(float(r["self_corr"]), 3)
+            if r.get("fails"):
+                row["fails"] = list(r["fails"])
+            if r.get("defect_warnings"):
+                row["warns"] = list(r["defect_warnings"])
+            if r.get("horizon_verdict"):
+                row["hv"] = r["horizon_verdict"]
+            if r.get("status") and r["status"] != "RECORDED":
+                row["st"] = r["status"]
+            compact_rows.append(row)
+
+            rx = r.get("de_crowding_prescription")
+            if rx and decrowd_summary is None:
+                levers = rx.get("levers") or []
+                cold_ids = [c.get("field_id") for c in (levers[0].get("suggested_cold_fields") or [])[:3]] if len(levers) > 0 else []
+                anch_ids = [a.get("field_id") for a in (levers[1].get("suggested_anchor_fields") or [])[:2]] if len(levers) > 1 else []
+                drop_rank = bool(levers[2].get("uses_rank_currently")) if len(levers) > 2 else False
+                decrowd_summary = {"cold": cold_ids, "anchors": anch_ids, "drop_rank": drop_rank}
+
+        out: Dict[str, Any] = {
+            "job_id": job_id,
+            "campaign": full_resp.get("campaign_id"),
+            "hyp": full_resp.get("hypothesis_id"),
+            "mode": full_resp.get("mode"),
+            "status": "COMPLETED",
+            "holdout_masked": masked_mode,
+            "results": compact_rows,
+        }
+        if decrowd_summary:
+            out["decrowd"] = decrowd_summary
+        if full_resp.get("stagnation_tabu_alert"):
+            out["tabu_alert"] = full_resp.get("hypothesis_id")
+        return out
+
+    @staticmethod
+    def _build_compact_profile_summary(prof_resp: Dict[str, Any], job_id: str) -> Dict[str, Any]:
+        """将实盘探针画像裁剪为极简高信噪比摘要，供主 Agent 直接进入假说构建。"""
+        phys_brief: Dict[str, Dict[str, Any]] = {}
+        for fid, p in (prof_resp.get("measured_physics") or {}).items():
+            phys_brief[fid] = {
+                k: v for k, v in (
+                    ("cov", p.get("measured_coverage")),
+                    ("freq", p.get("measured_update_frequency")),
+                    ("sparse", p.get("measured_is_sparse")),
+                    ("tvr", p.get("measured_rank_turnover")),
+                ) if v is not None
+            }
+        out: Dict[str, Any] = {
+            "job_id": job_id,
+            "campaign": prof_resp.get("campaign_id"),
+            "status": "COMPLETED",
+            "c_eff": prof_resp.get("effective_rank"),
+            "method": prof_resp.get("method"),
+            "fields": prof_resp.get("field_count"),
+            "clusters": prof_resp.get("semantic_cluster_count"),
+            "has_vec": prof_resp.get("has_vector_fields"),
+            "measured": phys_brief,
+        }
+        if prof_resp.get("live_probe_warning"):
+            out["warn"] = prof_resp["live_probe_warning"]
+        return out
+
     def run_experiment(
         self,
         campaign_id: str,
@@ -1753,6 +2053,7 @@ class ResearchService:
         mode: str = "discovery",
         settings: Optional[dict] = None,
         dry_run: bool = False,
+        enqueue: bool = False,
         sim_executor: Optional[Callable[[dict, dict], Any]] = None,
         fields_meta: Optional[Dict[str, dict]] = None,
     ) -> Dict[str, Any]:
@@ -1764,6 +2065,7 @@ class ResearchService:
                 mode=mode,
                 settings=settings,
                 dry_run=dry_run,
+                enqueue=enqueue,
                 sim_executor=sim_executor,
                 fields_meta=fields_meta,
             )
@@ -1950,6 +2252,10 @@ class ResearchService:
         validated_variants: List[dict],
         eff_settings: dict,
         mode_l: str = "discovery",
+        checkpoint_state: Optional[Dict[str, Any]] = None,
+        checkpoint_save_cb: Optional[Callable[[Dict[str, Any]], None]] = None,
+        progress_log_cb: Optional[Callable[[str], None]] = None,
+        initial_wait_sec: float = 0.0,
     ) -> List[dict]:
         bm = get_brain_module()
         if not bm or not hasattr(bm, "create_multi_simulation"):
@@ -1959,18 +2265,20 @@ class ResearchService:
 
         base_url = str(getattr(getattr(bm, "brain_client", None), "base_url", "https://api.worldquantbrain.com")).rstrip("/")
         poll_sleep_min = float(os.environ.get("AEGIS_LIVE_POLL_MIN_SEC", "1.0"))
+        poll_default = float(os.environ.get("AEGIS_LIVE_POLL_INTERVAL_SEC", "20.0"))
+        max_polls = int(os.environ.get("AEGIS_LIVE_POLL_MAX_STEPS", "120"))
         retry_backoff_sec = float(os.environ.get("AEGIS_LIVE_RETRY_BACKOFF_SEC", "5.0"))
 
         async def _poll(u: str) -> dict:
             url = _join_sim_url(base_url, u)
-            for _ in range(90):
+            for _ in range(max_polls):
                 resp = await bm.brain_client._request("GET", url)
                 data = resp.json() if hasattr(resp, "json") else (resp if isinstance(resp, dict) else {})
                 ra = float(getattr(resp, "headers", {}).get("Retry-After", 0) or 0)
                 st = str(data.get("status", "")).upper()
                 if (ra == 0 and (data.get("children") or data.get("alpha") or st in ("COMPLETE", "COMPLETED", "DONE"))) or st in ("ERROR", "CANCELLED"):
                     return data
-                await asyncio.sleep(max(poll_sleep_min, min(ra or 10.0, 30.0)))
+                await asyncio.sleep(max(poll_sleep_min, min(ra or poll_default, 30.0)))
             return {"status": "ERROR"}
 
         def _make_sim_item(ex: str) -> dict:
@@ -1993,11 +2301,22 @@ class ResearchService:
                 "regular": ex,
             }
 
+        state: Dict[str, Any] = checkpoint_state if isinstance(checkpoint_state, dict) else {}
+        chunks_ckpt: Dict[str, Dict[str, Any]] = state.setdefault("chunks", {})
         all_out: List[dict] = []
+        total_chunks = max(1, (len(validated_variants) + LIVE_CHUNK_SIZE - 1) // LIVE_CHUNK_SIZE)
 
-        # Strict <= 4 chunking (brain-mcp hard cap is <= 8) + CANCELLED retry with exponential backoff
-        for start in range(0, len(validated_variants), LIVE_CHUNK_SIZE):
+        # Strict <= 4 chunking (brain-mcp hard cap is <= 8) + checkpoint/resume + CANCELLED retry with exponential backoff
+        for c_idx, start in enumerate(range(0, len(validated_variants), LIVE_CHUNK_SIZE)):
+            ck_key = str(c_idx)
+            ck_entry = chunks_ckpt.get(ck_key) or {}
             chunk = validated_variants[start:start + LIVE_CHUNK_SIZE]
+            if ck_entry.get("status") == "DONE" and isinstance(ck_entry.get("results"), list) and len(ck_entry["results"]) == len(chunk):
+                all_out.extend(ck_entry["results"])
+                if progress_log_cb:
+                    progress_log_cb(f"[AEGIS job] chunk {c_idx + 1}/{total_chunks} already DONE (resumed from campaign.db)")
+                continue
+
             chunk_results: Optional[List[dict]] = None
 
             for attempt in range(3):
@@ -2008,21 +2327,47 @@ class ResearchService:
                     payload.append(dict(payload[0]))
                     padded_single = True
 
-                if use_single_api:
-                    sub = await self._submit_single_simulation_async(bm, payload[0])
+                loc = ck_entry.get("location") if ck_entry.get("status") == "SUBMITTED" else None
+                resumed = bool(loc)
+                if loc:
+                    use_single_api = bool(ck_entry.get("use_single_api", use_single_api))
+                    padded_single = bool(ck_entry.get("padded_single", padded_single))
+                    if progress_log_cb:
+                        progress_log_cb(f"[AEGIS job] chunk {c_idx + 1}/{total_chunks} resuming saved location")
                 else:
-                    sub = await bm.create_multi_simulation(payload)
+                    if use_single_api:
+                        sub = await self._submit_single_simulation_async(bm, payload[0])
+                    else:
+                        sub = await bm.create_multi_simulation(payload)
 
-                loc = sub.get("location") if isinstance(sub, dict) else None
-                if not loc:
-                    if attempt < 2:
-                        await asyncio.sleep(retry_backoff_sec * (attempt + 1))
-                        continue
-                    raise RuntimeError(f"Brain 仿真提交失败 (chunk {start // LIVE_CHUNK_SIZE + 1}): {sub}")
+                    loc = sub.get("location") if isinstance(sub, dict) else None
+                    if not loc:
+                        if attempt < 2:
+                            await asyncio.sleep(retry_backoff_sec * (attempt + 1))
+                            continue
+                        raise RuntimeError(f"Brain 仿真提交失败 (chunk {c_idx + 1}): {sub}")
+
+                    ck_entry = {
+                        "status": "SUBMITTED",
+                        "location": loc,
+                        "use_single_api": use_single_api,
+                        "padded_single": padded_single,
+                    }
+                    chunks_ckpt[ck_key] = ck_entry
+                    if checkpoint_save_cb:
+                        checkpoint_save_cb(state)
+                    if progress_log_cb:
+                        progress_log_cb(f"[AEGIS job] chunk {c_idx + 1}/{total_chunks} submitted ({len(chunk)} slots)")
+                    if initial_wait_sec > 0:
+                        await asyncio.sleep(initial_wait_sec)
 
                 p_state = await _poll(loc)
                 p_status = str(p_state.get("status", "")).upper()
                 if p_status == "CANCELLED" and attempt < 2:
+                    ck_entry = {"status": "PENDING"}
+                    chunks_ckpt[ck_key] = ck_entry
+                    if checkpoint_save_cb:
+                        checkpoint_save_cb(state)
                     await asyncio.sleep(retry_backoff_sec * (attempt + 1))
                     continue
 
@@ -2042,6 +2387,10 @@ class ResearchService:
                             cancelled_child = True
                         child_alphas.append(c_state.get("alpha"))
                     if cancelled_child and attempt < 2:
+                        ck_entry = {"status": "PENDING"}
+                        chunks_ckpt[ck_key] = ck_entry
+                        if checkpoint_save_cb:
+                            checkpoint_save_cb(state)
                         await asyncio.sleep(retry_backoff_sec * (attempt + 1))
                         continue
 
@@ -2081,11 +2430,201 @@ class ResearchService:
                         fetch_yearly=True,
                     )
                     chunk_results.append(item_doc)
+
+                ck_entry = {
+                    "status": "DONE",
+                    "location": loc,
+                    "use_single_api": use_single_api,
+                    "padded_single": padded_single,
+                    "results": chunk_results,
+                }
+                chunks_ckpt[ck_key] = ck_entry
+                if checkpoint_save_cb:
+                    checkpoint_save_cb(state)
+                if progress_log_cb:
+                    progress_log_cb(f"[AEGIS job] chunk {c_idx + 1}/{total_chunks} completed (resumed={resumed})")
                 break
 
             all_out.extend(chunk_results if chunk_results is not None else [{"status": "ERROR"} for _ in chunk])
 
         return all_out
+
+    # ------------------------------------------------------------------
+    # Background Silent Job Runner (CLI `run-job` — 0 MCP timeout, 0 LLM polling, <1KB summary)
+    # ------------------------------------------------------------------
+    async def execute_job_async(
+        self,
+        campaign_id: str,
+        job_id: str,
+        compact: bool = True,
+        sim_executor: Optional[Callable[[dict, dict], Any]] = None,
+        log_to_stderr: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        执行已通过全部静态门禁并持久化在 campaign.db 的异步任务（支持断点续传、幂等防重、静默轮询与 <1KB 脱敏摘要）。
+        供 `python3 aegis_mcp_server.py cli run-job` 在后台独立进程/子 Agent 中静默调用。
+        """
+        _, store = self._get_store(campaign_id)
+        camp = store.get_campaign(campaign_id)
+        if not camp:
+            raise ValueError(f"未找到战役 '{campaign_id}'")
+        job = store.get_job(job_id)
+        if not job or job.get("campaign_id") != campaign_id:
+            raise ValueError(f"在战役 '{campaign_id}' 中未找到作业 '{job_id}'")
+
+        # Idempotent return if already COMPLETED (never double-submit or double-record!)
+        if job.get("status") == "COMPLETED" and isinstance(job.get("summary"), dict) and job["summary"]:
+            return dict(job["summary"])
+
+        def _log(msg: str) -> None:
+            if log_to_stderr:
+                print(msg, file=sys.stderr, flush=True)
+
+        progress_state: Dict[str, Any] = dict(job.get("progress") or {})
+
+        def _save_ckpt(st: Dict[str, Any]) -> None:
+            store.update_job(job_id, status="RUNNING", progress=st)
+
+        store.update_job(job_id, status="RUNNING", error_message="")
+        payload = job.get("payload") or {}
+        job_type = str(job.get("job_type") or "")
+
+        try:
+            if job_type == "experiment":
+                hypothesis_id = str(payload.get("hypothesis_id") or job.get("hypothesis_id") or "")
+                mode_l = str(payload.get("mode") or job.get("mode") or "discovery")
+                eff_settings = dict(payload.get("settings") or {})
+                validated_variants = list(payload.get("validated_variants") or [])
+                recommended_controls = payload.get("recommended_surgery_controls")
+                override_fields = payload.get("fields_meta_override")
+                try:
+                    resolved_fields = self._resolve_fields(camp, override_fields=override_fields)
+                except FileNotFoundError:
+                    resolved_fields = {}
+
+                if sim_executor is not None:
+                    raw_results = []
+                    for vv in validated_variants:
+                        r = sim_executor(vv["variant"], eff_settings)
+                        if asyncio.iscoroutine(r):
+                            r = await r
+                        raw_results.append(r if isinstance(r, dict) else {})
+                else:
+                    init_wait = float(os.environ.get("AEGIS_LIVE_INITIAL_WAIT_SEC", "60.0"))
+                    raw_results = await self._execute_live_variants_async(
+                        camp=camp,
+                        validated_variants=validated_variants,
+                        eff_settings=eff_settings,
+                        mode_l=mode_l,
+                        checkpoint_state=progress_state,
+                        checkpoint_save_cb=_save_ckpt,
+                        progress_log_cb=_log,
+                        initial_wait_sec=init_wait,
+                    )
+
+                full_resp = self._finalize_experiment_results(
+                    store=store,
+                    campaign_id=campaign_id,
+                    hypothesis_id=hypothesis_id,
+                    mode_l=mode_l,
+                    eff_settings=eff_settings,
+                    validated_variants=validated_variants,
+                    raw_results=raw_results,
+                    resolved_fields=resolved_fields,
+                    recommended_surgery_controls=recommended_controls,
+                )
+                compact_summary = self._build_compact_experiment_summary(full_resp, job_id=job_id)
+                store.update_job(job_id, status="COMPLETED", progress=progress_state, summary=compact_summary)
+                return compact_summary if compact else full_resp
+
+            if job_type == "profile_probe":
+                override_fields = payload.get("fields_meta_override")
+                resolved = self._resolve_fields(camp, override_fields=override_fields)
+                clusters = self._build_semantic_clusters(resolved)
+                sample_fids = payload.get("sample_fids") or None
+                init_wait = float(os.environ.get("AEGIS_LIVE_PROBE_INITIAL_WAIT_SEC", os.environ.get("AEGIS_LIVE_INITIAL_WAIT_SEC", "30.0")))
+                probe_out = await self._run_live_p0y0m_probe_async(
+                    camp=camp,
+                    resolved=resolved,
+                    clusters=clusters,
+                    sample_fids_override=sample_fids,
+                    checkpoint_state=progress_state,
+                    checkpoint_save_cb=_save_ckpt,
+                    progress_log_cb=_log,
+                    initial_wait_sec=init_wait,
+                )
+                live_pnl_map = probe_out.get("pnl_map")
+                measured_physics = probe_out.get("measured_physics") or {}
+                live_probe_warning = probe_out.get("warning")
+                for fid, phys in measured_physics.items():
+                    if fid in resolved:
+                        resolved[fid]["evidence_status"] = "MEASURED"
+                        if phys.get("measured_coverage") is not None:
+                            resolved[fid]["coverage"] = phys["measured_coverage"]
+                        if phys.get("measured_update_frequency"):
+                            resolved[fid]["update_frequency"] = phys["measured_update_frequency"]
+                        if phys.get("measured_is_sparse") is not None:
+                            resolved[fid]["is_sparse"] = phys["measured_is_sparse"]
+
+                prof_resp = self._persist_and_format_profile(
+                    store=store,
+                    campaign_id=campaign_id,
+                    resolved=resolved,
+                    clusters=clusters,
+                    live_pnl_map=live_pnl_map,
+                    measured_physics=measured_physics,
+                    live_probe_warning=live_probe_warning,
+                )
+                compact_summary = self._build_compact_profile_summary(prof_resp, job_id=job_id)
+                store.update_job(job_id, status="COMPLETED", progress=progress_state, summary=compact_summary)
+                return compact_summary if compact else prof_resp
+
+            raise ValueError(f"不支持的作业类型: '{job_type}'")
+        except Exception as exc:
+            store.update_job(job_id, status="FAILED", progress=progress_state, error_message=str(exc))
+            raise
+
+    def execute_job(
+        self,
+        campaign_id: str,
+        job_id: str,
+        compact: bool = True,
+        sim_executor: Optional[Callable[[dict, dict], Any]] = None,
+        log_to_stderr: bool = False,
+    ) -> Dict[str, Any]:
+        return _run_coro_sync(
+            self.execute_job_async(
+                campaign_id=campaign_id,
+                job_id=job_id,
+                compact=compact,
+                sim_executor=sim_executor,
+                log_to_stderr=log_to_stderr,
+            )
+        )
+
+    def list_jobs(self, campaign_id: str, status: Optional[str] = None) -> Dict[str, Any]:
+        _, store = self._get_store(campaign_id)
+        camp = store.get_campaign(campaign_id)
+        if not camp:
+            raise ValueError(f"未找到战役 '{campaign_id}'")
+        jobs = store.list_jobs(campaign_id, status=status)
+        return {
+            "campaign_id": campaign_id,
+            "count": len(jobs),
+            "jobs": [
+                {
+                    "job_id": j["job_id"],
+                    "job_type": j["job_type"],
+                    "hypothesis_id": j.get("hypothesis_id") or "",
+                    "mode": j.get("mode") or "",
+                    "status": j["status"],
+                    "cli_command": self._job_cli_command(campaign_id, j["job_id"]),
+                    "error_message": j.get("error_message") or "",
+                    "updated_at": j.get("updated_at"),
+                }
+                for j in jobs
+            ],
+        }
 
     # ------------------------------------------------------------------
     # Tool 6: request_verdict (async + sync wrapper)

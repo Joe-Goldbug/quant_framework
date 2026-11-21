@@ -155,20 +155,22 @@ sequenceDiagram
     Host->>MCP: 2. profile_dataset (测定有效秩 C_eff)
     Host->>MCP: 3. register_hypothesis (预注册 DGP 假说)
     Host->>MCP: 4. lookup_operators (按需查 104 官方算子签名)
-    Host->>MCP: 5. run_experiment (mode=discovery / surgery / settings_calibration)
-    MCP->>AST: SNC多行编译 / 离散时间晶格 / 量纲 / 等价去重 / RedTeam
-    MCP->>Brain: 串行分批执行回测 (Expression-First, Settings-Last)
-    MCP->>DB: 写入全量真实指标与 Holdout；自动更新 RESEARCH_TREE.md
-    MCP-->>Host: 返回 IS 结果 (discovery/surgery 屏蔽近2年 Holdout)
+    Host->>MCP: 5. run_experiment (mode=discovery / surgery / settings_calibration, enqueue=True)
+    MCP->>AST: <1s SNC多行编译 / 离散时间晶格 / 量纲 / 等价去重 / RedTeam
+    MCP->>DB: 写入 pending_jobs 队列并立即返回 job_id（永不触发 3 分钟 MCP 超时）
+    Host->>Brain: 后台任务 / 轻量执行子 Agent 运行 `cli run-job`（纯 Python 静默串行分块，0 轮询 Token，断点续传）
+    Brain->>DB: 写入全量真实指标、yearly_stats、相关性与 Holdout；自动更新 RESEARCH_TREE.md
+    DB-->>Host: 单次事件唤醒回传 <1KB 精简脱敏摘要 (discovery/surgery 严密屏蔽近2年 Holdout)
     Host->>MCP: 6. request_verdict (CERTIFY_ALPHA | DECLARE_EXHAUSTED)
     MCP->>DB: 解封 Holdout / ProductionGate ALL PASS 后写入 certified_champions.json
 ```
 
 ### 核心建筑不变量：
 1. **104 Official Operators SSOT**：唯一真源来自 `knowledge_base/operators/user_operators.json`（含 `lookup_operators` 按需查询与 < 1KB 极简索引），物理清理 `exp`/`jump_decay`/`ts_max`/`ts_min`/`ts_skewness`/`ts_kurtosis`/`pasteurize`/`group_quantile`/`neg` 等幻觉算子；
-2. **SNC 多行编译器 & 离散晶格 (`core/fastexpr_ast.py`)**：以 `mode='exec'` 统一替代全仓旧版 `mode='eval'`，原生校验 `^[a-z][a-z0-9_]{5,40}$` 变量后缀同构，并强制日/月/季离散时间窗口与参数晶格 (`winsorize std ∈ {3,4}`, `power ∈ {0.25, 0.5, 1.0, 1.5, 2.0}`)；
-3. **三文件极简收敛与零碎片卫生**：每个 V4.1 战役目录仅允许包含 `campaign.db`、`RESEARCH_TREE.md`（自动生成只读）与 `certified_champions.json`（+ 可选 `artifacts/`），严禁落盘 `.py` 临时脚本与 `.agent_tasks/` 碎片；
-4. **$C_{\text{eff}}$ 科学穷尽裁决**：禁止主观宣布数据集饱和；仅当 `orthogonal_hypotheses`、机制家族多样性、不重样核心骨架实验数与未决线索清零均通过 `C_eff` 动态门槛时方允许退出。
+2. **SNC 多行编译器 & 离散晶格 (`core/fastexpr_ast.py`)**：以 `mode='exec'` 统一替代全仓旧版 `mode='eval'`，算子数 $\ge 4$ 强制多行 SNC 拆解（$\ge 2$ 条赋值且每行 $\le 3$ 非 `vec_*` 算子）与变量后缀同构，并强制日/月/季离散时间窗口与参数晶格 (`winsorize std ∈ {3,4}`, `power ∈ {0.25, 0.5, 1.0, 1.5, 2.0}`)；
+3. **三文件极简收敛与零碎片卫生**：每个 V4.1 战役目录仅允许包含 `campaign.db`（含 `pending_jobs` 持久化作业队列表）、`RESEARCH_TREE.md`（自动生成只读）与 `certified_champions.json`（+ 可选 `artifacts/`），严禁落盘 `.py` 临时脚本与 `.agent_tasks/` 碎片；
+4. **大脑/四肢解耦（0 MCP 超时 / 0 轮询算力浪费 / <1KB 摘要）**：主 Agent 通过 `enqueue=True` 1 秒内过门禁入队，再通过后台任务或轻量执行子 Agent 跑官方内置命令 `python3 aegis_mcp_server.py cli run-job --campaign <id> --job <job_id>` 静默完成 6–15 分钟长回测，支持断点续传并仅回传 `<1KB` 脱敏关键摘要，彻底隔绝 `brain-mcp` 原始大 JSON 污染上下文；
+5. **$C_{\text{eff}}$ 科学穷尽裁决**：禁止主观宣布数据集饱和；仅当 `orthogonal_hypotheses`、机制家族多样性、不重样核心骨架实验数、字段语义簇覆盖率 $\ge 80\%$ 与未决线索清零均通过 `C_eff` 动态门槛时方允许退出。
 
 ---
 

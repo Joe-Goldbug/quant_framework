@@ -76,11 +76,17 @@ def campaign_status(campaign_id: str) -> Dict[str, Any]:
 async def profile_dataset(
     campaign_id: str,
     use_live_probe: bool = False,
+    enqueue: bool = False,
 ) -> Dict[str, Any]:
-    """分析锁定数据集物理画像并测定特征有效秩 C_eff 与分层语义簇实测物理特征 (原生异步，无事件循环冲突)。"""
+    """
+    分析锁定数据集物理画像并测定特征有效秩 C_eff 与分层语义簇实测物理特征。
+    强烈建议实盘探针传 use_live_probe=True, enqueue=True：1秒内落盘离线基线并把实盘探针入队 campaign.db，
+    再通过后台执行 `python3 aegis_mcp_server.py cli run-job --campaign <id> --job <job_id>` 静默跑完，彻底避免 3 分钟 MCP 超时。
+    """
     return await _SERVICE.profile_dataset_async(
         campaign_id=campaign_id,
         use_live_probe=use_live_probe,
+        enqueue=enqueue,
     )
 
 
@@ -116,10 +122,13 @@ async def run_experiment(
     mode: str = "discovery",
     settings: Optional[Dict[str, Any]] = None,
     dry_run: bool = False,
+    enqueue: bool = False,
 ) -> Dict[str, Any]:
     """
     提交批量变体执行多行 SNC 编译门禁、离散晶格检验、量纲守恒审查、双层等价去重、反微调、RedTeam 与分块仿真回测。
-    注意: discovery(1~20)/surgery(1~8) 锁定物理设置并彻底屏蔽 10Y 全局 sharpe 与近 2 年 Holdout；settings_calibration(1~4) 须已有 |Sharpe|>=1.25 母本。
+    - 实盘在线回测强烈建议传 `enqueue=True`：1 秒内跑完 100% 静态门禁并持久化入队 `campaign.db`，返回 `job_id` 与 `cli_command`，
+      随后由后台任务或轻量执行子 Agent 静默运行 `cli run-job`（0 轮询 Token、无 3 分钟 MCP 超时、完成后仅回传 <1KB 脱敏关键摘要）。
+    - discovery(1~20)/surgery(1~8) 锁定物理设置并彻底屏蔽 10Y 全局 sharpe 与近 2 年 Holdout；settings_calibration(1~4) 须已有 |Sharpe|>=1.25 母本。
     """
     return await _SERVICE.run_experiment_async(
         campaign_id=campaign_id,
@@ -128,6 +137,7 @@ async def run_experiment(
         mode=mode,
         settings=settings,
         dry_run=dry_run,
+        enqueue=enqueue,
     )
 
 
@@ -176,6 +186,17 @@ def _run_cli(argv: List[str]) -> int:
     ar_p = sub.add_parser("archive-legacy", help="Losslessly archive stray legacy .py scripts under campaigns/")
     ar_p.add_argument("--campaigns-root", default=os.path.join(_ROOT_DIR, "campaigns"), help="Path to campaigns root")
 
+    rj_p = sub.add_parser("run-job", help="Silently execute a queued experiment/probe job in background (0 MCP timeout, <1KB summary)")
+    rj_p.add_argument("--campaign", required=True, help="Campaign ID")
+    rj_p.add_argument("--job", required=True, help="Queued Job ID (from enqueue=True)")
+    rj_p.add_argument("--campaigns-root", default=None, help="Optional custom campaigns root directory")
+    rj_p.add_argument("--full", action="store_true", help="Output full response instead of compact <1KB summary")
+
+    jb_p = sub.add_parser("jobs", help="List queued/running/completed jobs in campaign.db")
+    jb_p.add_argument("--campaign", required=True, help="Campaign ID")
+    jb_p.add_argument("--status", default=None, help="Filter by status (QUEUED/RUNNING/COMPLETED/FAILED)")
+    jb_p.add_argument("--campaigns-root", default=None, help="Optional custom campaigns root directory")
+
     args = parser.parse_args(argv)
     if args.subcmd == "operators":
         res = _SERVICE.lookup_operators(query=args.query, category=args.category)
@@ -191,6 +212,21 @@ def _run_cli(argv: List[str]) -> int:
         return 0 if res.get("clean") else 2
     if args.subcmd == "archive-legacy":
         res = archive_legacy_scripts(args.campaigns_root, recursive=True)
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+    if args.subcmd == "run-job":
+        svc = ResearchService(workspace_root=_ROOT_DIR, campaigns_root=args.campaigns_root) if args.campaigns_root else _SERVICE
+        res = svc.execute_job(
+            campaign_id=args.campaign,
+            job_id=args.job,
+            compact=(not args.full),
+            log_to_stderr=True,
+        )
+        print(json.dumps(res, ensure_ascii=False, separators=(",", ":") if not args.full else None, indent=None if not args.full else 2))
+        return 0
+    if args.subcmd == "jobs":
+        svc = ResearchService(workspace_root=_ROOT_DIR, campaigns_root=args.campaigns_root) if args.campaigns_root else _SERVICE
+        res = svc.list_jobs(campaign_id=args.campaign, status=args.status)
         print(json.dumps(res, ensure_ascii=False, indent=2))
         return 0
     return 1

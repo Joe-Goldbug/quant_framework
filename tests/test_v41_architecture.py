@@ -1264,6 +1264,214 @@ class TestV41ArchitectureInvariants(unittest.TestCase):
 
         asyncio.run(_scenario())
 
+    def test_18_async_enqueue_resume_compact_summary_holdout_and_hygiene(self):
+        """[Adversarial 18] MCP 极速入队 + 断点续传不重发 + 幂等收割 + <1KB 脱敏关键摘要 + 零碎片三文件卫生"""
+        import asyncio
+        import types
+
+        svc = ResearchService(workspace_root=self.root_dir, campaigns_root=self.tmp_dir.name)
+        cid = "GLB_async_queue_e2e"
+        fields_meta = {
+            f"earn_f_{i}": {
+                "type": "MATRIX", "domain": "unbounded", "is_sparse": False,
+                "update_frequency": "daily", "coverage": 0.90, "alpha_count": i * 20, "semantic_role": "Signal_Flow",
+            }
+            for i in range(6)
+        }
+
+        submitted_locations = []
+        poll_fail_once = {"triggered": False}
+
+        class _FakeResp:
+            def __init__(self, payload):
+                self._payload = payload
+                self.headers = {"Retry-After": "0"}
+            def json(self):
+                return self._payload
+
+        class _FakeClient:
+            base_url = "https://api.worldquantbrain.com"
+            async def _request(self, method, url):
+                if "/multi/chunk_resume_test" in url and not poll_fail_once["triggered"]:
+                    poll_fail_once["triggered"] = True
+                    raise RuntimeError("simulated network drop mid-poll")
+                if "/multi/" in url:
+                    raw_tail = url.rsplit("/", 1)[-1]
+                    kids = raw_tail.replace("chunk_resume_test__", "").split("__")
+                    return _FakeResp({"status": "COMPLETE", "children": [f"/simulations/child/{k}" for k in kids]})
+                if "/child/" in url:
+                    aid = url.rsplit("/", 1)[-1]
+                    return _FakeResp({"status": "COMPLETE", "alpha": aid})
+                return _FakeResp({"status": "COMPLETE"})
+
+        async def _create_multi_simulation(items):
+            assert 2 <= len(items) <= 4
+            idx = len(submitted_locations) + 1
+            aids = [f"Q_ALPHA_{idx}_{k+1}" for k in range(len(items))]
+            prefix = "chunk_resume_test__" if idx == 2 else ""
+            loc = f"/simulations/multi/{prefix}{'__'.join(aids)}"
+            submitted_locations.append(loc)
+            return {"location": loc}
+
+        async def _get_alpha_details(aid):
+            return {
+                "id": aid,
+                "is": {
+                    "sharpe": 1.88, "fitness": 1.44, "turnover": 0.23, "margin": 0.0017,
+                    "longCount": 420, "shortCount": 410,
+                    "checks": [
+                        {"name": "LOW_SHARPE", "result": "PASS"},
+                        {"name": "LOW_2Y_SHARPE", "result": "FAIL"},
+                    ],
+                },
+                "settings": {"decay": 0, "truncation": 0.025, "neutralization": "SUBINDUSTRY"},
+            }
+
+        async def _get_alpha_yearly_stats(aid):
+            # 8Y core = 1.65, 2Y holdout = 0.50 (must NOT leak in compact summary!)
+            return {
+                "records": (
+                    [[2016 + i, 100.0, 1e6, 400, 400, 0.23, 1.65] for i in range(8)]
+                    + [[2024, 10.0, 1e6, 400, 400, 0.23, 0.50], [2025, 10.0, 1e6, 400, 400, 0.23, 0.50]]
+                )
+            }
+
+        async def _get_alpha_pnl(aid):
+            seed = sum(ord(c) for c in aid)
+            rng = np.random.default_rng(seed)
+            cum = np.cumsum(rng.normal(0.01, 1.0, 40)).tolist()
+            return {"records": [[f"2024-01-{i+1:02d}", v] for i, v in enumerate(cum)]}
+
+        async def _check_self_correlation(aid, threshold=0.7):
+            return {"alpha_id": aid, "max_correlation": 0.16, "passes_check": True}
+
+        async def _check_correlation(aid):
+            pcorr = 0.76 if aid.endswith("_1") else 0.28
+            return {"alpha_id": aid, "checks": {"production": {"max_correlation": pcorr, "passes_check": pcorr < 0.7}, "self": {"max_correlation": 0.16, "passes_check": True}}}
+
+        fake_bm = types.SimpleNamespace(
+            brain_client=_FakeClient(),
+            create_multi_simulation=_create_multi_simulation,
+            get_alpha_details=_get_alpha_details,
+            get_alpha_yearly_stats=_get_alpha_yearly_stats,
+            get_alpha_pnl=_get_alpha_pnl,
+            check_self_correlation=_check_self_correlation,
+            check_correlation=_check_correlation,
+        )
+
+        async def _scenario():
+            with mock.patch("core.research_service.get_brain_module", return_value=fake_bm), \
+                 mock.patch.object(aegis_mcp_server, "_SERVICE", svc), \
+                 mock.patch.object(svc, "_resolve_fields", return_value={k: HypothesisSpec.normalize_field_profile(k, v) for k, v in fields_meta.items()}), \
+                 mock.patch.dict(os.environ, {"AEGIS_LIVE_INITIAL_WAIT_SEC": "0.0", "AEGIS_LIVE_POLL_MIN_SEC": "0.01", "AEGIS_LIVE_RETRY_BACKOFF_SEC": "0.01"}):
+                await aegis_mcp_server.mcp.call_tool(
+                    "init_or_load_campaign",
+                    {"region": "GLB", "universe": "MINVOL1M", "dataset_id": "earnings6_q", "delay": 1, "category": "earnings", "campaign_name": cid},
+                )
+
+                # 1. Non-blocking MCP profile_dataset(use_live_probe=True, enqueue=True) returns QUEUED in <1s!
+                p_raw = await aegis_mcp_server.mcp.call_tool(
+                    "profile_dataset",
+                    {"campaign_id": cid, "use_live_probe": True, "enqueue": True},
+                )
+                p_q = json.loads(p_raw[0][0].text) if isinstance(p_raw, tuple) else json.loads(p_raw[0].text)
+                self.assertEqual(p_q["status"], "QUEUED")
+                self.assertIn("cli run-job", p_q["cli_command"])
+                # Directory hygiene strictly clean (still only 3 files!)
+                cdir = os.path.join(self.tmp_dir.name, cid)
+                self.assertTrue(check_directory_hygiene(cdir)["clean"])
+
+                # Run queued probe job silently -> upgrades C_eff to pnl_series_eigen and returns compact summary!
+                submitted_locations.clear()
+                poll_fail_once["triggered"] = True  # no crash during probe
+                p_done = await svc.execute_job_async(cid, p_q["job_id"], compact=True)
+                self.assertEqual(p_done["status"], "COMPLETED")
+                self.assertEqual(p_done["method"], "pnl_series_eigen")
+                self.assertGreater(len(p_done["measured"]), 0)
+
+                # 2. Register hypothesis and enqueue 6 variants (2 chunks: 4 + 2) via MCP!
+                await aegis_mcp_server.mcp.call_tool(
+                    "register_hypothesis",
+                    {
+                        "campaign_id": cid,
+                        "hypothesis_id": "HYP_Q",
+                        "economic_mechanism": "财报预期扩散滞后引发跨周相对重估溢价",
+                        "counterparty": "反应滞后的全球被动配置资金",
+                        "field_roles": [{"field_id": "earn_f_0", "role": "Signal_Flow"}],
+                        "mechanism_intents": ["EXPECTATION_SURPRISE", "CROSS_SECTIONAL_RELATIVE"],
+                        "falsification_criterion": "若 5d/21d 均无显著正夏普则证伪",
+                    },
+                )
+                six_vars = [
+                    {"slot": 1, "hypothesis_ref": "HYP_Q", "change_axis": "h5", "prediction": "5日增量捕捉反应不足，预期核心 Sharpe >= 1.2", "expression": "group_rank(ts_delta(earn_f_0, 5), subindustry)"},
+                    {"slot": 2, "hypothesis_ref": "HYP_Q", "change_axis": "h21", "prediction": "21日高原配对与 5日同号持续，预期核心 Sharpe >= 1.2", "expression": "group_rank(ts_delta(earn_f_0, 21), subindustry)"},
+                    {"slot": 3, "hypothesis_ref": "HYP_Q", "change_axis": "f1", "prediction": "正交字段 1 检验，预期核心 Sharpe >= 1.0", "expression": "group_rank(ts_delta(earn_f_1, 21), subindustry)"},
+                    {"slot": 4, "hypothesis_ref": "HYP_Q", "change_axis": "f2", "prediction": "正交字段 2 检验，预期核心 Sharpe >= 1.0", "expression": "group_rank(ts_delta(earn_f_2, 21), subindustry)"},
+                    {"slot": 5, "hypothesis_ref": "HYP_Q", "change_axis": "f3", "prediction": "正交字段 3 检验，预期核心 Sharpe >= 1.0", "expression": "group_rank(ts_delta(earn_f_3, 21), subindustry)"},
+                    {"slot": 6, "hypothesis_ref": "HYP_Q", "change_axis": "f4", "prediction": "正交字段 4 检验，预期核心 Sharpe >= 1.0", "expression": "group_rank(ts_delta(earn_f_4, 21), subindustry)"},
+                ]
+                e_raw = await aegis_mcp_server.mcp.call_tool(
+                    "run_experiment",
+                    {"campaign_id": cid, "hypothesis_id": "HYP_Q", "variants": six_vars, "mode": "discovery", "enqueue": True},
+                )
+                e_q = json.loads(e_raw[0][0].text) if isinstance(e_raw, tuple) else json.loads(e_raw[0].text)
+                self.assertEqual(e_q["status"], "QUEUED")
+                self.assertEqual(e_q["variant_count"], 6)
+                self.assertEqual(e_q["chunk_count"], 2)
+
+                # Duplicate in-flight enqueue of the same expression MUST BE BLOCKED!
+                with self.assertRaises(ValueError) as cm_dup_q:
+                    await svc.run_experiment_async(cid, "HYP_Q", [six_vars[0]], mode="discovery", enqueue=True)
+                self.assertIn("Exact Canonical Tabu", str(cm_dup_q.exception))
+
+                # 3. Execute job: chunk 1 completes, chunk 2 submits then crashes mid-poll -> resume MUST NOT re-submit!
+                submitted_locations.clear()
+                poll_fail_once["triggered"] = False
+                with self.assertRaises(RuntimeError):
+                    await svc.execute_job_async(cid, e_q["job_id"], compact=True)
+                self.assertEqual(len(submitted_locations), 2)
+
+                # Resume same job -> finishes cleanly with ZERO extra submissions!
+                summary_1 = await svc.execute_job_async(cid, e_q["job_id"], compact=True)
+                self.assertEqual(len(submitted_locations), 2, "断点续传不得重复向 BRAIN 提交已入队分块！")
+                self.assertEqual(summary_1["status"], "COMPLETED")
+                self.assertTrue(summary_1["holdout_masked"])
+                self.assertEqual(len(summary_1["results"]), 6)
+                self.assertEqual(summary_1["results"][0].get("hv"), "PLATEAU")
+                # Verify strict Holdout masking & compact < 1KB payload!
+                compact_bytes = len(json.dumps(summary_1, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+                self.assertLess(compact_bytes, 1024, f"6 槽精简摘要必须 < 1KB，实测 {compact_bytes} 字节")
+                for row in summary_1["results"]:
+                    self.assertNotIn("sh", row)
+                    self.assertNotIn("h2y", row)
+                    self.assertNotIn("LOW_2Y_SHARPE", row.get("fails", []))
+                    self.assertAlmostEqual(row["is_core"], 1.65, places=2)
+
+                # 4. Idempotent re-run of completed job -> returns cached summary with 0 BRAIN calls & 0 duplicate rows!
+                summary_2 = await svc.execute_job_async(cid, e_q["job_id"], compact=True)
+                self.assertEqual(summary_2, summary_1)
+                self.assertEqual(len(submitted_locations), 2)
+                self.assertEqual(svc.campaign_status(cid)["summary"]["total_experiments"], 6)
+                self.assertTrue(check_directory_hygiene(cdir)["clean"])
+
+                # 5. Subprocess CLI `jobs` & idempotent `run-job` return clean compact JSON on stdout!
+                p_jobs = subprocess.run(
+                    [sys.executable, os.path.join(self.root_dir, "aegis_mcp_server.py"), "cli", "jobs", "--campaign", cid, "--campaigns-root", self.tmp_dir.name],
+                    capture_output=True, text=True, check=True,
+                )
+                j_list = json.loads(p_jobs.stdout)
+                self.assertEqual(j_list["count"], 2)
+
+                p_rj = subprocess.run(
+                    [sys.executable, os.path.join(self.root_dir, "aegis_mcp_server.py"), "cli", "run-job", "--campaign", cid, "--job", e_q["job_id"], "--campaigns-root", self.tmp_dir.name],
+                    capture_output=True, text=True, check=True,
+                )
+                rj_out = json.loads(p_rj.stdout)
+                self.assertEqual(rj_out["status"], "COMPLETED")
+                self.assertLess(len(p_rj.stdout.encode("utf-8")), 1024)
+
+        asyncio.run(_scenario())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -206,10 +206,26 @@ class CampaignStore:
                     rationale TEXT DEFAULT '',
                     created_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS pending_jobs (
+                    job_id TEXT PRIMARY KEY,
+                    campaign_id TEXT NOT NULL,
+                    job_type TEXT NOT NULL,
+                    hypothesis_id TEXT DEFAULT '',
+                    mode TEXT DEFAULT 'discovery',
+                    status TEXT DEFAULT 'QUEUED',
+                    payload_json TEXT NOT NULL,
+                    progress_json TEXT DEFAULT '{}',
+                    summary_json TEXT DEFAULT '{}',
+                    error_message TEXT DEFAULT '',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
                 CREATE INDEX IF NOT EXISTS idx_exp_campaign_skel
                     ON experiments(campaign_id, core_skeleton);
                 CREATE INDEX IF NOT EXISTS idx_exp_campaign_canon
                     ON experiments(campaign_id, canonical_key);
+                CREATE INDEX IF NOT EXISTS idx_jobs_campaign_status
+                    ON pending_jobs(campaign_id, status);
                 """
             )
             # Safe migration for existing campaign.db files created before V4.1.1
@@ -603,6 +619,140 @@ class CampaignStore:
             return dict(row) if row is not None else None
         finally:
             conn.close()
+
+    # ------------------------------------------------------------------
+    # Persistent Async Job Queue (in-DB, zero extra files on disk!)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _decode_job_row(row: sqlite3.Row) -> Dict[str, Any]:
+        out = dict(row)
+        out["payload"] = json.loads(out.pop("payload_json", "{}") or "{}")
+        out["progress"] = json.loads(out.pop("progress_json", "{}") or "{}")
+        out["summary"] = json.loads(out.pop("summary_json", "{}") or "{}")
+        return out
+
+    def enqueue_job(
+        self,
+        job_id: str,
+        campaign_id: str,
+        job_type: str,
+        payload: Dict[str, Any],
+        hypothesis_id: str = "",
+        mode: str = "discovery",
+    ) -> Dict[str, Any]:
+        now = self._now()
+        conn = self._connect()
+        try:
+            conn.execute(
+                """
+                INSERT INTO pending_jobs
+                (job_id, campaign_id, job_type, hypothesis_id, mode, status, payload_json, progress_json, summary_json, error_message, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, 'QUEUED', ?, '{}', '{}', '', ?, ?)
+                """,
+                (
+                    job_id,
+                    campaign_id,
+                    job_type,
+                    hypothesis_id or "",
+                    mode or "discovery",
+                    json.dumps(payload or {}, ensure_ascii=False),
+                    now,
+                    now,
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+        return self.get_job(job_id) or {}
+
+    def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT * FROM pending_jobs WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+            return self._decode_job_row(row) if row is not None else None
+        finally:
+            conn.close()
+
+    def update_job(
+        self,
+        job_id: str,
+        *,
+        status: Optional[str] = None,
+        progress: Optional[Dict[str, Any]] = None,
+        summary: Optional[Dict[str, Any]] = None,
+        error_message: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        sets = ["updated_at = ?"]
+        vals: List[Any] = [self._now()]
+        if status is not None:
+            sets.append("status = ?")
+            vals.append(status)
+        if progress is not None:
+            sets.append("progress_json = ?")
+            vals.append(json.dumps(progress, ensure_ascii=False))
+        if summary is not None:
+            sets.append("summary_json = ?")
+            vals.append(json.dumps(summary, ensure_ascii=False))
+        if error_message is not None:
+            sets.append("error_message = ?")
+            vals.append(str(error_message))
+        vals.append(job_id)
+        conn = self._connect()
+        try:
+            conn.execute(
+                f"UPDATE pending_jobs SET {', '.join(sets)} WHERE job_id = ?",
+                tuple(vals),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+        return self.get_job(job_id)
+
+    def list_jobs(
+        self,
+        campaign_id: str,
+        status: Optional[str] = None,
+        limit: int = 20,
+    ) -> List[Dict[str, Any]]:
+        conn = self._connect()
+        try:
+            if status:
+                rows = conn.execute(
+                    "SELECT * FROM pending_jobs WHERE campaign_id = ? AND status = ? ORDER BY created_at DESC LIMIT ?",
+                    (campaign_id, status, int(limit)),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM pending_jobs WHERE campaign_id = ? ORDER BY created_at DESC LIMIT ?",
+                    (campaign_id, int(limit)),
+                ).fetchall()
+            return [self._decode_job_row(r) for r in rows]
+        finally:
+            conn.close()
+
+    def get_pending_canonical_keys(self, campaign_id: str) -> Set[str]:
+        """收集所有 QUEUED / RUNNING 实验作业中已占坑的 exact_canonical_key，防止重复入队。"""
+        keys: Set[str] = set()
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                "SELECT payload_json FROM pending_jobs WHERE campaign_id = ? AND job_type = 'experiment' AND status IN ('QUEUED', 'RUNNING')",
+                (campaign_id,),
+            ).fetchall()
+            for r in rows:
+                try:
+                    p = json.loads(r["payload_json"] or "{}")
+                    for v in p.get("validated_variants") or []:
+                        if not v.get("is_control") and v.get("canonical_key"):
+                            keys.add(str(v["canonical_key"]))
+                except Exception:
+                    pass
+        finally:
+            conn.close()
+        return keys
 
     def record_verdict(
         self,

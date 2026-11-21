@@ -8,8 +8,8 @@
 
 ## 二、 AEGIS V4.1.1 唯一主轨道工作契约
 
-### 1. 弹性并发三模式（取代僵化 20 槽与 1+9+10 固定分仓）
-所有实验必须经由 `aegis_mcp_server.py` 的 `run_experiment` 提交：
+### 1. 弹性并发三模式与「MCP 门禁入队 + 后台 `cli run-job` 静默执行」（取代僵化 20 槽与 1+9+10 固定分仓）
+所有实盘实验必须经由 `aegis_mcp_server.py` 走 **“秒级门禁入队 + 静默后台回测”** 两段式执行：先调 `run_experiment(..., enqueue=True)` 在 `< 1 秒` 内通过全部静态门禁并将作业写入 `campaign.db`，再由后台任务或轻量执行子 Agent 运行 `python3 aegis_mcp_server.py cli run-job --campaign <id> --job <job_id>` 静默完成回测（无 3 分钟 MCP 超时、0 轮询 Token、完成后仅回传 `< 1 KB` 脱敏摘要；严禁直连 `brain-mcp` 读取原始大 JSON）：
 - **`mode="discovery"` (`1~20` 条)**：跨语义簇探索正交经济学假说，每条变体可使用同数据集内 `1~3` 个正交字段，算子数上限 `<= 8`（鼓励 `<= 6`），支持成对 `N/2N` 离散晶格高原探针（单批同拓扑最多 `2` 槽且倍率位于 `[1.6, 4.2]`）。
 - **`mode="surgery"` (`1~8` 条)**：针对已捕获的 `|Sharpe| >= 1.25` 准冠军母本执行定向微创手术；当批量大小 `>= 3` 时，**强制包含至少 1 个 `type="parent_control"` 母本基准对照槽**，配合 `ablation_control` / `placebo_control` 双对照验证净机制增益，算子预算上限 `<= 10`。
 - **`mode="settings_calibration"` (`1~4` 条)**：仅在至少 1 条表达式达到基准 `|Sharpe| >= 1.25` 后解锁，用于系统校准 `decay` / `truncation` / `neutralization`（严禁对已内层 `group_*(..., subindustry)` 表达式做数学等价的外层粗粒度中性化冗余试探）。
