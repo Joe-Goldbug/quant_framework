@@ -63,10 +63,12 @@ try:
     from quant_framework.core.crowding_pairing import FieldCrowdingProfiler, enforce_stage0_pairing
     from quant_framework.core.horizon_probe import HorizonProbe
     from quant_framework.core.swarm_auditor import SwarmAuditor
+    from quant_framework.core.fastexpr_ast import parse_fastexpr
 except (ModuleNotFoundError, ImportError):
     from core.crowding_pairing import FieldCrowdingProfiler, enforce_stage0_pairing
     from core.horizon_probe import HorizonProbe
     from core.swarm_auditor import SwarmAuditor
+    from core.fastexpr_ast import parse_fastexpr
 
 try:
     from quant_framework.core.field_resolver import DatasetFieldResolver
@@ -228,24 +230,23 @@ class AegisPipelineController:
         )
 
     ALL_TEMPORAL_OPS = {
-        "ts_delta", "ts_decay", "ts_mean", "ts_std_dev", "ts_zscore", "ts_rank",
+        "ts_delta", "ts_mean", "ts_std_dev", "ts_zscore", "ts_rank",
         "ts_decay_linear", "ts_decay_exp_window", "ts_delay", "ts_corr", "ts_product",
-        "ts_sum", "ts_min", "ts_max", "ts_arg_max", "ts_arg_min", "ts_median"
+        "ts_sum", "ts_arg_max", "ts_arg_min", "ts_median", "ts_av_diff", "ts_backfill"
     }
     ALLOWED_SHOCK_TEMPORAL = {"ts_delta", "ts_decay_linear", "ts_zscore", "ts_mean"}
 
     @classmethod
     def _get_ast_temporal_calls(cls, expr_str: str) -> List[str]:
-        try:
-            tree = ast.parse(expr_str, mode='eval')
-            calls = []
-            for n in ast.walk(tree):
-                if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
-                    if n.func.id in cls.ALL_TEMPORAL_OPS or n.func.id.startswith("ts_"):
-                        calls.append(n.func.id)
-            return calls
-        except Exception:
+        parsed = parse_fastexpr(expr_str)
+        if not parsed.is_valid or parsed.final_ast is None:
             return ["UNKNOWN"]
+        calls = []
+        for n in ast.walk(parsed.final_ast):
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
+                if n.func.id in cls.ALL_TEMPORAL_OPS or n.func.id.startswith("ts_"):
+                    calls.append(n.func.id)
+        return calls
 
     def synthesize_stage0_hypotheses(self, count: int = 10) -> List[dict]:
         """
@@ -297,16 +298,14 @@ class AegisPipelineController:
         pairing_candidates = profiler.candidate_pairs(limit=8)
 
         session = self.client.create_session(role="aegis-seed-synthesizer", model=self.model)
-        op_manual = OperatorRegistry.format_pyramid_level1_markdown()
         prompt = (
-            f"你是一位顶级的 WorldQuant 量化研究总监与因果假说架构专家。请深入研读下方给定的数据集字段物理画像与官方算子库，构建 {count} 个纯因果假说规格 (HypothesisSpec)，此时切勿生成任何 FastExpr 公式。\n"
+            f"你是一位顶级的 WorldQuant 量化研究总监与因果假说架构专家。请深入研读下方给定的数据集字段物理画像，构建 {count} 个纯因果假说规格 (HypothesisSpec)，此时切勿生成任何 FastExpr 公式，也不要预设任何算子模板。\n"
             f"目标配置: 区域 {self.region} | 股票池 {self.universe} | 预测延迟 Delay {self.delay} | 类别 {self.category} | 数据集 {self.dataset_id}\n\n"
             f"【假说规格核心准则 (DGP 物理机制驱动)】：\n"
             f"1. 严格锁定单数据集：所有字段必须 100% 来自下方给定的物理画像字段清单，严禁跨数据集混用外部量价 (PV) 字段；\n"
             f"2. 字段角色定义：每个假说选用 1~3 个字段，在 field_roles 中明确声明每个字段的 role (Signal_Flow / Dimension_Anchor / Uncertainty_Scale / Catalyst_Event) 与 expected_transform；\n"
             f"3. 机制意图：interaction_type 表达核心因果机制，可参考常见机制意图 (如 SCALE_NORMALIZATION / EXPECTATION_SURPRISE / EVENT_GATE / TEMPORAL_DECAY / CROSS_SECTIONAL_RELATIVE / DISPERSION / REGIME_SPREAD / RESIDUAL_EXTRACTION / TAIL_ASYMMETRY / VECTOR_HIGHER_MOMENT 等)，亦可基于 DGP 业务机理自主定义；\n"
             f"4. 完整因果链：必须明确阐明 counterparty (错误定价对手盘)、causal_chain (微观传导链)、horizon_model (期限模型)、normalization_rationale (去噪理由) 与 falsification_tests (证伪条件)。\n\n"
-            f"【算子签名表 (语法字典，供「变换需求 → 实现」映射；不得作为选配清单反向挑场景)】:\n{op_manual}\n\n"
             f"【候选字段全量物理画像清单】:\n{json.dumps(fields_meta_list, ensure_ascii=False, indent=1)}\n\n"
             f"【推荐冷热非对称配对清单】:\n{json.dumps(pairing_candidates, ensure_ascii=False, indent=1)}\n\n"
             f"【输出格式契约】必须返回严格的 JSON 对象：\n"
@@ -443,7 +442,7 @@ class AegisPipelineController:
             )
 
         session = self.client.create_session(role="aegis-seed-synthesizer", model=self.model)
-        op_manual = OperatorRegistry.format_pyramid_level1_markdown()
+        op_manual = OperatorRegistry.format_compact_index_markdown()
         prompt = (
             f"你是一位顶级的 WorldQuant 量化研究总监与 ATOM Alpha 架构专家。请深入研读下方给定的数据集字段物理画像（算子签名表仅作语法字典，本阶段不写任何公式），构建 {count} 个高价值、低相关性、非过拟合的 ATOM 原生主信号假说。\n"
             f"目标配置: 区域 {self.region} | 股票池 {self.universe} | 预测延迟 Delay {self.delay} | 类别 {self.category} | 数据集 {self.dataset_id}\n\n"
@@ -541,10 +540,10 @@ class AegisPipelineController:
 
         def _extract_subtree_skeletons(expr_str: str, known_f: set) -> list:
             norm_expr = re.sub(r'vec_(?:avg|sum|max|min)\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\)', r'\1', expr_str)
-            try:
-                root = ast.parse(norm_expr, mode='eval').body
-            except Exception:
+            parsed = parse_fastexpr(norm_expr)
+            if not parsed.is_valid or parsed.final_ast is None:
                 return []
+            root = parsed.final_ast
             subtrees = []
             for node in ast.walk(root):
                 if isinstance(node, ast.Call) and node is not root:
@@ -883,15 +882,11 @@ class AegisPipelineController:
             self.last_step_verdict = None
             self.last_step_qa_prescriptions = []
             stage_guidance = (
-                "【阶段科研使命: Step #1 假说多维实证检验 (Clean Empirical Validation)】:\n"
-                "- 当前假说尚未经过回测检验，不存在母本 (parent_alpha 为空)，因此本轮 100% 为假说实证探索 (type 统一填 'empirical_probe')！\n"
-                "- 【基础清洗与周期探索】：允许根据字段的更新周期和数据稀疏性进行基础清洗与缺失值回填，并在多个具有经济学含义的时间周期上检验信号的原生稳健性！\n"
-                "- 【保持极简纯净】：每条变体外层包装算子严格控制在 1~3 个以内；先确认假说需要的变换（时序/截面），再查签名表映射为 1~3 个最小实现，从不同时序跨度干净地检验假说原生预测力。\n"
+                "【阶段科研使命: Step #1 多假说并发实证检验 (Multi-Hypothesis Clean Empirical Validation)】:\n"
+                "- 当前阶段处于开拓探索期，允许围绕该数据集的不同经济学角色/正交机制簇并发检验多条假说分支（严禁拿同一骨架套 20 种算子外壳凑数）！\n"
+                "- 【基础清洗与离散周期晶格】：结合字段更新频率与稀疏性做必要清洗，并在经济学离散时间晶格 (daily {1,5,10,21,63,126,252} / quarterly {63,66,125,126,252}) 上检验原生预测力！\n"
+                "- 【保持极简纯净】：先从第一性原理推导所需变换（时序/截面/去噪），再按需通过算子检索映射到 1~3 个最小实现，严禁机械堆叠装饰算子。\n"
                 f"- 【中性化基准约束】：在 {self.parallelism} 条实证变体中，必须保证至少 30% (>= {max(int(self.parallelism * 0.3), 1)} 条) 变体使用基础截面中性化 ('SUBINDUSTRY' 或 'INDUSTRY')，以验证信号源是否自带真实 Alpha 潜力，严禁全量寄生在高阶风险中性化残差中！\n"
-            )
-            output_schema_instruction = (
-                f"【输出格式契约】必须返回严格的 JSON 数组，共 {self.parallelism} 个纯净实证变体对象。\n"
-                f"每个对象必须包含以下 6 个键：slot, optimize_reason, expression, neutralization, type, original_alpha（注意：先写 optimize_reason 阐述实证设计理由，再写 expression！）。\n"
             )
         else:
             # Step >= 2: 仅允许从当前种子的局部结果中提取标杆，严禁回退全局 self.good_alphas / self.history_save
@@ -934,11 +929,8 @@ class AegisPipelineController:
             else:
                 parent_op_count = 0
                 if parent_alpha and "expression" in parent_alpha:
-                    try:
-                        tree = ast.parse(parent_alpha["expression"], mode='eval')
-                        parent_op_count = sum(1 for n in ast.walk(tree) if isinstance(n, ast.Call))
-                    except Exception:
-                        parent_op_count = 0
+                    parsed_parent = parse_fastexpr(parent_alpha["expression"])
+                    parent_op_count = parsed_parent.operator_count if parsed_parent.is_valid else 0
 
                 verdict = Gatekeeper.diagnose_and_route_prescriptions(
                     alpha_metrics=p_metrics,
@@ -1025,8 +1017,8 @@ class AegisPipelineController:
 
             if surgery_mode:
                 mission_line = (
-                    f"- 🩺 【场景路由 = 老兵精修 (1+9+10 分仓制)】母本 |Sharpe|={_parent_sharpe:.2f} 已是局部极值，本轮目标不是全绿，"
-                    f"而是按母本病灶选一条轴做单点相对改进 (Margin 升 >= 20% / Turnover 降 >= 20%『仅当母本换手 > 30%』/ ProdCorr 降 >= 0.05)，"
+                    f"- 🩺 【场景路由 = 老兵精修 (1+9+10 分仓制)】母本 |Sharpe|={_parent_sharpe:.2f} 必须持续进化冲击 ALL PASS (0 FAIL + 0 缺陷类 WARNING)，"
+                    f"同时按母本病灶选一条轴做单点突破 (Margin 升 >= 20% / Turnover 降 >= 20%『仅当母本换手 > 30%』/ ProdCorr 降 >= 0.05)，"
                     f"且 |Sharpe| 不得低于母本。\n"
                     f"- ⚖️ 分仓配额: Slot 1 逐字复现母本控制槽；Slot 2~10 (45%) 锁定母本主锚特征做单变量微调；Slot 11~20 (50%) 彻底重构全新数学拓扑；\n"
                 )
@@ -1050,17 +1042,35 @@ class AegisPipelineController:
                 f"- 💡 【算子使用铁律】: 算子签名表全量开放但**仅作语法字典**，不是选配清单！严禁将算子像积木一样生搬硬套！必须先结合下方字段的定义域 (domain)、稀疏度 (is_sparse)、更新频率 (update_frequency) 与反事实病因推导所需变换，再查签名表映射为最小实现，绝不预设或堆叠僵化算子！\n"
                 f"- 请严格根据反事实病理线索自主推演 DGP，先从第一性原理写出所需变换，再映射到算子签名，绝不盲目堆叠非线性算子！\n"
             )
-            output_schema_instruction = (
-                f"【输出格式契约】必须返回严格的 JSON 数组，共 {self.parallelism} 个变体对象（1+9+10 三分天下分仓制）。\n"
-                f"每个对象必须严格按以下顺序包含 9 个键：slot, optimize_reason, hypothesis_ref, mechanism_intents, economic_delta, expression, neutralization, type, original_alpha"
-                f"（先写假说与机制增量，再写 expression；hypothesis_ref 必须等于预注册 hypothesis_id，mechanism_intents 必须与表达式实际算子族同构）。\n"
-            )
 
         # ---------------- V3.1 极简瘦身 Prompt 构建 (< 1,000 Token) ----------------
-        # 1. 字段铁律约束
+        # 1. 字段铁律约束 (V4.1.1: 解除 Step 1 死锁 2 字段陷阱，允许单数据集内 1~3 个正交字段自由验证假说)
         if step <= 2 and not parent_alpha:
-            field_rule_str = "【字段铁律 (Step 1~2 初筛阶段)】: 严格 100% 锁定种子初始的 2 个字段，严禁增减任何字段！严禁使用外部量价 (PV) 字段！\n"
-            alt_candidates_list = []
+            field_rule_str = "【字段铁律 (Step 1~2 初筛阶段)】: 所有字段必须 100% 来自本数据集，每条变体可使用 1~3 个正交字段（支持跨语义簇冷字段探索，严禁混入外部量价 PV 字段）！\n"
+            all_fields = list(fields_dict.keys())
+            core_used = set(used_field_names)
+            valid_candidates = [
+                fn for fn in all_fields
+                if fn not in core_used and fields_dict.get(fn, {}).get("coverage", 1.0) >= 0.20
+            ]
+            valid_candidates.sort(
+                key=lambda fn: fields_dict.get(fn, {}).get("coverage", 0) / (1 + math.log1p(fields_dict.get(fn, {}).get("alpha_count", 0))),
+                reverse=True
+            )
+            alt_candidates_list = [
+                {
+                    "name": fn,
+                    "type": fields_dict[fn].get("type", "MATRIX"),
+                    "description": fields_dict[fn].get("description", "无描述"),
+                    "coverage": round(fields_dict[fn].get("coverage", 1.0), 3),
+                    "alpha_count": fields_dict[fn].get("alpha_count", 0),
+                    "update_frequency": fields_dict[fn].get("update_frequency", "daily"),
+                    "domain": fields_dict[fn].get("domain", "unbounded"),
+                    "skewness": fields_dict[fn].get("skewness", "medium"),
+                    "is_sparse": fields_dict[fn].get("is_sparse", False),
+                }
+                for fn in valid_candidates[:10]
+            ]
         else:
             field_rule_str = "【字段铁律 (Step 3~10 / 母本靶向优化)】: 允许从同数据集引入至多 1 个同源辅助特征做交互 (全表达式唯一字段总数严格 <= 3)！严禁跨数据集或引入外部量价字段！\n"
             all_fields = list(fields_dict.keys())
@@ -1139,9 +1149,8 @@ class AegisPipelineController:
             if qa_prompt_section:
                 prompt_parts.append(f"【因果问答启发】:\n{qa_prompt_section}\n")
 
-        # 去模板化铁律：严禁下发历史变体公式字面量，防止大模型发生拓扑锚定与积木套用
-        # 强制大模型基于字段 DGP 画像与母本体检报表先推导变换需求，再查算子签名表映射实现
-        op_manual = OperatorRegistry.format_pyramid_level1_markdown()
+        # 去模板化与精简上下文铁律: 仅注入 <1KB 的 104 授权算子索引，具体签名通过 lookup_operators 按需查询
+        op_manual = OperatorRegistry.format_compact_index_markdown()
         prompt_parts.append(f"{op_manual}\n")
 
         if step >= 2 and pyramid_kb:
@@ -1253,13 +1262,14 @@ class AegisPipelineController:
             # Slot 1: 绝对基准对照槽 (原样复测)
             by_slot_map[1] = {
                 "slot": 1,
-                "optimize_reason": "保留母本核心骨架作为对照控制槽，严格比对基准 Sharpe 和 Margin 表现",
+                "optimize_reason": "保留母本核心骨架作为基准对照槽 (parent_control)，严格对齐 Sharpe 与 Margin 基准表现",
                 "hypothesis_ref": seed_hypothesis.get("hypothesis_id"),
                 "mechanism_intents": _parent_intents,
-                "economic_delta": "对照槽不引入机制增量，仅校准回测基准",
+                "economic_delta": "母本基准对照槽 (parent_control): 保持原结构验证基准 Sharpe 与换手一致性",
                 "expression": _parent_expr,
                 "neutralization": _base_neutralization,
-                "type": "exploit"
+                "type": "parent_control",
+                "original_alpha": parent_id or "",
             }
 
             # Slot 2~3: 反事实消融舱 + 复杂度匹配安慰剂舱 (构造失败则跳过)
@@ -1275,24 +1285,26 @@ class AegisPipelineController:
                 if _ctrl.get("ablation"):
                     by_slot_map[2] = {
                         "slot": 2,
-                        "optimize_reason": "【反事实消融对照】母本最深层信息提取机制被恒等占位替换——若母本收益显著高于本槽，机制声明为真；若两者接近，赚钱的不是声称的机制。判读只在样本外/近端区间读差。",
+                        "optimize_reason": "【反事实消融对照】剥离外层机制保留裸核心，在近端区间比对基准 Sharpe 与 Margin 净增益",
                         "hypothesis_ref": seed_hypothesis.get("hypothesis_id"),
                         "mechanism_intents": _parent_intents,
-                        "economic_delta": "消融对照槽：剥离核心机制以验证机制声明的真实性，不追求指标改善。",
+                        "economic_delta": "消融对照槽：剥离核心机制以验证机制声明的真实性，量化机制 Sharpe 贡献。",
                         "expression": _ctrl["ablation"],
                         "neutralization": _base_neutralization,
-                        "type": "ablation_control"
+                        "type": "ablation_control",
+                        "original_alpha": parent_id or "",
                     }
                 if _ctrl.get("placebo"):
                     by_slot_map[3] = {
                         "slot": 3,
-                        "optimize_reason": "【复杂度匹配安慰剂对照】母本最外层装饰算子被同样替换为恒等占位——用于排除「任何修改都会掉分」的复杂度假象：机制贡献 = (母本-消融) - (母本-安慰剂)。",
+                        "optimize_reason": "【复杂度匹配安慰剂对照】字段滞后252日注入相同外层算子壳，检验外层包装是否伪造 Sharpe 与 Margin",
                         "hypothesis_ref": seed_hypothesis.get("hypothesis_id"),
                         "mechanism_intents": _parent_intents,
-                        "economic_delta": "安慰剂对照槽：区分机制贡献与复杂度噪声，不追求指标改善。",
+                        "economic_delta": "安慰剂对照槽：区分机制贡献与结构寄生噪声，校验假信号 Sharpe 为零。",
                         "expression": _ctrl["placebo"],
                         "neutralization": _base_neutralization,
-                        "type": "placebo_control"
+                        "type": "placebo_control",
+                        "original_alpha": parent_id or "",
                     }
 
             variants = [by_slot_map[k] for k in sorted(by_slot_map.keys())]
@@ -1414,6 +1426,10 @@ class AegisPipelineController:
                         expr = data.get("code") or data.get("expression")
                         if expr:
                             print(f"📁 [SeedResolver] 从本地画像载入种子 Alpha {alpha_id}: {p}")
+                            local_settings = dict(data.get("settings") or {})
+                            for sk in ("decay", "truncation", "neutralization", "nanHandling", "nan_handling", "region", "universe", "delay"):
+                                if sk in data and sk not in local_settings:
+                                    local_settings[sk] = data[sk]
                             return {
                                 "id": alpha_id,
                                 "expression": expr,
@@ -1422,6 +1438,7 @@ class AegisPipelineController:
                                 "ra": data.get("ra", {}),
                                 "checks": data.get("checks", {}),
                                 "yearly_stats": data.get("yearly_stats", []),
+                                "settings": local_settings,
                                 "times": 0
                             }
                 except Exception:
@@ -1441,7 +1458,7 @@ class AegisPipelineController:
                     return val
 
                 details = await _call_api(bm.get_alpha_details, alpha_id)
-                if details and isinstance(details, dict) and (details.get("code") or details.get("expression")):
+                if details and isinstance(details, dict) and (details.get("code") or details.get("expression") or (details.get("regular") or {}).get("code")):
                     print(f"🌐 [SeedResolver] 从 WorldQuant Brain 成功同步 Alpha {alpha_id} 详情！")
                     y_records = []
                     if hasattr(bm, "get_alpha_yearly_stats"):
@@ -1451,12 +1468,13 @@ class AegisPipelineController:
                             pass
                     return {
                         "id": alpha_id,
-                        "expression": details.get("code") or details.get("expression"),
+                        "expression": details.get("code") or details.get("expression") or (details.get("regular") or {}).get("code"),
                         "economic_mechanism": f"针对已有母本 {alpha_id} 的靶向攻坚",
                         "metrics": details.get("metrics") or details.get("is") or {},
                         "ra": details.get("ra", {}),
                         "checks": details.get("checks") or (details.get("is", {}).get("checks")) or {},
                         "yearly_stats": y_records or details.get("yearly_stats", []),
+                        "settings": details.get("settings") or {},
                         "times": 0
                     }
             except Exception as e:
@@ -1504,15 +1522,8 @@ class AegisPipelineController:
     def _operator_count_of(cls, alpha: dict) -> int:
         op_count = int(alpha.get("operator_count", 0) or 0)
         if op_count <= 0 and alpha.get("expression"):
-            try:
-                tree = ast.parse(alpha["expression"], mode='eval')
-                op_count = sum(
-                    1 for node in ast.walk(tree)
-                    if isinstance(node, ast.Call)
-                    and not getattr(node.func, "id", "").startswith("vec_")
-                )
-            except Exception:
-                op_count = 6
+            parsed = parse_fastexpr(alpha["expression"])
+            op_count = parsed.operator_count if parsed.is_valid else 6
         return op_count
 
     @classmethod
@@ -1553,6 +1564,9 @@ class AegisPipelineController:
 
     def champion_eligibility(self, alpha: dict) -> dict:
         """
+        @deprecated 仅保留兼容历史单元测试，严禁在 run_single_batch / run_pipeline_loop 中调用；
+        AEGIS V4.1 唯一生产级发证门禁为 core/production_gate.py::ProductionGate。
+
         冠军资格硬过滤 (One-Champion-Per-Anchor 的最后一道防线):
         1. ProdCorr 必须 < 0.70 (若已核实且 >= 0.70，硬性否决);
         2. 若 ProdCorr 未核实 (None)，标记为 PENDING_PROD_CORR_CHECK (待核验准冠军)，
@@ -1660,13 +1674,19 @@ class AegisPipelineController:
         from core.sim_runner import SimBatchRunner
         if self.mock_only:
             os.environ["AEGIS_MOCK_MODE"] = "1"
+        batch_settings = (batch_data.get("settings") if isinstance(batch_data, dict) else None) or {}
+        if not isinstance(batch_settings, dict):
+            batch_settings = {}
         sim_res = await SimBatchRunner.run_batch_silently(
             batch_file_path=batch_file_path,
             region=self.region,
             universe=self.universe,
             delay=self.delay,
             category=self.category,
-            neutralization=None,
+            neutralization=batch_settings.get("neutralization") or (batch_data.get("neutralization") if isinstance(batch_data, dict) else None),
+            decay=int(batch_settings.get("decay", batch_data.get("decay", 0) if isinstance(batch_data, dict) else 0) or 0),
+            truncation=float(batch_settings.get("truncation", batch_data.get("truncation", 0.025) if isinstance(batch_data, dict) else 0.025) or 0.025),
+            nan_handling=str(batch_settings.get("nanHandling") or batch_settings.get("nan_handling") or (batch_data.get("nan_handling") if isinstance(batch_data, dict) else None) or "ON"),
             ledger_path=campaign_ledger
         )
 
@@ -1697,8 +1717,8 @@ class AegisPipelineController:
                     if fp.get("expression") in approved_exprs:
                         evaluated_passed.append(fp)
             except Exception as _pg_err:
-                print(f"⚠️ [ProductionGate 前置终审] 异常: {_pg_err}")
-                evaluated_passed = final_passed
+                print(f"❌ [ProductionGate 前置终审 Fail-Closed 熔断] 异常，拒绝发证: {_pg_err}")
+                evaluated_passed = []
 
             if evaluated_passed:
                 champions_file = os.path.join(self.campaign_dir, "campaign_champions.json")
@@ -1817,6 +1837,7 @@ class AegisPipelineController:
                     "ra": seed.get("ra", {}),
                     "checks": seed.get("checks", {}),
                     "yearly_stats": seed.get("yearly_stats", []),
+                    "settings": seed.get("settings", {}),
                     "fail_count": parsed_init_chk["fail_count"],
                     "fails": parsed_init_chk["fails"],
                     "warning_count": len(parsed_init_chk["warnings"]),
@@ -1906,15 +1927,22 @@ class AegisPipelineController:
                         seed_qualified_alphas=seed_qualified_alphas,
                         is_golden_shot=bool(overtime_granted and step == step_limit)
                     )
-                    try:
-                        import ast
-                        tree = ast.parse(seed.get("expression", ""), mode='eval')
-                        stage0_op_count = sum(1 for n in ast.walk(tree) if isinstance(n, ast.Call))
-                    except Exception:
-                        stage0_op_count = 1
+                    parsed_s0 = parse_fastexpr(seed.get("expression", ""))
+                    stage0_op_count = parsed_s0.operator_count if parsed_s0.is_valid else 1
 
                     has_parent_flag = bool(seed_best_parent is not None)
                     effective_step = max(step, 2) if has_parent_flag else step
+                    _parent_settings = (
+                        (seed_best_parent.get("settings") if isinstance(seed_best_parent, dict) else None)
+                        or (seed.get("settings") if isinstance(seed, dict) else None)
+                        or {}
+                    )
+                    if not isinstance(_parent_settings, dict):
+                        _parent_settings = {}
+                    _p_decay = int(_parent_settings.get("decay", 0) or 0)
+                    _p_trunc = float(_parent_settings.get("truncation", 0.025) or 0.025)
+                    _p_nan = str(_parent_settings.get("nanHandling") or _parent_settings.get("nan_handling") or "ON")
+                    _p_neut = _parent_settings.get("neutralization")
 
                     with open(batch_path, 'w', encoding='utf-8') as f:
                         json.dump({
@@ -1925,6 +1953,11 @@ class AegisPipelineController:
                             "universe": self.universe,
                             "delay": self.delay,
                             "category": self.category,
+                            "decay": _p_decay,
+                            "truncation": _p_trunc,
+                            "nan_handling": _p_nan,
+                            "neutralization": _p_neut,
+                            "settings": _parent_settings,
                             "known_fields": known_fields,
                             "expected_polarity": seed.get("expected_polarity", 1),
                             "stage0_op_count": stage0_op_count,
@@ -1948,7 +1981,10 @@ class AegisPipelineController:
                             universe=self.universe,
                             delay=self.delay,
                             category=self.category,
-                            neutralization=None,
+                            neutralization=_p_neut,
+                            decay=_p_decay,
+                            truncation=_p_trunc,
+                            nan_handling=_p_nan,
                             ledger_path=campaign_ledger
                         )
                     except (ValueError, PermissionError, RuntimeError) as e:
@@ -2271,7 +2307,7 @@ class AegisPipelineController:
                         max_champ_ops = getattr(self, "max_champion_operators", 6)
                         max_ast_ops = getattr(self, "max_ast_operators", 8)
                         phase_name = "准冠军定向优化阶段" if getattr(self, "is_quasi_champion_optimization", False) else "常规研究挖掘阶段"
-                        op_manual = OperatorRegistry.format_pyramid_level1_markdown()
+                        op_manual = OperatorRegistry.format_compact_index_markdown()
                         refiner_prompt = (
                             f"当前针对主信号 {seed_id} 累计发现 {len(seed_good_alphas)} 个达标母本 (Sharpe >= 1.2)。\n"
                             f"最优母本: {seed_good_alphas[0]['expression']} (Sharpe={seed_good_alphas[0].get('sharpe', 0.0):.2f})\n"

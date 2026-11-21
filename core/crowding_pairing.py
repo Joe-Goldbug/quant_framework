@@ -189,7 +189,7 @@ class FieldCrowdingProfiler:
         for f in used:
             if f == cold_anchor:
                 continue
-            if self.is_scale_anchor(f):
+            if self.is_scale_anchor(f) and (cold_anchor is None or self._is_dimensionally_compatible_pair(cold_anchor, f)):
                 normalizer = f
                 break
 
@@ -242,10 +242,25 @@ class FieldCrowdingProfiler:
 
     # 纯标识类字段 (币种代码/财月/标志位) 不适合做经济信号主锚
     IDENTIFIER_HINTS = ("currency_code", "_flag", "fiscal_month", "_id", "iso_code", "ticker")
+    ANCHOR_HINTS = ("tot_assets", "assets", "market_cap", "sales", "revenue", "ebitda", "cashflow", "equity", "debt", "cap")
 
     def _is_identifier_like(self, name: str) -> bool:
         low = name.lower()
         return any(h in low for h in self.IDENTIFIER_HINTS)
+
+    def _is_dimensionally_compatible_pair(self, main_anchor: str, normalizer: str) -> bool:
+        """拦截无量纲 [0,1]/[-1,1] 主锚与正尺度货币/市值 Dimension_Anchor 的跨量纲畸形配对"""
+        m_meta = self.meta.get(main_anchor, {}) if isinstance(self.meta, dict) else {}
+        n_meta = self.meta.get(normalizer, {}) if isinstance(self.meta, dict) else {}
+        m_dom = str(m_meta.get("domain") or "").strip()
+        if m_dom not in ("[0, 1]", "(0, 1]", "[-1, 1]"):
+            return True
+        n_dom = str(n_meta.get("domain") or "").strip()
+        n_role = str(n_meta.get("semantic_role") or "").strip()
+        n_low = normalizer.lower()
+        if n_dom == "positive" or n_role == "Dimension_Anchor" or any(tok in n_low for tok in self.ANCHOR_HINTS):
+            return False
+        return True
 
     def candidate_pairs(self, limit: int = 8) -> List[dict]:
         """给出可用的冷热配对清单 (低拥挤主锚 x 高覆盖归一锚)"""
@@ -272,9 +287,9 @@ class FieldCrowdingProfiler:
         pairs: List[dict] = []
         top_scales = scales[:max(3, min(len(scales), 6))]
         for idx, c in enumerate(colds):
-            candidates = [s for s in top_scales if s != c]
+            candidates = [s for s in top_scales if s != c and self._is_dimensionally_compatible_pair(c, s)]
             if not candidates:
-                candidates = [s for s in scales if s != c]
+                candidates = [s for s in scales if s != c and self._is_dimensionally_compatible_pair(c, s)]
             if not candidates:
                 continue
             # 确定性轮换 top 归一锚，打散归一化推荐，防单一字段独占清单造成思维锚定

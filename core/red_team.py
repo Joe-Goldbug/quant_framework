@@ -28,6 +28,14 @@ import re
 import sys
 from typing import Dict, List, Tuple
 
+try:
+    from quant_framework.core.fastexpr_ast import parse_fastexpr, build_named_ablation_and_placebo
+except ModuleNotFoundError:
+    try:
+        from core.fastexpr_ast import parse_fastexpr, build_named_ablation_and_placebo
+    except ModuleNotFoundError:
+        from fastexpr_ast import parse_fastexpr, build_named_ablation_and_placebo
+
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -80,34 +88,34 @@ class DoubleBlindRedTeam:
             "parsimony_check": True
         }
 
-        # 1. 形式化语法树校验
-        try:
-            tree = ast.parse(expr, mode='eval')
-        except SyntaxError as e:
+        # 1. 形式化语法树校验 (支持单行与多行 SNC 语法)
+        parsed = parse_fastexpr(expr)
+        if not parsed.is_valid or parsed.final_ast is None:
             return {
                 "verdict": "REJECT",
                 "checks": {k: False for k in checks},
-                "issues": [f"AST 语法树解析失败: {str(e)}"],
+                "issues": [f"AST 语法树解析失败: {'; '.join(parsed.errors)}"],
                 "signature": None
             }
+        tree = parsed.final_ast
+        expr_inlined = parsed.to_inline_expression()
 
         # 2. 定义域与物理语义对齐审讯 (domain_alignment_check)
         # 遍历字段：稀疏 [0, 1] 检查非法 zero offset；负半轴对数域检查 log/sqrt 非法调用
         for f_name, f_meta in fields.items():
             f_dom = str(f_meta.get("domain") or "unbounded")
             if f_dom == "[0, 1]" and (f_meta.get("sparse_zero") or f_meta.get("is_sparse")):
-                if f"subtract({f_name}, 0.5)" in expr or f"subtract(0.5, {f_name})" in expr:
+                if f"subtract({f_name}, 0.5)" in expr_inlined or f"subtract(0.5, {f_name})" in expr_inlined:
                     checks["domain_alignment_check"] = False
                     issues.append(f"字段 '{f_name}' 属于稀疏 [0, 1]，subtract 0.5 会将零值偏移为 -0.5 伪空头信号，审讯驳回！")
             # 对数概率/对数似然负半轴: 直接套 log/sqrt 会产生连片 NaN
-            # (s_log_1p 定义域为全体实数 sign(x)*log(1+|x|)，保号压缩合法，不在禁令内)
             elif f_dom == "(-inf, 0]":
                 for bad_op in ("log", "sqrt"):
-                    if f"{bad_op}({f_name})" in expr:
+                    if f"{bad_op}({f_name})" in expr_inlined:
                         checks["domain_alignment_check"] = False
                         issues.append(
                             f"字段 '{f_name}' 处于负半轴对数域 (-inf, 0]，直接套用 {bad_op} 会产生连片 NaN！"
-                            f"请先用 exp() 还原至概率空间，或改用保号的 s_log_1p。"
+                            f"请改用保号的 s_log_1p 或 quantile(..., driver=gaussian)。"
                         )
 
         # 3. 假设与 AST 保真度审讯 (hypothesis_to_ast_fidelity)
@@ -222,18 +230,18 @@ def _walk_skeleton_chain(tree_body):
 def _replace_node_at_depth(expr: str, depth: int) -> str:
     """
     把沿第一参数链第 depth 层 (0=最外层) 的算子调用替换为恒等占位 add(arg0, 0)。
-    复杂度匹配: 被替换算子 1 个调用节点 -> add(...) 1 个调用节点。
-    注意: 必须对「同一棵」解析树做变换 (身份比较定位节点)，禁止二次 parse。
     """
-    tree = ast.parse(expr.strip(), mode="eval")
-    chain = _walk_skeleton_chain(tree.body)
+    parsed = parse_fastexpr(expr)
+    if not parsed.is_valid or parsed.final_ast is None:
+        return ""
+    tree_body = parsed.final_ast
+    chain = _walk_skeleton_chain(tree_body)
     if depth >= len(chain):
         return ""
     target = chain[depth]
     func_name = getattr(target.func, "id", "")
     if not func_name or not target.args:
         return ""
-    # 恒等占位: add(arg0, 0) —— 与被替换算子同为 1 个调用节点，语义中性
     placeholder = ast.Call(
         func=ast.Name(id="add", ctx=ast.Load()),
         args=[target.args[0], ast.Constant(value=0)],
@@ -247,53 +255,45 @@ def _replace_node_at_depth(expr: str, depth: int) -> str:
                 self.done = True
                 return ast.copy_location(placeholder, node)
             return self.generic_visit(node)
-    new_tree = _Swapper().visit(tree)
+    new_tree = _Swapper().visit(tree_body)
     ast.fix_missing_locations(new_tree)
     try:
-        return ast.unparse(new_tree.body) if hasattr(ast, "unparse") else ""
+        return ast.unparse(new_tree) if hasattr(ast, "unparse") else ""
     except Exception:
         return ""
 
 
 def build_ablation_and_placebo(parent_expression: str) -> dict:
     """
-    从母本表达式构造「复杂度匹配的安慰剂对照」实验对:
-      - ablation (消融版): 骨架链最深层 (信息提取核心) 算子 -> add(arg0, 0)
-      - placebo (安慰剂版): 骨架链的非机制装饰层 (最外层) 算子 -> add(arg0, 0)
-    判读 (写入 Dossier 的 E3 证据):
-      机制贡献 = (母本 - 消融版) - (母本 - 安慰剂版)，仅在样本外/近端区间读差。
-      若 母本 ≈ 消融版 (差 < 30%): 机制声明为假，赚钱的不是声称的机制。
-      若 消融版 ≈ 安慰剂版: 整个骨架都是过拟合装饰。
-    返回 {"ablation": expr_or_empty, "placebo": expr_or_empty, "notes": [...]}
+    委托 fastexpr_ast.build_named_ablation_and_placebo 构建：
+    - 支持多行 SNC 变量内联还原；
+    - 保留 vec_* 向量标量化外衣；
+    - trade_when/if_else/filter 精准切入 args[1] 信号分支；
+    - ablation 为剥壳后的极简核心基线 rank(core)，placebo 为 ts_delay(..., 252) 结构空壳。
     """
     result = {"ablation": "", "placebo": "", "notes": []}
     expr = (parent_expression or "").strip()
     if not expr:
         result["notes"].append("母本表达式为空")
         return result
-    try:
-        tree = ast.parse(expr, mode="eval")
-    except SyntaxError:
-        result["notes"].append("母本表达式语法错误，无法构造对照")
+    parsed = parse_fastexpr(expr)
+    if not parsed.is_valid:
+        result["notes"].append(f"母本表达式语法错误，无法构造对照: {'; '.join(parsed.errors)}")
         return result
 
-    chain = _walk_skeleton_chain(tree.body)
-    if len(chain) < 2:
-        # 骨架链只有 1 层: 无法区分机制位与装饰位，只构造消融版
-        ablation = _replace_node_at_depth(expr, len(chain) - 1) if chain else ""
-        result["ablation"] = ablation
+    built = build_named_ablation_and_placebo(parsed)
+    if parsed.operator_count < 2:
+        result["ablation"] = built.get("ablation_expr", "")
+        result["placebo"] = ""
         result["notes"].append("骨架链过短 (单算子)，安慰剂版退化为不可构造；判读只看 母本 vs 消融版")
         return result
 
-    # 消融位 = 最深层 (信息提取核心); 安慰剂位 = 最外层 (通常是中性化/包装装饰)
-    ablation = _replace_node_at_depth(expr, len(chain) - 1)
-    placebo = _replace_node_at_depth(expr, 0)
-    if not ablation:
-        result["notes"].append("消融版构造失败 (最深层替换异常)")
-    if not placebo:
-        result["notes"].append("安慰剂版构造失败 (最外层替换异常)")
-    result["ablation"] = ablation
-    result["placebo"] = placebo
+    result["ablation"] = built.get("ablation_expr", "")
+    result["placebo"] = built.get("placebo_expr", "")
+    if not result["ablation"]:
+        result["notes"].append("消融版构造失败")
+    if not result["placebo"]:
+        result["notes"].append("安慰剂版构造失败")
     return result
 
 
@@ -338,7 +338,7 @@ def negative_control_selftest() -> dict:
         ("G1-动量+差分", "group_zscore(ts_delta(x_field, 5), industry)", "捕捉边际改善的动量效应"),
         ("G2-门控+乘积", "trade_when(greater(y_field, 0.5), ts_delta(x_field, 5), 0)", "施加催化剂门控与放大权重"),
         ("G3-负半轴保号压缩", "s_log_1p(logprob_field)", "对数概率压缩"),
-        ("G4-负半轴exp还原", "group_zscore(exp(logprob_field), industry)", "还原概率空间后截面定价"),
+        ("G4-负半轴分位压缩", "group_zscore(quantile(logprob_field, driver=gaussian), industry)", "截面分位映射定价"),
         ("G5-单层平滑", "ts_decay_linear(zscore(x_field), 8)", "时序稳定"),
         ("G6-合规基础式", "winsorize(zscore(ts_delta(x_field, 5)), std=4)", "动量标准化"),
     ]

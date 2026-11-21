@@ -96,8 +96,8 @@ class RAGMemoryEngine:
             except Exception as e:
                 print(f"⚠️ [RAG Memory] 读取指定算子文件失败: {e}")
         else:
-            # 自动加载当前账号可用的算子签名库精要 (语法字典，非选配清单)
-            pyramid_sections.append(OperatorRegistry.format_pyramid_level1_markdown())
+            # V4.1.1: 仅注入 <1KB 极简分类算子索引，彻底杜绝 16KB 全量算子菜单重力诱导套积木
+            pyramid_sections.append(OperatorRegistry.format_compact_index_markdown())
 
         # 第二级: 垂直特异经验手册 ({REGION}_{DELAY}_{CATEGORY}.md)
         # V2: 仅当 DGP 物理签名匹配时才挂载实现级经验，切断跨物理形态乱套算子
@@ -187,17 +187,31 @@ class RAGMemoryEngine:
             with open(os.path.join(cls.EXP_DIR, chosen_file), 'r', encoding='utf-8') as f:
                 content = f.read()
 
-            # 提取所有 QA 块或启发条目，严禁输出具体代码/公式模板
+            # 提取所有 QA 块或启发条目，严禁输出具体代码/公式模板或劝退/换数据集暗示
+            _DEFEATIST_RE = re.compile(
+                r'(?:换数据集|更换数据源|更换数据集|已穷尽|因子饱和|天花板|彻底放弃|建议切换)'
+            )
             sections = re.split(r'\n(?=###?\s+)', content)
             valid_insights = []
             for sec in sections:
                 clean_sec = sec.strip()
                 if not clean_sec or clean_sec.startswith("# "):
                     continue
+                if _DEFEATIST_RE.search(clean_sec):
+                    # 仅保留非劝退行；若整节以劝退结论为主则跳过
+                    filtered = [
+                        l.strip() for l in clean_sec.split('\n')
+                        if l.strip() and not _DEFEATIST_RE.search(l)
+                        and not l.strip().startswith("```")
+                        and not re.search(r'^[a-z_]{2,}\([a-z0-9_,\s\(\)]+\)$', l.strip())
+                    ]
+                    if len(filtered) >= 2:
+                        valid_insights.append("\n".join(filtered[:4]))
+                    continue
                 lines = [l.strip() for l in clean_sec.split('\n') if l.strip()]
                 # 剔除代码块和类似单纯公式表达式的行
                 meaningful_lines = [
-                    l for l in lines 
+                    l for l in lines
                     if not l.startswith("```") and not re.search(r'^[a-z_]{2,}\([a-z0-9_,\s\(\)]+\)$', l)
                 ]
                 if meaningful_lines:

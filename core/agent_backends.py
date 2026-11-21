@@ -204,11 +204,8 @@ class BuiltinAgentBackend(BaseAgentBackend):
         self.poll_interval = poll_interval
         self.direct_handler = direct_handler
         self.fallback_fn = fallback_fn
-        if direct_handler and tasks_dir is None:
-            self.tasks_dir = None
-        else:
-            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-            self.tasks_dir = tasks_dir or os.path.join(base_dir, ".agent_tasks")
+        self.tasks_dir = tasks_dir
+        if self.tasks_dir:
             os.makedirs(self.tasks_dir, exist_ok=True)
 
     async def send_message(
@@ -241,12 +238,24 @@ class BuiltinAgentBackend(BaseAgentBackend):
                     json_mode=json_mode, timeout=timeout, context=context
                 )
             except Exception as e:
-                print(f"⚠️ [BuiltinAgent] LLMAPIBackend 前置直连异常，回退至 IPC 邮箱通道: {e}")
+                print(f"⚠️ [BuiltinAgent] LLMAPIBackend 前置直连异常: {e}")
 
+        # 1.2 默认废除 .agent_tasks 磁盘落地与 600s 静默轮询: 未显式传入 tasks_dir 时 0ms 快速分流/熔断
         if not self.tasks_dir:
-            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-            self.tasks_dir = os.path.join(base_dir, ".agent_tasks")
-            os.makedirs(self.tasks_dir, exist_ok=True)
+            if os.environ.get("AEGIS_MOCK_MODE") == "1" or self.fallback_fn:
+                if self.fallback_fn:
+                    return self.fallback_fn(role, prompt, json_mode=json_mode, context=context)
+                return await RuleMockBackend().send_message(
+                    role=role, model=model, prompt=prompt, system_prompt=system_prompt,
+                    json_mode=json_mode, timeout=timeout, context=context
+                )
+            raise RuntimeError(
+                f"❌ [AEGIS V4.1 Fail-Fast] 默认已废除 .agent_tasks 磁盘邮箱与长轮询挂起 (role={role})。\n"
+                f"   请使用宿主驱动架构 `aegis_mcp_server.py` (MCP Tool 模式)、传入内存 direct_handler、"
+                f"或配置 llm_api (OPENAI_API_KEY / DEEPSEEK_API_KEY / LLM_API_KEY)。"
+            )
+
+        os.makedirs(self.tasks_dir, exist_ok=True)
 
         context = context or {}
         tag = context.get("task_tag") or f"{context.get('seed_id', 'init')}_step_{context.get('step', 0)}"

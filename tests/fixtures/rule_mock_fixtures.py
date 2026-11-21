@@ -119,7 +119,7 @@ def handle_rule_mock(
 
         category = (ctx.get("category") or "news").lower()
         is_fnd = category in ("fundamental", "fnd")
-        win1 = 66 if is_fnd else 20
+        win1 = 66 if is_fnd else 21
         win2 = 125 if is_fnd else 63
         pyramid_kb = ctx.get("pyramid_kb") or ""
         neut_list = ctx.get("neutralizations") or ["STATISTICAL", "CROWDING"]
@@ -160,10 +160,10 @@ def handle_rule_mock(
 
             variants.append({
                 "slot": slot,
-                "optimize_reason": f"针对母本 {orig_alpha} 进行第 {slot} 槽因果探索，调节窗口为自然日历周期",
+                "optimize_reason": f"针对母本 {orig_alpha} 进行第 {slot} 槽因果探索，预期改善 Sharpe 与 Margin 并验证离散日历周期稳健性",
                 "hypothesis_ref": hypothesis_id,
                 "mechanism_intents": ["TEMPORAL_DECAY"],
-                "economic_delta": f"第 {slot} 槽检验不同期限下的信息半衰期与截面形态",
+                "economic_delta": f"第 {slot} 槽检验不同期限下的信息半衰期与截面形态增量",
                 "expression": expr,
                 "neutralization": neut,
                 "type": v_type,

@@ -161,14 +161,27 @@ class TestV32MechanismRevolution(unittest.TestCase):
         )
         self.assertFalse(res_win_toolong["is_valid"], "使用了超过 252 的超长窗口 300 必须被拦截")
 
-        # 4.3 合法正整数窗口 (如 17 日、30 日等) 全面自由放行，不设死板白名单限制
-        res_win_allowed = DimensionAuditor.audit_expression(
+        # 4.3 离散时间晶格校验：任意非晶格整数窗口 17 被拦截，标准日频晶格窗口 21 放行
+        res_win_nonlattice = DimensionAuditor.audit_expression(
             "ts_delta(f1, 17)",
+            known_fields=known_fields,
+        )
+        self.assertFalse(
+            res_win_nonlattice["is_valid"],
+            "非离散时间晶格窗口 17 必须被 Lattice-Window 拦截"
+        )
+        self.assertTrue(
+            any("Lattice-Window" in iss for iss in res_win_nonlattice["issues"]),
+            f"期望包含 Lattice-Window 提示，实际: {res_win_nonlattice['issues']}"
+        )
+
+        res_win_allowed = DimensionAuditor.audit_expression(
+            "ts_delta(f1, 21)",
             known_fields=known_fields,
         )
         self.assertTrue(
             res_win_allowed["is_valid"],
-            f"合法正整数窗口 17 必须予以放行，实际被拒: {res_win_allowed['issues']}"
+            f"标准日频晶格窗口 21 必须予以放行，实际被拒: {res_win_allowed['issues']}"
         )
 
     def test_05_production_gate_self_corr_and_pc_certificate(self):
@@ -236,10 +249,10 @@ class TestV32MechanismRevolution(unittest.TestCase):
         self.assertEqual(trial_20_threshold, 1.58)
 
     def test_07_surgery_mode_slot2_syntax_validity(self):
-        """[断言 7] Slot 2 裸核消融保留原始常数不含 NUM，且反事实夏普坍塌时触发算子寄生法医警告"""
-        parent_expr = "group_rank(winsorize(ts_delta(f1, 20), std=3), subindustry)"
+        """[断言 7] Slot 2 裸核消融保留原始常数不含 NUM，且通过离散晶格 AST 审查"""
+        parent_expr = "group_rank(winsorize(ts_delta(f1, 21), std=3), subindustry)"
         stripped = ASTSandboxCorrector.strip_decoration_operators(parent_expr, mechanism_intents=set())
-        self.assertEqual(stripped, "ts_delta(f1, 20)")
+        self.assertEqual(stripped, "ts_delta(f1, 21)")
         self.assertNotIn("NUM", stripped)
 
         # 语法与 AST 审查通过
@@ -290,9 +303,10 @@ class TestV32MechanismRevolution(unittest.TestCase):
         batch_data = {
             "step": 2,
             "has_parent": True,
+            "parent_expression": "ts_delta(field_a, 21)",
             "parent_snapshot": {
                 "horizon_verdict": "PLATEAU",
-                "expression": "ts_delta(field_a, 20)",
+                "expression": "ts_delta(field_a, 21)",
                 "sharpe": 1.65,
                 "fitness": 1.4,
                 "margin": 0.0025,
@@ -301,12 +315,13 @@ class TestV32MechanismRevolution(unittest.TestCase):
             "items": [
                 {
                     "slot": 1,
-                    "expression": "ts_delta(field_a, 20)",
-                    "neutralization": "SUBINDUSTRY",
-                    "optimize_reason": "Control slot replicating parent",
+                    "optimize_reason": "母本基准控制槽位: 逐字复现母本表达式并严格核对同口径 Sharpe 与 Margin",
                     "hypothesis_ref": "HYP_01",
-                    "mechanism_intents": ["TEMPORAL_DECAY"],
-                    "economic_delta": "Replicate parent"
+                    "mechanism_intents": ["EXPECTATION_SURPRISE"],
+                    "economic_delta": "母本基准对照槽 (parent_control): 验证基准 Sharpe 一致性",
+                    "expression": "ts_delta(field_a, 21)",
+                    "neutralization": "SUBINDUSTRY",
+                    "type": "parent_control",
                 }
             ],
             "known_fields": {
@@ -330,7 +345,7 @@ class TestV32MechanismRevolution(unittest.TestCase):
             "alpha_id": "ALPHA_001",
             "status": "COMPLETE",
             "slot": 1,
-            "expression": "ts_delta(field_a, 20)",
+            "expression": "ts_delta(field_a, 21)",
             "neutralization": "SUBINDUSTRY",
             "prodCorrelation": 0.15,
             "pcorr": 0.15,
@@ -386,7 +401,7 @@ class TestV32MechanismRevolution(unittest.TestCase):
             "f2": {"type": "MATRIX", "domain": "unbounded", "semantic_role": "Dimension_Anchor"},
         }
         # 1. ts_rank 作为非负门控乘以标准化信号 -> 放行
-        gate_expr = "multiply(ts_rank(f1, 20), group_zscore(f2, subindustry))"
+        gate_expr = "multiply(ts_rank(f1, 21), group_zscore(f2, subindustry))"
         audit_gate = DimensionAuditor.audit_expression(gate_expr, known_fields=fields, category="other")
         self.assertTrue(audit_gate["is_valid"], f"ts_rank 门控乘法必须放行，实际问题: {audit_gate['issues']}")
 
@@ -461,32 +476,35 @@ class TestV32MechanismRevolution(unittest.TestCase):
         batch_data = {
             "step": 2,
             "has_parent": True,
+            "parent_expression": "group_rank(ts_delta(field_a, 21), subindustry)",
             "parent_snapshot": {
                 "horizon_verdict": "PLATEAU",
-                "expression": "ts_delta(field_a, 20)",
-                "sharpe": 1.30,
-                "fitness": 1.1,
-                "margin": 0.002,
+                "expression": "group_rank(ts_delta(field_a, 21), subindustry)",
+                "sharpe": 1.80,
+                "fitness": 1.4,
+                "margin": 0.0025,
                 "turnover": 0.15
             },
             "items": [
                 {
                     "slot": 1,
-                    "expression": "group_rank(ts_delta(field_a, 20), subindustry)",
-                    "neutralization": "SUBINDUSTRY",
-                    "optimize_reason": "Control slot",
+                    "optimize_reason": "母本控制基准槽: 复现完整信号表达式并对齐基准 Sharpe 与 Margin 水平",
                     "hypothesis_ref": "HYP_01",
-                    "mechanism_intents": ["TEMPORAL_DECAY"],
-                    "economic_delta": "Replicate parent"
+                    "mechanism_intents": ["EXPECTATION_SURPRISE"],
+                    "economic_delta": "母本控制基线槽 (parent_control): 复现原结构验证 Sharpe",
+                    "expression": "group_rank(ts_delta(field_a, 21), subindustry)",
+                    "neutralization": "SUBINDUSTRY",
+                    "type": "parent_control",
                 },
                 {
                     "slot": 2,
-                    "expression": "ts_delta(field_a, 20)",
-                    "neutralization": "SUBINDUSTRY",
-                    "optimize_reason": "Ablation slot",
+                    "optimize_reason": "反事实消融对照槽: 剥离外层装饰仅保留裸核差分检验机制 Sharpe 净增益",
                     "hypothesis_ref": "HYP_01",
-                    "mechanism_intents": ["RESIDUAL_EXTRACTION"],
-                    "economic_delta": "Naked core"
+                    "mechanism_intents": ["EXPECTATION_SURPRISE"],
+                    "economic_delta": "消融裸核槽 (ablation_control): 对比外层包装是否带来真增益",
+                    "expression": "ts_delta(field_a, 21)",
+                    "neutralization": "SUBINDUSTRY",
+                    "type": "ablation_control",
                 }
             ],
             "known_fields": {
@@ -500,18 +518,19 @@ class TestV32MechanismRevolution(unittest.TestCase):
         mock_bm.submit_multi_simulation.return_value = {"location": "https://api.worldquantbrain.com/multi-sim/test1234"}
         mock_bm.check_multi_simulation.return_value = {"status": "COMPLETE", "progress": 1.0}
 
-        # 真实 Brain API 返回绝对不含 slot 和 hypothesis 字段
+        # 真实 Brain API 返回绝对不含 slot 和 hypothesis 字段；
+        # 检验正确双重差分逻辑: 母本 |S|=1.80 vs 裸核 |S|=1.75 (降幅 < 0.20 -> 外层未带来增量)
         raw_brain_alpha1 = {
             "id": "ALPHA_001",
             "alpha_id": "ALPHA_001",
             "status": "COMPLETE",
-            "expression": "group_rank(ts_delta(field_a, 20), subindustry)",
+            "expression": "group_rank(ts_delta(field_a, 21), subindustry)",
             "neutralization": "SUBINDUSTRY",
             "is": {
-                "sharpe": 1.35,
+                "sharpe": 1.80,
                 "turnover": 0.15,
                 "margin": 0.0025,
-                "fitness": 1.20,
+                "fitness": 1.40,
                 "checks": [],
                 "yearly_stats": [],
             }
@@ -520,13 +539,13 @@ class TestV32MechanismRevolution(unittest.TestCase):
             "id": "ALPHA_002",
             "alpha_id": "ALPHA_002",
             "status": "COMPLETE",
-            "expression": "ts_delta(field_a, 20)",
+            "expression": "ts_delta(field_a, 21)",
             "neutralization": "SUBINDUSTRY",
             "is": {
-                "sharpe": 0.40,
+                "sharpe": 1.75,
                 "turnover": 0.15,
-                "margin": 0.0010,
-                "fitness": 0.30,
+                "margin": 0.0020,
+                "fitness": 1.30,
                 "checks": [],
                 "yearly_stats": [],
             }

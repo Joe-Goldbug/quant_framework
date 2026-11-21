@@ -2,7 +2,7 @@
  "dataset_id": "finnews_nlp_scores",
  "region": "GLB",
  "total_fields": 108,
- "dataset_note": "Transformer Based Financial News Scores (category=other, delay=1, universe=MINVOL1M). Daily sentiment/relevance scores for Dow Jones Newswires stories via a custom transformer NLP model. 105 MATRIX fields = 7 aggregation families (average/median/maximum/minimum/stddev/lower_confidence/upper_confidence) x {negative, neutral, positive} polarity x NLP variants 1-6. All fields share coverage 0.4621 (fraction of MINVOL1M names with >=1 mapped story that day) and very low alphaCount (1-24) => blue-ocean. Domain [0,1] polarity. Daily update frequency. | 2026-11-01 注入 companion 总量字段: assets_total_2(fundamental23, cov=0.9603), fnd23_tot_revenue(fundamental23, cov=0.9117) — 仅作 Iron Law A 分母，非主信号源 | [AEGIS-授权] 已注入 1 个 GLB fundamental23 跨数据集归一锚 fnd23_tot_assets (cov=0.9601, HOT), 仅供分母/差分基准, 满足铁律 A 高覆盖归一锚要求。",
+ "dataset_note": "Transformer Based Financial News Scores (category=other, delay=1, universe=MINVOL1M). Daily sentiment/relevance scores for Dow Jones Newswires stories via a custom transformer NLP model. 105 MATRIX fields = 7 aggregation families (average/median/maximum/minimum/stddev/lower_confidence/upper_confidence) x {negative, neutral, positive} polarity x NLP variants 1-6. All fields share coverage 0.4621 (fraction of MINVOL1M names with >=1 mapped story that day) and very low alphaCount (1-24) => blue-ocean. Domain [0,1] polarity. Daily update frequency.",
  "fields": {
   "average_negative_sentiment_score_1": {
    "type": "MATRIX",
@@ -1394,25 +1394,10 @@
    "update_frequency": "quarterly",
    "semantic_role": "Signal_Flow",
    "skewness": "medium",
-   "dimension_anchor_suggested": "fnd23_tot_assets",
    "role_note": "营业收入流量，覆盖 91.2%",
    "companion_source": "fundamental23",
    "injected": true,
    "injected_reason": "AEGIS 研究员授权: 引入单个 coverage>=0.80 同源总量字段做 Iron Law A 分母 (角色02 同数据集内生字段约束已为此字段放宽)"
-  },
-  "fnd23_tot_assets": {
-   "type": "MATRIX",
-   "description": "total assets.",
-   "coverage": 0.9601,
-   "alpha_count": 22,
-   "user_count": 13,
-   "category": "Fundamental",
-   "update_frequency": "quarterly",
-   "semantic_role": "Dimension_Anchor",
-   "domain": "positive",
-   "is_sparse": false,
-   "skewness": "high",
-   "cross_dataset_note": "AEGIS 用户授权跨数据集归一锚: GLB fundamental23 总量字段, 仅作分母剥离规模噪音, 禁止作分子主信号"
   }
  },
  "injected_companion_fields": [

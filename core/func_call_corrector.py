@@ -23,11 +23,14 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 try:
     from quant_framework.core.operator_registry import OperatorRegistry
+    from quant_framework.core.fastexpr_ast import parse_fastexpr, canonical_equivalence_key
 except (ModuleNotFoundError, ImportError):
     try:
         from core.operator_registry import OperatorRegistry
+        from core.fastexpr_ast import parse_fastexpr, canonical_equivalence_key
     except (ModuleNotFoundError, ImportError):
         from operator_registry import OperatorRegistry
+        from fastexpr_ast import parse_fastexpr, canonical_equivalence_key
 
 if sys.platform == "win32":
     try:
@@ -187,18 +190,14 @@ class ASTSandboxCorrector:
         for p in cls.PARAM_ALIASES:
             cleaned = re.sub(rf'(,\s*){p}\s*=\s*([0-9.]+)', r'\1\2', cleaned)
 
-        # 4. 高阶算子参数默认值补全 (jump_decay 需 sensitivity 和 force)
-        if "jump_decay(" in cleaned and "sensitivity" not in cleaned and "force" not in cleaned:
-            cleaned = re.sub(r'jump_decay\s*\(([^,]+),\s*([0-9.]+)\s*\)', r'jump_decay(\1, \2, sensitivity=0.5, force=0.1)', cleaned)
-
-        # 5. 参数顺序自愈 (如 ts_decay_linear(10, x) -> ts_decay_linear(x, 10))
-        try:
-            tree = ast.parse(cleaned, mode='eval')
-            order_corrector = ParamOrderCorrector()
-            fixed_tree = order_corrector.visit(tree)
-            cleaned = ast.unparse(fixed_tree)
-        except Exception:
-            pass
+        # 4. 参数顺序自愈 (仅在单行表达式下 AST 改写，保护多行 SNC 语义赋值变量名不被内联破坏)
+        parsed = parse_fastexpr(cleaned)
+        if parsed.is_valid and len(parsed.assignment_list) == 0 and parsed.final_ast is not None:
+            try:
+                fixed_tree = ParamOrderCorrector().visit(ast.Expression(body=parsed.final_ast))
+                cleaned = ast.unparse(fixed_tree)
+            except Exception:
+                pass
 
         return cleaned
 
@@ -207,16 +206,26 @@ class ASTSandboxCorrector:
         """
         自动日历网格吸附:
         保护日频触发器 (d=1)，将非法的时间窗口吸附到最近的标准日历网格
-        [5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252]
         """
         if not expr:
             return expr
         corrected = cls.correct_expression(expr)
+        parsed = parse_fastexpr(corrected)
+        if not parsed.is_valid or parsed.final_ast is None:
+            return corrected
         try:
-            tree = ast.parse(corrected, mode='eval')
+            if len(parsed.assignment_list) == 0:
+                snapped_tree = CalendarWindowSnapper(cls.VALID_LOOKBACKS).visit(ast.Expression(body=parsed.final_ast))
+                return ast.unparse(snapped_tree)
+            # 多行 SNC 逐条吸附并保留变量命名
             snapper = CalendarWindowSnapper(cls.VALID_LOOKBACKS)
-            snapped_tree = snapper.visit(tree)
-            return ast.unparse(snapped_tree)
+            rebuilt = []
+            for lhs, rhs, _ in parsed.assignment_list:
+                fixed_rhs = snapper.visit(rhs)
+                rebuilt.append(f"{lhs} = {ast.unparse(fixed_rhs)};")
+            if parsed.module_ast and parsed.module_ast.body and isinstance(parsed.module_ast.body[-1], ast.Expr):
+                rebuilt.append(ast.unparse(snapper.visit(parsed.module_ast.body[-1].value)))
+            return "\n".join(rebuilt)
         except Exception:
             return corrected
 
@@ -228,7 +237,7 @@ class ASTSandboxCorrector:
         Stage 0 ATOM Alpha 专属门禁审查:
         1. 专攻 ATOM Alpha 范式，使用 1~3 个字段
         2. 算子预算限制：总算子数 op <= 6 (豁免 vec_* 降维包裹算子)
-        3. 加法/乘法不再一刀切禁止；是否合法由 HypothesisSpec 的量纲与机制意图审计决定
+        3. 支持单行与多行 SNC 语法
         """
         issues = []
         op_count = 0
@@ -237,10 +246,10 @@ class ASTSandboxCorrector:
         if not expr or not expr.strip():
             return False, ["表达式为空"], 0, set()
 
-        try:
-            tree = ast.parse(expr.strip(), mode='eval')
-        except Exception as e:
-            return False, [f"表达式语法解析失败: {e}"], 0, set()
+        parsed = parse_fastexpr(expr.strip())
+        if not parsed.is_valid or parsed.module_ast is None:
+            return False, [f"表达式语法解析失败: {'; '.join(parsed.errors)}"], 0, set()
+        tree = parsed.module_ast
 
         group_and_params = {
             "market", "sector", "subindustry", "industry", "country", "region",
@@ -251,7 +260,6 @@ class ASTSandboxCorrector:
         for node in ast.walk(tree):
             if isinstance(node, ast.BinOp):
                 op_count += 1
-                # V2: 加乘是否合法交给量纲/机制审计；这里只计数，不再逼 Agent 堆一元装饰算子
             elif isinstance(node, ast.UnaryOp):
                 op_count += 1
             elif isinstance(node, ast.Call):
@@ -268,7 +276,8 @@ class ASTSandboxCorrector:
                 name = node.id
                 name_lower = name.lower()
                 if (
-                    name_lower not in group_and_params
+                    name not in parsed.local_vars
+                    and name_lower not in group_and_params
                     and name not in all_known_ops
                 ):
                     if valid_dataset_fields is not None:
@@ -294,64 +303,66 @@ class ASTSandboxCorrector:
     @classmethod
     def get_canonical_skeleton(cls, expr: str) -> str:
         """
-        通过 AST 节点转换抽取标准拓扑骨架 (消除数字参数差异)
+        通过统一 AST 解析与局部 SNC 变量内联抽取标准拓扑骨架 (消除变量重命名与数字参数差异)
         """
         corrected = cls.correct_expression(expr)
-        try:
-            tree = ast.parse(corrected, mode='eval')
-            transformed = SkeletonTransformer().visit(tree)
-            skeleton = ast.unparse(transformed)
-            # 统一去除空格
-            return re.sub(r'\s+', '', skeleton)
-        except Exception:
-            # 降级备选方案：正则替换所有纯数字为 NUM
-            return re.sub(r'\b\d+(\.\d+)?\b', 'NUM', re.sub(r'\s+', '', corrected))
+        parsed = parse_fastexpr(corrected)
+        if parsed.is_valid and parsed.final_ast is not None:
+            try:
+                transformed = SkeletonTransformer().visit(ast.Expression(body=parsed.final_ast))
+                skeleton = ast.unparse(transformed)
+                return re.sub(r'\s+', '', skeleton)
+            except Exception:
+                return canonical_equivalence_key(parsed)
+        return canonical_equivalence_key(corrected)
 
     @classmethod
     def compute_skeleton_hash(cls, skeleton_str: str) -> str:
         """计算骨架 SHA256/MD5 指纹"""
         return hashlib.md5(skeleton_str.encode('utf-8')).hexdigest()
 
-    @classmethod
-    def get_core_skeleton(cls, expr: str, mechanism_intents: Optional[set] = None) -> str:
-        """
-        V2: 提取“核心经济骨架”。
+    _CONDITIONAL_DECORATION = {
+        "signed_power": "TAIL_ASYMMETRY",
+        "power": "TAIL_ASYMMETRY",
+        "winsorize": "TAIL_ASYMMETRY",
+        "s_log_1p": "TAIL_ASYMMETRY",
+        "abs": "TAIL_ASYMMETRY",
+        "truncate": "TAIL_ASYMMETRY",
+        "ts_decay_linear": "TEMPORAL_DECAY",
+        "ts_decay_exp_window": "TEMPORAL_DECAY",
+        "ts_mean": "TEMPORAL_DECAY",
+        "ts_backfill": "TEMPORAL_DECAY",
+        "group_backfill": "TEMPORAL_DECAY",
+        "ts_target_tvr_decay": "TEMPORAL_DECAY",
+        "hump": "TEMPORAL_DECAY",
+        "rank": "CROSS_SECTIONAL_RELATIVE",
+        "group_rank": "CROSS_SECTIONAL_RELATIVE",
+        "group_zscore": "CROSS_SECTIONAL_RELATIVE",
+        "group_neutralize": "CROSS_SECTIONAL_RELATIVE",
+        "zscore": "CROSS_SECTIONAL_RELATIVE",
+        "scale": "CROSS_SECTIONAL_RELATIVE",
+        "group_scale": "CROSS_SECTIONAL_RELATIVE",
+        "normalize": "CROSS_SECTIONAL_RELATIVE",
+        "group_normalize": "CROSS_SECTIONAL_RELATIVE",
+        "ts_av_diff": "EXPECTATION_SURPRISE",
+        "ts_zscore": "EXPECTATION_SURPRISE",
+        "ts_rank": "EXPECTATION_SURPRISE",
+        "ts_scale": "EXPECTATION_SURPRISE",
+    }
 
-        装饰算子不能靠固定名单一刀切:
-        - 若假说声明 TEMPORAL_DECAY，则 ts_decay_* 是核心机制，不剥离;
-        - 若声明 TAIL_ASYMMETRY，则 winsorize/signed_power/s_log_1p 是核心机制;
-        - 若声明 CROSS_SECTIONAL_RELATIVE，则 rank/group_rank 等截面映射是核心机制。
-        """
+    @classmethod
+    def _strip_decoration_ast(cls, expr: str, mechanism_intents: Optional[set] = None) -> Tuple[Optional[ast.AST], str]:
         intents = set(mechanism_intents or [])
         corrected = cls.correct_expression(expr)
-        try:
-            tree = ast.parse(corrected, mode='eval')
-        except Exception:
-            return cls.get_canonical_skeleton(corrected)
-
-        always_decoration = set()
-        conditional_decoration = {
-            "signed_power": "TAIL_ASYMMETRY",
-            "power": "TAIL_ASYMMETRY",
-            "winsorize": "TAIL_ASYMMETRY",
-            "s_log_1p": "TAIL_ASYMMETRY",
-            "abs": "TAIL_ASYMMETRY",
-            "ts_decay_linear": "TEMPORAL_DECAY",
-            "ts_decay_exp_window": "TEMPORAL_DECAY",
-            "jump_decay": "TEMPORAL_DECAY",
-            "rank": "CROSS_SECTIONAL_RELATIVE",
-            "group_rank": "CROSS_SECTIONAL_RELATIVE",
-            "group_zscore": "CROSS_SECTIONAL_RELATIVE",
-            "group_neutralize": "CROSS_SECTIONAL_RELATIVE",
-        }
+        parsed = parse_fastexpr(corrected)
+        if not parsed.is_valid or parsed.final_ast is None:
+            return None, corrected
+        tree: ast.AST = ast.Expression(body=parsed.final_ast)
 
         def _is_decoration_call(node: ast.AST) -> bool:
             if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
                 return False
-            name = node.func.id
-            if name in always_decoration:
-                return True
-            required_intent = conditional_decoration.get(name)
+            required_intent = cls._CONDITIONAL_DECORATION.get(node.func.id)
             return bool(required_intent and required_intent not in intents)
 
         changed = True
@@ -360,7 +371,7 @@ class ASTSandboxCorrector:
 
             def _strip(node: ast.AST) -> ast.AST:
                 nonlocal changed
-                if _is_decoration_call(node) and node.args:
+                if _is_decoration_call(node) and isinstance(node, ast.Call) and node.args:
                     changed = True
                     return node.args[0]
                 for field_name, value in ast.iter_fields(node):
@@ -378,7 +389,16 @@ class ASTSandboxCorrector:
                 return node
 
             tree = _strip(tree)
+        return tree, corrected
 
+    @classmethod
+    def get_core_skeleton(cls, expr: str, mechanism_intents: Optional[set] = None) -> str:
+        """
+        提取“核心经济骨架”，覆盖 26 类外层修饰/壳算子，彻底封堵外层壳算子套壳重复实验。
+        """
+        tree, corrected = cls._strip_decoration_ast(expr, mechanism_intents=mechanism_intents)
+        if tree is None:
+            return cls.get_canonical_skeleton(corrected)
         try:
             transformed = SkeletonTransformer().visit(tree)
             core = ast.unparse(transformed)
@@ -390,65 +410,10 @@ class ASTSandboxCorrector:
     def strip_decoration_operators(cls, expr: str, mechanism_intents: Optional[set] = None) -> str:
         """
         剥离外层装饰算子，保留内部原始表达式结构（不替换常数，不转为抽象骨架）。
-        用于消融测试裸核构造等场景。
         """
-        intents = set(mechanism_intents or [])
-        corrected = cls.correct_expression(expr)
-        try:
-            tree = ast.parse(corrected, mode='eval')
-        except Exception:
+        tree, corrected = cls._strip_decoration_ast(expr, mechanism_intents=mechanism_intents)
+        if tree is None:
             return corrected
-
-        always_decoration = set()
-        conditional_decoration = {
-            "signed_power": "TAIL_ASYMMETRY",
-            "power": "TAIL_ASYMMETRY",
-            "winsorize": "TAIL_ASYMMETRY",
-            "s_log_1p": "TAIL_ASYMMETRY",
-            "abs": "TAIL_ASYMMETRY",
-            "ts_decay_linear": "TEMPORAL_DECAY",
-            "ts_decay_exp_window": "TEMPORAL_DECAY",
-            "jump_decay": "TEMPORAL_DECAY",
-            "rank": "CROSS_SECTIONAL_RELATIVE",
-            "group_rank": "CROSS_SECTIONAL_RELATIVE",
-            "group_zscore": "CROSS_SECTIONAL_RELATIVE",
-            "group_neutralize": "CROSS_SECTIONAL_RELATIVE",
-        }
-
-        def _is_decoration_call(node: ast.AST) -> bool:
-            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
-                return False
-            name = node.func.id
-            if name in always_decoration:
-                return True
-            required_intent = conditional_decoration.get(name)
-            return bool(required_intent and required_intent not in intents)
-
-        changed = True
-        while changed:
-            changed = False
-
-            def _strip(node: ast.AST) -> ast.AST:
-                nonlocal changed
-                if _is_decoration_call(node) and node.args:
-                    changed = True
-                    return node.args[0]
-                for field_name, value in ast.iter_fields(node):
-                    if isinstance(value, list):
-                        new_values = []
-                        for child in value:
-                            if _is_decoration_call(child) and isinstance(child, ast.Call) and child.args:
-                                changed = True
-                                new_values.append(child.args[0])
-                            else:
-                                new_values.append(_strip(child) if isinstance(child, ast.AST) else child)
-                        setattr(node, field_name, new_values)
-                    elif isinstance(value, ast.AST):
-                        setattr(node, field_name, _strip(value))
-                return node
-
-            tree = _strip(tree)
-
         try:
             ast.fix_missing_locations(tree)
             return ast.unparse(tree)
@@ -562,10 +527,14 @@ class ASTSandboxCorrector:
                 + "\\n".join(core_details)
             )
 
-        # 0. 母本骨架纯常数微调硬拦截 (Anti-Trivial Tuning Gate)
+        # 0. 母本骨架纯常数微调硬拦截 (Anti-Trivial Tuning Gate，精确复现母本的控制槽不计入常数微调)
         if parent_expression:
+            parent_corr_check = self.correct_expression(parent_expression)
             parent_skel = self.get_canonical_skeleton(parent_expression)
-            same_as_parent = [idx + 1 for idx, s in enumerate(skeletons) if s == parent_skel]
+            same_as_parent = [
+                idx + 1 for idx, (e, s) in enumerate(zip(corrected_exprs, skeletons))
+                if s == parent_skel and e != parent_corr_check
+            ]
             if len(same_as_parent) >= min(3, len(expressions)):
                 conn.close()
                 raise ValueError(
@@ -574,8 +543,8 @@ class ASTSandboxCorrector:
                     f"卡槽 {same_as_parent} 仅微调了常数数值，未引入新的数学拓扑结构！"
                 )
 
-        # 1. 批次内部骨架多样性门禁：支持弹性容量缩放 (8槽限2条，20槽限4条；精修/exploit阶段放宽至60%对齐SwarmAuditor)
-        ratio_cap = 0.60 if is_exploit_or_step2 else 0.20
+        # 1. 批次内部骨架多样性门禁：支持弹性容量缩放 (8槽限2条，20槽限4条；精修/exploit阶段收紧至35%)
+        ratio_cap = 0.35 if is_exploit_or_step2 else 0.20
         max_allowed_per_skel = max(2, int(len(expressions) * ratio_cap))
         skeleton_freq: Dict[str, List[int]] = {}
         for idx, s_str in enumerate(skeletons):
@@ -593,15 +562,15 @@ class ASTSandboxCorrector:
                 f"违规骨架详情:\n" + "\n".join(details) + "\n请结合底层数据生成过程 (DGP) 自主推演差异化因果拓扑与不同经济学假说机制，严禁同质化骨架堆叠！"
             )
 
-        # 2. 数据库历史去重 (Exact MD5) 与 跨批次历史骨架累积查重 (Gate 3 终极加固)
+        # 2. 数据库历史去重 (Exact MD5) 与 跨批次历史骨架累积查重 (全阶段强制，不再因 step>=2 豁免)
         duplicates = []
         new_records = []
         parent_corr = self.correct_expression(parent_expression) if parent_expression else None
+        effective_max_hist = max_hist_count
         for expr, skel, skel_hash in zip(corrected_exprs, skeletons, skeleton_hashes):
-            # 2.1 跨批次骨架频次核查：若该拓扑骨架在相同中性化下历史回测中已测试 >= max_hist_count (>= 8) 次，直接熔断
-            # 若提供了 batch_id，排除当前批次自身的旧记录 (支持幂等重跑与断点恢复)
-            # 若处于 step >= 2 的母本精修阶段，豁免骨架熔断以支持参数精调
-            if not is_exploit_or_step2:
+            is_parent_control = bool(parent_corr and expr == parent_corr)
+            # 2.1 跨批次骨架频次核查 (仅豁免精确母本对照组复测，其余一律执行上限拦截)
+            if not is_parent_control:
                 if batch_id:
                     cursor.execute(
                         "SELECT COUNT(*) FROM alpha_fingerprints WHERE skeleton_hash = ? AND region = ? AND universe = ? AND (neutralization = ? OR neutralization IS NULL) AND (batch_id != ? OR batch_id IS NULL)", 
@@ -613,10 +582,10 @@ class ASTSandboxCorrector:
                         (skel_hash, region, universe, neutralization)
                     )
                 hist_count = cursor.fetchone()[0]
-                if hist_count >= max_hist_count:
+                if hist_count >= effective_max_hist:
                     conn.close()
                     raise ValueError(
-                        f"【跨批次骨架耗尽熔断】该算子+字段骨架在中性化 [{neutralization}] 下已累计微调测试 {hist_count} 次 (>= {max_hist_count} 次上限)！\n"
+                        f"【跨批次骨架耗尽熔断】该算子+字段骨架在中性化 [{neutralization}] 下已累计微调测试 {hist_count} 次 (>= {effective_max_hist} 次上限)！\n"
                         f"违规骨架: [{skel}]\n"
                         f"系统硬性禁止继续修改数字窗口调参！必须更换底层数据集字段、更换中性化维度或改变算子拓扑结构！"
                     )

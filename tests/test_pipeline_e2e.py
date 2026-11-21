@@ -92,7 +92,7 @@ def run_verification_suite():
     assert not res2['is_valid'], "未能拦截 add(rank, rank) 纯数学拼凑"
 
     # 合规案例: 正交变动源与数据集内部自归一化 (纯内部波动率消除量纲，0 PV 污染)
-    good_expr = "divide(subtract(target_price, ts_mean(target_price, 20)), ts_std_dev(target_price, 20))"
+    good_expr = "divide(subtract(target_price, ts_mean(target_price, 21)), ts_std_dev(target_price, 21))"
     res3 = DimensionAuditor.audit_expression(good_expr, ["target_price"])
     print(f"测试合规表达式: '{good_expr}' -> 校验结果: {res3['is_valid']}")
     assert res3['is_valid'], "合规因果结构被误杀"

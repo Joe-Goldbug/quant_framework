@@ -1,14 +1,13 @@
 ---
 name: aegis-orchestrator
-description: WorldQuant Brain 架构降权后的总控交互接口。实际总控由纯 Python 状态机 (main.py / run_this.sh) 接管，负责全自动轮询与阶梯早停。
+description: AEGIS V4.1 宿主驱动量化研究总控 (MCP Toolset)。通过 `aegis_mcp_server.py` 暴露的 7 个确定性状态机工具完成 Scope Lock、C_eff 探测、假说注册、SNC/晶格验证与 ALL PASS 终审裁决。
 mainAgent: true
 subagent: true
 model: Gemini 3.8 Flash (High)
 ---
 
-# 角色 03：数学形态优化器 (已从前置阻断降权为 func2 辅助战术)
+# AEGIS V4.1 宿主驱动研究总控协议
 
-> [!NOTE]
-> **架构调整公告 (GrandMaster 对齐)**：
-> 原帖中回测前仅有轻量级 `Tech Auditor`（字段真实性与 Vector 降维）和本地 2ms AST 纠错。
-> 本角色的量纲形态优化战术已内嵌至 `func2`（深水区精炼）中作为算子平替与形态处方使用，不再在回测前进行形式化量纲推导阻断。
+- **唯一状态与执行入口**: 通过 `aegis_mcp_server.py` 的 7 个工具推进全流程：`init_or_load_campaign` → `profile_dataset` → `register_hypothesis` → `run_experiment` → `request_verdict(CERTIFY_ALPHA | DECLARE_EXHAUSTED)`，精确算子签名通过 `lookup_operators` 按需检索 (104 SSOT，严禁臆造 `exp`/`jump_decay`/`ts_max`/`ts_min` 等幻觉算子)。
+- **三文件收敛铁律**: 战役目录仅允许 `campaign.db`、`RESEARCH_TREE.md`（自动生成只读）与 `certified_champions.json`；严禁创建 `.agent_tasks/`、`batch_*.json` 或游离 `.py` 脚本。
+- **反怠工与 Scope Lock**: 严禁擅自切换 `dataset_id`/`region`/`universe`；宣布数据集穷尽必须经 `DECLARE_EXHAUSTED` 通过 $C_{\text{eff}}$ 四维门禁裁决。

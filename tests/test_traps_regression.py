@@ -136,31 +136,33 @@ class TestTrap2DeadlockPreventionCleanup(unittest.TestCase):
     若不清理 .agent_tasks/resp_*.json 缓存，下次 BuiltinAgentBackend 会重放相同非法产出导致死循环。
     """
     def test_task_cache_deleted_on_enforce_failure(self):
-        tasks_dir = os.path.join(WORKSPACE_DIR, "quant_framework", ".agent_tasks")
-        os.makedirs(tasks_dir, exist_ok=True)
-        dummy_resp_path = os.path.join(tasks_dir, "resp_aegis-swarm-generator_TEST_SEED_s1.json")
-        with open(dummy_resp_path, "w", encoding="utf-8") as f:
-            json.dump([{"slot": 1, "expression": "group_rank(f, subindustry)"}], f)
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp_base:
+            tasks_dir = os.path.join(tmp_base, ".agent_tasks")
+            os.makedirs(tasks_dir, exist_ok=True)
+            dummy_resp_path = os.path.join(tasks_dir, "resp_aegis-swarm-generator_TEST_SEED_s1.json")
+            with open(dummy_resp_path, "w", encoding="utf-8") as f:
+                json.dump([{"slot": 1, "expression": "group_rank(f, subindustry)"}], f)
 
-        self.assertTrue(os.path.exists(dummy_resp_path))
+            self.assertTrue(os.path.exists(dummy_resp_path))
 
-        # 构造全部是 group_rank 的非法变体
-        invalid_variants = [
-            {"slot": 1, "expression": "group_rank(f, subindustry)"},
-            {"slot": 2, "expression": "group_rank(g, subindustry)"},
-        ]
+            # 构造全部是 group_rank 的非法变体
+            invalid_variants = [
+                {"slot": 1, "expression": "group_rank(f, subindustry)"},
+                {"slot": 2, "expression": "group_rank(g, subindustry)"},
+            ]
 
-        # 模拟 main.py 的 try-except 保护与清理逻辑
-        cleaned = False
-        try:
-            SwarmAuditor.enforce(invalid_variants, step=1, parallelism=2, strict=True)
-        except (ValueError, PermissionError, RuntimeError):
-            if os.path.exists(dummy_resp_path):
-                os.remove(dummy_resp_path)
-                cleaned = True
+            # 模拟 main.py 的 try-except 保护与清理逻辑
+            cleaned = False
+            try:
+                SwarmAuditor.enforce(invalid_variants, step=1, parallelism=2, strict=True)
+            except (ValueError, PermissionError, RuntimeError):
+                if os.path.exists(dummy_resp_path):
+                    os.remove(dummy_resp_path)
+                    cleaned = True
 
-        self.assertTrue(cleaned, "捕获 SwarmAuditor 异常时必须清除 resp_*.json")
-        self.assertFalse(os.path.exists(dummy_resp_path), "响应缓存文件应已被物理删除，防止重放死锁")
+            self.assertTrue(cleaned, "捕获 SwarmAuditor 异常时必须清除 resp_*.json")
+            self.assertFalse(os.path.exists(dummy_resp_path), "响应缓存文件应已被物理删除，防止重放死锁")
 
 
 class TestTrap3ChampionPodiumAndProdCorr(unittest.TestCase):

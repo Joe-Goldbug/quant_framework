@@ -20,11 +20,13 @@
 - **乘法门控约束**：严禁双无界实数字段直接裸乘 (`multiply(A, B)` 或 `A * B`)；乘法必须作为非负门控滤波使用（至少有一方为值域处于 $[0, 1]$ 或 $[0, \infty)$ 的非负门控/权重，或常数），严禁两个定义域均在 $[-1, 1]$ 的特征直接相乘导致“负负得正”生成虚假买入信号；
 - **量纲加减约束**：加法与减法仅允许同量纲或同语义角色（如同为 `Signal_Flow`）的分量进行 `add` / `subtract`；跨不同语义角色（如 `Dimension_Anchor` 与 `Signal_Flow`）的无界加减必须在假说中声明 `EXPECTATION_SURPRISE` 或 `RESIDUAL_EXTRACTION`，否则视为量纲违规予以拦截。
 
-### 4. FastExpr 语法与时序自然日历周期合规核查 (Valid Syntax & Calendar Snapping)
-- 括号必须严格平衡；
-- 算子命名必须符合 WorldQuant FastExpr 官方标准；
-- Group 算子最后一个参数必须为裸字面量 `market/sector/industry/subindustry`，严禁加引号；
-- **时序窗口合规要求**：时序算子的窗口参数 $d$ 必须为合法正整数，严禁负数或非整数参数，窗口大小必须结合特征字段的信息半衰期与更新频率合理设定。
+### 4. FastExpr 多行 SNC 与离散时间尺度晶格核查 (AEGIS V4.1)
+- 原生支持单行与多行分号赋值 FastExpr (`mode='exec'`)，括号与分号语法严格合规；
+- 多行赋值变量必须符合 SNC 规范 (`^[a-z][a-z0-9_]{5,40}$`、蛇形 `<semantic>_<intent>`、后缀与外层算子族同构、严禁相邻同族冗余套壳与 `u/x/a/tmp` 命名)；
+- 算子必须在官方 **104 SSOT** 内（严禁 `exp`/`jump_decay`/`ts_max`/`ts_min`/`ts_skewness`/`ts_kurtosis`/`pasteurize`/`group_quantile`/`neg`）；
+- Group 算子最后一个参数必须为裸字面量 `market/sector/industry/subindustry/country/region`；
+- **离散时间尺度与超参晶格合规**：日频窗口 $d \in \{1, 5, 10, 21, 63, 126, 252\}$（季频 $\in \{63, 66, 125, 126, 252, 504\}$），`winsorize` `std` $\in \{3, 4\}$，`power`/`signed_power` $\in \{0.25, 0.5, 1.0, 1.5, 2.0\}$；
+- **跨量纲除法拦截**：禁止 `[0,1]`/`[-1,1]` 无量纲有界特征直接除以货币/总资产 `Dimension_Anchor`。
 
 ---
 

@@ -85,7 +85,7 @@ class DatasetFieldResolver:
         # 2. 优先级二: 显式指定的外部字段文件 (--fields-file <path>)
         if fields_file and os.path.exists(fields_file):
             print(f"📁 [FieldResolver] 从指定文件载入字段画像: {fields_file}")
-            parsed = self._parse_file(fields_file)
+            parsed = self._parse_file(fields_file, target_dataset_id=dataset_id)
             if parsed:
                 return parsed
 
@@ -120,7 +120,7 @@ class DatasetFieldResolver:
                 ]
                 for target_path in target_paths:
                     if os.path.exists(target_path):
-                        parsed = self._parse_file(target_path)
+                        parsed = self._parse_file(target_path, target_dataset_id=dataset_id)
                         if parsed:
                             print(f"✅ [FieldResolver] 匹配本地字段知识库: {region}/{c_ds} (共 {len(parsed)} 字段)")
                             return parsed
@@ -136,7 +136,7 @@ class DatasetFieldResolver:
                     for s_root in search_roots:
                         cand_path = os.path.join(s_root, cand, f"{c_ds}.json")
                         if os.path.exists(cand_path):
-                            parsed = self._parse_file(cand_path)
+                            parsed = self._parse_file(cand_path, target_dataset_id=dataset_id)
                             if parsed:
                                 print(f"🌐 [FieldResolver] 目标区域 '{region}' 缺少字段画像，已触发跨区域同源继承 (从 {cand}/{c_ds} 载入 {len(parsed)} 个特征)！")
                                 # 自动为当前区域落盘缓存，避免二次查找
@@ -150,7 +150,7 @@ class DatasetFieldResolver:
                     for root, _, files in os.walk(s_root):
                         if f"{c_ds}.json" in files:
                             found_path = os.path.join(root, f"{c_ds}.json")
-                            parsed = self._parse_file(found_path)
+                            parsed = self._parse_file(found_path, target_dataset_id=dataset_id)
                             if parsed:
                                 print(f"🔍 [FieldResolver] 在全局字段库中定位到同名画像: {found_path} (共 {len(parsed)} 字段)")
                                 self._save_cache(region, dataset_id, parsed)
@@ -163,7 +163,46 @@ class DatasetFieldResolver:
             f"   请先运行 01_field_explorer 探针脚本生成真实字段画像 JSON 后再启动挖掘。"
         )
 
-    def _parse_file(self, file_path: str) -> Dict[str, Dict[str, Any]]:
+    @staticmethod
+    def _dataset_aliases(dataset_id: str) -> set:
+        ds = (dataset_id or "").strip().lower()
+        if not ds:
+            return set()
+        aliases = {ds}
+        if ds.startswith("oth") and not ds.startswith("other"):
+            aliases.add(f"other{ds[3:]}")
+        elif ds.startswith("other"):
+            aliases.add(f"oth{ds[5:]}")
+        if ds.startswith("fnd"):
+            aliases.add(f"fundamental{ds[3:]}")
+        elif ds.startswith("fundamental"):
+            aliases.add(f"fnd{ds[11:]}")
+        if ds.startswith("nws"):
+            aliases.add(f"news{ds[3:]}")
+        elif ds.startswith("news"):
+            aliases.add(f"nws{ds[4:]}")
+        return aliases
+
+    @classmethod
+    def _is_dirty_cross_dataset_field(cls, entry: dict, target_dataset_id: Optional[str] = None) -> bool:
+        """剔除跨数据集混入字段 (如含 cross_dataset_note 或 dataset.id 与目标不匹配)"""
+        if not isinstance(entry, dict):
+            return False
+        if entry.get("cross_dataset_note"):
+            return True
+        if target_dataset_id:
+            allowed = cls._dataset_aliases(target_dataset_id)
+            ds_obj = entry.get("dataset")
+            entry_ds = None
+            if isinstance(ds_obj, dict) and ds_obj.get("id"):
+                entry_ds = str(ds_obj["id"]).strip().lower()
+            elif entry.get("dataset_id"):
+                entry_ds = str(entry["dataset_id"]).strip().lower()
+            if entry_ds and allowed and not (cls._dataset_aliases(entry_ds) & allowed):
+                return True
+        return False
+
+    def _parse_file(self, file_path: str, target_dataset_id: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
         """自适应解析 List 格式与 Dict 格式的字段定义"""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -178,6 +217,8 @@ class DatasetFieldResolver:
         if isinstance(data, list):
             for item in data:
                 if not isinstance(item, dict):
+                    continue
+                if self._is_dirty_cross_dataset_field(item, target_dataset_id=target_dataset_id):
                     continue
                 fid = item.get("id") or item.get("name")
                 if not fid:
@@ -211,6 +252,8 @@ class DatasetFieldResolver:
                 if k in ("dataset_id", "region", "universe", "delay", "total_fields", "universal_laws", "dataset_verdict"):
                     continue
                 if isinstance(v, dict):
+                    if self._is_dirty_cross_dataset_field(v, target_dataset_id=target_dataset_id):
+                        continue
                     entry = dict(v)
                     entry.setdefault("type", "MATRIX")
                     entry.setdefault("description", v.get("role_note", v.get("description", "无描述")))

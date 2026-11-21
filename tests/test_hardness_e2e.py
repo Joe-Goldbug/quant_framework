@@ -72,7 +72,7 @@ class TestAEGISHardnessSystem(unittest.TestCase):
 
         # 2. 深度嵌套子树 (winsorize 内部) 的双 [-1, 1] 裸乘拦截
         list_fields2 = ["sent_score_a", "sent_score_b"]
-        e2 = "group_rank(multiply(winsorize(sent_score_a, std=2.5), ts_decay_linear(sent_score_b, 5)), subindustry)"
+        e2 = "group_rank(multiply(winsorize(sent_score_a, std=3), ts_decay_linear(sent_score_b, 5)), subindustry)"
         res2 = DimensionAuditor.audit_expression(e2, list_fields2, category="news")
         self.assertFalse(res2["is_valid"], "嵌套双 [-1, 1] 裸乘必须被拦截！")
         self.assertIn("伪因果负负得正违规", res2["issues"][0])
@@ -242,19 +242,54 @@ class TestAEGISHardnessSystem(unittest.TestCase):
         campaign_dir = os.path.join(self.temp_dir, "campaign_tabu")
         os.makedirs(campaign_dir, exist_ok=True)
         sneaky_batch = [
-            {"expression": f"group_rank(ts_decay_exp_window(news_volume, {10+i}, factor=0.8), subindustry)", "optimize_reason": f"合规槽位 A{i}"}
+            {
+                "slot": i + 1,
+                "optimize_reason": f"合规槽位 A{i}，预期优化 Sharpe 与 Turnover 稳定表现",
+                "hypothesis_ref": "HYP_TABU",
+                "mechanism_intents": ["TEMPORAL_DECAY"],
+                "economic_delta": f"采用标准离散晶格衰减窗口验证时序平滑槽位 A{i}",
+                "expression": f"group_rank(ts_decay_exp_window(news_volume, {[10, 21][i]}, factor=0.8), subindustry)",
+            }
             for i in range(2)
         ] + [
-            {"expression": f"group_rank(ts_decay_linear(news_volume, {10+i}), subindustry)", "optimize_reason": f"合规槽位 B{i}"}
+            {
+                "slot": i + 3,
+                "optimize_reason": f"合规槽位 B{i}，预期优化 Sharpe 与 Margin 利润贡献",
+                "hypothesis_ref": "HYP_TABU",
+                "mechanism_intents": ["TEMPORAL_DECAY"],
+                "economic_delta": f"采用线性衰减离散窗口对比信号稳定性槽位 B{i}",
+                "expression": f"group_zscore(ts_decay_linear(news_volume, {[10, 21][i]}), subindustry)",
+            }
             for i in range(2)
         ] + [
             # Slot 5 偷偷夹带已处于 Tabu 锁定的字段组合！
-            {"expression": f"group_rank(ts_decay_exp_window(multiply({sig}, {cat}), 10, factor=0.8), subindustry)", "optimize_reason": "夹带违规字段对"}
+            {
+                "slot": 5,
+                "optimize_reason": "夹带违规字段对测试，验证 Tabu 全槽扫描拦截 Sharpe 违规样本",
+                "hypothesis_ref": "HYP_TABU",
+                "mechanism_intents": ["TEMPORAL_DECAY"],
+                "economic_delta": "引入历史停滞字段对用于测试 Gate 5 全槽扫描截获机制",
+                "expression": f"group_rank(ts_decay_exp_window(multiply({sig}, {cat}), 10, factor=0.8), subindustry)",
+            }
         ] + [
-            {"expression": f"group_rank(ts_delta(news_volume, {3+i}), subindustry)", "optimize_reason": f"合规槽位 C{i}"}
+            {
+                "slot": i + 6,
+                "optimize_reason": f"合规槽位 C{i}，验证事件冲击差分对 Sharpe 的提升",
+                "hypothesis_ref": "HYP_TABU",
+                "mechanism_intents": ["EXPECTATION_SURPRISE"],
+                "economic_delta": f"提取短期事件差分冲击向量验证预期差槽位 C{i}",
+                "expression": f"group_rank(ts_delta(news_volume, {[5, 10][i]}), subindustry)",
+            }
             for i in range(2)
         ] + [
-            {"expression": f"group_rank(s_log_1p(winsorize(news_volume, std=3)), subindustry)", "optimize_reason": "合规槽位 D"}
+            {
+                "slot": 8,
+                "optimize_reason": "合规槽位 D，通过凹压缩极值抑制集中度改善 Sharpe 与 Margin",
+                "hypothesis_ref": "HYP_TABU",
+                "mechanism_intents": ["TAIL_ASYMMETRY"],
+                "economic_delta": "对重尾信号执行尾部截断与对数压缩提升截面稳健性",
+                "expression": "group_rank(s_log_1p(winsorize(news_volume, std=3)), subindustry)",
+            }
         ]
         self.assertEqual(len(sneaky_batch), 8)
         batch_file = os.path.join(campaign_dir, "batch_sneaky.json")
@@ -296,23 +331,60 @@ class TestAEGISHardnessSystem(unittest.TestCase):
 
         # 当前批次待测 8 条表达式 (单批每种骨架 <= 2 条，使用未测过的独立测试字段 test_feed_x)
         rnd_field = f"test_feed_x_{int(time.time()*1000)%100000}"
+        parent_ctrl_expr = f"group_rank(ts_decay_linear({rnd_field}, 10), subindustry)"
         new_batch = [
-            {"expression": f"group_rank(ts_decay_linear({rnd_field}, {[10, 20][i]}), subindustry)", "optimize_reason": f"新批次变体 A{i}"}
+            {
+                "slot": 1,
+                "optimize_reason": "控制基准槽位 A0，严格复现母本结构以校验同口径 Sharpe 与 Margin",
+                "hypothesis_ref": "HYP_PASS",
+                "mechanism_intents": ["TEMPORAL_DECAY"],
+                "economic_delta": "基准对照锚定窗口 d=10 验证基础信号预测力",
+                "expression": parent_ctrl_expr,
+                "type": "parent_control",
+            },
+            {
+                "slot": 2,
+                "optimize_reason": "新批次变体 A1，切换组内标准化 zscore 保留连续幅度改善 Sharpe 与 Margin",
+                "hypothesis_ref": "HYP_PASS",
+                "mechanism_intents": ["CROSS_SECTIONAL_RELATIVE", "TEMPORAL_DECAY"],
+                "economic_delta": "从 rank 切换为 group_zscore 保留连续截面极值幅度并配合月度窗口",
+                "expression": f"group_zscore(ts_decay_linear({rnd_field}, 21), subindustry)",
+            },
+        ] + [
+            {
+                "slot": i + 3,
+                "optimize_reason": f"新批次变体 B{i}，测试指数衰减算子对 Sharpe 与 Turnover 的平滑增益",
+                "hypothesis_ref": "HYP_PASS",
+                "mechanism_intents": ["TEMPORAL_DECAY"],
+                "economic_delta": f"测试指数衰减权重结构对近期事件冲击的响应增量 B{i}",
+                "expression": f"group_rank(ts_decay_exp_window({rnd_field}, {[10, 21][i]}, factor=0.8), subindustry)",
+            }
             for i in range(2)
         ] + [
-            {"expression": f"group_rank(ts_decay_exp_window({rnd_field}, {[10, 20][i]}, factor=0.8), subindustry)", "optimize_reason": f"新批次变体 B{i}"}
+            {
+                "slot": i + 5,
+                "optimize_reason": f"新批次变体 C{i}，刻画短中周期差分对预期差 Sharpe 与 Margin 的影响",
+                "hypothesis_ref": "HYP_PASS",
+                "mechanism_intents": ["EXPECTATION_SURPRISE"],
+                "economic_delta": f"提取离散周期差分信号捕获边际变化 C{i}",
+                "expression": f"group_rank(ts_delta({rnd_field}, {[5, 10][i]}), subindustry)",
+            }
             for i in range(2)
         ] + [
-            {"expression": f"group_rank(ts_delta({rnd_field}, {3+i}), subindustry)", "optimize_reason": f"新批次变体 C{i}"}
-            for i in range(2)
-        ] + [
-            {"expression": f"group_rank(s_log_1p(winsorize({rnd_field}, std={3+i})), subindustry)", "optimize_reason": f"新批次变体 D{i}"}
+            {
+                "slot": i + 7,
+                "optimize_reason": f"新批次变体 D{i}，验证离散截断档 std={[3, 4][i]} 下 Sharpe 与 CW 集中度",
+                "hypothesis_ref": "HYP_PASS",
+                "mechanism_intents": ["TAIL_ASYMMETRY"],
+                "economic_delta": f"使用离散截断与凹压缩收敛尾部异常离群值 D{i}",
+                "expression": f"group_rank(s_log_1p(winsorize({rnd_field}, std={[3, 4][i]})), subindustry)",
+            }
             for i in range(2)
         ]
         self.assertEqual(len(new_batch), 8)
         batch_file = os.path.join(campaign_dir, "batch_new.json")
         with open(batch_file, 'w', encoding='utf-8') as f:
-            json.dump({"items": new_batch, "known_fields": [rnd_field]}, f)
+            json.dump({"items": new_batch, "known_fields": [rnd_field], "parent_expression": parent_ctrl_expr, "parent_snapshot": {"sharpe": 1.4, "expression": parent_ctrl_expr}}, f)
 
         # 运行门禁核验：必须检测到旧通行证不匹配并触发重新盲审
         corrected = SimBatchRunner.verify_state_token_and_gates(

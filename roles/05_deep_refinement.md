@@ -42,7 +42,8 @@
 - **Fitness $\ge 1.00$**（绝对底线）
 - **Margin $\ge 10.0\text{ bps}$ (USA/EUR) / $\ge 15.0\text{ bps}$ (ASI/GLB/GBR/DEU) / $\ge 20.0\text{ bps}$ (IND/MEA)**
 - **Turnover $\in [5.0\%, 50.0\%]$**
-- **Checks: `fail_num == 0` 且集中度无违规 (ALL PASS, 0 WARNING)**
+- **Checks: `fail_num == 0` 且 0 缺陷类 WARNING (ALL PASS)** —— `MATCHES_THEMES` / `MATCHES_COMPETITION` / `MATCHES_PYRAMID` 归类为信息提示 (`info_warnings`) 不阻断出厂，其余所有质量 WARNING 必须彻底清零；
 - **库内相关性: 平台 ProdCorr $< 0.65$ (安全红线) 且 本地 SelfCorr $\le 0.60$**
 - **相关性必须已核实**：结果体若拿不到 `prodCorrelation`，Python 侧一律按「未核实」拦截，严禁未核实提交；
+- **终审与穷尽裁决**：一切出厂发证必须经 `request_verdict(action="CERTIFY_ALPHA")` 解封内部 2 年 Holdout 并由 `ProductionGate` 写入 `certified_champions.json`；严禁未通过 `request_verdict(action="DECLARE_EXHAUSTED")` 的主观穷尽宣称，并严格遵守战役目录三文件卫生 (`campaign.db`, `RESEARCH_TREE.md`, `certified_champions.json`)。
 - **冠军资格 (One-Champion-Per-Anchor)**：同一 `seed_id` 只提交 1 条，且必须满足 ProdCorr 已核实 $< 0.65$、常规探索阶段算子数 $\le 6$（准冠军定向优化阶段 $\le 10$）、Margin 达标。

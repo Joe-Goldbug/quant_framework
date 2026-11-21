@@ -8,8 +8,21 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-sys.path.insert(0, r"D:\brain-mcp")
-os.environ["BRAIN_MCP_CONFIG"] = r"D:\brain-mcp\user_config.json"
+brain_dir = os.environ.get("BRAIN_MCP_DIR")
+if not brain_dir:
+    for candidate in [
+        "/home/kali/.gemini/antigravity/scratch/quant_research/brain-mcp",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../brain-mcp")),
+        r"D:\brain-mcp"
+    ]:
+        if os.path.exists(candidate):
+            brain_dir = candidate
+            break
+
+if brain_dir and brain_dir not in sys.path:
+    sys.path.insert(0, brain_dir)
+if brain_dir:
+    os.environ.setdefault("BRAIN_MCP_CONFIG", os.path.join(brain_dir, "user_config.json"))
 
 import main as bm
 

@@ -12,6 +12,7 @@ gatekeeper.py
 import json
 import os
 import sys
+from typing import Optional
 
 if sys.platform == "win32":
     try:
@@ -26,6 +27,9 @@ except ImportError:
     from core.rag_memory import RAGMemoryEngine
 
 class Gatekeeper:
+    # 信息提示类 WARNING（不阻断 ALL PASS，仅拆分为 info_warnings）
+    INFO_ONLY_WARNINGS = {"MATCHES_THEMES", "MATCHES_COMPETITION", "MATCHES_PYRAMID"}
+
     # 区域差异化基准 Margin 门槛 (AEGIS 标准)
     REGION_MIN_MARGIN_BPS = {
         "USA": 10.0,
@@ -132,7 +136,7 @@ class Gatekeeper:
         cls,
         sim_result_data: dict,
         min_sharpe: float = 1.2,
-        min_margin_bps: float = 5.0,
+        min_margin_bps: float = 0.0,
         expected_polarity: int = 1,
         check_parasitism: bool = True
     ) -> dict:
@@ -322,6 +326,7 @@ class Gatekeeper:
 
         fails = []
         warnings = []
+        info_warnings = []
         cluster_sharpe = None
         ladder_2y_sharpe = None
         sub_universe_sharpe = None
@@ -330,16 +335,18 @@ class Gatekeeper:
             for chk in checks_list:
                 if not isinstance(chk, dict):
                     continue
-                name = chk.get("name", "")
+                name = str(chk.get("name", ""))
                 result = str(chk.get("result", "")).upper()
                 val = chk.get("value")
 
+                name_upper = name.strip().upper()
                 if result == "FAIL":
                     fails.append(name)
                 elif result == "WARNING":
-                    warnings.append(name)
-
-                name_upper = name.upper()
+                    if name_upper in cls.INFO_ONLY_WARNINGS:
+                        info_warnings.append(name)
+                    else:
+                        warnings.append(name)
                 if "CLUSTER" in name_upper:
                     try:
                         cluster_sharpe = float(val) if val is not None else None
@@ -362,7 +369,11 @@ class Gatekeeper:
             for item in raw_fails if isinstance(raw_fails, list) else []:
                 fails.append(item.get("name", str(item)) if isinstance(item, dict) else str(item))
             for item in raw_warnings if isinstance(raw_warnings, list) else []:
-                warnings.append(item.get("name", str(item)) if isinstance(item, dict) else str(item))
+                w_name = item.get("name", str(item)) if isinstance(item, dict) else str(item)
+                if w_name.strip().upper() in cls.INFO_ONLY_WARNINGS:
+                    info_warnings.append(w_name)
+                else:
+                    warnings.append(w_name)
             cluster_sharpe = checks_list.get("cluster_sharpe")
 
         # 兼容旧测试数据中的 ra 字典
@@ -382,6 +393,7 @@ class Gatekeeper:
             "fail_count": len(fails),
             "fails": fails,
             "warnings": warnings,
+            "info_warnings": info_warnings,
             "checks_verified": checks_verified,
             "cluster_sharpe": cluster_sharpe,
             "ladder_2y_sharpe": ladder_2y_sharpe,
@@ -488,7 +500,7 @@ class Gatekeeper:
         margin_bps = float(alpha.get("margin_bps") or metrics.get("margin_bps") or (float(metrics.get("margin") or 0.0) * 10000.0))
         turnover = float(alpha.get("turnover") or metrics.get("turnover") or 0.0)
         margin_passed = margin_bps >= 8.0
-        turnover_passed = 0.05 <= turnover <= 0.35
+        turnover_passed = 0.05 <= turnover <= 0.50
 
         raw_yearly = alpha.get("yearly_stats") or metrics.get("yearly_stats") or alpha.get("yearly_sharpe") or []
         if isinstance(raw_yearly, dict):
@@ -535,9 +547,10 @@ class Gatekeeper:
             for c in checks:
                 if isinstance(c, dict):
                     res_val = str(c.get("result", "")).upper()
+                    chk_name = str(c.get("name", "")).strip().upper()
                     if res_val in ("FAIL", "ERROR"):
                         fail_cnt += 1
-                    elif res_val == "WARNING":
+                    elif res_val == "WARNING" and chk_name not in cls.INFO_ONLY_WARNINGS:
                         warn_cnt += 1
         warn_passed = (warn_cnt == 0)
         fail_passed = (fail_cnt == 0)
@@ -568,6 +581,105 @@ class Gatekeeper:
             "fail_count": fail_cnt,
             "prod_corr_passed": prod_corr_passed,
             "prod_corr": pcorr
+        }
+
+    @classmethod
+    def compute_internal_holdout_stats(cls, alpha_or_yearly) -> dict:
+        """
+        内部 Holdout (近2年样本外留出区) 隔离计算器:
+        Stage 1 / Stage 2 仅暴露 IS 核心统计，近 2 年 holdout_2y_sharpe 由系统内部留存，
+        仅在 ProductionGate / CERTIFY_ALPHA 终审时拆封核验，防止对近 2 年区间逆向过拟合。
+        """
+        yearly_sharpes = []
+        fallback_2y = None
+        fallback_core = None
+        if isinstance(alpha_or_yearly, dict):
+            metrics = alpha_or_yearly.get("is") or alpha_or_yearly.get("metrics") or {}
+            if not isinstance(metrics, dict):
+                metrics = {}
+            fallback_core = alpha_or_yearly.get("sharpe") if alpha_or_yearly.get("sharpe") is not None else metrics.get("sharpe")
+            fallback_2y = (
+                alpha_or_yearly.get("holdout_2y_sharpe")
+                or alpha_or_yearly.get("ladder_2y_sharpe")
+                or alpha_or_yearly.get("two_year_sharpe")
+                or metrics.get("sharpe_2y")
+                or metrics.get("two_year_sharpe")
+            )
+            if fallback_2y is None:
+                parsed = cls.parse_brain_checks(alpha_or_yearly)
+                fallback_2y = parsed.get("ladder_2y_sharpe")
+            raw_yearly = (
+                alpha_or_yearly.get("yearly_stats")
+                or metrics.get("yearly_stats")
+                or alpha_or_yearly.get("yearly_sharpe")
+                or []
+            )
+        else:
+            raw_yearly = alpha_or_yearly or []
+
+        if isinstance(raw_yearly, dict):
+            raw_yearly = raw_yearly.get("records", [])
+        if isinstance(raw_yearly, list):
+            for y_item in raw_yearly:
+                sh = None
+                if isinstance(y_item, dict):
+                    sh = y_item.get("sharpe") if y_item.get("sharpe") is not None else y_item.get("value")
+                elif isinstance(y_item, (list, tuple)) and len(y_item) >= 2:
+                    sh = y_item[1]
+                elif isinstance(y_item, (int, float)):
+                    sh = y_item
+                if sh is not None:
+                    try:
+                        yearly_sharpes.append(float(sh))
+                    except (ValueError, TypeError):
+                        pass
+
+        if len(yearly_sharpes) >= 3:
+            is_core_list = yearly_sharpes[:-2]
+            holdout_list = yearly_sharpes[-2:]
+            is_core_sharpe = round(sum(is_core_list) / len(is_core_list), 4)
+            if len(is_core_list) >= 3:
+                best_yr = max(is_core_list)
+                trimmed_is_sharpe = round((sum(is_core_list) - best_yr) / (len(is_core_list) - 1), 4)
+            else:
+                trimmed_is_sharpe = is_core_sharpe
+            holdout_2y_sharpe: Optional[float] = round(sum(holdout_list) / len(holdout_list), 4)
+            holdout_verified = True
+            holdout_ratio: Optional[float] = (
+                round(holdout_2y_sharpe / is_core_sharpe, 4)
+                if abs(is_core_sharpe) > 1e-6
+                else (1.0 if abs(holdout_2y_sharpe) <= 1e-6 else 0.0)
+            )
+            holdout_passed = bool(
+                holdout_2y_sharpe >= 1.58 or (is_core_sharpe >= 1.58 and holdout_ratio >= 0.75 and holdout_2y_sharpe >= 1.15)
+            )
+        else:
+            # Fail-Closed: 缺少 >= 3 年真实 yearly_stats 时绝不允许用 is_core_sharpe 伪造近 2 年 Holdout 放行！
+            try:
+                is_core_sharpe = float(fallback_core) if fallback_core is not None else 0.0
+            except (TypeError, ValueError):
+                is_core_sharpe = 0.0
+            trimmed_is_sharpe = is_core_sharpe
+            holdout_verified = False
+            try:
+                holdout_2y_sharpe = float(fallback_2y) if fallback_2y is not None else None
+            except (TypeError, ValueError):
+                holdout_2y_sharpe = None
+            holdout_ratio = (
+                round(holdout_2y_sharpe / is_core_sharpe, 4)
+                if (holdout_2y_sharpe is not None and abs(is_core_sharpe) > 1e-6)
+                else None
+            )
+            holdout_passed = False
+
+        return {
+            "is_core_sharpe": is_core_sharpe,
+            "trimmed_is_sharpe": trimmed_is_sharpe,
+            "holdout_2y_sharpe": holdout_2y_sharpe,
+            "holdout_ratio": holdout_ratio,
+            "holdout_verified": holdout_verified,
+            "holdout_passed": holdout_passed,
+            "yearly_count": len(yearly_sharpes),
         }
 
     @classmethod

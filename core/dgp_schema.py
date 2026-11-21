@@ -14,6 +14,14 @@ import json
 import re
 from typing import Dict, List, Optional, Tuple, Set
 
+try:
+    from quant_framework.core.fastexpr_ast import parse_fastexpr
+except (ModuleNotFoundError, ImportError):
+    try:
+        from core.fastexpr_ast import parse_fastexpr
+    except (ModuleNotFoundError, ImportError):
+        from fastexpr_ast import parse_fastexpr
+
 EVIDENCE_MEASURED = "MEASURED"
 EVIDENCE_DECLARED = "DECLARED"
 EVIDENCE_INFERRED = "INFERRED"
@@ -60,29 +68,42 @@ class HypothesisSpec:
     # 一律视为「无法判定」并放行——保留模型自主探索冷门算子的空间，避免白名单化变成新死模板。
     # 只有当表达式算子全部在已知族内、且无自定义意图时，才要求「至少一个声明意图有实现支撑」。
     INTENT_OPERATOR_FAMILIES = {
-        "SCALE_NORMALIZATION": {"divide", "scale", "group_scale", "zscore", "group_zscore", "ts_scale", "ts_zscore", "normalize", "group_normalize", "fraction"},
+        "SCALE_NORMALIZATION": {"divide", "scale", "group_scale", "zscore", "group_zscore", "ts_scale", "ts_zscore", "normalize", "group_normalize", "inverse"},
         "EXPECTATION_SURPRISE": {"subtract", "ts_delta", "ts_av_diff", "ts_regression", "ts_zscore", "group_zscore", "regression_neut", "vector_neut"},
         "RESIDUAL_EXTRACTION": {"group_neutralize", "regression_neut", "vector_neut", "ts_regression", "subtract", "ts_av_diff"},
-        "EVENT_GATE": {"trade_when", "if_else", "filter", "multiply", "days_from_last_change", "ts_backfill", "group_backfill", "is_nan", "greater", "less", "equal", "not_equal", "jump_decay", "hump"},
-        "TEMPORAL_DECAY": {"ts_decay_linear", "ts_decay_exp_window", "jump_decay", "hump", "ts_target_tvr_decay", "ts_mean", "ts_sum", "ts_delay", "ts_product"},
-        "CROSS_SECTIONAL_RELATIVE": {"rank", "group_rank", "quantile", "group_quantile", "zscore", "group_zscore", "group_neutralize", "scale", "group_scale", "rank_by_side"},
-        "DISPERSION": {"ts_std_dev", "ts_variance", "ts_ir", "ts_entropy", "vec_std", "vec_stddev", "vec_range", "vec_ir", "vec_norm", "reduce_range", "reduce_ir"},
-        "TAIL_ASYMMETRY": {"winsorize", "signed_power", "power", "s_log_1p", "log", "sqrt", "abs", "right_tail", "left_tail", "bucket", "quantile", "ts_quantile", "ts_skewness", "ts_kurtosis", "vec_skewness", "vec_kurtosis", "truncate"},
-        "VECTOR_HIGHER_MOMENT": {"vec_std", "vec_stddev", "vec_range", "vec_ir", "vec_skewness", "vec_kurtosis", "vec_norm", "vec_percentage", "vec_max", "vec_min", "vec_median"},
-        "REGIME_SPREAD": {"subtract", "divide", "ts_av_diff", "ts_delta", "ts_regression", "ts_rank", "ts_zscore"},
+        "EVENT_GATE": {"trade_when", "if_else", "multiply", "days_from_last_change", "last_diff_value", "ts_backfill", "group_backfill", "is_nan", "greater", "less", "equal", "not_equal", "hump"},
+        "TEMPORAL_DECAY": {"ts_decay_linear", "ts_decay_exp_window", "hump", "ts_target_tvr_decay", "ts_mean", "ts_sum", "ts_delay", "ts_product"},
+        "CROSS_SECTIONAL_RELATIVE": {"rank", "group_rank", "quantile", "zscore", "group_zscore", "group_neutralize", "scale", "group_scale", "group_mean", "group_median"},
+        "DISPERSION": {"ts_std_dev", "ts_count_nans", "vec_stddev", "vec_range", "vec_count", "reduce_stddev", "reduce_range", "reduce_ir"},
+        "TAIL_ASYMMETRY": {"winsorize", "signed_power", "power", "s_log_1p", "log", "sqrt", "abs", "right_tail", "left_tail", "bucket", "quantile", "ts_quantile", "reduce_skewness", "reduce_kurtosis", "truncate"},
+        "VECTOR_HIGHER_MOMENT": {"vec_stddev", "vec_range", "vec_count", "vec_max", "vec_min", "vec_avg", "vec_sum"},
+        "REGIME_SPREAD": {"subtract", "divide", "ts_av_diff", "ts_delta", "ts_regression", "ts_rank", "ts_zscore", "ts_corr", "ts_covariance"},
     }
 
     @classmethod
     def infer_evidence_status(cls, meta: Optional[dict]) -> str:
-        """根据字段元数据推断证据等级; 不确定时必须显式 UNKNOWN。"""
+        """根据字段元数据推断证据等级; 严防 INFERRED semantic_provenance 伪装为 MEASURED。"""
         if not isinstance(meta, dict):
             return EVIDENCE_UNKNOWN
         explicit = str(meta.get("evidence_status", "") or "").upper()
+        provenance = str(meta.get("semantic_provenance", "") or "").upper()
+        has_probe = bool(
+            meta.get("probe_results")
+            or meta.get("probe_verified") is True
+            or meta.get("sample_verified") is True
+        )
+
+        # 硬锁: 若语义画像注明 INFERRED 且无实测探针证据，禁止伪报 MEASURED
+        if "INFERRED" in provenance and not has_probe:
+            if explicit in (EVIDENCE_UNKNOWN, EVIDENCE_DECLARED):
+                return explicit
+            return EVIDENCE_INFERRED
+
         if explicit in VALID_EVIDENCE_STATUS:
             return explicit
 
         # 探针/样本实测优先
-        if meta.get("probe_results") or meta.get("probe_verified") is True or meta.get("sample_verified") is True:
+        if has_probe:
             return EVIDENCE_MEASURED
 
         coverage = meta.get("coverage")
@@ -274,8 +295,10 @@ class HypothesisSpec:
         if not isinstance(spec, dict):
             return True, []  # legacy seed 兼容: 不阻断旧流程，但无法获得 V2 语义增益
 
+        is_v41_compact = bool(variant.get("change_axis") and variant.get("prediction") is not None)
+
         import os
-        if spec.get("source") == "legacy" or os.environ.get("AEGIS_MOCK_MODE") == "1":
+        if (spec.get("source") == "legacy" or os.environ.get("AEGIS_MOCK_MODE") == "1") and not is_v41_compact:
             if not variant.get("hypothesis_ref") or variant.get("hypothesis_ref") != spec.get("hypothesis_id"):
                 variant["hypothesis_ref"] = spec.get("hypothesis_id")
             if not variant.get("mechanism_intents"):
@@ -288,18 +311,27 @@ class HypothesisSpec:
 
         intents = variant.get("mechanism_intents")
         intents_set: Set[str] = set()
-        if not isinstance(intents, list) or not intents:
-            issues.append("mechanism_intents 缺失，无法进行语义—AST 审计")
-        else:
-            for intent in intents:
-                s_intent = str(intent).strip().upper()
-                if s_intent:
-                    intents_set.add(s_intent)
-            if len(intents_set) > 3:
-                issues.append(f"mechanism_intents 声明了 {len(intents_set)} 个机制意图 (> 3)，存在多机制大杂烩风险")
+        if not is_v41_compact:
+            if not isinstance(intents, list) or not intents:
+                issues.append("mechanism_intents 缺失，无法进行语义—AST 审计")
+            else:
+                for intent in intents:
+                    s_intent = str(intent).strip().upper()
+                    if s_intent:
+                        intents_set.add(s_intent)
+                if len(intents_set) > 3:
+                    issues.append(f"mechanism_intents 声明了 {len(intents_set)} 个机制意图 (> 3)，存在多机制大杂烩风险")
 
-        if len(str(variant.get("economic_delta") or "").strip()) < 20:
-            issues.append("economic_delta 过短，无法说明相对母本或种子的机制增量")
+            if len(str(variant.get("economic_delta") or "").strip()) < 20:
+                issues.append("economic_delta 过短，无法说明相对母本或种子的机制增量")
+        else:
+            if len(str(variant.get("prediction") or "").strip()) < 16:
+                issues.append("prediction 过短，无法阐述可证伪方向预测")
+            if isinstance(intents, list):
+                for intent in intents:
+                    s_intent = str(intent).strip().upper()
+                    if s_intent:
+                        intents_set.add(s_intent)
 
         # ---------------- 真实 AST 结构与意图同构断言 ----------------
         expr = str(variant.get("expression") or "").strip()
@@ -308,7 +340,11 @@ class HypothesisSpec:
             return not issues, issues
 
         try:
-            tree = ast.parse(expr, mode='eval')
+            parsed = parse_fastexpr(expr)
+            if not parsed.is_valid or parsed.final_ast is None:
+                issues.append(f"表达式语法错误无法解析 AST: {'; '.join(parsed.errors)}")
+                return not issues, issues
+            tree = parsed.final_ast
             called_funcs: Set[str] = set()
             for n in ast.walk(tree):
                 if isinstance(n, ast.Call):

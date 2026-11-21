@@ -528,13 +528,16 @@ class AuditBus:
 
         idx = self._index_result(result_path)
         by_role: Dict[str, Dict[str, Any]] = {}
+        entry_by_role: Dict[str, Dict[str, Any]] = {}
         missing: List[Any] = []
         for e in exp.get("entries") or []:
+            role_k = str(e.get("role"))
+            entry_by_role[role_k] = e
             row = idx.get(_norm_expr(e.get("expression")))
             if row is None or row.get(metric) is None:
                 missing.append(e.get("role"))
             else:
-                by_role[str(e.get("role"))] = row
+                by_role[role_k] = row
 
         evidence: Dict[str, Any] = {
             "metric": metric, "min_delta": min_delta,
@@ -555,26 +558,76 @@ class AuditBus:
                 verdict = ST_INCONCLUSIVE
                 reason = f"母本 {metric}={p_val:.3f} 无正收益, 机制无从谈起"
             elif "placebo" in by_role and "strip" in by_role:
-                # 双差分: (母本-消融) - (母本-安慰剂) = 安慰剂 - 消融
-                # 单看 M-P 会把「去掉外层包装的代价」误算成机制贡献, 故必须两个对照同时在场。
                 s_val = float(by_role["strip"][metric])     # type: ignore[arg-type]
                 q_val = float(by_role["placebo"][metric])   # type: ignore[arg-type]
-                net = q_val - s_val
-                evidence.update(strip=s_val, placebo=q_val,
-                                parent_minus_strip=round(p_val - s_val, 4),
-                                parent_minus_placebo=round(p_val - q_val, 4),
-                                net_mechanism_effect=round(net, 4),
-                                rule="double_difference")
-                # 拆机制与拆装饰掉分一样多 => 赚钱的不是声称的机制, 而是复杂度本身
-                evidence["complexity_artifact"] = bool(
-                    (p_val - s_val) >= min_delta and net < min_delta
+
+                p_expr_raw = str((entry_by_role.get("parent") or {}).get("expression") or "")
+                q_expr_raw = str((entry_by_role.get("placebo") or {}).get("expression") or "")
+                q_kind = str((entry_by_role.get("placebo") or {}).get("control_kind") or "").lower()
+                lag_pat = re.compile(r"ts_delay\s*\([^)]*,\s*252\s*\)", re.IGNORECASE)
+                is_lagged_placebo = (
+                    q_kind == "lagged_placebo"
+                    or len(lag_pat.findall(q_expr_raw)) > len(lag_pat.findall(p_expr_raw))
                 )
-                if net >= min_delta:
-                    verdict = ST_CORROBORATED
-                    reason = f"净机制效应 {net:+.3f} >= {min_delta} (安慰剂 {q_val:.2f} / 消融 {s_val:.2f})"
+
+                if is_lagged_placebo:
+                    # V4.1 双对照机制裁决 (strip = rank(raw), placebo = 252日滞后壳):
+                    # 必须同时通过:
+                    #   1. 机制增益: parent - strip >= min_delta (证明机制显著优于裸字段)
+                    #   2. 非壳时效增益: parent - placebo >= max(min_delta, 0.50) (证明收益来自当期信息而非复杂外壳伪影)
+                    mech_gain = p_val - s_val
+                    freshness_gain = p_val - q_val
+                    min_freshness = max(min_delta, 0.50)
+                    net = min(mech_gain, freshness_gain)
+                    is_shell_artifact = bool(mech_gain >= min_delta and freshness_gain < min_freshness)
+                    evidence.update(
+                        strip=s_val,
+                        placebo=q_val,
+                        parent_minus_strip=round(mech_gain, 4),
+                        parent_minus_placebo=round(freshness_gain, 4),
+                        mech_gain=round(mech_gain, 4),
+                        freshness_gain=round(freshness_gain, 4),
+                        min_freshness_delta=round(min_freshness, 4),
+                        net_mechanism_effect=round(net, 4),
+                        complexity_artifact=is_shell_artifact,
+                        rule="dual_control_lagged_placebo",
+                    )
+                    if mech_gain >= min_delta and freshness_gain >= min_freshness:
+                        verdict = ST_CORROBORATED
+                        reason = (
+                            f"双对照验证通过: 机制增益 {mech_gain:+.3f} >= {min_delta:.2f} 且 "
+                            f"时效非壳增益 {freshness_gain:+.3f} >= {min_freshness:.2f} "
+                            f"(母本 {p_val:.2f} / 消融 {s_val:.2f} / 滞后安慰剂 {q_val:.2f})"
+                        )
+                    elif is_shell_artifact:
+                        verdict = ST_FALSIFIED
+                        reason = (
+                            f"疑似复杂度外壳伪影: 机制增益 {mech_gain:+.3f} 但 252日滞后安慰剂仍达 {q_val:.2f} "
+                            f"(时效增益 {freshness_gain:+.3f} < {min_freshness:.2f})"
+                        )
+                    else:
+                        verdict = ST_FALSIFIED
+                        reason = (
+                            f"机制相对裸信号增益不足: parent-strip={mech_gain:+.3f} < {min_delta:.2f} "
+                            f"(母本 {p_val:.2f} / 消融 {s_val:.2f} / 滞后安慰剂 {q_val:.2f})"
+                        )
                 else:
-                    verdict = ST_FALSIFIED
-                    reason = f"净机制效应 {net:+.3f} < {min_delta} (机制声明不成立)"
+                    # 经典外层去壳双差分: (母本-消融) - (母本-安慰剂) = 安慰剂 - 消融
+                    net = q_val - s_val
+                    evidence.update(strip=s_val, placebo=q_val,
+                                    parent_minus_strip=round(p_val - s_val, 4),
+                                    parent_minus_placebo=round(p_val - q_val, 4),
+                                    net_mechanism_effect=round(net, 4),
+                                    rule="double_difference")
+                    evidence["complexity_artifact"] = bool(
+                        (p_val - s_val) >= min_delta and net < min_delta
+                    )
+                    if net >= min_delta:
+                        verdict = ST_CORROBORATED
+                        reason = f"净机制效应 {net:+.3f} >= {min_delta} (安慰剂 {q_val:.2f} / 消融 {s_val:.2f})"
+                    else:
+                        verdict = ST_FALSIFIED
+                        reason = f"净机制效应 {net:+.3f} < {min_delta} (机制声明不成立)"
             elif "placebo" in by_role:
                 # 只有安慰剂: 只能排除「纯装饰」, 无法排除复杂度效应, 按不充分处理
                 verdict = ST_INCONCLUSIVE

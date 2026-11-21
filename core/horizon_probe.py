@@ -25,6 +25,14 @@ import re
 import sys
 from typing import Dict, List, Optional, Tuple, Union
 
+try:
+    from .fastexpr_ast import parse_fastexpr, extract_all_windows
+except (ImportError, ValueError):
+    try:
+        from core.fastexpr_ast import parse_fastexpr, extract_all_windows
+    except ImportError:
+        from fastexpr_ast import parse_fastexpr, extract_all_windows
+
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -61,13 +69,12 @@ def _norm_expr(expr: str) -> str:
 
 
 def extract_windows(expr: str) -> List[int]:
-    """抽取表达式中所有时序算子的整数窗口参数 (跳过第一个数据参数)"""
+    """抽取表达式中所有时序算子的整数窗口参数 (支持单行与多行 SNC 表达式)"""
     windows: List[int] = []
-    try:
-        tree = ast.parse((expr or "").strip(), mode="eval")
-    except SyntaxError:
+    parsed = parse_fastexpr((expr or "").strip())
+    if not parsed.is_valid or parsed.final_ast is None:
         return windows
-    for node in ast.walk(tree):
+    for node in ast.walk(parsed.final_ast):
         if not isinstance(node, ast.Call):
             continue
         fname = getattr(node.func, "id", getattr(node.func, "attr", ""))
@@ -322,13 +329,14 @@ class HorizonProbe:
                 # 纯截面公式豁免: 若 AST 中不含任何 TIME_SERIES_OPS，赋予 STATIC_CROSS_SECTION
                 has_ts = False
                 try:
-                    tree = ast.parse(raw_expr.strip(), mode="eval")
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.Call):
-                            fname = getattr(node.func, "id", getattr(node.func, "attr", ""))
-                            if fname in TIME_SERIES_OPS:
-                                has_ts = True
-                                break
+                    parsed = parse_fastexpr(raw_expr.strip())
+                    if parsed.is_valid and parsed.final_ast is not None:
+                        for node in ast.walk(parsed.final_ast):
+                            if isinstance(node, ast.Call):
+                                fname = getattr(node.func, "id", getattr(node.func, "attr", ""))
+                                if fname in TIME_SERIES_OPS:
+                                    has_ts = True
+                                    break
                 except Exception:
                     pass
                 if not has_ts:
@@ -341,16 +349,19 @@ class HorizonProbe:
         return expr_to_verdict
 
     @classmethod
-    def filter_parents(cls, candidates: List[dict]) -> Tuple[List[dict], List[dict]]:
+    def filter_parents(cls, candidates: List[dict], fail_closed: bool = False) -> Tuple[List[dict], List[dict]]:
         """
         母本过滤: 剔除 SPIKE 与非预期反号；EXPECTED_REVERSAL 是预注册机制，允许保留。
-        未参与配对 (horizon_verdict is None) 的候选视为「无配对证据」，予以保留。
+        当 fail_closed=True 时，未参与配对/证据不足 (None/WEAK/NO_DATA) 的候选同样予以隔离拦截。
         """
         rejected = {"SPIKE", "UNEXPECTED_SIGN_FLIP", "UNEXPECTED_SPIKE"}
+        verified_ok = {"PLATEAU", "EXPECTED_PLATEAU", "EXPECTED_DECAY", "EXPECTED_REVERSAL", "STATIC_CROSS_SECTION"}
         kept, dropped = [], []
         for c in candidates or []:
             vd = c.get("horizon_verdict")
             if vd in rejected:
+                dropped.append(c)
+            elif fail_closed and vd not in verified_ok:
                 dropped.append(c)
             else:
                 kept.append(c)

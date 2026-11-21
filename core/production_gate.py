@@ -14,8 +14,10 @@ from typing import Dict, List, Optional, Union
 
 try:
     from quant_framework.core.gatekeeper import Gatekeeper
+    from quant_framework.core.fastexpr_ast import parse_fastexpr
 except ModuleNotFoundError:
     from core.gatekeeper import Gatekeeper
+    from core.fastexpr_ast import parse_fastexpr
 
 
 class ProductionGate:
@@ -83,7 +85,12 @@ class ProductionGate:
 
     @classmethod
     def _operator_count(cls, expression: str) -> int:
-        return expression.count("(") if expression else 0
+        if not expression:
+            return 0
+        parsed = parse_fastexpr(expression)
+        if parsed.is_valid:
+            return parsed.operator_count
+        return expression.count("(")
 
     @classmethod
     def _settings_digest(cls, alpha: dict) -> str:

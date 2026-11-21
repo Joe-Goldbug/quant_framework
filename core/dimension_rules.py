@@ -23,11 +23,14 @@ from typing import Dict, List, Set, Union, Optional
 
 try:
     from quant_framework.core.operator_registry import OperatorRegistry
+    from quant_framework.core.fastexpr_ast import parse_fastexpr, validate_snc, validate_horizon_lattice
 except ModuleNotFoundError:
     try:
         from core.operator_registry import OperatorRegistry
+        from core.fastexpr_ast import parse_fastexpr, validate_snc, validate_horizon_lattice
     except ModuleNotFoundError:
         from operator_registry import OperatorRegistry
+        from fastexpr_ast import parse_fastexpr, validate_snc, validate_horizon_lattice
 
 if sys.platform == "win32":
     try:
@@ -41,20 +44,23 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
     KNOWN_OPERATORS = OperatorRegistry.get_all_operator_names()
     TIME_SERIES_OPS = {
         "ts_delta", "ts_mean", "ts_sum", "ts_std_dev", "ts_rank", "ts_zscore",
-        "ts_decay_linear", "ts_decay_exp_window", "ts_delay", "ts_corr", "ts_min",
-        "ts_max", "ts_arg_max", "ts_arg_min", "ts_av_diff", "ts_scale", "ts_backfill",
-        "ts_returns", "ts_ir", "ts_skewness", "ts_kurtosis", "ts_quantile",
-        "ts_regression", "ts_count_nans", "ts_product", "jump_decay",
+        "ts_decay_linear", "ts_decay_exp_window", "ts_delay", "ts_corr",
+        "ts_arg_max", "ts_arg_min", "ts_av_diff", "ts_scale", "ts_backfill",
+        "ts_quantile", "ts_regression", "ts_count_nans", "ts_product",
+        "ts_median", "ts_covariance", "ts_target_tvr_decay", "ts_delta_limit", "ts_step",
     }
-    CALENDAR_PRESETS = {1, 2, 3, 4, 5, 10, 20, 21, 22, 60, 63, 120, 126, 250, 252}
+    CALENDAR_PRESETS = {1, 5, 10, 21, 63, 126, 252}
 
     # 非负域集合: 供乘法门控/除法归一/量纲一致性判断统一引用。
-    # "(0, 1]" 是 exp() 对负半轴对数域 (-inf, 0] 的还原结果 (AEGIS v3.2)，
-    # 若此处遗漏会导致 multiply(exp(prob), signal) 被误报为「无界字段裸乘」。
     NON_NEG_DOMAINS = ("[0, 1]", "(0, 1]", "[0, inf)", "constant")
     NON_NEG_BOUNDED = ("[0, 1]", "(0, 1]")
+    DIMENSIONLESS_BOUNDED = ("[0, 1]", "(0, 1]", "[-1, 1]")
+    ANCHOR_NAME_TOKENS = (
+        "tot_assets", "assets", "market_cap", "cap", "sales", "revenue",
+        "ebitda", "close", "vwap", "adv20", "volume", "debt", "equity", "cashflow"
+    )
 
-    def __init__(self, fields_meta: Dict[str, dict], category: str, allow_pv_cross: bool, max_operators: int = 8, hypothesis: Optional[dict] = None):
+    def __init__(self, fields_meta: Dict[str, dict], category: str, allow_pv_cross: bool, max_operators: int = 8, hypothesis: Optional[dict] = None, max_window_days: int = 252):
         self.fields_meta = fields_meta
         self.category = category.lower()
         self.allow_pv_cross = allow_pv_cross
@@ -67,6 +73,9 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         self.used_pv_fields: Set[str] = set()
         self.group_vars: Set[str] = set()
         self.called_operators: Set[str] = set()
+        self.local_vars: Set[str] = set()
+        self.local_var_domains: Dict[str, dict] = {}
+        self.local_var_fields: Dict[str, List[str]] = {}
 
         self.allowed_windows = set(self.CALENDAR_PRESETS)
         if isinstance(self.hypothesis, dict):
@@ -85,7 +94,7 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         self.FORBIDDEN_OPERATORS = set()
 
         # 2. V2: 窗口由字段更新频率与 horizon_model 决定；这里只做物理安全边界
-        self.MAX_WINDOW_DAYS = 252
+        self.MAX_WINDOW_DAYS = max_window_days
         self.MAX_ABS_FLOAT_PARAM = 10.0
 
         self.VALID_GROUPS = {"market", "sector", "industry", "subindustry", "country", "region"}
@@ -104,6 +113,8 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         3. 剔除旧版 "名字含 probability => [0, 1] 稀疏" 的模板化误判:
            prob_rank_bin / log-softmax 类字段真实值域是 (-inf, 0] 或 unbounded。
         """
+        if field_name in self.local_var_domains:
+            return self.local_var_domains[field_name]
         meta = self.fields_meta.get(field_name, {}) if isinstance(self.fields_meta, dict) else {}
         raw_dom = meta.get("domain")
         f_type = meta.get("type") or ("VECTOR" if ("vector" in field_name.lower() or field_name.lower().startswith("vec_")) else "MATRIX")
@@ -136,7 +147,9 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         return {"type": f_type, "domain": dom, "is_sparse": is_sparse}
 
     def _is_dataset_field(self, var_name: str) -> bool:
-        if (var_name in self.VALID_GROUPS or 
+        if (var_name in self.local_vars or
+            var_name in self.local_var_domains or
+            var_name in self.VALID_GROUPS or 
             var_name in self.EXTERNAL_PV_FIELDS or 
             var_name in self.KNOWN_OPERATORS or 
             var_name in self.VECTOR_WRAPPERS or 
@@ -149,12 +162,55 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
         return True
 
     def _extract_subtree_fields(self, node: ast.AST) -> List[str]:
-        """递归提取子树中引用的所有数据集字段"""
+        """递归提取子树中引用的所有数据集字段（穿透 SNC 局部变量引用）"""
         fields = []
         for n in ast.walk(node):
-            if isinstance(n, ast.Name) and self._is_dataset_field(n.id):
-                fields.append(n.id)
+            if isinstance(n, ast.Name):
+                if n.id in self.local_var_fields:
+                    fields.extend(self.local_var_fields[n.id])
+                elif self._is_dataset_field(n.id):
+                    fields.append(n.id)
         return fields
+
+    def _check_divide_cross_dimension(self, num_node: ast.AST, den_node: ast.AST) -> None:
+        """禁止无量纲有界比例/概率/情绪信号 ([0,1]/[-1,1]) 直接除以正尺度美元/市值/总资产锚字段"""
+        num_dom = self._infer_node_domain(num_node).get("domain", "unbounded")
+        if num_dom not in self.DIMENSIONLESS_BOUNDED:
+            return
+        den_info = self._infer_node_domain(den_node)
+        den_dom = den_info.get("domain", "unbounded")
+        if den_dom in self.DIMENSIONLESS_BOUNDED or den_dom == "constant":
+            return
+        den_fields = set(self._extract_subtree_fields(den_node))
+        if not den_fields and isinstance(den_node, ast.Name) and den_node.id in self.EXTERNAL_PV_FIELDS:
+            den_fields = {den_node.id}
+        is_anchor = den_dom == "positive"
+        if not is_anchor:
+            for df in den_fields:
+                meta = self.fields_meta.get(df, {}) if isinstance(self.fields_meta, dict) else {}
+                if meta.get("semantic_role") == "Dimension_Anchor" or meta.get("domain") == "positive":
+                    is_anchor = True
+                    break
+                dl = df.lower()
+                if any(tok in dl for tok in self.ANCHOR_NAME_TOKENS):
+                    is_anchor = True
+                    break
+        if is_anchor:
+            num_fields = self._extract_subtree_fields(num_node)
+            self.issues.append(
+                f"【跨量纲除法违规】无量纲有界信号 {num_fields} (domain={num_dom}) 严禁直接除以正尺度锚字段 {sorted(den_fields)}！"
+                f"情绪/分位概率除以总资产/市值/成交额会导致量纲坍塌与市值小盘偏差。请先对分母取排名或截面比值归因。"
+            )
+
+    def visit_Assign(self, node: ast.Assign):
+        if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            lhs = node.targets[0].id
+            self.local_vars.add(lhs)
+        self.visit(node.value)
+        if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            lhs = node.targets[0].id
+            self.local_var_domains[lhs] = self._infer_node_domain(node.value)
+            self.local_var_fields[lhs] = self._extract_subtree_fields(node.value)
 
     def _check_unbounded_addition_subtraction(self, left_node: ast.AST, right_node: ast.AST, op_name: str):
         """
@@ -219,14 +275,6 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
                 "less", "greater", "equal", "not_equal", "less_equal", "greater_equal", "and", "or", "not", "is_nan"
             ):
                 return {"type": "MATRIX", "domain": "[0, 1]", "is_sparse": False}
-
-            # 2a. exp 指数还原: 负半轴对数域 (-inf, 0] -> (0, 1] 概率空间 (AEGIS v3.2)
-            elif func_name == "exp":
-                if node.args:
-                    inner_dom = self._infer_node_domain(node.args[0]).get("domain", "unbounded")
-                    if inner_dom == "(-inf, 0]":
-                        return {"type": "MATRIX", "domain": "(0, 1]", "is_sparse": False}
-                return {"type": "MATRIX", "domain": "[0, inf)", "is_sparse": False}
 
             # 2b. 保号压缩算子: s_log_1p 定义域为全体实数 (sign(x)*log(1+|x|))，值域继承输入符号
             elif func_name == "s_log_1p":
@@ -336,12 +384,22 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
                 self.issues.append(
                     f"【数学定义域违规】算子 '{func_name}' 要求输入严格为正，但内层子树 (涉及字段 {sub_f}) "
                     f"推导值域为 '{arg_dom}' (对数概率/对数似然负半轴)，会产生连片 NaN！"
-                    f"请先用 exp() 还原至 (0, 1] 概率空间，或改用保号的 s_log_1p。"
+                    f"请改用保号的 s_log_1p 或 quantile(..., driver=gaussian) 变换至连续分布空间。"
                 )
 
-        # 0. 时序算子窗口参数合法性检查
-        if func_name in self.TIME_SERIES_OPS or func_name.startswith("ts_"):
-            for arg in node.args[1:]:
+        if func_name == "divide" and len(node.args) >= 2:
+            self._check_divide_cross_dimension(node.args[0], node.args[1])
+
+        # 0. 时序算子窗口参数合法性检查 (精确锁定 lookback d 位置，避免误伤 lag=0/constant=0/ts_target_tvr_decay)
+        if func_name.startswith("ts_") and func_name not in {"ts_step", "ts_target_tvr_decay", "ts_delta_limit"}:
+            win_idx = 2 if func_name in {"ts_corr", "ts_covariance", "ts_regression"} else 1
+            win_candidates = []
+            for kw in node.keywords:
+                if kw.arg in ("d", "lookback", "window"):
+                    win_candidates.append(kw.value)
+            if not win_candidates and len(node.args) > win_idx:
+                win_candidates.append(node.args[win_idx])
+            for arg in win_candidates:
                 val = None
                 if isinstance(arg, ast.Constant):
                     val = arg.value
@@ -357,9 +415,9 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
                         self.issues.append(
                             f"【非法窗口拦截】时序算子 '{func_name}' 的窗口参数 {val} 必须为合法正整数 (> 0)！"
                         )
-                    elif val > 252:
+                    elif val > self.MAX_WINDOW_DAYS:
                         self.issues.append(
-                            f"【超长窗口拦截】时序算子 '{func_name}' 的窗口参数 {val} 超过平台上限 252 日！"
+                            f"【超长窗口拦截】时序算子 '{func_name}' 的窗口参数 {val} 超过平台上限 {self.MAX_WINDOW_DAYS} 日！"
                         )
 
         # 1. 乘法门控与伪因果检查
@@ -492,6 +550,8 @@ class ASTSymbolicVisitor(ast.NodeVisitor):
             g2 = is_const_2 or (d2 in self.NON_NEG_DOMAINS)
             if not (g1 or g2):
                 self.issues.append("【无界字段裸乘拦截】检测到两个无界实数字段直接裸乘 A * B，严禁双 unbounded 裸乘导致方差爆炸！乘法必须作为非负门控滤波使用。")
+        elif isinstance(node.op, ast.Div):
+            self._check_divide_cross_dimension(node.left, node.right)
         elif isinstance(node.op, (ast.Add, ast.Sub)):
             is_const_1 = isinstance(node.left, (ast.Constant, ast.Num))
             is_const_2 = isinstance(node.right, (ast.Constant, ast.Num))
@@ -592,7 +652,10 @@ class DimensionAuditor:
         allowed_operators: Optional[Set[str]] = None,
         stage0_op_count: int = 0,
         required_fields: Optional[List[str]] = None,
-        hypothesis: Optional[dict] = None
+        hypothesis: Optional[dict] = None,
+        update_frequency: str = "daily",
+        strict_lattice: bool = True,
+        require_snc_when_complex: bool = False,
     ) -> dict:
         """
         基于 Python AST 抽象语法树的确定性符号与量纲推导编译器 (AEGIS v3.1 Hardness 终极加固版)
@@ -634,26 +697,38 @@ class DimensionAuditor:
                         sp = False
                     fields_meta[f] = {"type": f_type, "domain": dom, "is_sparse": sp}
 
-        # 3. 语法树解析
-        try:
-            tree = ast.parse(expr_clean, mode='eval')
-        except SyntaxError as e:
+        # 3. 统一 FastExpr 多行/单行语法树解析 (SNC 原生支持)
+        parsed = parse_fastexpr(expr_clean)
+        if not parsed.is_valid or parsed.module_ast is None:
             return {
                 "is_valid": False,
-                "issues": [f"FastExpr 语法错误无法解析: {str(e)}"],
+                "issues": [f"FastExpr 语法错误无法解析: {'; '.join(parsed.errors)}"],
                 "operator_count": 0,
                 "used_fields": []
             }
 
-        # 4. AST 深度静态分析与量纲类型推导
+        # 3a. SNC 语义命名与同构去重门禁
+        snc_check = validate_snc(parsed, require_snc_when_complex=require_snc_when_complex)
+        if not snc_check.get("passed", True):
+            issues.extend(snc_check.get("violations", []))
+
+        # 3b. 离散时间尺度与参数晶格反过拟合门禁
+        if strict_lattice:
+            lattice_check = validate_horizon_lattice(parsed, update_frequency=update_frequency)
+            if not lattice_check.get("passed", True):
+                issues.extend(lattice_check.get("violations", []))
+
+        # 4. AST 深度静态分析与量纲类型推导 (BRAIN 实证安全上限统一收敛至 252)
+        max_win_days = 252
         visitor = ASTSymbolicVisitor(
             fields_meta=fields_meta,
             category=category,
             allow_pv_cross=allow_pv_cross,
             max_operators=max_operators,
-            hypothesis=hypothesis
+            hypothesis=hypothesis,
+            max_window_days=max_win_days,
         )
-        visitor.visit(tree)
+        visitor.visit(parsed.module_ast)
 
         # 5. 字段总数硬上限：严禁超过 4 个数据集字段 (优先于子树算子级告警，防止大杂烩特征被次要告警淹没)
         if len(visitor.used_fields) > 4:
@@ -703,12 +778,11 @@ class DimensionAuditor:
                     f"Step 1 实证检验必须严格锁定主信号底层因果源，严禁擅自篡改核心字段。"
                 )
 
-        # 9. 平台官方算子全量合规校验 (Single Source of Truth, SSOT)
-        # Agent 享有基于经济学机制自主选算子的自由，平台 104 个合法算子全量开放，仅拦截完全不存在的幻觉算子
+        # 9. 平台官方算子全量合规校验 (Single Source of Truth, 104 SSOT 严格校验)
         all_platform_ops = OperatorRegistry.get_all_operator_names()
         for op in visitor.called_operators:
-            if op not in all_platform_ops and not op.startswith("vec_") and not op.startswith("group_") and not op.startswith("ts_"):
-                issues.append(f"【未知/非法算子拦截】检测到非 WorldQuant Brain 平台合法算子: '{op}'！请选用官方算子库中的标准算子。")
+            if op not in all_platform_ops:
+                issues.append(f"【未知/非法算子拦截】检测到非 WorldQuant Brain 平台合法算子: '{op}'！请选用 104 个官方授权算子。")
 
         return {
             "is_valid": len(issues) == 0,

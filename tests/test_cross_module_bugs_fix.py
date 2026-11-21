@@ -78,21 +78,26 @@ class TestCrossModuleBugsFix(unittest.TestCase):
         print("  ✅ [Bug 2 验证] 2~4 字段复合异象放行与 5 字段大杂烩物理拦截正常！")
 
     def test_bug3_ast_visitor_does_not_flag_operators_as_hallucinations(self):
-        """【Bug 3 验证】AST 遍历仅访问参数与关键字，不把 pasteurize 等算子当成幻觉字段"""
+        """【Bug 3 验证】AST 遍历仅访问参数与关键字，不把授权冷门算子 densify 等误判为幻觉字段，同时拦截非 SSOT 幻觉算子 pasteurize"""
         fields_meta = {
             "f1": {"type": "MATRIX", "domain": "unbounded"},
             "f2": {"type": "MATRIX", "domain": "unbounded"}
         }
-        # 使用不在常规白名单或前缀集合中的非典型算子 pasteurize
-        expr = "group_rank(pasteurize(divide(f1, f2)), subindustry)"
+        expr = "group_rank(densify(divide(f1, f2)), subindustry)"
         res = DimensionAuditor.audit_expression(expr, fields_meta, category="analyst")
-        
-        # 绝不能报 pasteurize 是非法/幻觉字段！
+
+        # 绝不能报 densify 是非法/幻觉字段！
         for issue in res["issues"]:
-            self.assertNotIn("pasteurize", issue)
-        self.assertNotIn("pasteurize", res["used_fields"])
+            self.assertNotIn("densify", issue)
+        self.assertNotIn("densify", res["used_fields"])
         self.assertEqual(set(res["used_fields"]), {"f1", "f2"})
-        print("  ✅ [Bug 3 验证] 外部/非典型算子 AST 节点未被误判为数据集字段！")
+
+        # 同时验证非 104 SSOT 的幻觉算子 pasteurize 被精确拦截
+        bad_expr = "group_rank(pasteurize(divide(f1, f2)), subindustry)"
+        bad_res = DimensionAuditor.audit_expression(bad_expr, fields_meta, category="analyst")
+        self.assertFalse(bad_res["is_valid"])
+        self.assertTrue(any("未知/非法算子拦截" in issue for issue in bad_res["issues"]))
+        print("  ✅ [Bug 3 验证] 合法冷门算子未误判为字段，且非 104 幻觉算子已被精确拦截！")
 
     def test_bug3_vector_type_preserved_with_unbounded_domain(self):
         """【Bug 3 验证】_get_field_info 保留 type: VECTOR，即使 domain 未定义或为 unbounded"""

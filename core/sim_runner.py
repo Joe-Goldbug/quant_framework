@@ -37,9 +37,21 @@ if sys.platform == "win32":
         pass
 
 sys.path.insert(0, os.path.abspath("."))
-if r"D:\brain-mcp" not in sys.path:
-    sys.path.append(r"D:\brain-mcp")
-os.environ["BRAIN_MCP_CONFIG"] = r"D:\brain-mcp\user_config.json"
+brain_dir = os.environ.get("BRAIN_MCP_DIR")
+if not brain_dir:
+    for candidate in [
+        "/home/kali/.gemini/antigravity/scratch/quant_research/brain-mcp",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../brain-mcp")),
+        r"D:\brain-mcp"
+    ]:
+        if os.path.exists(candidate):
+            brain_dir = candidate
+            break
+
+if brain_dir and brain_dir not in sys.path:
+    sys.path.append(brain_dir)
+if brain_dir:
+    os.environ.setdefault("BRAIN_MCP_CONFIG", os.path.join(brain_dir, "user_config.json"))
 
 BrainModule = None
 
@@ -48,7 +60,7 @@ def get_brain_module():
     if BrainModule is None:
         try:
             import importlib.util
-            brain_main_path = r"D:\brain-mcp\main.py"
+            brain_main_path = os.path.join(brain_dir, "main.py") if brain_dir else r"D:\brain-mcp\main.py"
             if os.path.exists(brain_main_path):
                 spec = importlib.util.spec_from_file_location("brain_mcp_main", brain_main_path)
                 _bm = importlib.util.module_from_spec(spec)
@@ -62,6 +74,7 @@ def get_brain_module():
 
 try:
     from quant_framework.core.dimension_rules import DimensionAuditor
+    from quant_framework.core.fastexpr_ast import parse_fastexpr
     from quant_framework.core.func_call_corrector import ASTSandboxCorrector
     from quant_framework.core.gatekeeper import Gatekeeper
     from quant_framework.core.anti_laziness import AntiLazinessAuditor
@@ -69,6 +82,7 @@ try:
     from quant_framework.core.concurrency_utils import atomic_save_json
 except ImportError:
     from core.dimension_rules import DimensionAuditor
+    from core.fastexpr_ast import parse_fastexpr
     from core.func_call_corrector import ASTSandboxCorrector
     from core.gatekeeper import Gatekeeper
     from core.anti_laziness import AntiLazinessAuditor
@@ -307,6 +321,18 @@ class SimBatchRunner:
                   f"抽样={'是' if _dec.sampled else '否'} | {_dec.reason}")
             if _dec.sampled:
                 # 只生成待审作业, 不调用 LLM; 由独立出题器消费。主 Agent 读不到该文件路径。
+                _b_meta_probe = {}
+                if batch_file_path and os.path.exists(batch_file_path):
+                    try:
+                        with open(batch_file_path, "r", encoding="utf-8") as _bf:
+                            _b_meta_probe = json.load(_bf)
+                    except Exception:
+                        _b_meta_probe = {}
+                _field_profiles = (
+                    known_fields
+                    if isinstance(known_fields, dict)
+                    else {fn: {} for fn in (known_fields or [])}
+                )
                 _job_path = os.path.join(campaign_dir, f"audit_probe_job_{_ticket.batch_id}.json")
                 with open(_job_path, "w", encoding="utf-8") as _jf:
                     json.dump({
@@ -317,9 +343,13 @@ class SimBatchRunner:
                         "mandatory": _dec.mandatory,
                         "spec": {"region": region, "universe": universe, "delay": delay,
                                  "category": category, "neutralization": neutralization},
+                        "known_fields": known_fields,
+                        "field_profiles": _field_profiles,
+                        "hypothesis": _b_meta_probe.get("hypothesis"),
                         "items": [
                             {k: x.get(k) for k in ("slot", "expression", "optimize_reason",
-                                                   "hypothesis_ref", "mechanism_intents", "economic_delta")}
+                                                   "hypothesis_ref", "mechanism_intents", "economic_delta",
+                                                   "change_axis", "prediction")}
                             for x in expressions_data if isinstance(x, dict)
                         ],
                     }, _jf, ensure_ascii=False, indent=2)
@@ -349,12 +379,11 @@ class SimBatchRunner:
                 curative_ops -= set(action_ops.keys())
 
                 def _count_operators(expr_text: str) -> int:
-                    """AST 统计算子调用数 (与 DimensionAuditor.operator_count 口径一致)"""
-                    try:
-                        tree = ast.parse(expr_text, mode="eval")
-                        return sum(1 for n in ast.walk(tree) if isinstance(n, ast.Call))
-                    except Exception:
-                        return 9999
+                    """AST 统计算子调用数 (支持多行 SNC 且与 DimensionAuditor.operator_count 口径一致)"""
+                    parsed_cnt = parse_fastexpr(expr_text)
+                    if parsed_cnt.is_valid:
+                        return parsed_cnt.operator_count
+                    return 9999
 
                 if symptoms:
                     if getattr(cls, "_strict_prescription_lock", False) and (curative_ops or action_ops):
@@ -412,9 +441,8 @@ class SimBatchRunner:
                                 ts_data = json.load(tf)
                                 for sig in ts_data.get("signals", []):
                                     if sig.get("id") == b_meta.get("seed_id"):
-                                        import ast
-                                        tree = ast.parse(sig.get("expression", ""), mode='eval')
-                                        stage0_op_count = sum(1 for n in ast.walk(tree) if isinstance(n, ast.Call))
+                                        parsed_sig = parse_fastexpr(sig.get("expression", ""))
+                                        stage0_op_count = parsed_sig.operator_count if parsed_sig.is_valid else 0
                                         break
             except Exception:
                 pass
@@ -456,17 +484,18 @@ class SimBatchRunner:
         )
         route_mode = SwarmAuditor.MODE_REFINEMENT if refinement_eligible else SwarmAuditor.MODE_EXPLORATION
         event_driven_cat = str(category).lower() in {"news", "sentiment", "analyst", "socialmedia", "earnings", "insider"}
-        # Phase A (默认): 仅观测告警并落盘审计报告，100% 兼容 6 键存量脚本；
-        # Phase B: 设置 AEGIS_GATE15_STRICT=1 后开启硬熔断（要求 9 键契约）。
-        gate15_phase_b = bool(strict_hardness and os.environ.get("AEGIS_GATE15_STRICT") == "1")
+        # Phase B 设为默认 Fail-Closed (AEGIS_GATE15_STRICT 默认 "1")；仅显式设为 "0" 时降级观测模式。
+        gate15_phase_b = bool(strict_hardness and os.environ.get("AEGIS_GATE15_STRICT", "1") == "1")
         legacy_6key_batch = bool(expressions_data) and all(
-            isinstance(item, dict) and "mechanism_intents" not in item for item in expressions_data
+            isinstance(item, dict)
+            and "mechanism_intents" not in item
+            and not ("change_axis" in item and "prediction" in item)
+            for item in expressions_data
         )
         if legacy_6key_batch and gate15_phase_b:
             raise PermissionError(
                 "【Gate 1.5 契约版本拦截】本批次仍为 6 键存量格式 (缺少 mechanism_intents/hypothesis_ref/economic_delta)，"
-                "而 AEGIS_GATE15_STRICT=1 要求 9 键契约。请先调用 SwarmAuditor.upgrade_6key_to_9key() 完成无损迁移，"
-                "或保持 AEGIS_GATE15_STRICT=0 以 Phase A 观测模式运行。"
+                "而 AEGIS_GATE15_STRICT=1 要求 9 键或 V4.1 5 键契约。请先完成迁移或设置 AEGIS_GATE15_STRICT=0。"
             )
 
         swarm_report = SwarmAuditor.enforce(
@@ -502,13 +531,14 @@ class SimBatchRunner:
             f"假说偏离={hyp_deviation_slots} 槽 | 审计报告已落盘"
         )
 
-        # 5. Gate 5: Tabu 禁忌表全槽位扫描 (在靶向母本精修模式 has_parent 下，母本核心字段与基准对照槽豁免禁忌锁定)
+        # 5. Gate 5: Tabu 禁忌表全槽位扫描 (仅豁免显式基准/消融/安慰剂控制槽，禁止全局绕过)
         ledger_file = ledger_path or os.path.join(campaign_dir, "exploration_ledger.json")
         known_field_names = set(known_fields if isinstance(known_fields, list) else known_fields.keys())
-        if strict_hardness and os.path.exists(ledger_file) and not has_parent:
+        if strict_hardness and os.path.exists(ledger_file):
             for slot_idx, item in enumerate(expressions_data):
                 expr_text = item.get("expression", "")
-                if slot_idx == 0 or (parent_expr and expr_text == parent_expr):
+                v_type = str(item.get("type") or "").strip().lower()
+                if v_type in ("parent_control", "ablation_control", "placebo_control") or (slot_idx == 0 and parent_expr and expr_text == parent_expr):
                     continue
                 tokens = [t for t in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', expr_text) if t in known_field_names]
                 if len(tokens) >= 1:
@@ -563,7 +593,7 @@ class SimBatchRunner:
             audit = DimensionAuditor.audit_expression(
                 expr, known_fields, category=category, allow_pv_cross=False, max_operators=batch_max_ops,
                 step=batch_step, allowed_operators=rx_allowed, stage0_op_count=stage0_op_count,
-                required_fields=core_fields if (batch_step == 1 and not (locals().get('b_meta', {}).get('has_parent')) and core_fields) else None,
+                required_fields=None,
                 hypothesis=item.get("hypothesis") or (b_meta.get("hypothesis") if 'b_meta' in locals() and isinstance(b_meta, dict) else None)
             )
             if not audit["is_valid"]:
@@ -657,68 +687,155 @@ class SimBatchRunner:
                     print(f"   🔄 [子批 #{c_idx}/{total_chunks}] 正在进行第 {retry_attempt}/{max_chunk_retries} 次重试，先静默等待 30 秒缓解集群压力...")
                     await asyncio.sleep(30)
 
-                sub_res = await bm.submit_multi_simulation(
-                    alpha_expressions=expr_chunk,
-                    region=region,
-                    universe=universe,
-                    delay=delay,
-                    decay=decay,
-                    neutralization=chunk_neut,
-                    truncation=truncation,
-                    pasteurization="ON",
-                    unit_handling="VERIFY",
-                    nan_handling=nan_handling,
-                    language="FASTEXPR",
-                    visualization=False
-                )
-                if "error" in sub_res:
-                    print(f"   ⚠️ [子批 #{c_idx}/{total_chunks} | 中性化: {chunk_neut}] 提交失败: {sub_res['error']}")
-                    if retry_attempt < max_chunk_retries:
-                        continue
-                    else:
-                        print(f"   ❌ [子批 #{c_idx}/{total_chunks}] 提交最终失败，跳过该子批。")
+                if hasattr(bm, "submit_multi_simulation"):
+                    sub_res = await bm.submit_multi_simulation(
+                        alpha_expressions=expr_chunk,
+                        region=region,
+                        universe=universe,
+                        delay=delay,
+                        decay=decay,
+                        neutralization=chunk_neut,
+                        truncation=truncation,
+                        pasteurization="ON",
+                        unit_handling="VERIFY",
+                        nan_handling=nan_handling,
+                        language="FASTEXPR",
+                        visualization=False
+                    )
+                    if "error" in sub_res:
+                        print(f"   ⚠️ [子批 #{c_idx}/{total_chunks} | 中性化: {chunk_neut}] 提交失败: {sub_res['error']}")
+                        if retry_attempt < max_chunk_retries:
+                            continue
+                        else:
+                            print(f"   ❌ [子批 #{c_idx}/{total_chunks}] 提交最终失败，跳过该子批。")
+                            return chunk_results_out
+
+                    loc = sub_res.get("location")
+                    sim_locations.append(loc)
+                    print(f"   [子批 #{c_idx}/{total_chunks} | 中性化: {chunk_neut}] 成功接入 Brain 队列! Location: {loc}")
+
+                    # 串行静默轮询单个子批 (前 60s 不查询，0 Token 浪费)
+                    print(f"   ⏳ [子批 #{c_idx}] 静默等待完成 (前 60s 不查询)...")
+                    await asyncio.sleep(60)
+                    poll_count = 0
+                    done = False
+                    terminal_status = None
+                    while not done:
+                        poll_count += 1
+                        chk = await bm.check_multi_simulation(loc)
+                        terminal_status = chk.get("status")
+                        progress = chk.get("progress", 0)
+                        print(f"   [静默轮询 #{poll_count} | 子批 {c_idx} | {str(loc)[-12:]}] 状态: {terminal_status} | 进度: {progress*100:.0f}%")
+                        if terminal_status in ["COMPLETE", "COMPLETED", "DONE", "ERROR", "CANCELLED"]:
+                            done = True
+                        else:
+                            await asyncio.sleep(20)
+
+                    if terminal_status == "CANCELLED":
+                        print(f"   ⚠️ [子批 #{c_idx}/{total_chunks}] Brain 平台因集群排队/配额返回 CANCELLED！")
+                        if retry_attempt < max_chunk_retries:
+                            continue
+                        else:
+                            print(f"   ❌ [子批 #{c_idx}/{total_chunks}] 超过最大重试次数 ({max_chunk_retries})，跳过该子批。")
+                            return chunk_results_out
+
+                    if terminal_status == "ERROR":
+                        print(f"   ⚠️ [子批 #{c_idx}/{total_chunks}] Brain 平台返回 ERROR 状态！")
+                        if retry_attempt < max_chunk_retries:
+                            continue
+                        else:
+                            print(f"   ❌ [子批 #{c_idx}/{total_chunks}] 超过最大重试次数 ({max_chunk_retries})，跳过该子批。")
+                            return chunk_results_out
+
+                    fetch_res = await bm.fetch_multi_simulation_result(loc)
+                    chunk_results = fetch_res.get("alpha_results", [])
+                elif hasattr(bm, "create_multi_simulation"):
+                    # 适配新版 brain-mcp 的 create_multi_simulation + location/children 协议
+                    multi_items = [
+                        {
+                            "type": "REGULAR",
+                            "settings": {
+                                "instrumentType": "EQUITY",
+                                "region": region,
+                                "universe": universe,
+                                "delay": delay,
+                                "decay": decay,
+                                "neutralization": chunk_neut,
+                                "truncation": truncation,
+                                "pasteurization": "ON",
+                                "unitHandling": "VERIFY",
+                                "nanHandling": nan_handling,
+                                "language": "FASTEXPR",
+                                "visualization": False,
+                            },
+                            "regular": expr,
+                        }
+                        for expr in expr_chunk
+                    ]
+                    if len(multi_items) == 1:
+                        multi_items.append(dict(multi_items[0]))
+                    sub_res = await bm.create_multi_simulation(multi_items)
+                    if not isinstance(sub_res, dict) or sub_res.get("error") or not sub_res.get("location"):
+                        print(f"   ⚠️ [子批 #{c_idx}/{total_chunks} | 中性化: {chunk_neut}] create_multi_simulation 失败: {sub_res}")
+                        if retry_attempt < max_chunk_retries:
+                            continue
                         return chunk_results_out
 
-                loc = sub_res.get("location")
-                sim_locations.append(loc)
-                print(f"   [子批 #{c_idx}/{total_chunks} | 中性化: {chunk_neut}] 成功接入 Brain 队列! Location: {loc}")
+                    loc = sub_res["location"]
+                    sim_locations.append(loc)
+                    print(f"   [子批 #{c_idx}/{total_chunks} | create_multi_simulation] 已入队: {loc}")
 
-                # 串行静默轮询单个子批 (前 60s 不查询，0 Token 浪费)
-                print(f"   ⏳ [子批 #{c_idx}] 静默等待完成 (前 60s 不查询)...")
-                await asyncio.sleep(60)
-                poll_count = 0
-                done = False
-                terminal_status = None
-                while not done:
-                    poll_count += 1
-                    chk = await bm.check_multi_simulation(loc)
-                    terminal_status = chk.get("status")
-                    progress = chk.get("progress", 0)
-                    print(f"   [静默轮询 #{poll_count} | 子批 {c_idx} | {loc[-12:]}] 状态: {terminal_status} | 进度: {progress*100:.0f}%")
-                    if terminal_status in ["COMPLETE", "COMPLETED", "DONE", "ERROR", "CANCELLED"]:
-                        done = True
-                    else:
-                        await asyncio.sleep(20)
+                    async def _poll_url(target_url: str, max_polls: int = 90) -> dict:
+                        base_url = str(getattr(getattr(bm, "brain_client", None), "base_url", "https://api.worldquantbrain.com")).rstrip("/")
+                        url = target_url if str(target_url).startswith("http") else f"{base_url}/simulations/{str(target_url).lstrip('/')}"
+                        for _ in range(max_polls):
+                            resp = await bm.brain_client._request("GET", url)
+                            payload = resp.json() if hasattr(resp, "json") else (resp if isinstance(resp, dict) else {})
+                            headers = getattr(resp, "headers", {}) or {}
+                            retry_after = float(headers.get("Retry-After", headers.get("retry-after", 0)) or 0)
+                            st = str(payload.get("status", "")).upper()
+                            if (retry_after == 0 and (payload.get("children") or payload.get("alpha") or st in ("COMPLETE", "COMPLETED", "DONE"))) or st in ("ERROR", "CANCELLED"):
+                                return payload
+                            await asyncio.sleep(max(1.0, min(retry_after or 10.0, 30.0)))
+                        return {"status": "ERROR", "error": "simulation poll timeout"}
 
-                if terminal_status == "CANCELLED":
-                    print(f"   ⚠️ [子批 #{c_idx}/{total_chunks}] Brain 平台因集群排队/配额返回 CANCELLED！")
-                    if retry_attempt < max_chunk_retries:
-                        continue
-                    else:
-                        print(f"   ❌ [子批 #{c_idx}/{total_chunks}] 超过最大重试次数 ({max_chunk_retries})，跳过该子批。")
+                    parent_state = await _poll_url(loc)
+                    p_status = str(parent_state.get("status", "")).upper()
+                    if p_status in ("CANCELLED", "ERROR"):
+                        if retry_attempt < max_chunk_retries:
+                            continue
                         return chunk_results_out
 
-                if terminal_status == "ERROR":
-                    print(f"   ⚠️ [子批 #{c_idx}/{total_chunks}] Brain 平台返回 ERROR 状态！")
-                    if retry_attempt < max_chunk_retries:
-                        continue
-                    else:
-                        print(f"   ❌ [子批 #{c_idx}/{total_chunks}] 超过最大重试次数 ({max_chunk_retries})，跳过该子批。")
-                        return chunk_results_out
-
-                # 正常完成，拉取结果
-                fetch_res = await bm.fetch_multi_simulation_result(loc)
-                chunk_results = fetch_res.get("alpha_results", [])
+                    child_urls = parent_state.get("children") or []
+                    chunk_results = []
+                    for c_idx_child, child_ref in enumerate(child_urls):
+                        child_state = await _poll_url(child_ref)
+                        alpha_id = child_state.get("alpha")
+                        orig_expr = expr_chunk[c_idx_child] if c_idx_child < len(expr_chunk) else ""
+                        if not alpha_id:
+                            chunk_results.append({
+                                "status": child_state.get("status", "ERROR"),
+                                "expression": orig_expr,
+                                "code": orig_expr,
+                                "error": child_state.get("message", "missing alpha id"),
+                            })
+                            continue
+                        details = await bm.get_alpha_details(alpha_id)
+                        is_block = details.get("is") or {}
+                        reg_code = (details.get("regular") or {}).get("code") or orig_expr
+                        chunk_results.append({
+                            "id": alpha_id,
+                            "alpha_id": alpha_id,
+                            "status": "COMPLETE",
+                            "expression": reg_code,
+                            "code": reg_code,
+                            "is": is_block,
+                            "metrics": is_block,
+                            "checks": is_block.get("checks", []),
+                            "settings": details.get("settings", {}),
+                        })
+                else:
+                    raise RuntimeError("❌ brain-mcp 既无 submit_multi_simulation 也无 create_multi_simulation 接口")
                 valid_chunk_results = [
                     r for r in chunk_results 
                     if r.get("status") not in ["CANCELLED", "ERROR"] 
@@ -919,19 +1036,18 @@ class SimBatchRunner:
         batch_fitness_list = [_fitness_of(r) for r in results]
         max_batch_fitness = max(batch_fitness_list) if batch_fitness_list else 0.0
 
-        # Gate 5: 登记账本并检测 Tabu 连续停滞 (仅在开拓探索阶段生效，老兵精修模式豁免锁定母本字段)
-        # 2026-11-13 根因修复: 原实现只按 corrected_exprs[0] 的字段对记账，导致单批 20 槽中
-        # 其余 19 槽探索的字段对全部漏记，Tabu 水位线停滞检测与穷尽覆盖率长期失真。
-        # 现改为遍历全批槽位，按每槽实际使用的 (signal_field, catalyst_field) 分组记录本批最高 Fitness。
-        if not batch_data.get("has_parent", False):
+        # Gate 5: 登记账本并检测 Tabu 连续停滞 (全阶段记账，仅豁免控制对比槽)
+        control_exprs = {
+            (it.get("expression") or "").strip()
+            for it in items
+            if isinstance(it, dict) and str(it.get("type") or "").strip().lower() in ("parent_control", "ablation_control", "placebo_control")
+        }
+        if True:
             known_field_set = set(known_fields if isinstance(known_fields, list) else known_fields.keys())
             pair_stats: Dict[Tuple[str, Optional[str]], Dict[str, Union[float, List[str]]]] = {}
-            # 2026-11-17 根因修复: 原实现 zip(corrected_exprs, results) 假定 results 与槽位同序，
-            # 但部分回测(4/8 等) results 按平台完成顺序返回, 与槽位错位 -> 把 A 槽 fitness 记到 B 字段,
-            # 导致必测网格漏记/错记。改为逐结果从其自带 code(自身表达式) 提取字段令牌, 与顺序无关。
             for r_obj in results:
-                expr_str = r_obj.get("code") or r_obj.get("expression") or ""
-                if not expr_str:
+                expr_str = (r_obj.get("code") or r_obj.get("expression") or "").strip()
+                if not expr_str or expr_str in control_exprs:
                     continue
                 matched_tokens = []
                 for tok in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*', expr_str):
@@ -1097,39 +1213,71 @@ class SimBatchRunner:
             parent_alpha=parent_snapshot
         )
 
-        # 反事实消融检验: Slot 1 (exploit 控制槽) vs Slot 2 (ablation 裸核槽)
+        # 反事实消融双重差分检验: Slot 1 (parent) vs Slot 2 (ablation 裸核) vs Slot 3 (placebo 滞后空壳)
         if batch_data.get("has_parent", False):
             r_slot1 = None
             r_slot2 = None
+            r_slot3 = None
             for r in results:
                 s_idx = r.get("slot")
-                if s_idx == 1:
+                r_type = str(r.get("type") or "").strip().lower()
+                if s_idx == 1 or r_type == "parent_control":
                     r_slot1 = r
-                elif s_idx == 2:
+                elif s_idx == 2 or r_type == "ablation_control":
                     r_slot2 = r
+                elif s_idx == 3 or r_type == "placebo_control":
+                    r_slot3 = r
 
-            # 备用容错：若未通过 slot 字段匹配到，尝试按 items 中的 Slot 1 与 Slot 2 表达式进行二次定位
-            if (r_slot1 is None or r_slot2 is None) and ASTSandboxCorrector is not None:
-                s1_expr = next((ASTSandboxCorrector.correct_expression(it.get("expression", "")) for it in items if it.get("slot") == 1), None)
-                s2_expr = next((ASTSandboxCorrector.correct_expression(it.get("expression", "")) for it in items if it.get("slot") == 2), None)
+            # 备用容错：按 items 中的槽位表达式进行二次定位
+            if (r_slot1 is None or r_slot2 is None or r_slot3 is None) and ASTSandboxCorrector is not None:
+                s1_expr = next((ASTSandboxCorrector.correct_expression(it.get("expression", "")) for it in items if it.get("slot") == 1 or it.get("type") == "parent_control"), None)
+                s2_expr = next((ASTSandboxCorrector.correct_expression(it.get("expression", "")) for it in items if it.get("slot") == 2 or it.get("type") == "ablation_control"), None)
+                s3_expr = next((ASTSandboxCorrector.correct_expression(it.get("expression", "")) for it in items if it.get("slot") == 3 or it.get("type") == "placebo_control"), None)
                 for r in results:
                     re_str = ASTSandboxCorrector.correct_expression(Gatekeeper.extract_expression(r))
                     if s1_expr and re_str == s1_expr and r_slot1 is None:
                         r_slot1 = r
                     elif s2_expr and re_str == s2_expr and r_slot2 is None:
                         r_slot2 = r
+                    elif s3_expr and re_str == s3_expr and r_slot3 is None:
+                        r_slot3 = r
 
             if r_slot1 is not None and r_slot2 is not None:
                 m1 = r_slot1.get("is_metrics", {}) or r_slot1.get("metrics", {}) or r_slot1.get("is", {})
                 m2 = r_slot2.get("is_metrics", {}) or r_slot2.get("metrics", {}) or r_slot2.get("is", {})
+                m3 = (r_slot3.get("is_metrics", {}) or r_slot3.get("metrics", {}) or r_slot3.get("is", {})) if r_slot3 is not None else {}
                 sharpe1 = float(m1.get("sharpe", 0.0) or 0.0)
                 sharpe2 = float(m2.get("sharpe", 0.0) or 0.0)
-                ablation_sharpe_ratio = abs(sharpe2) / max(abs(sharpe1), 0.01)
-                if abs(sharpe2) < 0.65 and abs(sharpe1) >= 1.25:
-                    clues = prescriptions.setdefault("forensic_clues", [])
-                    warn_msg = "【反事实消融警告：外层算子寄生】裸核 Slot 2 夏普坍塌 (<0.65)，禁止继续叠加外层包装算子！"
+                sharpe3 = float(m3.get("sharpe", 0.0) or 0.0) if r_slot3 is not None else 0.0
+
+                drop_ablation = abs(sharpe1) - abs(sharpe2)
+                placebo_drop = (abs(sharpe1) - abs(sharpe3)) if r_slot3 is not None else drop_ablation
+                is_parasitism = (
+                    abs(sharpe1) >= 1.25
+                    and (
+                        drop_ablation < 0.20
+                        or (r_slot3 is not None and (abs(sharpe3) >= 0.70 * abs(sharpe1) or placebo_drop < 0.30))
+                    )
+                )
+                clues = prescriptions.setdefault("forensic_clues", [])
+                if is_parasitism:
+                    warn_msg = (
+                        f"【反事实消融警告：外层算子寄生】母本(|S|={abs(sharpe1):.2f}) vs "
+                        f"裸核(|S|={abs(sharpe2):.2f}, Δ={drop_ablation:+.2f})"
+                        + (f" vs 滞后空壳(|S|={abs(sharpe3):.2f})" if r_slot3 is not None else "")
+                        + "，外层包装未贡献真实边际或滞后信号仍有效！"
+                    )
                     if warn_msg not in clues:
                         clues.append(warn_msg)
+                elif abs(sharpe1) >= 1.25 and drop_ablation >= 0.30 and (r_slot3 is None or placebo_drop >= 0.30):
+                    ok_msg = (
+                        f"【反事实消融验证：核心机制证实】母本(|S|={abs(sharpe1):.2f}) 显著超越 "
+                        f"裸核(|S|={abs(sharpe2):.2f}, 机制净增益={drop_ablation:+.2f})"
+                        + (f" 与滞后安慰剂(|S|={abs(sharpe3):.2f})" if r_slot3 is not None else "")
+                        + "，证实交互机制有效。"
+                    )
+                    if ok_msg not in clues:
+                        clues.append(ok_msg)
 
         # 将授权处方写盘给下一轮使用 (清空旧算子白名单，彻底杜绝历史处方锁绑架 Agent 自主探索)
         rx_path = os.path.join(campaign_dir, "authorized_mutations.json")

@@ -12,7 +12,7 @@ model: Gemini 3.8 Flash (High)
 本 Agent 担当知识沉淀飞轮的核心。
 **【严格准入触发条件】**：
 - **普通试错、低分淘汰（|Sharpe| < 1.0）或未达标的死种子上，绝对严禁触发本角色（0 Token 纠缠）！**
-- **当且仅当**某个 Alpha 通过了全部终极生产准入门禁（Sharpe $\ge 1.58$, Fitness $\ge 1.0$, Margin 达标, CW 集中度合规, 平台 ProdCorr $< 0.70$ 且 本地 SelfCorr $\le 0.60$），被 Python 打上蓝色标记（`BLUE`）后，才触发本 Agent 进行经验复盘！
+- **当且仅当**某个 Alpha 通过了全部终极生产准入门禁（Sharpe $\ge 1.58$, Fitness $\ge 1.0$, Margin 达标, CW 集中度合规, **0 FAIL + 0 缺陷类 WARNING**, 平台 ProdCorr $< 0.65$ 且 本地 SelfCorr $\le 0.60$，并经 `request_verdict(CERTIFY_ALPHA)` 发证写入 `certified_champions.json`）后，才触发本 Agent 进行经验复盘！
 
 你的任务是：**复盘突破性 Alpha 的完整演化轨迹，提炼高度抽象的纯算子增益规律，增量写入 Markdown 实战手册（如 `USA_1_analyst.md`），使后续的研究 Agent 自动继承成功模式。**
 

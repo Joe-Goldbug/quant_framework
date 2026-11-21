@@ -29,6 +29,14 @@ if sys.platform == "win32":
         pass
 
 try:
+    from .fastexpr_ast import parse_fastexpr
+except (ImportError, ValueError):
+    try:
+        from core.fastexpr_ast import parse_fastexpr
+    except ImportError:
+        from fastexpr_ast import parse_fastexpr
+
+try:
     from .horizon_probe import HorizonProbe
 except (ImportError, ValueError):
     try:
@@ -139,10 +147,10 @@ def _parse(expr: str):
     s = (expr or "").strip()
     while s.startswith("-"):
         s = s[1:].strip()
-    try:
-        return ast.parse(s, mode="eval")
-    except SyntaxError:
+    parsed = parse_fastexpr(s)
+    if not parsed.is_valid or parsed.final_ast is None:
         return None
+    return ast.Expression(body=parsed.final_ast)
 
 
 def _call_name(node) -> str:
@@ -195,7 +203,7 @@ class SwarmAuditor:
     MIN_PAIRED_SLOTS = 2           # V2: 至少 1 组双窗口对照做期限稳健性，不再强制 10 组拓扑
     PAIRED_SLOTS_8 = 2             # 8 槽批次同样至少 1 组对照
     MIN_SKELETON_RATIO = 0.45      # 精修模式: 至少 45% 槽位保留母本主锚字段/骨架 (1+9+10 三分天下制)
-    MAX_WINDOW_ONLY_RATIO = 0.50   # 精修模式: 纯窗口数字微调不得超过一半槽位
+    MAX_WINDOW_ONLY_RATIO = 0.10   # 精修模式: 纯窗口数字微调严格限制 <= 10% (禁止摸鱼调参)
 
     @staticmethod
     def extract_skeleton_ops(expr: str, depth: int = 3) -> List[str]:
@@ -234,25 +242,33 @@ class SwarmAuditor:
                 slot = idx + 1
 
             keys = list(v.keys())
-            if "optimize_reason" in keys and "expression" in keys:
-                if keys.index("optimize_reason") > keys.index("expression"):
+            reason_key = "optimize_reason" if "optimize_reason" in keys else ("prediction" if "prediction" in keys else None)
+            if reason_key and "expression" in keys:
+                if keys.index(reason_key) > keys.index("expression"):
                     ordered_bad.append(slot)
 
-            intents = v.get("mechanism_intents")
-            if not isinstance(intents, list) or not intents:
-                intents_missing.append(slot)
-            elif not all(isinstance(intent, str) and intent.strip() for intent in intents):
-                intents_invalid.append(slot)
+            v_type = str(v.get("type") or "").strip().lower()
+            is_control = v_type in ("parent_control", "ablation_control", "placebo_control")
+            is_v41_compact = bool(v.get("change_axis") and v.get("prediction") is not None)
 
-            reason = str(v.get("optimize_reason") or v.get("economic_rationale") or "").strip()
+            intents = v.get("mechanism_intents")
+            if not is_control and not is_v41_compact:
+                if not isinstance(intents, list) or not intents:
+                    intents_missing.append(slot)
+                elif not all(isinstance(intent, str) and intent.strip() for intent in intents):
+                    intents_invalid.append(slot)
+
+            reason = str(v.get("optimize_reason") or v.get("prediction") or v.get("economic_rationale") or "").strip()
             if not reason:
-                missing.append(slot)
+                if not is_control:
+                    missing.append(slot)
                 continue
-            if len(reason) < HYPOTHESIS_MIN_CHARS:
-                too_short.append(slot)
-            if not any(k in reason.lower() for k in METRIC_KEYWORDS):
-                no_metric.append(slot)
-            seen.setdefault(reason, []).append(slot)
+            if not is_control:
+                if len(reason) < HYPOTHESIS_MIN_CHARS:
+                    too_short.append(slot)
+                if not any(k in reason.lower() for k in METRIC_KEYWORDS):
+                    no_metric.append(slot)
+                seen.setdefault(reason, []).append(slot)
 
         dup_groups = [slots for slots in seen.values() if len(slots) > 1]
         dup_slots = sum(len(s) for s in dup_groups)
@@ -626,7 +642,7 @@ class SwarmAuditor:
             " (Margin / Sharpe / Turnover / ProdCorr / CLUSTER 等) 并摘述 economic_rationale——先落笔经济学因果，公式才被约束，"
             "先拼公式再补理由的后验辩解会被判违规；逐字重复的假设视为凑数；",
             "- 🧪 必须保留 1 个控制槽: 逐字复现母本表达式不做任何修改，用于确认本轮回测配置与母本历史结果同基准；",
-            "- 🎯 验收门槛改为「相对母本改进」: 不追求 0 FAIL + 0 WARNING 全绿 (LOW_SHARPE / CLUSTER 这类告警由骨架本身决定，不可能清零)，",
+            "- 🎯 验收门槛: 必须追求 ALL PASS (0 FAIL + 0 缺陷类 WARNING，MATCHES_THEMES/MATCHES_COMPETITION/MATCHES_PYRAMID 仅作信息类标注)，",
             "   而是按母本病灶选一条轴做单点突破:",
             "   a) Margin 升 >= 20% 且 |Sharpe| 不降 (母本边际利润单薄时的主攻方向)；",
             "   b) Turnover 降 >= 20% —— 仅当母本 Turnover > 30% (换手仍高) 时适用；低换手母本严禁再降换手，那会把收益一起砍掉；",

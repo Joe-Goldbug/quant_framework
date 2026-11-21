@@ -115,21 +115,32 @@ class TestDarkPitsRegression(unittest.TestCase):
             "alt_f3": {"type": "MATRIX", "coverage": 0.9}
         }
 
-        # 构造带有 has_parent=True 标记的批次元数据
-        b_meta = {"has_parent": True, "step": 1, "seed_id": "SEED_TEST"}
+        # 构造带有 has_parent=True 标记的 9 键批次元数据 (对齐 V4.1 Fail-Closed Gate 1.5)
+        item_doc = {
+            "slot": 1,
+            "optimize_reason": "基准控制槽位: 替换饱和字段并引入尾部凹压缩与截断以改善 Sharpe 与 CW",
+            "hypothesis_ref": "HYP_PIT2",
+            "mechanism_intents": ["TAIL_ASYMMETRY"],
+            "economic_delta": "在冷替代特征上执行截尾与凹压缩测试稳健 Sharpe 提升",
+            "expression": expr_with_curative,
+            "neutralization": "NONE",
+            "type": "parent_control",
+        }
         batch_file = os.path.join(ctrl.campaign_dir, "batch_test_parent.json")
         os.makedirs(ctrl.campaign_dir, exist_ok=True)
         with open(batch_file, "w", encoding="utf-8") as bf:
             json.dump({
-                "step": 2,  # 模式一写入时标记为 2
+                "step": 2,
                 "has_parent": True,
+                "parent_expression": expr_with_curative,
+                "parent_snapshot": {"sharpe": 1.35, "expression": expr_with_curative},
                 "core_fields": ["f1", "f2"],
-                "items": [{"expression": expr_with_curative}]
+                "items": [item_doc]
             }, bf)
 
         corrected = SimBatchRunner.verify_state_token_and_gates(
             batch_file_path=batch_file,
-            expressions_data=[{"expression": expr_with_curative}],
+            expressions_data=[item_doc],
             known_fields=known_fields,
             category="news",
             region="USA",

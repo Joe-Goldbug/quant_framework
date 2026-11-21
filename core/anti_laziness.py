@@ -258,3 +258,93 @@ class AntiLazinessAuditor:
             "reason": f"已系统性测试 {tested_count}/{total_required} 组核心因果交互 (覆盖率 {coverage*100:.1f}%)，允许判定该数据集在当前 Universe 下缺乏生命力。",
             "coverage_pct": coverage
         }
+
+    @classmethod
+    def evaluate_exhaustion_gate(
+        cls,
+        store_summary: dict,
+        effective_rank: float,
+        has_vector_fields: bool = False,
+    ) -> dict:
+        """
+        AEGIS V4.1 C_eff 自适应数据集穷尽硬裁决门禁:
+        基于实测特征有效秩 effective_rank (C_eff = exp(-sum p_i ln p_i)) 动态设定四重门槛：
+          1. 已验证/证伪的正交假说数 >= max(3, min(10, round(C_eff * 1.5)))
+          2. 覆盖机制家族数 >= min(4, max(2, round(C_eff))) （含 VECTOR 数据集 >= 2 种 vec_* 标量化算子）
+          3. 不重样核心骨架非平凡实验数 >= max(12, min(40, round(C_eff * 5)))
+          4. 未解决的 near_miss / ALL_PASS 候选线索必须 == 0
+        """
+        summary = store_summary if isinstance(store_summary, dict) else {}
+        ceff = max(1.0, float(effective_rank or 1.0))
+
+        min_hyp = max(3, min(10, int(round(ceff * 1.5))))
+        min_fam = min(4, max(2, int(round(ceff))))
+        min_exp = max(12, min(40, int(round(ceff * 5))))
+        min_vec = 2 if has_vector_fields else 0
+
+        hyp_cnt = int(summary.get("orthogonal_hypotheses_count", 0) or 0)
+        fam_list = summary.get("mechanism_families_covered") or []
+        fam_cnt = len(set(fam_list))
+        vec_list = summary.get("vec_scalarizers_tested") or []
+        vec_cnt = len(set(vec_list))
+        exp_cnt = int(summary.get("distinct_core_skeletons_count", 0) or 0)
+        open_leads = summary.get("open_near_miss_leads") or []
+        clusters_total = int(summary.get("semantic_clusters_total", 0) or 0)
+        clusters_tested = int(summary.get("semantic_clusters_tested", 0) or 0)
+        cluster_cov = (
+            float(summary.get("semantic_cluster_coverage"))
+            if summary.get("semantic_cluster_coverage") is not None
+            else (clusters_tested / float(clusters_total) if clusters_total > 0 else 1.0)
+        )
+
+        missing: List[str] = []
+        if hyp_cnt < min_hyp:
+            missing.append(
+                f"已验证正交假说仅 {hyp_cnt} 条 < C_eff={ceff:.2f} 动态门槛 {min_hyp} 条"
+            )
+        if fam_cnt < min_fam:
+            missing.append(
+                f"覆盖机制家族仅 {fam_cnt} 类 < 动态门槛 {min_fam} 类 (当前: {sorted(set(fam_list))})"
+            )
+        if has_vector_fields and vec_cnt < min_vec:
+            missing.append(
+                f"VECTOR 数据集仅测试 {vec_cnt} 种 vec_* 标量化方式 < 2 种 (需探索 vec_avg/vec_max/vec_stddev 等分布统计)"
+            )
+        if exp_cnt < min_exp:
+            missing.append(
+                f"独立核心骨架非平凡实验仅 {exp_cnt} 条 < C_eff={ceff:.2f} 动态门槛 {min_exp} 条"
+            )
+        if clusters_total >= 2 and cluster_cov < 0.80:
+            missing.append(
+                f"字段语义簇覆盖率仅 {cluster_cov * 100:.1f}% ({clusters_tested}/{clusters_total}) < 80% 门槛，严禁只测局部字段簇即宣称穷尽"
+            )
+        if len(open_leads) > 0:
+            missing.append(
+                f"尚有 {len(open_leads)} 条未决 Near-Miss 高潜力线索未推进至 ALL PASS 或证伪结案"
+            )
+
+        allowed = len(missing) == 0
+        return {
+            "allowed": allowed,
+            "effective_rank": round(ceff, 3),
+            "has_vector_fields": bool(has_vector_fields),
+            "thresholds": {
+                "min_orthogonal_hypotheses": min_hyp,
+                "min_mechanism_families": min_fam,
+                "min_distinct_experiments": min_exp,
+                "min_vec_scalarizers": min_vec,
+                "min_semantic_cluster_coverage": 0.80 if clusters_total >= 2 else 0.0,
+            },
+            "observed": {
+                "orthogonal_hypotheses_count": hyp_cnt,
+                "mechanism_families_count": fam_cnt,
+                "distinct_core_skeletons_count": exp_cnt,
+                "vec_scalarizers_count": vec_cnt,
+                "semantic_clusters_tested": clusters_tested,
+                "semantic_clusters_total": clusters_total,
+                "semantic_cluster_coverage": round(cluster_cov, 4),
+                "open_near_miss_count": len(open_leads),
+            },
+            "missing_requirements": missing,
+            "verdict": "EXHAUSTED_CERTIFIED" if allowed else "DENIED_PREMATURE",
+        }

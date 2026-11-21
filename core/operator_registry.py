@@ -32,44 +32,96 @@ class OperatorRegistry:
         if cls._LOADED and not json_path:
             return
         target_path = json_path or cls.get_json_path()
+        cls._OPERATORS = {}
+        cls._OPERATORS_BY_CAT = {}
         if os.path.exists(target_path):
             try:
                 with open(target_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 results = data.get("results", []) if isinstance(data, dict) else (data if isinstance(data, list) else [])
-                cls._OPERATORS = {op["name"]: op for op in results if "name" in op}
-                cls._OPERATORS_BY_CAT = {}
+                cls._OPERATORS = {op["name"]: op for op in results if isinstance(op, dict) and "name" in op}
                 for op in results:
+                    if not isinstance(op, dict) or "name" not in op:
+                        continue
                     cat = op.get("category", "General")
                     cls._OPERATORS_BY_CAT.setdefault(cat, []).append(op)
                 cls._ALL_NAMES = set(cls._OPERATORS.keys())
-                cls._LOADED = True
+                if cls._OPERATORS:
+                    cls._LOADED = True
             except Exception as e:
                 print(f"⚠️ [OperatorRegistry] 加载 user_operators.json 失败: {e}")
 
-        # Fallback to standard core operators if file missing or empty
-        fallback_ops = {
-            "add", "subtract", "multiply", "divide", "reverse", "neg", "abs", "sign",
-            "power", "signed_power", "sqrt", "log", "s_log_1p", "exp", "max", "min",
-            "rank", "group_rank", "quantile", "group_quantile", "scale", "group_scale",
-            "zscore", "group_zscore", "ts_mean", "ts_sum", "ts_std_dev", "ts_min", "ts_max",
-            "ts_rank", "ts_delta", "ts_delay", "ts_corr", "ts_decay_linear", "ts_decay_exp_window",
-            "trade_when", "if_else", "winsorize", "hump", "group_neutralize", "jump_decay",
-            "ts_regression", "ts_arg_max", "ts_arg_min", "ts_skewness", "ts_kurtosis",
-            "ts_target_tvr_decay", "ts_quantile",
-            "bucket", "right_tail", "left_tail", "densify", "pasteurize",
-            "vec_avg", "vec_sum", "vec_max", "vec_min", "vec_stddev", "vec_range", "vec_count"
-        }
-        cls._ALL_NAMES = set(cls._OPERATORS.keys()) | fallback_ops
-        for name in fallback_ops:
-            if name not in cls._OPERATORS:
-                cls._OPERATORS[name] = {"name": name, "category": "General", "definition": f"{name}(...)"}
+        # Only fall back to core authorized subset when JSON is missing or empty
+        if not cls._OPERATORS:
+            fallback_ops = {
+                "add", "subtract", "multiply", "divide", "reverse", "abs", "sign",
+                "power", "signed_power", "sqrt", "log", "s_log_1p", "max", "min",
+                "rank", "group_rank", "quantile", "scale", "group_scale",
+                "zscore", "group_zscore", "ts_mean", "ts_sum", "ts_std_dev",
+                "ts_rank", "ts_delta", "ts_delay", "ts_corr", "ts_decay_linear", "ts_decay_exp_window",
+                "trade_when", "if_else", "winsorize", "hump", "group_neutralize",
+                "ts_regression", "ts_arg_max", "ts_arg_min",
+                "ts_target_tvr_decay", "ts_quantile",
+                "bucket", "right_tail", "left_tail", "densify",
+                "vec_avg", "vec_sum", "vec_stddev"
+            }
+            for name in sorted(fallback_ops):
+                op = {"name": name, "category": "General", "definition": f"{name}(...)"}
+                cls._OPERATORS[name] = op
+                cls._OPERATORS_BY_CAT.setdefault("General", []).append(op)
+            cls._ALL_NAMES = set(cls._OPERATORS.keys())
+            cls._LOADED = True
 
         cls._KEEP_TOKENS = (
             cls._ALL_NAMES |
             cls.DEFAULT_GROUPS |
             cls.DEFAULT_SPECIAL_TOKENS
         )
+
+    @classmethod
+    def lookup_operators(cls, query: str = "", category: str = "") -> List[dict]:
+        """按名称/描述/分类按需检索授权算子签名，避免全量注入上下文"""
+        if not cls._LOADED:
+            cls.load()
+        q = (query or "").strip().lower()
+        cat_q = (category or "").strip().lower()
+        matches: List[dict] = []
+        for op in cls._OPERATORS.values():
+            op_cat = str(op.get("category", ""))
+            if cat_q and cat_q not in op_cat.lower():
+                continue
+            name = str(op.get("name", ""))
+            definition = str(op.get("definition", ""))
+            desc = str(op.get("description", ""))
+            if q and not (q in name.lower() or q in definition.lower() or q in desc.lower() or q in op_cat.lower()):
+                continue
+            matches.append({
+                "name": name,
+                "category": op_cat,
+                "scope": op.get("scope", []),
+                "definition": definition,
+                "description": desc,
+            })
+        matches.sort(key=lambda item: (0 if q and item["name"].lower().startswith(q) else 1, item["name"]))
+        return matches
+
+    @classmethod
+    def format_compact_index_markdown(cls) -> str:
+        """极简算子分类索引 (< 1KB): 通过 lookup_operators 按需查询精确签名"""
+        if not cls._LOADED:
+            cls.load()
+        cat_lines = []
+        for cat_key in sorted(cls._OPERATORS_BY_CAT.keys()):
+            ops = cls._OPERATORS_BY_CAT[cat_key]
+            sample = ", ".join(op["name"] for op in sorted(ops, key=lambda x: x["name"])[:4])
+            cat_lines.append(f"- {cat_key} ({len(ops)}): {sample}...")
+        lines = [
+            f"### Authorized Operators ({len(cls._ALL_NAMES)} SSOT)",
+            *cat_lines,
+            "Query exact signatures via `lookup_operators(query, category)`.",
+            "Banned aliases: exp/jump_decay/ts_max/ts_min/ts_skewness/ts_kurtosis/pasteurize/group_quantile/neg."
+        ]
+        return "\n".join(lines)
 
     @classmethod
     def get_all_operator_names(cls) -> Set[str]:

@@ -236,7 +236,7 @@ def materialize(campaign_dir: str, job: Dict[str, Any], probe: Dict[str, Any],
     spec = {"entries": [
         {"role": "parent", "expression": parent_expr},
         {"role": "strip", "expression": ablation},
-        {"role": "placebo", "expression": placebo},
+        {"role": "placebo", "expression": placebo, "control_kind": "lagged_placebo"},
     ]}
     try:
         exp = bus.open_experiment(probe_id, spec)
@@ -246,22 +246,55 @@ def materialize(campaign_dir: str, job: Dict[str, Any], probe: Dict[str, Any],
 
     # 产出一个可直接投递的批次 (走原有回测链路, 不新开旁路)
     spec_meta = job.get("spec") or {}
+    hyp_ref = probe.get("hypothesis_id") or spec_meta.get("hypothesis_id") or "HYP_PROBE"
+    neut_val = spec_meta.get("neutralization") or "SUBINDUSTRY"
+    orig_alpha = probe.get("alpha_id") or probe_id
     batch_doc = {
         "region": spec_meta.get("region") or "USA",
         "universe": spec_meta.get("universe") or "TOP1000",
         "delay": spec_meta.get("delay", 1),
         "category": spec_meta.get("category") or "other",
-        "neutralization": spec_meta.get("neutralization") or "SUBINDUSTRY",
+        "neutralization": neut_val,
         "known_fields": job.get("known_fields") or [],
         "audit_run_id": run_id,
         "audit_probe_id": probe_id,
         "items": [
-            {"slot": 1, "expression": parent_expr, "type": "parent_control",
-             "optimize_reason": "审计实验: 母本", "counterparty": probe.get("counterparty") or ""},
-            {"slot": 2, "expression": ablation, "type": "ablation_control",
-             "optimize_reason": "审计实验: 消融机制 (最深层算子 -> add(x,0))", "counterparty": ""},
-            {"slot": 3, "expression": placebo, "type": "placebo_control",
-             "optimize_reason": "审计实验: 复杂度匹配安慰剂 (最外层算子 -> add(x,0))", "counterparty": ""},
+            {
+                "slot": 1,
+                "optimize_reason": "审计对照实验母本基准槽: 复现原始完整表达并对齐 Sharpe 与 Margin 基准",
+                "hypothesis_ref": hyp_ref,
+                "mechanism_intents": ["CROSS_SECTIONAL_RELATIVE"],
+                "economic_delta": "母本基准对照槽 (parent_control): 保持原结构验证基准 Sharpe 与换手一致性",
+                "expression": parent_expr,
+                "neutralization": neut_val,
+                "type": "parent_control",
+                "original_alpha": orig_alpha,
+                "counterparty": probe.get("counterparty") or "",
+            },
+            {
+                "slot": 2,
+                "optimize_reason": "审计消融机制对照槽 (ablation_control): 剥离外层包装保留核心裸信号检验 Sharpe 净增益",
+                "hypothesis_ref": hyp_ref,
+                "mechanism_intents": ["CROSS_SECTIONAL_RELATIVE"],
+                "economic_delta": "消融基线对照槽: 验证核心信号在无外层加工时的基准 Sharpe 贡献",
+                "expression": ablation,
+                "neutralization": neut_val,
+                "type": "ablation_control",
+                "original_alpha": orig_alpha,
+                "counterparty": "",
+            },
+            {
+                "slot": 3,
+                "optimize_reason": "审计安慰剂空壳对照槽 (placebo_control): 字段滞后252日注入外层壳检验 Sharpe 是否寄生",
+                "hypothesis_ref": hyp_ref,
+                "mechanism_intents": ["TEMPORAL_DECAY"],
+                "economic_delta": "滞后失效安慰剂槽: 检验外层包装算子在失效数据上是否伪造正 Sharpe",
+                "expression": placebo,
+                "neutralization": neut_val,
+                "type": "placebo_control",
+                "original_alpha": orig_alpha,
+                "counterparty": "",
+            },
         ],
     }
     out_path = os.path.join(campaign_dir, f"audit_experiment_{run_id}.json")
@@ -283,7 +316,12 @@ def ask_probe(payload: Dict[str, Any], llm_fn: Optional[Callable[[str], Any]] = 
         except ImportError:
             from quant_framework.core.agent_backends import create_agent_backend
         backend = create_agent_backend("builtin")
-        raw = backend.send_message_sync(prompt, json_mode=True)
+        raw = backend.send_message_sync(
+            role="aegis-falsifiable-probe",
+            model="default",
+            prompt=prompt,
+            json_mode=True,
+        )
         if isinstance(raw, str):
             from core.agent_backends import extract_json_from_text
             raw = extract_json_from_text(raw) or {}
